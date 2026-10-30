@@ -1,0 +1,160 @@
+# Infra — Permaculture pack (v0, extracted from the Phase 0 prototype)
+# Format: docs/pack-format.md · Licence: CC-BY-SA 4.0 (packs/LICENSE.md)
+pack: infra
+version: 0
+title: Infra
+color: "#5FA8C9"
+description: >-
+  The platform a backend runs on: network, Kubernetes, the database engine, the message log, and the SRE
+  bargain.
+branches:
+  - id: network-and-platform
+    title: Network & platform
+  - id: data-and-reliability
+    title: Data & reliability
+sources: []
+seeds:
+  - id: tcp
+    name: TCP backlog
+    layer: ground-cover
+    branch: network-and-platform
+    tier: 0
+    harvest: recall
+    questions:
+      water:
+        - q: A SYN flood exhausts…
+          answer: The half-open connection queue
+          distractors:
+            - Disk space on the server
+            - The DNS cache
+            - TLS session tickets
+          why: SYN cookies let the kernel accept without holding state for half-open connections.
+  - id: k8s
+    name: k8s scheduling
+    layer: understory
+    branch: network-and-platform
+    tier: 1
+    needs:
+      - tcp
+    harvest: recall
+    questions:
+      water:
+        - q: A pod stays Pending most often because…
+          answer: No node satisfies its resource requests or affinity rules
+          distractors:
+            - The image is too large to pull
+            - Its Service has not been created
+            - Its ConfigMap is empty
+          why: >-
+            `kubectl describe pod` shows the scheduler events; requests, taints and affinity are the usual
+            culprits.
+  - id: tls
+    name: TLS & certs
+    layer: ground-cover
+    branch: network-and-platform
+    tier: 1
+    needs:
+      - tcp
+    harvest: recall
+    questions:
+      water:
+        - q: The TLS 1.3 handshake is faster mainly because…
+          answer: Key exchange and cipher negotiation complete in one round trip
+          distractors:
+            - Certificates are no longer sent
+            - It uses RSA key transport
+            - Compression was added
+          why: 1-RTT handshake, 0-RTT for resumption; legacy ciphers were removed.
+  - id: mesh
+    name: Service mesh
+    layer: canopy
+    branch: network-and-platform
+    tier: 2
+    needs:
+      - k8s
+      - tls
+    harvest: recall
+    questions:
+      water:
+        - q: A sidecar mesh moves retries, mTLS and metrics…
+          answer: Out of application code into a per-pod proxy
+          distractors:
+            - Into the kernel
+            - Into the load balancer only
+            - Into the database
+          why: "Cost: an extra hop per call and more moving parts to run."
+  - id: mvcc
+    name: Postgres MVCC
+    layer: shrub
+    branch: data-and-reliability
+    tier: 0
+    harvest: recall
+    questions:
+      water:
+        - q: An UPDATE in Postgres…
+          answer: Writes a new row version; the old one stays until VACUUM
+          distractors:
+            - Overwrites the row in place
+            - Takes a table-level lock
+            - Deletes the page and rewrites it
+          why: Readers keep seeing the old version; dead tuples are reclaimed by VACUUM.
+      harvest:
+        - q: A long-running transaction hurts mostly because…
+          answer: VACUUM cannot remove dead tuples that transaction might still see
+          distractors:
+            - It burns CPU constantly
+            - It locks every index
+            - It blocks all writers
+          why: Table bloat grows until the old snapshot is released.
+  - id: pgidx
+    name: Indexes & planner
+    layer: shrub
+    branch: data-and-reliability
+    tier: 1
+    needs:
+      - mvcc
+    harvest: recall
+    questions:
+      water:
+        - q: "`EXPLAIN` shows a Seq Scan on an indexed column because…"
+          answer: The planner estimates the index would not be cheaper (small table or low selectivity)
+          distractors:
+            - Indexes only work with primary keys
+            - The column type is unsupported
+            - You forgot VACUUM
+          why: Check row estimates with EXPLAIN ANALYZE; stale statistics mislead the planner.
+  - id: kafka
+    name: Kafka internals
+    layer: shrub
+    branch: data-and-reliability
+    tier: 1
+    needs:
+      - mvcc
+    harvest: recall
+    questions:
+      water:
+        - q: Ordering in Kafka is guaranteed…
+          answer: Within a partition only
+          distractors:
+            - Across the whole topic
+            - Across all topics of a producer
+            - Only with exactly-once enabled
+          why: Pick the partition key to be whatever you need ordered, e.g. an order id.
+  - id: slo
+    name: SLOs & error budgets
+    layer: vine
+    branch: data-and-reliability
+    tier: 2
+    needs:
+      - kafka
+      - pgidx
+    harvest: recall
+    questions:
+      water:
+        - q: An error budget is…
+          answer: The allowed unreliability (1 − SLO) you may spend on risk, like deploys
+          distractors:
+            - The on-call budget in rupees
+            - The number of bugs allowed per sprint
+            - A Grafana dashboard
+          why: Burn it too fast and you freeze feature work; that is the SRE bargain.

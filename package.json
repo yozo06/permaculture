@@ -1,0 +1,22 @@
+{
+  "name": "permaculture",
+  "version": "0.0.1",
+  "description": "A farm game where the crops are the things you are learning.",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "validate": "node scripts/validate-packs.mjs",
+    "extract-packs": "node scripts/extract-packs.mjs",
+    "serve": "npx --yes serve game"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "ajv": "^8.17.1",
+    "js-yaml": "^4.1.0"
+  },
+  "private": true,
+  "type": "module"
+}

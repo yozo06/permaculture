@@ -1,0 +1,153 @@
+# Kannada — Permaculture pack (v0, extracted from the Phase 0 prototype)
+# Format: docs/pack-format.md · Licence: CC-BY-SA 4.0 (packs/LICENSE.md)
+pack: kannada
+version: 0
+title: Kannada
+color: "#B089D6"
+description: >-
+  Everyday Kannada for Bengaluru and Coorg: words first, then the script and the small grammar that holds
+  sentences together.
+branches:
+  - id: words
+    title: Words
+  - id: grammar-and-script
+    title: Grammar & script
+sources: []
+seeds:
+  - id: food
+    name: Food words
+    layer: herb
+    branch: words
+    tier: 0
+    harvest: recall
+    questions:
+      water:
+        - q: ಊಟ (oota) means…
+          answer: meal
+          distractors:
+            - water
+            - house
+            - road
+          why: ಊಟ ಆಯ್ತಾ? (oota aaytaa?) — did you eat?
+      harvest:
+        - q: "'ನನಗೆ ಹಸಿವಾಗಿದೆ' (nanage hasivaagide) means…"
+          answer: I am hungry
+          distractors:
+            - I am tired
+            - I am thirsty
+            - I am late
+          why: ಹಸಿವು = hunger; ನನಗೆ = to me.
+  - id: water
+    name: Water & drink
+    layer: herb
+    branch: words
+    tier: 0
+    harvest: recall
+    questions:
+      water:
+        - q: ನೀರು (neeru) means…
+          answer: water
+          distractors:
+            - milk
+            - rice
+            - fire
+          why: ನೀರು ಕೊಡಿ (neeru kodi) — please give water.
+  - id: num
+    name: Numbers 1–10
+    layer: ground-cover
+    branch: words
+    tier: 0
+    harvest: recall
+    questions:
+      water:
+        - q: ಮೂರು (mooru) is…
+          answer: three
+          distractors:
+            - two
+            - five
+            - ten
+          why: ಒಂದು, ಎರಡು, ಮೂರು — ondu, eradu, mooru.
+  - id: market
+    name: Market phrases
+    layer: understory
+    branch: words
+    tier: 1
+    needs:
+      - num
+    harvest: recall
+    questions:
+      water:
+        - q: "'ಇದು ಎಷ್ಟು?' (idu eshtu?) asks…"
+          answer: How much is this?
+          distractors:
+            - Where is this?
+            - What is this?
+            - Who are you?
+          why: ಎಷ್ಟು = how much/many. Useful at every stall.
+  - id: dirs
+    name: Directions
+    layer: herb
+    branch: words
+    tier: 1
+    needs:
+      - water
+    harvest: recall
+    questions:
+      water:
+        - q: ಎಡ (eda) / ಬಲ (bala) are…
+          answer: left / right
+          distractors:
+            - up / down
+            - near / far
+            - fast / slow
+          why: ಎಡಕ್ಕೆ ತಿರುಗಿ (edakke tirugi) — turn left.
+  - id: script
+    name: "Script: vowels"
+    layer: ground-cover
+    branch: grammar-and-script
+    tier: 0
+    harvest: recall
+    questions:
+      water:
+        - q: ಅ ಆ ಇ ಈ are…
+          answer: "The first four vowels: a, aa, i, ii"
+          distractors:
+            - Consonants
+            - Numerals
+            - Punctuation marks
+          why: Kannada has 13 vowels (ಸ್ವರಗಳು); long vowels double the sound.
+  - id: verbs
+    name: "Verbs: ಇದೆ / ಬೇಕು"
+    layer: understory
+    branch: grammar-and-script
+    tier: 1
+    needs:
+      - food
+    harvest: recall
+    questions:
+      water:
+        - q: "'ನನಗೆ ಕಾಫಿ ಬೇಕು' means…"
+          answer: I want coffee
+          distractors:
+            - I have coffee
+            - I made coffee
+            - Coffee is hot
+          why: ಬೇಕು = want/need; ನನಗೆ (to me) + object + ಬೇಕು.
+  - id: talk
+    name: Small talk
+    layer: canopy
+    branch: grammar-and-script
+    tier: 2
+    needs:
+      - verbs
+      - market
+    harvest: recall
+    questions:
+      water:
+        - q: "'ಹೇಗಿದ್ದೀರಾ?' (hegiddeera?) is…"
+          answer: How are you? (polite)
+          distractors:
+            - What is your name?
+            - Where are you going?
+            - Good night
+          why: "Reply: ಚೆನ್ನಾಗಿದ್ದೀನಿ (chennaagiddeeni) — I am fine."

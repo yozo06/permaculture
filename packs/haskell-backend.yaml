@@ -1,0 +1,212 @@
+# Backend · Haskell — Permaculture pack (v0, extracted from the Phase 0 prototype)
+# Format: docs/pack-format.md · Licence: CC-BY-SA 4.0 (packs/LICENSE.md)
+pack: haskell-backend
+version: 0
+title: Backend · Haskell
+color: "#6DB24F"
+description: >-
+  Running Haskell services in production: the runtime under your feet, the types above your head, and the
+  idioms in between.
+branches:
+  - id: runtime-and-performance
+    title: Runtime & performance
+  - id: types-and-effects
+    title: Types & effects
+sources: []
+seeds:
+  - id: laziness
+    name: Laziness model
+    layer: ground-cover
+    branch: types-and-effects
+    tier: 0
+    harvest: recall
+    questions:
+      water:
+        - q: "`let xs = [1..] in take 3 xs` works because…"
+          answer: Lists are built lazily; only the demanded cons cells get evaluated
+          distractors:
+            - GHC detects infinite lists and truncates them
+            - take forces the whole list first
+            - "[1..] is special finite syntax"
+          why: Thunks are evaluated on demand; take only pattern-matches three cells.
+  - id: stm
+    name: STM retry
+    layer: shrub
+    branch: types-and-effects
+    tier: 1
+    harvest: recall
+    questions:
+      water:
+        - q: Inside an STM transaction, what does `retry` do?
+          answer: Blocks until a TVar it read changes, then re-runs the transaction
+          distractors:
+            - Re-runs the transaction immediately in a busy loop
+            - Throws an exception to the caller
+            - Commits the writes made so far
+          why: retry parks the thread and wakes it when any TVar read so far is written by another transaction.
+      harvest:
+        - q: Why can you not run IO inside `atomically`?
+          answer: A transaction may run several times before committing, so effects would repeat
+          distractors:
+            - IO is too slow for the STM scheduler
+            - The runtime has no way to time IO
+            - STM runs only on the main thread
+          why: Transactions are optimistic and can be re-executed; IO effects cannot be rolled back.
+  - id: bracket
+    name: bracket & cleanup
+    layer: herb
+    branch: types-and-effects
+    tier: 1
+    harvest: recall
+    questions:
+      water:
+        - q: "`bracket acquire release use` runs `release` when…"
+          answer: "`use` finishes, throws, or the thread gets an async exception"
+          distractors:
+            - Only when `use` returns normally
+            - Only on asynchronous exceptions
+            - Only if `acquire` failed
+          why: bracket masks async exceptions during acquire/release and always runs release.
+      harvest:
+        - q: What does `mask` change for the `acquire` step?
+          answer: Async exceptions are deferred until an interruptible op or unmask
+          distractors:
+            - Sync exceptions are swallowed
+            - GC is paused for the duration
+            - Nothing; mask only affects release
+          why: Without mask, a Ctrl-C between acquire and the handler install would leak the resource.
+  - id: gc
+    name: GC generations
+    layer: root
+    branch: runtime-and-performance
+    tier: 1
+    harvest: recall
+    questions:
+      water:
+        - q: GHC's default garbage collector is…
+          answer: A generational copying collector
+          distractors:
+            - Reference counting
+            - Mark-and-sweep only
+            - There is no GC; memory is arena-allocated
+          why: Young objects live in the nursery and get copied to the old generation if they survive.
+      harvest:
+        - q: Raising -A (nursery size) usually means…
+          answer: Fewer minor GCs, more memory per capability
+          distractors:
+            - More minor GCs, less memory
+            - No change to GC frequency
+            - The old generation shrinks
+          why: >-
+            A bigger nursery fills more slowly, so minor collections are rarer; cost is memory and cache
+            locality.
+  - id: leaks
+    name: Space leaks
+    layer: root
+    branch: runtime-and-performance
+    tier: 1
+    harvest: recall
+    questions:
+      water:
+        - q: The classic `foldl` space leak happens because…
+          answer: The lazy accumulator builds a chain of thunks before anything is forced
+          distractors:
+            - The list is evaluated strictly up front
+            - Too many capabilities run the fold
+            - foldl allocates a new list per step
+          why: foldl' (or a bang on the accumulator) forces each step and keeps memory flat.
+      harvest:
+        - q: Which RTS flag gives you a heap profile broken down by cost centre?
+          answer: "-hc"
+          distractors:
+            - "-s"
+            - "-N"
+            - "-A64m"
+          why: "-hc profiles by cost centre; -hy by type, -hd by closure description."
+  - id: rts
+    name: Threaded RTS
+    layer: root
+    branch: runtime-and-performance
+    tier: 2
+    needs:
+      - gc
+    harvest: recall
+    questions:
+      water:
+        - q: "`-N4` with the threaded runtime gives you…"
+          answer: "4 capabilities: OS threads that run Haskell threads in parallel"
+          distractors:
+            - 4 green threads
+            - 4 separate heaps with no sharing
+            - Nothing unless you also use forkOS
+          why: Capabilities are the parallel slots; green threads are multiplexed onto them.
+  - id: lockfree
+    name: Lock-free structures
+    layer: shrub
+    branch: types-and-effects
+    tier: 2
+    needs:
+      - stm
+    harvest: recall
+    questions:
+      water:
+        - q: A compare-and-swap loop can starve a thread because…
+          answer: Another thread keeps winning the CAS, so it never commits
+          distractors:
+            - CAS takes a global lock
+            - The GC blocks CAS
+            - CAS only works on 8-bit values
+          why: Lock-free guarantees system progress, not per-thread progress; that is wait-free.
+  - id: gadts
+    name: GADTs & type-level
+    layer: ground-cover
+    branch: types-and-effects
+    tier: 2
+    needs:
+      - laziness
+    harvest: recall
+    questions:
+      water:
+        - q: A GADT lets a constructor…
+          answer: Refine the type parameter, so pattern matching learns type information
+          distractors:
+            - Have more than one name
+            - Be used at the kind level only
+            - Skip the type checker
+          why: "`eval :: Expr Int -> Int` is safe because matching on `IntLit` refines `a ~ Int`."
+  - id: effects
+    name: Effect systems
+    layer: canopy
+    branch: types-and-effects
+    tier: 3
+    needs:
+      - gadts
+      - bracket
+    harvest: recall
+    questions:
+      water:
+        - q: The ReaderT-over-IO pattern avoids…
+          answer: Deep transformer stacks and their lifting overhead
+          distractors:
+            - All use of IO
+            - Exceptions entirely
+            - The need for a configuration record
+          why: One ReaderT Env IO layer; capabilities live in the Env.
+  - id: nonmoving
+    name: Non-moving GC
+    layer: root
+    branch: runtime-and-performance
+    tier: 3
+    needs:
+      - rts
+    wild: true
+    harvest: recall
+    questions:
+      water:
+        - q: GHC's non-moving collector mainly reduces…
+          answer: Pause times for the old generation
+          distractors:
+            - Allocation cost
+            - Thunk creation
+            - Binary size
+          why: Enable with --nonmoving-gc; throughput can drop slightly.

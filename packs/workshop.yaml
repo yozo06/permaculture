@@ -1,0 +1,197 @@
+# Workshop — Permaculture pack #0. The game's own build backlog, as seeds.
+# Harvest = the feature is merged and playable. Capped at 30% of daily energy by the game.
+# Format: docs/pack-format.md · Licence: CC-BY-SA 4.0 (packs/LICENSE.md)
+pack: workshop
+version: 0
+title: Workshop
+color: "#A9A692"
+description: >-
+  Building Permaculture is itself a field. Each seed is a feature; planting it means designing it,
+  watering it means a day of work, harvesting it means it ships. Capped so the farm never becomes the only crop.
+perennial: true
+branches:
+  - id: engine
+    title: Engine & packs
+    description: The rules, the event log, the pack format. Phase 1 and 2.
+  - id: world
+    title: World & village
+    description: What players see and share. Phase 3 and 4.
+sources:
+  - id: design
+    title: docs/design.md
+  - id: pack-format
+    title: docs/pack-format.md
+seeds:
+  # ---- Phase 0 (done in the first commit) ----
+  - id: repo
+    name: Repo & Pages
+    layer: ground-cover
+    branch: engine
+    tier: 0
+    harvest: artifact
+    minutes: 60
+    summary: Public repo, licence, prototype deployed on GitHub Pages, save export/import.
+    prompts: [Link to the live game on Pages.]
+  - id: pack-format-v0
+    name: Pack format v0
+    layer: ground-cover
+    branch: engine
+    tier: 0
+    harvest: artifact
+    minutes: 60
+    summary: YAML schema, validator in CI, four packs extracted from the prototype.
+    prompts: [All packs validate in CI.]
+  # ---- Phase 1 ----
+  - id: event-log
+    name: Event log & fold
+    layer: root
+    branch: engine
+    tier: 1
+    needs: [repo]
+    harvest: artifact
+    minutes: 120
+    summary: Every action is an event; farm state is a pure fold over the log. Property tests on the fold. Export is the log.
+    prompts: [Replaying the log reproduces the farm; tests pass.]
+  - id: pack-loader
+    name: Pack loader
+    layer: shrub
+    branch: engine
+    tier: 1
+    needs: [pack-format-v0]
+    harvest: artifact
+    minutes: 90
+    summary: The game reads packs/*.yaml instead of its inline TOPICS array. Branches, tiers, needs, guilds come from the pack.
+    prompts: [Adding a seed to a YAML file shows it in the seed bag with no code change.]
+  - id: catalogues
+    name: Seed catalogues
+    layer: canopy
+    branch: engine
+    tier: 2
+    needs: [pack-loader]
+    harvest: artifact
+    minutes: 180
+    summary: Full catalogues for Backend·Haskell, System design, Infra, DSA, Leadership, with all seven layers and guilds.
+    prompts: [Each field has perennials possible in all seven layers.]
+  - id: depth-ladder
+    name: Depth ladder
+    layer: understory
+    branch: engine
+    tier: 2
+    needs: [event-log, pack-loader]
+    harvest: artifact
+    minutes: 120
+    summary: Stages change the kind of work; read+notes, recall, explain, apply, harvest. Notes attach to a crop.
+    prompts: [A stage-2 watering asks for an explanation, not a multiple choice.]
+  # ---- Phase 2 ----
+  - id: byok
+    name: Bring your own key
+    layer: vine
+    branch: engine
+    tier: 3
+    needs: [depth-ladder]
+    harvest: artifact
+    minutes: 90
+    summary: API key stored only in the browser; calls go browser-to-provider. Ollama supported. No-AI mode stays complete.
+    prompts: [A judged harvest grades with the player's own key; self-rating works without one.]
+  - id: judged-harvest
+    name: Judged harvests
+    layer: understory
+    branch: engine
+    tier: 4
+    needs: [byok]
+    harvest: artifact
+    minutes: 120
+    summary: Written design or explanation graded against the seed's rubric; player can dispute each line.
+    prompts: [Rate limiting harvest graded against its five-line rubric.]
+  - id: pack-forge
+    name: Pack forge
+    layer: canopy
+    branch: engine
+    tier: 4
+    needs: [byok]
+    harvest: artifact
+    minutes: 120
+    summary: Prompt template that turns a syllabus or three job descriptions into a draft pack that passes the validator.
+    prompts: [A friend produces a valid pack for their own goal without touching code.]
+  - id: wild-finds
+    name: Wild finds
+    layer: herb
+    branch: engine
+    tier: 4
+    needs: [byok]
+    harvest: artifact
+    minutes: 90
+    summary: Foraging generates finds adjacent to what is growing. Domesticated finds become volunteer seeds.
+    prompts: [Three fresh finds a day, related to Z1 crops.]
+  # ---- Phase 3 ----
+  - id: snapshot
+    name: Farm snapshot
+    layer: ground-cover
+    branch: world
+    tier: 1
+    needs: [repo]
+    harvest: artifact
+    minutes: 90
+    summary: Publish a read-only snapshot (map and trees only, never compost or failed answers) to a free KV store. Opt-in, revocable.
+    prompts: [A farm code opens someone else's farm read-only.]
+  - id: visit
+    name: Visit & water
+    layer: understory
+    branch: world
+    tier: 2
+    needs: [snapshot]
+    harvest: artifact
+    minutes: 120
+    summary: Water one crop on a neighbour's farm by answering a question from their pack. A gift event lands in their log.
+    prompts: [Two farms exchange a watering.]
+  - id: village-server
+    name: Village server (Haskell)
+    layer: root
+    branch: world
+    tier: 3
+    needs: [visit]
+    harvest: artifact
+    minutes: 180
+    summary: Small Haskell service holding snapshots and gift events. Also a system-design talking point.
+    prompts: [Deployed; the game reads snapshots from it.]
+  # ---- Phase 4 ----
+  - id: sprites
+    name: Sprite sheets
+    layer: herb
+    branch: world
+    tier: 1
+    needs: [repo]
+    harvest: artifact
+    minutes: 120
+    summary: Replace procedural pixels with a consistent tileset (CC0 or generated and touched up). Growth animations, day and night.
+    prompts: [Crops, trees and buildings drawn from a sheet.]
+  - id: renderer
+    name: PixiJS renderer
+    layer: shrub
+    branch: world
+    tier: 2
+    needs: [sprites]
+    harvest: artifact
+    minutes: 180
+    summary: Camera, zoom, particles, chunked world so the map can grow beyond one screen without the canvas choking.
+    prompts: [60 fps on a phone with a 60x60 world.]
+  - id: terraces
+    name: Layers as terraces
+    layer: canopy
+    branch: world
+    tier: 3
+    needs: [renderer, catalogues]
+    harvest: artifact
+    minutes: 120
+    summary: A field's seven layers drawn as terraces up a hillside, so hollow layers are visible from across the map.
+    prompts: [A field with no Root perennials shows a bare bottom terrace.]
+  - id: weather
+    name: Coorg weather
+    layer: vine
+    branch: world
+    tier: 2
+    needs: [sprites]
+    harvest: artifact
+    minutes: 60
+    summary: Real weather from Chettimani drives the sky. Rain in Coorg is rain on the farm.
+    prompts: [The sky matches the forecast.]

@@ -1,0 +1,209 @@
+# System design — Permaculture pack (v0, extracted from the Phase 0 prototype)
+# Format: docs/pack-format.md · Licence: CC-BY-SA 4.0 (packs/LICENSE.md)
+pack: system-design
+version: 0
+title: System design
+color: "#E0A93E"
+description: How large systems are shaped, where state lives, and what happens when a region loses its store.
+branches:
+  - id: distributed-data
+    title: Distributed data
+  - id: traffic-and-resilience
+    title: Traffic & resilience
+sources: []
+seeds:
+  - id: cap
+    name: CAP & consistency
+    layer: ground-cover
+    branch: distributed-data
+    tier: 0
+    harvest: recall
+    questions:
+      water:
+        - q: Under a network partition, a CP system…
+          answer: Refuses some requests rather than return stale or divergent data
+          distractors:
+            - Keeps serving every request from any node
+            - Switches to eventual consistency automatically
+            - Loses data
+          why: "PACELC adds: even without a partition, you trade latency for consistency."
+  - id: con
+    name: Consistent hashing
+    layer: ground-cover
+    branch: distributed-data
+    tier: 0
+    harvest: recall
+    questions:
+      water:
+        - q: The main benefit of consistent hashing over `hash mod N`?
+          answer: Adding or removing a node remaps only about 1/N of the keys
+          distractors:
+            - Hashing becomes faster
+            - Collisions become impossible
+            - Keys come out sorted
+          why: Keys map to points on a ring; only the arc next to the new node moves.
+      harvest:
+        - q: Why add virtual nodes to the ring?
+          answer: To even out load when nodes are few or unequal in size
+          distractors:
+            - To encrypt the keys
+            - To cut memory use
+            - To avoid hashing entirely
+          why: Each physical node gets many ring positions, smoothing the arcs it owns.
+  - id: replication
+    name: Replication
+    layer: shrub
+    branch: distributed-data
+    tier: 1
+    needs:
+      - cap
+    harvest: recall
+    questions:
+      water:
+        - q: Leader-based replication with async followers risks…
+          answer: Acknowledged writes being lost if the leader fails before followers catch up
+          distractors:
+            - Double writes
+            - Followers overwriting the leader
+            - Nothing; it is equivalent to sync
+          why: Semi-sync (one follower acks) is the usual middle ground.
+  - id: raft
+    name: Raft
+    layer: root
+    branch: distributed-data
+    tier: 1
+    needs:
+      - con
+    harvest: recall
+    questions:
+      water:
+        - q: In Raft, a log entry is committed when…
+          answer: It is replicated on a majority and the leader has applied an entry from its current term
+          distractors:
+            - The leader has written it locally
+            - Any follower acknowledges it
+            - The client receives an acknowledgement
+          why: >-
+            Majority replication plus a current-term entry prevents an old entry from being committed by a
+            stale leader.
+  - id: cell
+    name: Cell architecture
+    layer: canopy
+    branch: distributed-data
+    tier: 2
+    needs:
+      - replication
+      - raft
+    harvest: recall
+    questions:
+      water:
+        - q: Cell-based architecture limits blast radius by…
+          answer: Running many small, independent copies of the whole stack, each serving a slice of customers
+          distractors:
+            - Caching everything at the edge
+            - Using one very large database
+            - Moving all logic to the client
+          why: A bad deploy or a hot tenant takes down one cell, not the fleet.
+  - id: bp
+    name: Backpressure
+    layer: understory
+    branch: traffic-and-resilience
+    tier: 0
+    harvest: recall
+    questions:
+      water:
+        - q: Backpressure is…
+          answer: A consumer signalling a producer to slow down
+          distractors:
+            - Retrying failed requests with jitter
+            - Caching responses near the client
+            - Spreading requests across replicas
+          why: Bounded queues, pull-based streams and TCP windows are all backpressure.
+      harvest:
+        - q: A bounded queue before a slow worker fills up. Safest failure for a payments API?
+          answer: Reject new work fast with 503 and Retry-After
+          distractors:
+            - Grow the queue without bound
+            - Drop the oldest requests silently
+            - Block the accept loop until space frees
+          why: >-
+            Fast rejection keeps latency bounded and lets callers back off; unbounded queues turn into memory
+            and timeout failures.
+  - id: rl
+    name: Rate limiting
+    layer: herb
+    branch: traffic-and-resilience
+    tier: 1
+    needs:
+      - bp
+    harvest: recall
+    questions:
+      water:
+        - q: A token bucket allows…
+          answer: Bursts up to the bucket size while enforcing an average rate
+          distractors:
+            - No bursts at all
+            - Unlimited rate when the bucket is empty
+            - Only fixed one-second windows
+          why: Tokens refill at the rate; a full bucket is the burst allowance.
+      harvest:
+        - q: Fixed-window counters suffer from…
+          answer: Up to 2× the limit across a window boundary
+          distractors:
+            - Too much memory per client
+            - Clock drift only
+            - Nothing; they are exact
+          why: A burst at the end of one window plus one at the start of the next doubles the real rate.
+  - id: idem
+    name: Idempotency & outbox
+    layer: understory
+    branch: traffic-and-resilience
+    tier: 1
+    needs:
+      - bp
+    harvest: recall
+    questions:
+      water:
+        - q: A transactional outbox solves…
+          answer: Writing to the DB and publishing an event atomically, so neither is lost
+          distractors:
+            - Slow queries
+            - Duplicate consumers
+            - Schema migrations
+          why: The event row commits with the business row; a relay publishes it afterwards, at-least-once.
+  - id: fpaxos
+    name: Flexible Paxos
+    layer: root
+    branch: distributed-data
+    tier: 2
+    needs:
+      - raft
+    wild: true
+    harvest: recall
+    questions:
+      water:
+        - q: Flexible Paxos relaxes…
+          answer: The rule that election and replication quorums are both majorities; they only need to intersect
+          distractors:
+            - The need for a leader
+            - Log ordering
+            - Durability
+          why: "Replicate to 2 of 5, elect with 4 of 5: faster steady state, slower failover."
+  - id: jump
+    name: Jump hash
+    layer: ground-cover
+    branch: distributed-data
+    tier: 1
+    needs:
+      - con
+    wild: true
+    harvest: recall
+    questions:
+      water:
+        - q: Compared with a hash ring, jump consistent hash gives up…
+          answer: Arbitrary node names and removal from the middle; buckets are numbered 0..n−1
+          distractors:
+            - Uniform key distribution
+            - Speed
+            - Determinism
+          why: Great for sharding where you only ever grow or shrink from the end.
