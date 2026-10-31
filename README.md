@@ -2,7 +2,7 @@
 
 A farm game where the crops are the things you are learning. Forgetting is wilting. Mastery is a tree.
 
-**Play:** once GitHub Pages is enabled for this repo, the game is at `https://<owner>.github.io/permaculture/`. Until then, open `game/index.html` in a browser.
+**Play:** [yozo06.github.io/permaculture](https://yozo06.github.io/permaculture/). To play offline, open `game/index.html` in a browser.
 
 Topics are seeds. Plant one in its field, water it by answering a question, and it grows. Miss a watering and it wilts. Harvest a stage-5 crop with a harder question and it becomes a perennial tree: rooted, yours for good. The map is your retention, drawn as land.
 
