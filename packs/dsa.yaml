@@ -1,0 +1,1843 @@
+# DSA patterns — Permaculture pack (v0)
+# Format: docs/pack-format.md · Licence: CC-BY-SA 4.0 (packs/LICENSE.md)
+pack: dsa
+version: 0
+title: DSA patterns
+color: "#E58A5C"
+description: >-
+  Data structures and algorithm patterns for interviews and real code, from complexity to graphs and dynamic
+  programming.
+perennial: false
+branches:
+  - id: linear-and-search
+    title: Arrays, search & linear structures
+  - id: graphs-and-dp
+    title: Trees, graphs & dynamic programming
+sources:
+  - id: clrs
+    title: Introduction to Algorithms (Cormen, Leiserson, Rivest, Stein), 4th edition
+    url: https://mitpress.mit.edu/9780262046305/introduction-to-algorithms/
+    note: The reference text. Chapter numbers in summaries follow the 4th edition's table of contents; sections are cited by name.
+  - id: algs4
+    title: Algorithms, 4th edition (Sedgewick and Wayne) and its booksite
+    url: https://algs4.cs.princeton.edu/home/
+    note: Free booksite with code (BST.java, Parentheses.java, TopM and more), excerpts and lectures. Section numbers match the booksite sidebar.
+  - id: erickson
+    title: Algorithms (Jeff Erickson), free book
+    url: https://jeffe.cs.illinois.edu/teaching/algorithms/
+    note: Clear on recursion, backtracking, dynamic programming, greedy proofs and graph search. Chapters 1 Recursion, 2 Backtracking, 3 Dynamic Programming, 4 Greedy Algorithms, 5 Basic Graph Algorithms, 6 Depth-First Search, 8 Shortest Paths.
+  - id: cph
+    title: Competitive Programmer's Handbook (Antti Laaksonen)
+    url: https://cses.fi/book/book.pdf
+    note: A compact free book. Chapter and section numbers in summaries follow the PDF's table of contents.
+  - id: mit6006
+    title: MIT 6.006 Introduction to Algorithms (OCW, Spring 2020)
+    url: https://ocw.mit.edu/courses/6-006-introduction-to-algorithms-spring-2020/pages/lecture-notes/
+    note: Lecture notes and videos. Lecture numbers in summaries follow this lecture-notes page.
+  - id: mit6172
+    title: MIT 6.172 Performance Engineering of Software Systems (OCW, Fall 2018), lecture videos
+    url: https://ocw.mit.edu/courses/6-172-performance-engineering-of-software-systems-fall-2018/video_galleries/lecture-videos/
+    note: Lecture 14 covers caching and cache-efficient algorithms; lecture 15 cache-oblivious algorithms.
+  - id: drepper-memory
+    title: What Every Programmer Should Know About Memory (Ulrich Drepper)
+    url: https://people.freebsd.org/~lstewart/articles/cpumemory.pdf
+    note: Free paper. Section 3.2 cache operation, 3.3.2 measured cache effects, 6.2.1 optimising L1 data cache access, 6.3.1 hardware prefetching.
+  - id: cses
+    title: CSES Problem Set
+    url: https://cses.fi/problemset/
+    note: Graded practice problems for the patterns in this pack.
+  - id: pytc
+    title: Python docs, Time complexity of operations on built-in types
+    url: https://docs.python.org/3/builtins/time-complexity.html
+    note: Costs of list, dict, set and str operations in CPython, including the notes on worst cases and string concatenation. It replaces the old wiki.python.org TimeComplexity page.
+  - id: heapq
+    title: Python docs, heapq (heap queue algorithm)
+    url: https://docs.python.org/3/library/heapq.html
+    note: Its Theory section gives the 0-indexed heap layout.
+  - id: py-bisect
+    title: Python docs, bisect (array bisection algorithm)
+    url: https://docs.python.org/3/library/bisect.html
+    note: bisect_left states the lower-bound invariant on a half-open range.
+  - id: py-recursion-limit
+    title: Python docs, sys.setrecursionlimit
+    url: https://docs.python.org/3/library/sys.html#sys.setrecursionlimit
+    note: Why an interpreter caps recursion depth.
+  - id: go-slicetricks
+    title: Go wiki, SliceTricks
+    url: https://go.dev/wiki/SliceTricks
+    note: Short recipes, including 'Filtering without allocating' and 'In-place deduplicate' with a read index and a write index.
+  - id: bloch-binary-search
+    title: "Joshua Bloch, Extra, Extra - Read All About It: Nearly All Binary Searches and Mergesorts are Broken (2006)"
+    url: https://research.google/blog/extra-extra-read-all-about-it-nearly-all-binary-searches-and-mergesorts-are-broken/
+    note: The (low + high) / 2 overflow bug found in the Java standard library.
+  - id: humble-programmer
+    title: Edsger W. Dijkstra, The Humble Programmer (EWD340, 1972 Turing Award lecture)
+    url: https://www.cs.utexas.edu/~EWD/transcriptions/EWD03xx/EWD340.html
+    note: Contains the argument that testing shows the presence of bugs, never their absence.
+  - id: wiki-call-stack
+    title: Wikipedia, Call stack
+    url: https://en.wikipedia.org/wiki/Call_stack
+    note: What a stack frame holds and how calls push and pop frames.
+  - id: wiki-deque
+    title: Wikipedia, Double-ended queue
+    url: https://en.wikipedia.org/wiki/Double-ended_queue
+    note: Implementations of a deque with a doubly linked list or a circular or offset array.
+  - id: wiki-topological-sorting
+    title: Wikipedia, Topological sorting
+    url: https://en.wikipedia.org/wiki/Topological_sorting
+    note: Kahn's algorithm with its cycle test, and the depth-first version.
+  - id: wiki-lis
+    title: Wikipedia, Longest increasing subsequence
+    url: https://en.wikipedia.org/wiki/Longest_increasing_subsequence
+    note: The 'Efficient algorithms' section describes the O(n log n) method with an array of smallest tails and binary search.
+  - id: wiki-held-karp
+    title: Wikipedia, Held-Karp algorithm
+    url: https://en.wikipedia.org/wiki/Held%E2%80%93Karp_algorithm
+    note: The subset dynamic program for the travelling salesman problem and its O(2^n n^2) cost.
+  - id: wiki-boundary-value
+    title: Wikipedia, Boundary-value analysis
+    url: https://en.wikipedia.org/wiki/Boundary-value_analysis
+    note: Why test inputs should sit on and next to the edges of a range.
+  - id: wiki-loop-variant
+    title: Wikipedia, Loop variant
+    url: https://en.wikipedia.org/wiki/Loop_variant
+    note: A bounded quantity that strictly decreases each pass is what proves a loop terminates.
+  - id: kt-greedy
+    title: Kleinberg and Tardos, Algorithm Design, slides 'Greedy Algorithms I' (Kevin Wayne)
+    url: https://www.cs.princeton.edu/~wayne/kleinberg-tardos/pdf/04GreedyAlgorithmsI.pdf
+    note: Interval scheduling (rules that fail, earliest finish) and interval partitioning (sort by start, priority queue of finish times, the depth bound).
+  - id: algorithms-illuminated
+    title: Algorithms Illuminated Part 2 (Tim Roughgarden), chapter 12 on hash tables
+    url: https://www.algorithmsilluminated.org/
+    note: Section 12.2 applies a hash table to the 2-SUM problem.
+  - id: cp-deleting-dsu
+    title: cp-algorithms, Deleting from a data structure in O(T(n) log n)
+    url: https://cp-algorithms.com/data_structures/deleting_in_log_n.html
+    note: Offline deletion by divide and conquer over time, with a union-find that supports rollbacks.
+guilds:
+  - id: window-and-pointers
+    title: Windows and pointers
+    seeds: [two-pointers, sliding-window, prefix-sums, monotonic-stack]
+  - id: search-family
+    title: Searching and proving it right
+    seeds: [binary-search, binary-search-answer, invariants, edge-case-testing]
+  - id: graph-walks
+    title: Walking a graph
+    seeds: [graph-representation, bfs, dfs, topo-sort, dijkstra]
+  - id: connect-and-choose
+    title: Connecting and choosing
+    seeds: [union-find, mst, greedy-exchange, proving-correctness]
+  - id: dp-families
+    title: Dynamic programming families
+    seeds: [dp-1d, dp-grid, knapsack, lis, bitmask-dp]
+  - id: under-the-hood
+    title: Under the hood
+    seeds: [big-o, dynamic-array-growth, hash-table-internals, cache-locality, call-stack]
+seeds:
+  # ---------- tier 0 ----------
+  - id: big-o
+    name: Big-O and amortised cost
+    layer: ground-cover
+    branch: linear-and-search
+    tier: 0
+    harvest: recall
+    minutes: 30
+    sources: [clrs, algs4, cph, erickson]
+    summary: >-
+      Read CLRS ch. 3 (Characterizing Running Times) or CPH ch. 2 (Time complexity), and Sedgewick and Wayne
+      section 1.4. For recurrences read Erickson ch. 1 (Mergesort, Recursion Trees); for amortised cost, the
+      dynamic-tables section of CLRS ch. 16. Notes: what O, Omega and Theta each claim; the dominant operation in
+      a loop, a halving loop and a recursion; worst, average and amortised cost. Yield: three cards mapping a loop
+      shape to its cost.
+    rubric:
+      - "Says Big-O is an upper bound on growth that ignores constants and lower-order terms"
+      - "Costs a nested loop, a halving loop and a two-way recursion correctly"
+      - "Separates worst-case, average-case and amortised cost with one example of each"
+      - "Reports space cost separately from time cost"
+    questions:
+      water:
+        - q: "A loop starts with i = 1 and doubles i each pass until i reaches n, doing constant work per pass. Its running time is…"
+          answer: "O(log n)"
+          distractors:
+            - "O(n) because it reaches n"
+            - "O(√n) because it doubles"
+            - "O(n log n) because it doubles n times"
+          why: "i takes the values 1, 2, 4, 8 and so on, so only about log2(n) passes are needed to reach n. Any loop that multiplies or divides its counter by a constant each pass is logarithmic."
+          source: cph
+        - q: "Pushing n items one by one onto a dynamic array that doubles its capacity when full costs, in total…"
+          answer: "O(n), so each push is O(1) amortised"
+          distractors:
+            - "O(n log n), since every resize copies up to n items"
+            - "O(n²), because any push might copy the whole array"
+            - "O(1) in total, since resizing is rare"
+          why: "Resizes happen at sizes 1, 2, 4, 8 and so on, so all the copying adds up to less than 2n element moves. The occasional expensive push is paid for by the cheap ones before it."
+          source: clrs
+      harvest:
+        - q: "A function does O(n) work itself, then calls itself on each half of its input (two calls of size n/2). Its total cost is…"
+          answer: "O(n log n)"
+          distractors:
+            - "O(n), because the halves add up to n"
+            - "O(n²), since there are two calls per level"
+            - "O(log n), because the input halves"
+          why: "There are about log n levels, and each level does O(n) work in total across all its calls (the sizes add back up to n). This is the shape of merge sort."
+          source: erickson
+  - id: arrays-strings
+    name: Arrays and strings
+    layer: ground-cover
+    branch: linear-and-search
+    tier: 0
+    harvest: recall
+    minutes: 25
+    sources: [algs4, clrs, pytc, go-slicetricks]
+    summary: >-
+      Read Sedgewick and Wayne section 1.1 (arrays), CLRS ch. 10 (Elementary Data Structures) and the list and str
+      notes on the Python time-complexity page. Then read the Go wiki SliceTricks entry 'Filtering without
+      allocating' for the read-index and write-index pattern. Notes: O(1) index access, O(n) insert and delete in
+      the middle, in-place versus copying, why repeated string concatenation goes quadratic, and a 2-D array as
+      rows of arrays.
+    rubric:
+      - "Explains why index access is constant time and middle insertion is linear"
+      - "Describes an in-place update with a read index and a write index"
+      - "Explains when repeated string building is quadratic and the usual fix"
+      - "Names what an off-by-one error looks like in a slice or loop bound"
+    questions:
+      water:
+        - q: "Inserting a new value at the front of an array holding n items costs…"
+          answer: "O(n), because every existing item shifts one slot"
+          distractors:
+            - "O(1), since the index of the front is known"
+            - "O(log n), since a contiguous array can be split"
+            - "O(1) amortised, thanks to spare resizing capacity"
+          why: "Items live in consecutive slots, so making room at index 0 moves all n items. Knowing the index only helps reads. A deque or linked list is the tool when you need cheap front inserts."
+          source: pytc
+        - q: "Where every concatenation creates a new string, building a result with s += c inside a loop of n characters costs about…"
+          answer: "O(n²) in total"
+          distractors:
+            - "O(n) in total"
+            - "O(n log n) in total"
+            - "O(1) per step, so O(n) overall"
+          why: "Each append copies the whole string built so far, so the copies are 1 + 2 + … + n characters. Collecting pieces in a list or a string builder and joining once brings it back to O(n)."
+          source: pytc
+      harvest:
+        - q: "You must delete every zero from an array in O(n) time, keeping the order of the other values and using O(1) extra space. Which approach does it?"
+          answer: "Scan once, copying each non-zero value to a write index that only moves forward"
+          distractors:
+            - "Shift the whole tail one slot left each time you meet a zero"
+            - "Sort the array so that every zero ends up together at one end, then trim them"
+            - "Copy the non-zeros into a new array first, then copy that array back over the original"
+          why: "A read index and a write index let you compact in place in one pass. Shifting per zero is O(n²); sorting loses the order and costs O(n log n); a second array breaks the O(1) space limit."
+          source: go-slicetricks
+  - id: recursion
+    name: Recursion
+    layer: ground-cover
+    branch: graphs-and-dp
+    tier: 0
+    harvest: recall
+    minutes: 30
+    sources: [erickson]
+    summary: >-
+      Read Erickson ch. 1 (Reductions, Simplify and Delegate, Tower of Hanoi, and the Exponentiation section),
+      then the opening Fibonacci section of ch. 3 to see why naive double recursion is exponential. Notes: base
+      case, a strictly smaller subproblem, trusting the recursive call, and the cost recurrence. Yield: factorial,
+      fast power and Tower of Hanoi each written as 'solve smaller, then combine'.
+    rubric:
+      - "States the base case and the step that moves toward it"
+      - "Explains why you may assume the recursive call is correct (induction)"
+      - "Writes the cost recurrence for a simple recursive function"
+      - "Shows fast power by squaring as an example of halving the problem"
+    questions:
+      water:
+        - q: "Every correct recursive function needs…"
+          answer: "A base case, and a step that gets closer to it each call"
+          distractors:
+            - "A loop around the call that keeps the recursion going"
+            - "At least two recursive calls per invocation, so it can branch"
+            - "A global counter that stops it once a set depth is reached"
+          why: "Without a base case the calls never end, and without progress toward it they can loop forever. One recursive call is enough, as in factorial; no loop or counter is required."
+          source: erickson
+        - q: "Computing x^n with x^n = (x^(n/2))² for even n (and one extra factor of x for odd n) needs how many multiplications?"
+          answer: "About log2(n)"
+          distractors:
+            - "About n, one per factor"
+            - "About n/2, since it halves the work"
+            - "About √n, from the square"
+          why: "Each call halves the exponent, so the recursion is only log2(n) levels deep, and each level does one or two multiplications. The key is that the half-power is computed once and reused, not twice."
+          source: erickson
+      harvest:
+        - q: "A naive fib(n) = fib(n-1) + fib(n-2) with no caching runs in…"
+          answer: "Exponential time, as the same subproblems are solved over and over"
+          distractors:
+            - "Linear time, since only n distinct values ever need computing"
+            - "Quadratic time, from n levels that each make two calls"
+            - "Logarithmic time, as the argument shrinks on each call, like binary search"
+          why: "The call tree branches twice per level and the branches overlap heavily, so the number of calls grows by roughly a factor of 1.6 per step of n. Caching each result turns it into n subproblems, the start of dynamic programming."
+          source: erickson
+  - id: graph-representation
+    name: Graph representations
+    layer: shrub
+    branch: graphs-and-dp
+    tier: 0
+    harvest: recall
+    minutes: 30
+    sources: [algs4, cph, clrs]
+    summary: >-
+      Read Sedgewick and Wayne section 4.1 (the Graph API and its adjacency-list representation) with section 4.2
+      for the reverse of a digraph, then CPH section 11.2 (Graph representation) or the representations section of
+      CLRS ch. 20 (Elementary Graph Algorithms). Notes: adjacency list, adjacency matrix and edge list with the
+      space and lookup cost of each; directed versus undirected; weighted edges. Yield: when each one is the right
+      choice.
+    rubric:
+      - "Gives the space of adjacency list, matrix and edge list in terms of V and E"
+      - "States the cost of listing a vertex's neighbours and of testing one edge in each"
+      - "Explains why sparse graphs favour lists and dense graphs can favour matrices"
+      - "Says how to store direction and weight"
+    questions:
+      water:
+        - q: "A road network has 100,000 junctions and about 300,000 roads, and you walk from junction to junction. The usual storage is…"
+          answer: "An adjacency list"
+          distractors:
+            - "An adjacency matrix, for O(1) lookups"
+            - "A list of edges, scanned per move"
+            - "A hash set holding every possible pair"
+          why: "A list uses O(V + E) space and hands you the neighbours of a vertex directly. A matrix would need V² = 10 billion cells for a graph that has almost no edges."
+          source: algs4
+        - q: "In an adjacency list, testing whether the specific edge (u, v) exists costs…"
+          answer: "Time proportional to u's neighbour count, unless each vertex keeps a hash set"
+          distractors:
+            - "Constant time, because adjacency lists are indexed directly by vertex number"
+            - "O(E) in every case, since the whole edge set must be searched"
+            - "O(log V), because every neighbour list is kept sorted and searched by halving"
+          why: "You jump to u's list in O(1) but then scan it. A matrix answers in O(1); a hash set per vertex does the same at the price of extra memory."
+          source: clrs
+      harvest:
+        - q: "You store a directed graph as adjacency lists but now also need to walk each edge backwards. What is the standard fix?"
+          answer: "Build a second set of lists with every edge reversed"
+          distractors:
+            - "Treat it as undirected and recover the direction later"
+            - "Sort each neighbour list in descending order"
+            - "Switch to a matrix, since lists cannot go backwards"
+          why: "A list only knows outgoing edges. Keeping a reversed copy costs O(V + E) extra and is how algorithms such as strongly connected components walk against the arrows. A matrix would also work but is not the fix for lists."
+          source: algs4
+  # ---------- tier 1 ----------
+  - id: hash-sets-maps
+    name: Hash maps and sets
+    layer: shrub
+    branch: linear-and-search
+    tier: 1
+    needs: [arrays-strings]
+    harvest: recall
+    minutes: 35
+    sources: [clrs, algs4, pytc, algorithms-illuminated]
+    summary: >-
+      Read CLRS ch. 11 (Hash Tables), Sedgewick and Wayne section 3.4, the dict and set notes on the Python
+      time-complexity page, and Algorithms Illuminated Part 2 section 12.2, whose 2-SUM application is the
+      one-pass map idea. Notes: expected O(1) insert, lookup and delete; what makes a key hashable; counting,
+      grouping and 'seen before' as the three everyday uses. Yield: one-pass solutions to two-sum and
+      group-anagrams.
+    rubric:
+      - "States expected and worst-case cost of lookup and what the worst case needs"
+      - "Names the three everyday uses: count, group, seen-before"
+      - "Explains why a key must not change while it is in the map"
+      - "Solves two-sum in one pass and says what the map stores"
+    questions:
+      water:
+        - q: "Counting how often each of n words appears, using a hash map, takes expected time…"
+          answer: "O(n)"
+          distractors:
+            - "O(n log n), as lookups walk a sorted structure"
+            - "O(n²), since each lookup scans the earlier words"
+            - "O(n·k), where k is the distinct word count"
+          why: "Each word needs one expected-O(1) lookup and one update, so the total is linear. Sorting first would give O(n log n); the map avoids that by jumping straight to a bucket."
+          source: clrs
+        - q: "Which object is unsafe to use as a map key?"
+          answer: "A mutable object whose contents (so hash) change after insertion"
+          distractors:
+            - "A tuple holding two integers and never modified afterwards"
+            - "An immutable string that was built once, then reused as a key"
+            - "A very large integer that is far bigger than the table size"
+          why: "The map files a key under the bucket for its hash at insertion time. If the contents change later, the hash changes and the entry can no longer be found, though it is still stored."
+          source: algs4
+      harvest:
+        - q: "To find, in one pass and expected O(n) time, whether any two numbers in an array sum to a target, you…"
+          answer: "Keep a map of values already seen; for each x ask if target − x is in it"
+          distractors:
+            - "Store every possible pair sum in a set first, then look the target up afterwards"
+            - "Keep a sorted copy of the array and walk inward from both ends"
+            - "Remember only the largest value seen and compare each new value to it"
+          why: "At each step the one partner you need is exactly target − x, which is a single lookup. Storing pair sums costs O(n²), and a sorted copy costs O(n log n) just to build."
+          source: algorithms-illuminated
+  - id: stack-queue-deque
+    name: Stacks, queues and deques
+    layer: shrub
+    branch: linear-and-search
+    tier: 1
+    needs: [arrays-strings]
+    harvest: recall
+    minutes: 25
+    sources: [algs4, clrs, cph, wiki-deque]
+    summary: >-
+      Read Sedgewick and Wayne section 1.3 (its booksite Parentheses client is the bracket matcher), CLRS ch. 10
+      (Elementary Data Structures) plus the BFS section of ch. 20 for a queue at work, CPH section 4.5, and the
+      implementation notes in the Wikipedia article on double-ended queues. Notes: LIFO versus FIFO, array and
+      linked implementations, the ring buffer, and the deque with O(1) at both ends. Yield: bracket matching and a
+      queue from two stacks.
+    rubric:
+      - "Contrasts LIFO and FIFO and names a use of each"
+      - "Explains how a ring buffer gives O(1) enqueue and dequeue"
+      - "Matches brackets with a stack and says what it holds at any moment"
+      - "Says what a deque adds over a stack or a queue"
+    questions:
+      water:
+        - q: "Checking that every closing bracket in \"([{}])\" matches the most recent unclosed opener is a job for…"
+          answer: "A stack"
+          distractors:
+            - "A queue, since the oldest opener closes first"
+            - "A set of the brackets seen so far"
+            - "A heap ordered by bracket type"
+          why: "The most recent unmatched opener must be the first to close, which is last-in-first-out. A queue would pair the first opener with the first closer, which is wrong for nesting."
+          source: algs4
+        - q: "Visiting a tree level by level, left to right, naturally uses…"
+          answer: "A queue, with children added at the back"
+          distractors:
+            - "A stack, with each node's children pushed on top"
+            - "A priority queue ordered by depth"
+            - "A hash set of visited nodes"
+          why: "First-in-first-out keeps all nodes of one depth ahead of the next depth's nodes. A stack would dive down one branch first, which gives depth-first order."
+          source: clrs
+      harvest:
+        - q: "You need O(1) push and pop at both ends without shifting elements. The structure to reach for is…"
+          answer: "A deque, built as a ring buffer or as linked blocks"
+          distractors:
+            - "A plain array that treats index 0 as the front end"
+            - "A singly linked list with only a head pointer, so the far end is slow"
+            - "A binary heap that orders items by when they were inserted"
+          why: "A ring buffer wraps indices around a fixed array, so neither end ever shifts anything. An array front needs shifting, a head-only singly linked list cannot remove from the far end quickly, and a heap pops its minimum, not an end."
+          source: wiki-deque
+  - id: binary-heap
+    name: Binary heaps and top-k
+    layer: shrub
+    branch: linear-and-search
+    tier: 1
+    needs: [arrays-strings, big-o]
+    harvest: recall
+    minutes: 40
+    sources: [clrs, algs4, heapq]
+    summary: >-
+      Read CLRS ch. 6 (Heapsort: heaps, maintaining the heap property, building a heap), Sedgewick and Wayne
+      section 2.4 (its TopM client keeps the k largest) and the heapq docs, whose Theory section gives the
+      0-indexed layout. Notes: the heap property, array layout with index arithmetic, sift-up and sift-down,
+      heapify in O(n), and the size-k min-heap that keeps the k largest of a stream. Yield: write push, pop and
+      top-k from memory.
+    rubric:
+      - "States the heap property and the array index rule for parent and children"
+      - "Gives the cost of push, pop-min and peek, and of heapify"
+      - "Explains top-k with a heap of size k, and which kind of heap"
+      - "Notes that a heap does not give a sorted iteration for free"
+    questions:
+      water:
+        - q: "In a binary heap stored in a 0-indexed array, the children of the item at index i sit at…"
+          answer: "2i + 1 and 2i + 2"
+          distractors:
+            - "i + 1 and i + 2"
+            - "2i and 2i + 1"
+            - "i / 2 and i / 2 + 1"
+          why: "The heap is a complete binary tree written level by level, so level sizes double. The pair 2i and 2i + 1 is the rule for arrays that start at index 1, which is why 0-indexed code gets it wrong so often."
+          source: heapq
+        - q: "Building a heap from n unsorted items by sifting down every node, from the last parent back to the root, costs…"
+          answer: "O(n)"
+          distractors:
+            - "O(n log n), as each of the n items costs log n"
+            - "O(log n), because the tree is balanced"
+            - "O(n²), since each sift compares everything"
+          why: "Most nodes sit near the leaves and sift down only a step or two, while only a few near the root pay log n. The sum over levels converges to a constant times n. Inserting n items one at a time is the O(n log n) route."
+          source: clrs
+      harvest:
+        - q: "You must keep the k largest values from a stream of n items using only O(k) memory. What do you keep, and what does it cost?"
+          answer: "A min-heap of size k; swap out its root for any larger value; O(n log k)"
+          distractors:
+            - "A max-heap of size k; remove its root whenever the heap is full; O(n log k)"
+            - "A max-heap of all n values, popped k times to get the answer; O(n log n)"
+            - "A sorted array of size k; insert each new value by shifting entries; O(nk)"
+          why: "The heap's root should be the weakest of your current best k, so it is the first to be evicted, which needs a min-heap. A max-heap of size k would evict your largest values and keep the smallest."
+          source: algs4
+  - id: two-pointers
+    name: Two pointers
+    layer: herb
+    branch: linear-and-search
+    tier: 1
+    needs: [arrays-strings]
+    harvest: recall
+    minutes: 30
+    sources: [cph, go-slicetricks, cses]
+    summary: >-
+      Read CPH section 8.1 (two pointers: a subarray sum, and the 2SUM problem, which sorts first) and, for
+      same-direction pointers, the Go wiki SliceTricks entries 'Filtering without allocating' and 'In-place
+      deduplicate'. Notes: opposite-end pointers on sorted data, slow and fast pointers for in-place work, why the
+      scan stays linear, and when it fails. Yield: pair-sum on a sorted array and remove-duplicates in place.
+    rubric:
+      - "Describes opposite-end and same-direction pointer setups"
+      - "Explains why moving a particular pointer is safe (what it rules out)"
+      - "Argues the scan is O(n) because pointers never move back"
+      - "Says what property of the data the technique relies on"
+    questions:
+      water:
+        - q: "On a sorted array with a pointer at each end, the pair sums to more than the target. You should…"
+          answer: "Move the right pointer one step left"
+          distractors:
+            - "Move the left pointer one step right"
+            - "Move both pointers inward at once"
+            - "Restart with the pointers at new positions"
+          why: "Sorted order means a smaller right value is the only move that lowers the sum without skipping a valid pair. Moving the left pointer would raise the sum, and moving both can skip an answer."
+          source: cph
+        - q: "Removing duplicates from a sorted array in place, the slow pointer marks…"
+          answer: "The end of the de-duplicated prefix built so far"
+          distractors:
+            - "The last duplicate value that the scan has found so far"
+            - "The middle of the array, where the halves meet"
+            - "The index of the first element that is out of order"
+          why: "The fast pointer scans every item, and whenever it finds a value different from the one at the slow pointer, that value is written just after the slow pointer. Everything left of the slow pointer is final."
+          source: go-slicetricks
+      harvest:
+        - q: "Why does the opposite-ends pair-sum method not work on an unsorted array?"
+          answer: "The sum no longer says which pointer to move, so a valid pair may be skipped"
+          distractors:
+            - "Pointers cannot safely cross over data that is not in order"
+            - "It becomes O(n²) because the pointer loop has to be nested"
+            - "Duplicates make the two pointers meet before the scan has finished"
+          why: "The method relies on sorted order making each move monotonic: moving one end changes the sum in a known direction. Without that, comparing to the target gives no safe move. Sort first, or use a hash map."
+          source: cph
+  - id: prefix-sums
+    name: Prefix sums
+    layer: herb
+    branch: linear-and-search
+    tier: 1
+    needs: [arrays-strings]
+    harvest: recall
+    minutes: 30
+    sources: [cph, cses]
+    summary: >-
+      Read CPH section 9.1 (static array queries: the prefix sum array, its range formula and the two-dimensional
+      version; the book indexes the prefix array from the first element) and the opening of section 9.2 for why
+      updates break it. Notes: building the prefix array, the range-sum formula and its off-by-one trap, the 2-D
+      rectangle formula, and when to switch to a Fenwick tree. Yield: a range-sum helper and a rectangle-sum
+      table; as a stretch, CSES 'Subarray Sums II'.
+    rubric:
+      - "Builds the prefix array and states the range-sum formula without an off-by-one"
+      - "Gives build cost and per-query cost"
+      - "Extends the idea to a 2-D table and combines four entries per rectangle query"
+      - "Says what breaks when values change between queries, and what to use then"
+    questions:
+      water:
+        - q: "Let P[0] = 0 and P[i] = a[0] + … + a[i-1]. The sum of a[l] through a[r], both included, equals…"
+          answer: "P[r + 1] − P[l]"
+          distractors:
+            - "P[r] − P[l]"
+            - "P[r] − P[l − 1]"
+            - "P[r + 1] + P[l]"
+          why: "P[r + 1] covers everything up to index r, and P[l] covers everything before index l, so the difference is exactly the slice. P[r] − P[l − 1] is right only when the array is stored 1-indexed."
+          source: cph
+        - q: "Prefix sums over n numbers cost what to build and what per range-sum query?"
+          answer: "O(n) to build, O(1) per query"
+          distractors:
+            - "O(n log n) to build, O(1) per query"
+            - "O(n) to build, O(log n) per query"
+            - "O(1) to build, O(n) per query"
+          why: "One pass builds the table, and each query is a single subtraction. The trade is memory: you store n extra numbers. If the array changes between queries you need a Fenwick tree instead."
+          source: cph
+      harvest:
+        - q: "A fixed n × n grid of numbers must answer a million rectangle-sum queries. Which plan gives the cheapest queries?"
+          answer: "Build a 2-D prefix table once; each query then combines four table entries"
+          distractors:
+            - "Keep a 1-D prefix array per row; each query then adds up one range per row"
+            - "Re-add every cell inside the rectangle, since the grid is too big to table"
+            - "Sort all the cell values once so each rectangle becomes a contiguous run"
+          why: "The table stores the sum from the top-left corner to each cell, so a rectangle is one corner sum minus two strips plus the overlap that was subtracted twice: four lookups, O(1) per query after O(n²) setup. Row-wise prefix arrays also work but cost O(n) per query, and adding cell by cell costs O(n²) per query."
+          source: cph
+  - id: binary-search
+    name: Binary search
+    layer: herb
+    branch: linear-and-search
+    tier: 1
+    needs: [arrays-strings, big-o]
+    harvest: recall
+    minutes: 35
+    sources: [algs4, cph, py-bisect, bloch-binary-search]
+    summary: >-
+      Read Sedgewick and Wayne section 1.1 (the binary search example), the bisect docs (bisect_left states the
+      lower-bound invariant on a half-open range), CPH section 3.3 and Joshua Bloch's 2006 post on the midpoint
+      overflow bug. Notes: the loop on a half-open range [lo, hi), the lower-bound form that finds the first index
+      with a[i] >= x, the overflow-safe midpoint, and the invariant that keeps it correct. Yield: lower-bound and
+      upper-bound written from memory.
+    rubric:
+      - "States the invariant about what lies left of lo and right of hi"
+      - "Writes a lower-bound search that terminates on every input"
+      - "Computes the midpoint without overflow"
+      - "Gives the cost and the one property of the input it needs"
+    questions:
+      water:
+        - q: "Binary search on a sorted array of one million items needs at most about how many comparisons?"
+          answer: "20"
+          distractors:
+            - "1,000"
+            - "500,000"
+            - "100"
+          why: "Each comparison halves the remaining range, and 2^20 is a little over a million, so about 20 halvings reach a single item. Linear search would need up to a million."
+          source: algs4
+        - q: "Computing the middle as (lo + hi) / 2 with fixed-width integers can fail because…"
+          answer: "lo + hi can overflow before the division"
+          distractors:
+            - "The division rounds the wrong way for odd sizes"
+            - "mid can land exactly on hi"
+            - "Duplicate values make the loop endless"
+          why: "With very large arrays the sum of two valid indices can exceed the integer range and wrap negative. Writing lo + (hi − lo) / 2 never exceeds hi. Integer rounding is harmless to correctness."
+          source: bloch-binary-search
+      harvest:
+        - q: "In a lower-bound search over a half-open range [lo, hi) that returns the first index with a[i] >= x, the invariant is…"
+          answer: "Everything before lo is smaller than x; everything from hi on is at least x"
+          distractors:
+            - "x always lies between the values at a[lo] and a[hi] whenever it is in the array"
+            - "a[mid] equals x when the loop ends"
+            - "The range shrinks by exactly half each pass"
+          why: "The invariant says the answer lies in [lo, hi]. When lo meets hi, the boundary between 'smaller than x' and 'at least x' has been pinned down. Many off-by-one bugs come from not knowing which side mid belongs to."
+          source: py-bisect
+  - id: dynamic-array-growth
+    name: Dynamic array growth
+    layer: root
+    branch: linear-and-search
+    tier: 1
+    needs: [big-o, arrays-strings]
+    harvest: recall
+    minutes: 30
+    sources: [mit6006, clrs, algs4]
+    summary: >-
+      Read MIT 6.006 lecture 2 (Data Structures: dynamic arrays, amortisation and deletion), the dynamic-tables
+      section of CLRS ch. 16, and the resizing-array stack in Sedgewick and Wayne section 1.3. Notes: grow by a
+      factor versus by a constant, the aggregate and potential methods, and the shrink-too-eagerly trap. Yield:
+      why the factor works and why +10 does not.
+    rubric:
+      - "Shows that growth by a constant factor gives O(1) amortised push"
+      - "Shows that growth by a fixed number of slots gives quadratic total cost"
+      - "Explains thrashing when a table shrinks at half full"
+      - "Names the memory cost of spare capacity"
+    questions:
+      water:
+        - q: "A dynamic array that adds 10 slots each time it fills, pushing n items, costs in total about…"
+          answer: "O(n²)"
+          distractors:
+            - "O(n), as growth is rare"
+            - "O(n log n), from repeated copying"
+            - "O(n) amortised, same as doubling"
+          why: "There are about n / 10 resizes, and each copies everything stored so far, so the copies add up to a sum proportional to n². Multiplying the capacity makes the number of resizes logarithmic instead."
+          source: mit6006
+        - q: "Which growth factor makes dynamic-array push O(1) amortised?"
+          answer: "Any constant factor above 1, such as 1.5 or 2"
+          distractors:
+            - "Only 2, because doubling matches how binary works"
+            - "Only a power of two, so addresses stay aligned in memory"
+            - "Any amount of extra room, even one slot, in each step"
+          why: "With a factor f, the total copying is a geometric series bounded by roughly n / (f − 1), still linear. Smaller factors waste less memory but copy more often; 1.5 and 2 are common."
+          source: mit6006
+      harvest:
+        - q: "A table halves its capacity as soon as it drops below half full, and a program alternately pushes and pops at that boundary. What happens?"
+          answer: "Each operation triggers a resize, so every one costs O(n)"
+          distractors:
+            - "Nothing special, because resizing is amortised anyway so each op stays cheap"
+            - "The array grows without bound until memory runs out"
+            - "Pops get cheaper because the array keeps getting smaller"
+          why: "Right at the boundary, the table shrinks on pop and immediately regrows on push, copying everything each time. The standard fix is to shrink only at a quarter full, which leaves room for many operations before the next resize."
+          source: clrs
+  - id: binary-trees
+    name: Binary trees and BSTs
+    layer: shrub
+    branch: graphs-and-dp
+    tier: 1
+    needs: [recursion]
+    harvest: recall
+    minutes: 40
+    sources: [clrs, algs4]
+    summary: >-
+      Read CLRS ch. 12 (Binary Search Trees: what a BST is, querying, insertion and deletion) and Sedgewick and
+      Wayne section 3.2, including the height method in BST.java on the booksite (it counts edges, so an empty
+      tree is -1; the harvest question counts nodes). Notes: node structure, pre-, in- and post-order traversals,
+      the BST ordering rule, search and insert, why height decides cost, and self-balancing without the rotations.
+    rubric:
+      - "Writes pre-, in- and post-order traversals recursively"
+      - "States the BST rule and what an in-order walk yields"
+      - "Explains that search cost is the tree's height, and when height is n"
+      - "Writes the recursion for tree height or node count"
+    questions:
+      water:
+        - q: "An in-order traversal of a binary search tree visits the keys in…"
+          answer: "Ascending sorted order"
+          distractors:
+            - "The order they were inserted"
+            - "Level order, top to bottom"
+            - "Descending sorted order"
+          why: "In-order means left subtree, then the node, then the right subtree. Every key in the left subtree is smaller and every key in the right is larger, so the walk comes out sorted."
+          source: clrs
+        - q: "Keys 1, 2, 3, …, n are inserted in that order into an ordinary unbalanced BST. A search then costs…"
+          answer: "O(n), because the tree degenerates into a chain"
+          distractors:
+            - "O(log n), because every binary search tree is balanced"
+            - "O(1), since the keys are consecutive integers"
+            - "O(n log n), from walking down and comparing keys"
+          why: "Each new key is bigger than all before it, so it hangs off the right of the last node, and the tree is a linked list of height n. Self-balancing trees such as AVL or red-black trees repair this."
+          source: algs4
+      harvest:
+        - q: "The height of a binary tree, counted in nodes along the longest root-to-leaf path, with an empty tree having height 0, is defined as…"
+          answer: "1 + max(height(left), height(right))"
+          distractors:
+            - "height(left) + height(right)"
+            - "1 + min(height(left), height(right))"
+            - "The number of nodes divided by two"
+          why: "The longest path goes through whichever child is deeper, plus the node itself. Using the minimum finds the shortest path to a missing child, and adding the two heights measures a path through the root, not from it."
+          source: algs4
+  - id: call-stack
+    name: The call stack
+    layer: root
+    branch: graphs-and-dp
+    tier: 1
+    needs: [recursion]
+    harvest: recall
+    minutes: 25
+    sources: [wiki-call-stack, py-recursion-limit, erickson]
+    summary: >-
+      Read the Wikipedia article on the call stack (frames, return addresses, locals), the sys.setrecursionlimit
+      entry in the Python docs (why interpreters cap depth), and Erickson ch. 5, Whatever-First Search, which
+      writes DFS recursively and with an explicit stack. Notes: a frame holds arguments, locals and a return
+      address; depth costs memory; overflow; and the explicit-stack rewrite that avoids it.
+    rubric:
+      - "Says what a stack frame holds and when it is created and freed"
+      - "Explains stack overflow on deep recursion and where the limit comes from"
+      - "Converts a recursive walk to an explicit stack, noting what state must be pushed"
+      - "Counts the stack space of a recursive function as its maximum depth"
+    questions:
+      water:
+        - q: "Recursing one million levels deep in a language with a fixed-size call stack, such as C, Java or CPython, most likely ends in…"
+          answer: "A stack overflow or recursion-limit error"
+          distractors:
+            - "A slower run that still finishes correctly"
+            - "Running out of heap memory first"
+            - "A compile-time error about depth"
+          why: "Every active call holds a frame on a stack with a fixed budget, often a few megabytes. A runtime that caps depth, as Python does, raises its own error sooner. Heap size is a separate limit."
+          source: py-recursion-limit
+        - q: "Each active recursive call keeps…"
+          answer: "Its own frame, holding its arguments, locals and a return address"
+          distractors:
+            - "Only the value that it is going to return to its caller"
+            - "A private copy of the entire heap, so that calls cannot disturb one another"
+            - "Nothing of its own, as the frames are shared between calls"
+          why: "The frame is how the call knows where to resume and what its locals were, so that calls at different depths do not disturb each other. This is also why space for a recursion is its maximum depth."
+          source: wiki-call-stack
+      harvest:
+        - q: "To make a deep recursive graph walk safe, you rewrite it with an explicit stack. What must each entry on your stack carry?"
+          answer: "What the frame held: the node, and how far through its neighbours you were"
+          distractors:
+            - "Only the starting node, since the rest can be rebuilt from the graph later"
+            - "Only the return value of each finished subcall, collected in order"
+            - "Just the depth reached, because the stack can regenerate everything else"
+          why: "A call frame remembers where to resume. If your stack holds only the node, you lose your place and may revisit neighbours or finish in the wrong order, so a post-order step breaks."
+          source: wiki-call-stack
+  - id: union-find
+    name: Union-find (disjoint sets)
+    layer: shrub
+    branch: graphs-and-dp
+    tier: 1
+    needs: [graph-representation, arrays-strings]
+    harvest: recall
+    minutes: 40
+    sources: [algs4, clrs, cp-deleting-dsu]
+    summary: >-
+      Read Sedgewick and Wayne section 1.5, or CLRS ch. 19 (Data Structures for Disjoint Sets). Notes: parent
+      array, find with path compression, union by size or rank, the nearly constant cost, and what it cannot do
+      (undo a merge). For deletions see cp-algorithms 'Deleting from a data structure in O(T(n) log n)', which
+      shows the offline rollback version. Yield: counting components in an edge stream.
+    rubric:
+      - "Describes the parent-array forest and what find and union do"
+      - "Names path compression and union by size, and what each fixes"
+      - "States the cost as nearly constant per operation"
+      - "Says it supports merging and not splitting"
+    questions:
+      water:
+        - q: "Which two ideas together make union-find run in nearly constant time per operation?"
+          answer: "Linking the smaller tree under the larger, and compressing paths in find"
+          distractors:
+            - "Keeping each set as a sorted array, and merging two sets by a linear merge"
+            - "Hashing every element, then comparing the hashes of two whole sets"
+            - "Storing each set as a list and copying the shorter one into the longer"
+          why: "Union by size keeps trees shallow, and path compression flattens whatever a find walks over. Together the amortised cost per operation is the inverse Ackermann function, which is below 5 for any realistic input. Copying the smaller set into the larger is a real technique, but it costs O(log n) per element overall, not nearly constant."
+          source: algs4
+        - q: "Can union-find undo a union, splitting a set back into two?"
+          answer: "Not in its basic form; it only merges sets and answers same-set queries"
+          distractors:
+            - "Yes, by calling find on the node and then clearing that node's parent link"
+            - "Yes, by running union again with the arguments swapped around"
+            - "Yes, because every union is recorded as an edge and can be deleted"
+          why: "Path compression rewrites parents all over a tree, so the old structure is gone. Handling deletions needs offline tricks such as divide and conquer over time with a rollback version."
+          source: cp-deleting-dsu
+      harvest:
+        - q: "You process a stream of edges over n nodes and want the number of connected components at the end. How do you get it?"
+          answer: "Start from n and subtract one per union that joined two different roots"
+          distractors:
+            - "Count the distinct values in the parent array without calling find on each"
+            - "Count the number of union calls that were made"
+            - "Count the nodes whose parent has a smaller index than their own"
+          why: "Each successful merge reduces the component count by exactly one; a union of nodes already together changes nothing. Raw parent values include non-roots until compressed, so counting them overcounts."
+          source: algs4
+  # ---------- tier 2 ----------
+  - id: sliding-window
+    name: Sliding window
+    layer: understory
+    branch: linear-and-search
+    tier: 2
+    needs: [two-pointers, hash-sets-maps]
+    harvest: judged
+    minutes: 40
+    sources: [cph, cses]
+    summary: >-
+      Read CPH section 8.1 (two pointers: the subarray-sum example is a variable window) and 8.3 (sliding window
+      minimum, a fixed window), then the CSES sliding-window problems. Notes: fixed versus variable windows, what
+      state the window holds (a count map, a sum), when to expand and when to shrink, and why every index enters
+      and leaves at most once.
+    rubric:
+      - "Distinguishes fixed-size from variable-size windows"
+      - "States the window invariant and what state is kept for it"
+      - "Says when to expand the right edge and when to shrink the left"
+      - "Argues the cost is O(n) because each index enters and leaves once"
+      - "Gives the space cost of the window state"
+    prompts:
+      - "Explain how you would solve this: given a list of positive daily sales figures and a target S, find the shortest run of consecutive days whose total reaches at least S. Name the pattern, the invariant, and the time and space cost."
+      - "Explain how you would solve this: given a long text, find the longest stretch that contains at most two different characters. Name the pattern, the invariant, and the time and space cost."
+    questions:
+      water:
+        - q: "A window of positive daily sales must stay at or under a budget S. After the right edge takes in a new day, the total exceeds S. You…"
+          answer: "Advance the left edge, dropping days, until the total is at most S again"
+          distractors:
+            - "Reset the window to empty and restart the scan from the new day"
+            - "Skip the new day and keep the window exactly as it was before"
+            - "Drop days from the right end until the total fits under S again"
+          why: "All values are positive, so removing days from the left always lowers the total: shrinking from the left until the budget fits is safe and keeps the new day. Resetting throws away a window that was still partly valid, and dropping from the right undoes the day you just added."
+          source: cph
+        - q: "A variable window has a shrink loop nested inside its grow loop. Why is the whole scan still O(n)?"
+          answer: "Each index enters once and leaves at most once; the pointers never move back"
+          distractors:
+            - "The inner loop only runs when a duplicate arrives, which is rare"
+            - "The shrink loop runs exactly once per grow step, so the nesting costs nothing"
+            - "Hash maps make every step constant time, so the loops cancel out"
+          why: "The nested loops look quadratic, but the left pointer never moves back and cannot pass the right one. Total left moves are at most n and total right moves are at most n, so it is linear."
+          source: cph
+  - id: binary-search-answer
+    name: Binary search on the answer
+    layer: understory
+    branch: linear-and-search
+    tier: 2
+    needs: [binary-search]
+    harvest: judged
+    minutes: 40
+    sources: [cph, cses]
+    summary: >-
+      Read CPH section 3.3, its 'Finding the smallest solution' part (an ok(x) test that flips once, with the O(n
+      log z) cost note), and the CSES 'factory machines' problem. Notes: the feasibility predicate that flips once
+      from false to true, choosing safe low and high bounds, the cost of one feasibility check, and handling
+      real-valued answers.
+    rubric:
+      - "Defines a feasibility predicate and shows it is monotonic in the answer"
+      - "Picks safe bounds for the search range"
+      - "Gives total cost as (cost per check) × log(range)"
+      - "Says what to return so the result is the smallest feasible value"
+    prompts:
+      - "Explain how you would solve this: packages with given weights must ship in order, within D days, and you want the smallest daily ship capacity that works. Name the pattern, the invariant, and the time and space cost."
+      - "Explain how you would solve this: split an array of positive numbers into k contiguous parts so that the largest part sum is as small as possible. Name the pattern, the invariant, and the time and space cost."
+    questions:
+      water:
+        - q: "Binary searching over candidate answers is valid when the yes-or-no test 'is x enough?' is…"
+          answer: "Monotonic: once true for some x, it stays true for every larger x"
+          distractors:
+            - "True for exactly one value of x, found by comparison in sorted order"
+            - "Computable in constant time, so each probe is cheap"
+            - "Defined over an array that has already been sorted beforehand"
+          why: "Monotonicity is what lets one failed or passed check discard half the range. The input need not be sorted, and the check can be slow; only the answer space must flip from false to true once."
+          source: cph
+        - q: "A feasibility check is one greedy O(n) pass over the input, and candidate answers range from 1 to S. The total cost is…"
+          answer: "O(n log S)"
+          distractors:
+            - "O(n · S)"
+            - "O(n log n)"
+            - "O(log S)"
+          why: "You run about log2(S) checks, one per halving of the range, and each check costs O(n). Trying every candidate from 1 to S, the linear route, would be O(n · S)."
+          source: cph
+  - id: monotonic-stack
+    name: Monotonic stack and queue
+    layer: herb
+    branch: linear-and-search
+    tier: 2
+    needs: [stack-queue-deque]
+    harvest: judged
+    minutes: 40
+    sources: [cph, cses]
+    summary: >-
+      Read CPH section 8.2 (nearest smaller elements: a stack that pops on arrival) and 8.3 (sliding window
+      minimum: the same idea as a queue); next greater is the mirror image of nearest smaller. Notes: a stack that
+      keeps its values in sorted order by popping on arrival, the 'next greater element' template, the monotonic
+      deque for window maximum, and the amortised argument. Yield: next-greater and largest-rectangle templates.
+    rubric:
+      - "States what order the stack is kept in and what is popped on arrival"
+      - "Explains that a popped item has just found its answer"
+      - "Argues O(n) because each item is pushed and popped once"
+      - "Names a window-maximum use of the monotonic deque"
+    prompts:
+      - "Explain how you would solve this: for each day in a list of temperatures, find how many days until a warmer one. Name the pattern, the invariant, and the time and space cost."
+      - "Explain how you would solve this: find the largest rectangle that fits under a skyline of bar heights. Name the pattern, the invariant, and the time and space cost."
+    questions:
+      water:
+        - q: "You find the next greater element for each index with a stack that keeps values decreasing. When a new value x arrives, you…"
+          answer: "Pop every smaller value; x is the answer for each value popped"
+          distractors:
+            - "Pop only the top value, then push x on top of the stack"
+            - "Push x first, then sort the whole stack in place again"
+            - "Pop every value that is larger than x, and x becomes the answer for each of them"
+          why: "Anything smaller than x that is still waiting has just found its next greater element, which is x. What remains on the stack is still waiting. Popping larger values would break the decreasing order."
+          source: cph
+        - q: "A monotonic-stack solution over n items has pops inside a loop. Why is it O(n)?"
+          answer: "Each item is pushed once and popped at most once"
+          distractors:
+            - "The pops stop at the first small value they meet, so few happen"
+            - "The stack never holds more than log n items"
+            - "Pops cost nothing, so only pushes count"
+          why: "Total pops can never exceed total pushes, and there are n pushes. A single iteration may pop many items, but that work is paid for by the earlier iterations that pushed them."
+          source: cph
+  - id: intervals-sweep
+    name: Intervals and sweep line
+    layer: understory
+    branch: linear-and-search
+    tier: 2
+    needs: [binary-heap, two-pointers]
+    harvest: judged
+    minutes: 40
+    sources: [kt-greedy, clrs, cph, cses]
+    summary: >-
+      Read the Kleinberg and Tardos 'Greedy Algorithms I' slides (interval scheduling and interval partitioning:
+      sort by start time, a priority queue keyed on finish time, the depth bound), the activity-selection section
+      of CLRS ch. 15 and CPH section 6.2 (Scheduling). Notes: sort by start to merge intervals, sort events by
+      time to sweep, a min-heap of end times for 'how many at once', and the half-open versus closed endpoint
+      question.
+    rubric:
+      - "Says what to sort by for merging and why"
+      - "Describes the event-sweep and what state it carries"
+      - "Uses a min-heap of end times for concurrent counts"
+      - "Decides how touching endpoints are treated"
+    prompts:
+      - "Explain how you would solve this: given meeting start and end times, find the minimum number of rooms needed. Name the pattern, the invariant, and the time and space cost."
+      - "Explain how you would solve this: given a list of possibly overlapping ranges, merge them into the smallest set of disjoint ranges. Name the pattern, the invariant, and the time and space cost."
+    questions:
+      water:
+        - q: "A set of meetings needs rooms so that no two meetings in one room overlap. The fewest rooms you can possibly use is never less than…"
+          answer: "The most meetings in progress at any single moment"
+          distractors:
+            - "The number of other meetings that overlap the longest one"
+            - "The number of distinct start times among all the meetings"
+            - "The number of meetings that start before the last one ends"
+          why: "If k meetings are all running at one instant, each needs its own room, so k rooms are unavoidable. This count is called the depth of the intervals, and sorting by start time and reusing a free room achieves it exactly. Distinct start times or the overlaps of one meeting do not bound the answer, since back-to-back meetings share a room."
+          source: kt-greedy
+        - q: "To count the rooms needed for meetings sorted by start time, you keep a min-heap of…"
+          answer: "The end times of meetings in progress"
+          distractors:
+            - "The start times of the meetings still waiting"
+            - "The lengths of the meetings so far"
+            - "The room numbers that are free"
+          why: "The root is the meeting that ends soonest. If it ends before the next meeting starts, you reuse that room, so you pop it; otherwise you need a new room. The heap size is the number of rooms in use."
+          source: kt-greedy
+  - id: trie
+    name: Tries
+    layer: shrub
+    branch: linear-and-search
+    tier: 2
+    needs: [hash-sets-maps, binary-trees]
+    harvest: judged
+    minutes: 40
+    sources: [algs4, cph, cses]
+    summary: >-
+      Read CPH section 26.2 (trie structure) and Sedgewick and Wayne section 5.2 (tries, including prefix
+      matching). Notes: nodes with a child per character, insert and lookup in O(length), prefix queries, array
+      children versus map children, and the memory cost. Yield: an insert/search/startsWith implementation.
+    rubric:
+      - "Describes the node layout and the end-of-word marker"
+      - "Gives insert and lookup cost in terms of word length"
+      - "Explains how a prefix query finds all words under a node"
+      - "Weighs array children against hash-map children for memory"
+    prompts:
+      - "Explain how you would solve this: build search-as-you-type suggestions for 200,000 product names, returning up to ten names that start with what the user has typed so far. Name the pattern, the invariant, and the time and space cost."
+    questions:
+      water:
+        - q: "Looking up a word of length m in a trie that stores n words costs…"
+          answer: "O(m), regardless of how many words are stored"
+          distractors:
+            - "O(log n), the same as in a balanced search tree"
+            - "O(m log n), one search per letter"
+            - "O(n · m), comparing every word"
+          why: "You follow one edge per character, so the work depends on the word's length and not on the dictionary size. A hash table also gives about O(m), since hashing reads every character."
+          source: cph
+        - q: "To list every stored word that starts with a prefix p, a trie lets you…"
+          answer: "Walk down to the node for p, then collect words in its subtree"
+          distractors:
+            - "Hash every stored word, then compare each hash against the hash of p"
+            - "Scan all stored words and test each one for the prefix p"
+            - "Look p up as a whole key and read off the value"
+          why: "All words sharing prefix p hang below one node, so a short walk finds them with no scan of unrelated words. A hash lookup of p alone only finds p itself."
+          source: algs4
+  - id: hash-table-internals
+    name: Hash table internals
+    layer: root
+    branch: linear-and-search
+    tier: 2
+    needs: [hash-sets-maps, dynamic-array-growth]
+    harvest: judged
+    minutes: 45
+    sources: [clrs, algs4, pytc]
+    summary: >-
+      Read CLRS ch. 11 (Hash Tables): the sections on hash tables with chaining, hash functions and open
+      addressing. Then Sedgewick and Wayne section 3.4 (separate chaining, linear probing, resizing) and the dict
+      notes on the Python time-complexity page for the worst case. Notes: hash function to bucket index, load
+      factor, resizing and rehashing, and how a bad hash or hostile keys turn O(1) into O(n).
+    rubric:
+      - "Traces a put from hash to bucket and handles a collision by chaining or probing"
+      - "Defines load factor and says when and why the table resizes"
+      - "Explains why resizing re-inserts every key"
+      - "Describes how poor or attacker-chosen hashes degrade cost to linear"
+    prompts:
+      - "Explain what happens inside a hash map from put(key, value) through a collision to the resize that follows, and say how a bad hash function turns O(1) lookups into O(n). Name the load-factor trigger and the cost of the resize."
+    questions:
+      water:
+        - q: "In a chained hash table with m buckets holding n entries, the load factor n / m tells you…"
+          answer: "The average chain length"
+          distractors:
+            - "The share of buckets that are empty"
+            - "The longest chain you will meet"
+            - "The count of collisions so far"
+          why: "Spread evenly, each bucket holds n / m entries on average, and that average is what a lookup scans. The longest chain depends on the hash quality, and the load factor alone cannot reveal it."
+          source: clrs
+        - q: "When a hash table resizes, it must…"
+          answer: "Re-insert every key, computing its bucket for the new capacity"
+          distractors:
+            - "Copy each old bucket to the same index in the new, larger array"
+            - "Move only the keys that collided"
+            - "Keep the old indices and just append spare buckets"
+          why: "The bucket index is the hash taken modulo the capacity, so a bigger capacity changes where most keys belong. Copying buckets as they are would leave keys where lookups will no longer find them."
+          source: algs4
+  - id: cache-locality
+    name: Cache locality
+    layer: root
+    branch: linear-and-search
+    tier: 2
+    needs: [dynamic-array-growth]
+    harvest: judged
+    minutes: 45
+    sources: [mit6172, drepper-memory]
+    summary: >-
+      Watch or read MIT 6.172 lecture 14 (Caching and Cache-Efficient Algorithms: cache lines, spatial locality,
+      row-major matrices). Then Drepper's 'What Every Programmer Should Know About Memory': section 3.2 (cache
+      operation, 64-byte lines), 3.3.2 (sequential versus random list access) and 6.2.1 (optimising L1 data cache
+      access). Notes: spatial and temporal locality, row-major versus column-major traversal, array versus linked
+      list, and why equal big-O does not mean equal speed.
+    rubric:
+      - "Explains cache lines and why neighbouring memory is cheap once one item is loaded"
+      - "Predicts which loop order over a 2-D array is faster and why"
+      - "Explains why array traversal beats pointer chasing for the same big-O"
+      - "Says what big-O hides, and when that matters"
+    prompts:
+      - "Explain why binary search over a sorted array can beat a balanced binary search tree holding the same keys, even though both are O(log n), and name one case where the tree still wins."
+    questions:
+      water:
+        - q: "Summing a large 2-D array stored row by row is much faster when you loop row by row than column by column, because…"
+          answer: "Row reads touch consecutive memory, so one fetched line serves many items"
+          distractors:
+            - "Row-wise loops need fewer additions in total than column-wise ones"
+            - "Column-wise reads need extra index arithmetic for every single element they touch"
+            - "The CPU can add values from only one row at a time"
+          why: "Memory is fetched in cache lines of around 64 bytes. Walking along a row uses every byte of each line, while walking down a column uses a line for one element and then moves on, so the cache misses far more."
+          source: mit6172
+        - q: "Traversing an array and a linked list of the same n items are both O(n), yet the array is usually several times faster, because…"
+          answer: "Array items are adjacent, so cache lines and prefetching help; list nodes are scattered"
+          distractors:
+            - "Linked lists need a separate memory allocation each time a node is read from them"
+            - "Array reads need fewer machine instructions per element than list reads"
+            - "Linked-list nodes are stored in slower kinds of RAM than array data"
+          why: "Following a pointer to a distant node often means a cache miss, and the processor cannot know the next address until it has loaded the current one. Sequential array access is easy to predict and prefetch."
+          source: drepper-memory
+  - id: invariants
+    name: Loop invariants
+    layer: vine
+    branch: linear-and-search
+    tier: 2
+    needs: [binary-search, two-pointers]
+    harvest: judged
+    minutes: 35
+    sources: [clrs, cph]
+    summary: >-
+      Read CLRS ch. 2 (insertion sort and its loop invariant: initialization, maintenance, termination) and CPH
+      section 2.4 (maximum subarray sum, ending in Kadane's algorithm). Notes: how to state an invariant in one
+      sentence, check it before the loop, after each pass and at exit, and apply it to Kadane's algorithm and
+      binary search.
+    rubric:
+      - "States the three checks: before the loop, kept by each pass, useful at exit"
+      - "Writes a one-sentence invariant for a loop of your choice"
+      - "Shows how the invariant plus the exit condition gives the result"
+      - "Uses an invariant to find an off-by-one error"
+    prompts:
+      - "Take Kadane's maximum-subarray loop. State its invariant in one sentence, show it holds before the loop, is kept by each pass, and gives the answer at exit. Say what time and space the loop uses."
+    questions:
+      water:
+        - q: "To show a loop is correct using an invariant, you check that it holds…"
+          answer: "Before the first pass, after each pass, and at exit it implies the goal"
+          distractors:
+            - "After the first pass only, since later passes repeat exactly the same body"
+            - "At the last pass only, because that is where the result appears"
+            - "On a handful of sample inputs that cover the usual cases"
+          why: "Initialisation, maintenance and termination work like induction: the base case, the step, and the conclusion. Testing a few inputs can find a bug but cannot prove there is none."
+          source: clrs
+        - q: "In Kadane's algorithm, after processing index i, the variable 'cur' holds…"
+          answer: "The best sum of a subarray that ends exactly at index i"
+          distractors:
+            - "The best subarray sum seen anywhere in a[0..i], like the overall answer"
+            - "The sum of all elements of a[0..i]"
+            - "The best sum of a subarray that starts at index i"
+          why: "cur = max(a[i], cur + a[i]) extends the best run ending at the previous index or starts fresh. The best seen anywhere is a separate variable, updated from cur. Mixing up these two meanings is the usual bug."
+          source: cph
+  - id: edge-case-testing
+    name: Edge cases and testing
+    layer: vine
+    branch: linear-and-search
+    tier: 2
+    needs: [binary-search]
+    harvest: judged
+    minutes: 30
+    sources: [wiki-boundary-value, cph, cses]
+    summary: >-
+      Read the Wikipedia article on boundary-value analysis, CPH section 1.3 (working with numbers: integer ranges
+      and overflow) and section 2.3 (estimating efficiency), then try three CSES problems and write your own tests
+      before submitting. Notes: a checklist of empty, single, two items, all equal, sorted, reverse sorted,
+      extremes and overflow; brute-force cross-checking; random testing.
+    rubric:
+      - "Lists the standard edge inputs for arrays, strings and graphs"
+      - "Explains what each edge input is likely to break"
+      - "Describes cross-checking against a slow brute-force version"
+      - "Notes integer overflow and sizes at the limit"
+    prompts:
+      - "List the eight inputs you would run through a function that returns the length of the longest strictly increasing run in an array, and say what bug each one is meant to expose."
+    questions:
+      water:
+        - q: "Which set of inputs is most likely to expose off-by-one errors in a binary search or window routine?"
+          answer: "Empty, one-item and two-item arrays, with the target at either end or absent"
+          distractors:
+            - "Several very large arrays filled with random values chosen uniformly"
+            - "A sorted array of a thousand distinct values, searching for one in the middle"
+            - "Arrays that contain only positive numbers, to keep the sums simple"
+          why: "Off-by-one bugs live at the boundaries, where a range has zero or one element or an index meets the end. Large random input rarely lands on those exact shapes."
+          source: wiki-boundary-value
+        - q: "A prefix-sum array over 200,000 values, each up to 10^9, is held in 32-bit integers. What goes wrong?"
+          answer: "Sums can reach about 2 × 10^14, so the prefix values overflow 32 bits"
+          distractors:
+            - "Nothing goes wrong, since every single value on its own fits in 32 bits"
+            - "Only the final sum overflows, not the prefixes"
+            - "Only sorted input can make the total overflow"
+          why: "Each element fits, but running totals do not; 32-bit integers stop near 2.1 × 10^9. The prefix entries themselves overflow, long before the last one, so use 64-bit sums."
+          source: cph
+  - id: backtracking
+    name: Backtracking
+    layer: understory
+    branch: graphs-and-dp
+    tier: 2
+    needs: [recursion, call-stack]
+    harvest: judged
+    minutes: 45
+    sources: [erickson, cph, cses]
+    summary: >-
+      Read CPH ch. 5 (Complete search: generating subsets and permutations, backtracking, pruning the search) and
+      Erickson ch. 2 (Backtracking: N Queens, Subset Sum, The General Pattern). Notes: choose, explore, un-choose;
+      the decision tree; pruning on partial results; subsets, permutations and N-queens as the three templates;
+      and the exponential cost that pruning only reduces.
+    rubric:
+      - "Describes the choose, explore, undo loop and the state it maintains"
+      - "Draws the decision tree for subsets or permutations and counts its leaves"
+      - "Explains how pruning cuts branches that cannot succeed"
+      - "States the worst-case cost and why it stays exponential"
+    prompts:
+      - "Explain how you would solve this: list every way to split a string into pieces that are all palindromes. Name the pattern, the invariant, and the time and space cost."
+      - "Explain how you would solve this: place n queens on an n by n board so that none attack each other. Name the pattern, the invariant, and the time and space cost."
+    questions:
+      water:
+        - q: "Backtracking differs from plain enumeration of all candidates because it…"
+          answer: "Drops a partial choice as soon as it cannot lead to a valid result"
+          distractors:
+            - "Never revisits a position that it has already chosen once"
+            - "Stores each partial result as it goes, so later branches can reuse them"
+            - "Works only when the choices can be laid out as a tree"
+          why: "Pruning cuts a whole subtree when a partial assignment already breaks a rule, as in a queen placed under attack. Plain enumeration builds complete candidates and tests them afterwards."
+          source: cph
+        - q: "Generating every subset of n items by choosing 'include' or 'skip' for each item visits how many leaves of the decision tree?"
+          answer: "2^n"
+          distractors:
+            - "n², since each item pairs with every other"
+            - "n!, as in a tree of permutations"
+            - "2n, because each item has two choices"
+          why: "Each item doubles the number of branches, giving 2 × 2 × … × 2 = 2^n leaves. Permutations are different: they have n! leaves because each choice removes one option from the next."
+          source: cph
+  - id: bfs
+    name: Breadth-first search
+    layer: understory
+    branch: graphs-and-dp
+    tier: 2
+    needs: [graph-representation, stack-queue-deque]
+    harvest: judged
+    minutes: 40
+    sources: [erickson, algs4, cph, cses]
+    summary: >-
+      Read Erickson ch. 5 (Whatever-First Search and Important Variants, where a queue gives BFS), Sedgewick and
+      Wayne section 4.1 (breadth-first search) and CPH section 12.2. Notes: queue, visited set, distance array,
+      the layer-by-layer invariant, marking nodes when they are enqueued, multi-source BFS, and BFS on implicit
+      graphs such as grids and puzzles.
+    rubric:
+      - "Writes BFS with a queue and a visited set, marking on enqueue"
+      - "States the invariant: nodes leave the queue in order of distance"
+      - "Explains why it gives shortest paths only when edges are unweighted"
+      - "Gives O(V + E) time and O(V) space"
+    prompts:
+      - "Explain how you would solve this: find the fewest moves for a knight to travel between two squares of an 8 by 8 chessboard. Name the pattern, the invariant, and the time and space cost."
+      - "Explain how you would solve this: given a start word, an end word and a dictionary, find the shortest chain changing one letter at a time. Name the pattern, the invariant, and the time and space cost."
+    questions:
+      water:
+        - q: "Breadth-first search from a source node on an unweighted graph reliably gives you…"
+          answer: "The fewest edges from the source to every reachable node"
+          distractors:
+            - "The cheapest path measured by the total weight of its edges"
+            - "A valid topological order of the nodes"
+            - "A path that visits each node exactly once"
+          why: "The queue releases nodes in non-decreasing distance, so the first time you reach a node is along a shortest route in edge count. Weighted graphs need Dijkstra instead."
+          source: algs4
+        - q: "In BFS, what goes wrong if you mark a node visited only when you pop it from the queue rather than when you push it?"
+          answer: "The same node can be queued several times before its first pop, wasting work"
+          distractors:
+            - "Nodes come off the queue in the wrong level order, so the layers get mixed up"
+            - "The search never terminates once the graph contains a cycle"
+            - "Nothing at all, as the two marking times are equivalent in every case"
+          why: "Several neighbours can discover the same unvisited node before it reaches the front, and each pushes a copy. Pops still come out in level order, so the answer stays right if you skip stale copies, but the queue can grow to O(E). Marking on push keeps one entry per node."
+          source: erickson
+  - id: dfs
+    name: Depth-first search
+    layer: understory
+    branch: graphs-and-dp
+    tier: 2
+    needs: [graph-representation, call-stack]
+    harvest: judged
+    minutes: 40
+    sources: [erickson, algs4, cph, cses]
+    summary: >-
+      Read Erickson ch. 6 (Preorder and Postorder, Detecting Cycles), Sedgewick and Wayne sections 4.1 and 4.2
+      (depth-first search, cycles and DAGs), and CPH sections 12.1 and 12.3. Notes: recursive and explicit-stack
+      forms, discovery and finish times, edge types in a directed graph, cycle detection with three states,
+      connected components and flood fill on grids.
+    rubric:
+      - "Writes DFS recursively and with an explicit stack"
+      - "Names tree, back, forward and cross edges, and what a back edge means"
+      - "Detects a cycle in a directed graph using in-progress and done states"
+      - "Counts components or fills a region in O(V + E)"
+    prompts:
+      - "Explain how you would solve this: count the islands of land cells in a grid of land and water. Name the pattern, the invariant, and the time and space cost."
+      - "Explain how you would solve this: given course prerequisites as pairs, decide whether the plan contains a circular dependency. Name the pattern, the invariant, and the time and space cost."
+    questions:
+      water:
+        - q: "In a DFS of a directed graph, finding an edge that leads back to a node still on the current path means…"
+          answer: "The graph contains a cycle"
+          distractors:
+            - "The graph is a tree"
+            - "That node cannot be reached again"
+            - "You have found a shortest path"
+          why: "A node still on the path is an ancestor, so the edge closes a loop from the ancestor to a descendant and back. This is why DFS is the standard way to test whether a dependency graph is acyclic."
+          source: erickson
+        - q: "For cycle detection in a directed graph, a single 'visited' flag is not enough because…"
+          answer: "Reaching a visited node may just be a finished branch, not an ancestor on the path"
+          distractors:
+            - "Visited flags would take more memory than the graph itself can afford"
+            - "A visited flag cannot be reset, so the search could never leave the first branch"
+            - "Directed edges cannot be followed backwards, so the cycle is never seen"
+          why: "Two paths can legitimately reach the same node in a DAG, with no cycle. You need three states: unvisited, in progress, done. Only an edge into an in-progress node proves a cycle."
+          source: algs4
+  - id: dp-1d
+    name: Memoisation and 1-D DP
+    layer: understory
+    branch: graphs-and-dp
+    tier: 2
+    needs: [call-stack, hash-sets-maps]
+    harvest: judged
+    minutes: 50
+    sources: [erickson, clrs, mit6006]
+    summary: >-
+      Read Erickson ch. 3 (Dynamic Programming: Fibonacci, memoization, 'Don't Remember Everything After All'),
+      the elements-of-dynamic-programming section of CLRS ch. 14, and MIT 6.006 lectures 15 (Part 1: SRBOT, Fib,
+      DAGs, Bowling) and 16 (Part 2: LCS, LIS, Coins). Notes: state, recurrence, base cases and evaluation order;
+      top-down with a cache versus bottom-up; shrinking a table to the last few values.
+    rubric:
+      - "Defines the state and the recurrence in words before any code"
+      - "Names the base cases and the evaluation order"
+      - "Contrasts top-down memoisation with bottom-up filling"
+      - "Says how to reduce space when only the last few entries matter"
+    prompts:
+      - "Explain how you would solve this: find the fewest coins that make an amount, given coin values with unlimited supply of each. Name the pattern, the invariant, and the time and space cost."
+      - "Explain how you would solve this: count the ways to climb n stairs taking one, two or three steps at a time. Name the pattern, the invariant, and the time and space cost."
+    questions:
+      water:
+        - q: "A problem is a good fit for dynamic programming when it has…"
+          answer: "Overlapping subproblems, and optimal answers built from optimal sub-answers"
+          distractors:
+            - "Sorted input that can be split in half again and again"
+            - "Exactly one correct solution, which the search must find"
+            - "A recursion that goes deeper than 1,000 levels and overflows the stack without a cache"
+          why: "Overlap means a cache pays off, and optimal substructure means combining sub-answers is valid. Without overlap, plain divide and conquer is enough. Depth and sortedness are not the test."
+          source: clrs
+        - q: "House robber has best[i] = max(best[i-1], best[i-2] + a[i]). To use O(1) extra space you…"
+          answer: "Keep only the last two values and roll them forward"
+          distractors:
+            - "Keep the whole table in memory and index into it each time"
+            - "Recompute earlier values from scratch each step"
+            - "Switch to recursion with no cache"
+          why: "Each cell reads only the two cells before it, so nothing older is ever needed again. Recomputing, or recursing without a cache, would bring back exponential time."
+          source: erickson
+  # ---------- tier 3 ----------
+  - id: greedy-exchange
+    name: Greedy and exchange arguments
+    layer: understory
+    branch: linear-and-search
+    tier: 3
+    needs: [intervals-sweep, invariants]
+    harvest: judged
+    minutes: 50
+    sources: [erickson, clrs, kt-greedy]
+    summary: >-
+      Read Erickson ch. 4 (Greedy Algorithms: Storing Files on Tape, Scheduling Classes, General Pattern), the
+      activity-selection and greedy-strategy sections of CLRS ch. 15, and the Kleinberg and Tardos
+      interval-scheduling slides, which show which plausible rules fail. Notes: the greedy-choice property, an
+      exchange argument that turns any optimal solution into one containing the greedy choice. Yield: activity
+      selection and a counterexample for a wrong rule.
+    rubric:
+      - "States the greedy rule precisely, including how ties are broken"
+      - "Gives an exchange argument showing an optimal solution can use the greedy choice"
+      - "Shows a counterexample for a plausible but wrong rule"
+      - "Gives the cost, usually dominated by sorting"
+    prompts:
+      - "Explain how you would solve this: choose the largest set of non-overlapping meetings from a list of start and end times, and argue why your rule is right. Name the pattern, the invariant, and the time and space cost."
+    questions:
+      water:
+        - q: "An exchange argument shows a greedy choice is safe by proving that…"
+          answer: "Any optimal solution can be changed to include the greedy choice and stay as good"
+          distractors:
+            - "The choice looks best at each step in isolation, so the total must be best"
+            - "The greedy solution is the only optimal solution for the problem"
+            - "No counterexample appears when the rule is tried on small test cases"
+          why: "If swapping the greedy choice into an optimal solution leaves it feasible and at least as good, then some optimal solution starts with the greedy choice. Repeating this on what remains proves the whole algorithm."
+          source: erickson
+        - q: "For choosing the most non-overlapping activities, which greedy rule is correct?"
+          answer: "Always take the compatible activity that finishes earliest"
+          distractors:
+            - "Always take the compatible activity that starts the earliest"
+            - "Always take the shortest remaining activity that still fits"
+            - "Always take the one that overlaps the fewest other activities"
+          why: "Finishing earliest leaves the most room for what follows, and an exchange swaps any optimal first pick for it. The other rules fail on counterexamples; for instance, earliest-start can pick one long activity that blocks many short ones."
+          source: kt-greedy
+  - id: topo-sort
+    name: Topological sort
+    layer: understory
+    branch: graphs-and-dp
+    tier: 3
+    needs: [dfs, bfs]
+    harvest: judged
+    minutes: 40
+    sources: [clrs, erickson, cph, wiki-topological-sorting]
+    summary: >-
+      Read the topological sort section of CLRS ch. 20, Erickson ch. 6 (Topological Sort), CPH section 16.1, and
+      the Kahn's algorithm and depth-first sections of the Wikipedia article on topological sorting. Notes: what
+      an ordering of a DAG means, Kahn's in-degree algorithm, the reverse-post-order DFS version, how each detects
+      a cycle, and DP over a DAG as the main use.
+    rubric:
+      - "States what a topological order guarantees about every edge"
+      - "Describes Kahn's queue algorithm and how it detects a cycle"
+      - "Describes the reverse finish-order DFS version"
+      - "Gives O(V + E) time and a use such as build order or DP over a DAG"
+    prompts:
+      - "Explain how you would solve this: given tasks and 'A must finish before B' pairs, produce a valid run order or report that none exists. Name the pattern, the invariant, and the time and space cost."
+    questions:
+      water:
+        - q: "Kahn's algorithm repeatedly removes nodes with in-degree zero. How does it reveal that the graph has a cycle?"
+          answer: "It stops with fewer than n nodes removed, since cycle nodes keep positive in-degree"
+          distractors:
+            - "The queue is already empty before the first node has been processed"
+            - "Some node's in-degree falls below zero while edges are being removed"
+            - "A node is removed twice, because the cycle leads back to it"
+          why: "Each node on a cycle has an incoming edge from another node on the cycle, which is never removed, so none of them reaches in-degree zero. The leftover nodes are exactly those blocked by a cycle."
+          source: wiki-topological-sorting
+        - q: "A DFS-based topological order of a DAG is obtained by…"
+          answer: "Listing nodes in reverse of the order they finish"
+          distractors:
+            - "Listing nodes in the order in which they are first discovered"
+            - "Sorting nodes by out-degree, highest first"
+            - "Listing nodes by their breadth-first level"
+          why: "A node finishes only after everything reachable from it has finished, so every edge u to v has v finishing before u. Reversing the finish order puts u ahead of v, as required."
+          source: clrs
+  - id: dijkstra
+    name: Dijkstra's shortest paths
+    layer: understory
+    branch: graphs-and-dp
+    tier: 3
+    needs: [bfs, binary-heap]
+    harvest: judged
+    minutes: 50
+    sources: [clrs, algs4, cph]
+    summary: >-
+      Read the Dijkstra section of CLRS ch. 22, Sedgewick and Wayne section 4.4 and CPH section 13.2 (the
+      priority-queue version that tolerates duplicate entries, and its negative-edge example). Notes: tentative
+      distance, relaxing an edge, popping the closest unsettled node, why nonnegative weights make the pop final,
+      the heap with lazy deletion, and when to use BFS or Bellman-Ford (CPH 13.1) instead.
+    rubric:
+      - "Describes relaxation and the min-heap loop"
+      - "Explains why a popped node's distance is final and why negative edges break this"
+      - "Gives O((V + E) log V) with a binary heap"
+      - "Names the alternative when edges are negative or all weights equal"
+    prompts:
+      - "Explain how you would solve this: find the fastest route between two cities in a road network where each road has a nonnegative travel time, and say what you would change if some roads could have negative cost. Name the pattern, the invariant, and the time and space cost."
+    questions:
+      water:
+        - q: "Dijkstra's algorithm is only guaranteed correct when…"
+          answer: "No edge has a negative weight"
+          distractors:
+            - "The graph has no cycles"
+            - "Every edge weight is an integer"
+            - "The graph is undirected"
+          why: "When the smallest unsettled distance is popped, no later path can beat it, because later paths only add nonnegative weight. A negative edge could lower a distance after the node was settled."
+          source: clrs
+        - q: "Dijkstra with a binary heap, where you push duplicate entries instead of decreasing a key, runs in…"
+          answer: "O((V + E) log V)"
+          distractors:
+            - "O(V²), as with an array scan"
+            - "O(V + E), the same as BFS"
+            - "O(V · E), as with Bellman-Ford"
+          why: "There can be one heap entry per relaxed edge, so the heap holds at most E items, and each push or pop costs log E, which is O(log V). Stale entries are skipped when popped. The O(V²) bound belongs to the array version."
+          source: cph
+  - id: dp-grid
+    name: DP on grids
+    layer: understory
+    branch: graphs-and-dp
+    tier: 3
+    needs: [dp-1d]
+    harvest: judged
+    minutes: 45
+    sources: [cph, erickson, cses]
+    summary: >-
+      Read CPH section 7.3 (paths in a grid) and 7.5 (edit distance), and Erickson ch. 3, Edit Distance, including
+      how the filled table lets you recover the edits. Notes: a two-index state, filling order so dependencies are
+      ready, base row and column, blocked cells, reconstructing the path. Yield: unique paths, minimum path sum
+      and edit distance.
+    rubric:
+      - "Defines dp[i][j] in words and writes its recurrence"
+      - "Fills base rows and columns and orders the loops so dependencies are ready"
+      - "States the time and the space of the table"
+      - "Recovers the path or the edit operations from the table"
+    prompts:
+      - "Explain how you would solve this: count the paths from the top-left to the bottom-right corner of a grid, moving only right or down, where some cells are blocked. Name the pattern, the invariant, and the time and space cost."
+      - "Explain how you would solve this: find the fewest single-letter inserts, deletes and replaces that turn one word into another. Name the pattern, the invariant, and the time and space cost."
+    questions:
+      water:
+        - q: "Minimum path sum in a grid, moving only right or down. The best cost to reach a cell depends on…"
+          answer: "Its own value plus the smaller of the best costs above and to its left"
+          distractors:
+            - "Its own value plus the best cost to its left only"
+            - "Its own value plus the best of all eight neighbours"
+            - "Its own value plus the best total of the previous row"
+          why: "Only two cells can feed a cell when moves are right and down, and taking the cheaper of them is optimal, because the rest of the path does not depend on how you arrived. Eight neighbours would allow cycles."
+          source: cph
+        - q: "After filling an edit-distance table you want the actual edits, not just the count. What is the standard way?"
+          answer: "Trace a path through the table, at each cell following a neighbour that produced its value"
+          distractors:
+            - "Refill the whole table with the loop order reversed, then read the edits off it"
+            - "Read along the main diagonal of the table, since the matching letters lie there"
+            - "Keep only the latest row while filling, as it already holds every edit made"
+          why: "Every entry was defined by one of up to three neighbours (insert, delete or substitute), so following those choices from one corner to the other spells out an optimal edit sequence; the choices can be recomputed from the numbers in O(m + n) extra time. Keeping only one row saves memory but throws away what the trace needs."
+          source: erickson
+  - id: knapsack
+    name: Knapsack and subset sum
+    layer: understory
+    branch: graphs-and-dp
+    tier: 3
+    needs: [dp-1d]
+    harvest: judged
+    minutes: 50
+    sources: [cph, mit6006, cses]
+    summary: >-
+      Read CPH section 7.4 (knapsack problems, with the 1-D table filled from high capacity to low) and MIT 6.006
+      lecture 18 (Part 4: Rods, Subsetsums, Pseudopolynomial), then the CSES coin and money-sum problems. Notes:
+      the (item, capacity) state, take-or-skip recurrence, why the loop direction decides 0/1 versus unlimited
+      items, and pseudo-polynomial time. Yield: subset sum and partition-equal-sum.
+    rubric:
+      - "Writes the take-or-skip recurrence for 0/1 knapsack"
+      - "Explains the loop direction for 0/1 versus unlimited items"
+      - "States O(nW) and why it is called pseudo-polynomial"
+      - "Maps subset sum or equal partition onto the same table"
+    prompts:
+      - "Explain how you would solve this: decide whether an array of positive integers can be split into two groups with equal sums. Name the pattern, the invariant, and the time and space cost."
+    questions:
+      water:
+        - q: "In a 1-D table for 0/1 knapsack, why iterate the capacity from high to low for each item?"
+          answer: "So each item is used at most once: lower entries are not yet updated when read"
+          distractors:
+            - "To keep the memory use of the table as small as possible"
+            - "So that the largest capacities, which hold the final answer, are filled first of all"
+            - "To keep the items processed in the same order as the input"
+          why: "Updating dp[w] from dp[w − weight] when w goes downward reads the old value for this item. Going upward would read an entry already including the item, letting you take it repeatedly, which is the unlimited version."
+          source: cph
+        - q: "The O(nW) running time of the knapsack DP is called pseudo-polynomial because…"
+          answer: "It is polynomial in the value of W but exponential in W's bit length"
+          distractors:
+            - "It is polynomial in the size of the input, so it counts as a polynomial algorithm"
+            - "It is exponential in the number n of items, however small W is"
+            - "It only holds when every item has the same weight as the others"
+          why: "W can be astronomically large while taking few digits to write down, so the table can be huge compared with the input size. For small capacities it is fast; for a large one it is not."
+          source: mit6006
+  - id: lis
+    name: Longest increasing subsequence
+    layer: understory
+    branch: graphs-and-dp
+    tier: 3
+    needs: [dp-1d, binary-search]
+    harvest: judged
+    minutes: 45
+    sources: [cph, wiki-lis, cses]
+    summary: >-
+      Read CPH section 7.2 (longest increasing subsequence and its O(n²) dynamic program) and the 'Efficient
+      algorithms' section of the Wikipedia article on the longest increasing subsequence for the O(n log n) array
+      of smallest tails with binary search, then the CSES 'increasing subsequence' problem. Notes: dp ending at
+      each index, why the tails array is not the sequence itself, and the strict versus non-strict variants.
+    rubric:
+      - "Defines dp[i] for the quadratic version and writes its recurrence"
+      - "Defines what tails[k] holds and why it stays sorted"
+      - "Explains the binary search step and its cost"
+      - "Says how to recover an actual sequence and not only its length"
+    prompts:
+      - "Explain how you would solve this: given a list of envelope sizes, find the longest chain where each envelope is strictly larger than the previous in both width and height. Name the pattern, the invariant, and the time and space cost."
+    questions:
+      water:
+        - q: "In the O(n²) dynamic program for the longest increasing subsequence, dp[i] is…"
+          answer: "The length of the longest increasing subsequence that ends at index i"
+          distractors:
+            - "The length of the longest increasing subsequence found within the first i items"
+            - "The value of the i-th element of the best sequence"
+            - "The index where the best sequence begins"
+          why: "The recurrence is dp[i] = 1 + max over earlier j with a[j] < a[i] of dp[j]. Fixing the last element is what makes extension easy to check. The overall answer is the maximum of all dp[i]."
+          source: cph
+        - q: "In the O(n log n) method, tails[k] stores…"
+          answer: "The smallest possible last value of an increasing subsequence of length k + 1"
+          distractors:
+            - "The k-th element of the final, longest increasing subsequence found"
+            - "The largest last value of any increasing subsequence of length k + 1"
+            - "The index in the input of the element chosen as the k-th member of the sequence"
+          why: "A smaller tail is always at least as easy to extend, so you keep the best one per length. The array stays sorted, so each new value finds its slot by binary search. The tails array is not itself the subsequence."
+          source: wiki-lis
+  - id: bitmask-dp
+    name: Bitmask DP over subsets
+    layer: understory
+    branch: graphs-and-dp
+    tier: 4
+    needs: [knapsack, backtracking]
+    harvest: judged
+    minutes: 55
+    sources: [cph, wiki-held-karp, cses]
+    summary: >-
+      Read CPH section 10.3 (representing sets) and 10.5 (dynamic programming over subsets), the Wikipedia article
+      on the Held-Karp algorithm, and the CSES 'elevator rides' and 'hamiltonian flights' problems. Notes: a
+      subset as an integer, testing, setting and clearing bits, a state of (mask, last), the 2^n·n² cost, and the
+      n of about 20 that signals this pattern.
+    rubric:
+      - "Represents a subset as a bitmask and uses bit tests, sets and clears"
+      - "Defines the DP state over (mask, last) and its transition"
+      - "Gives the cost as roughly 2^n times a polynomial in n"
+      - "Recognises the size hint (n up to about 20) that points to this pattern"
+    prompts:
+      - "Explain how you would solve this: assign n tasks to n workers, one task each, at the lowest total cost given a cost for every pair, with n up to 18. Name the pattern, the invariant, and the time and space cost."
+    questions:
+      water:
+        - q: "In bitmask DP for the travelling-salesman route, dp[mask][last] means…"
+          answer: "The cheapest path that visits exactly the cities in mask and ends at last"
+          distractors:
+            - "The cost of the shortest complete tour that starts from the city called last"
+            - "The number of different orders that visit exactly the cities in mask"
+            - "The cheapest single edge leaving the set of cities named by mask"
+          why: "The mask records which cities are done, and last is where you stand, which is all the future needs to know. Extending to an unvisited city adds one bit and one edge, so the transition is cheap."
+          source: wiki-held-karp
+        - q: "Held-Karp style bitmask DP for n cities takes about…"
+          answer: "O(2^n · n²) time, far better than trying all n! orders"
+          distractors:
+            - "O(n²) time, since the graph has at most n² edges to consider"
+            - "O(n!) time, the same as full enumeration"
+            - "O(2^n) time with no extra factor of n"
+          why: "There are 2^n masks times n choices of last city, with n options for the next, giving 2^n·n². Because 2^n is much smaller than n! (for n = 20 about a million against 2×10^18), it makes n around 20 feasible."
+          source: wiki-held-karp
+  # ---------- tier 4 ----------
+  - id: mst
+    name: Minimum spanning trees
+    layer: understory
+    branch: graphs-and-dp
+    tier: 4
+    needs: [union-find, greedy-exchange, dfs]
+    harvest: judged
+    minutes: 50
+    sources: [clrs, algs4, cph]
+    summary: >-
+      Read CLRS ch. 21 (Minimum Spanning Trees: the generic algorithm with its safe-edge theorem, then Kruskal and
+      Prim), Sedgewick and Wayne section 4.3 and CPH ch. 15 (Kruskal, the union-find structure, Prim). Notes: the
+      cut property, Kruskal's algorithm (sort edges, add if it joins two components, using union-find), Prim's
+      algorithm with a heap, and the complexity of each.
+    rubric:
+      - "States the cut property and why it makes the greedy edge safe"
+      - "Describes Kruskal with union-find and Prim with a heap"
+      - "Gives the cost of each and when each is preferred"
+      - "Explains the effect of tied weights on uniqueness"
+    prompts:
+      - "Explain how you would solve this: connect n offices with cable at the lowest total cost, given the price of laying cable between each pair, and say how you would find the cheapest replacement if one cable on your plan turned out to be unusable. Name the pattern, the invariant, and the time and space cost."
+    questions:
+      water:
+        - q: "Kruskal's algorithm takes the cheapest remaining edge if and only if…"
+          answer: "Its endpoints lie in different components of the edges chosen so far"
+          distractors:
+            - "It is the lightest edge in the whole graph, whatever the chosen edges are"
+            - "It touches the vertex that was added most recently to the tree"
+            - "Both of its endpoints have the same degree in the graph"
+          why: "An edge inside one component would close a cycle, which a tree cannot have. Scanning edges by increasing weight and using union-find to check components gives O(E log E) time, mostly from sorting."
+          source: clrs
+        - q: "The cut property says that for any split of the vertices into two groups, the lightest edge crossing it…"
+          answer: "Belongs to some minimum spanning tree"
+          distractors:
+            - "Belongs to every minimum spanning tree"
+            - "Can never be part of one"
+            - "Forms a cycle with the other crossing edges"
+          why: "If an optimal tree lacks that edge, adding it forms a cycle that crosses the cut at another, heavier-or-equal edge, and swapping them does not hurt. With tied weights the lightest crossing edge need not be in every tree."
+          source: clrs
+  - id: divide-and-conquer
+    name: Divide and conquer
+    layer: canopy
+    branch: graphs-and-dp
+    tier: 2
+    needs: [recursion, big-o]
+    harvest: judged
+    minutes: 50
+    sources: [clrs, erickson]
+    summary: >-
+      Read CLRS ch. 2 (merge sort as divide and conquer) and ch. 4 (the recursion-tree and master methods), and
+      Erickson ch. 1 (Mergesort, Quicksort, Recursion Trees, Fast Multiplication). Notes: split, solve, combine;
+      the recurrence T(n) = a·T(n/b) + f(n) and which term dominates; why balanced splits matter; where the extra
+      space goes. Yield: merge sort and inversion counting from the recurrence.
+    rubric:
+      - "Names the split, solve and combine steps of a divide-and-conquer algorithm"
+      - "Writes the recurrence for merge sort and solves it to O(n log n)"
+      - "Compares the combine cost with the work at the leaves to see which dominates"
+      - "Explains why an unbalanced split, as in quicksort's worst case, costs O(n²)"
+    prompts:
+      - "Explain how you would solve this: count the pairs of positions i < j where a[i] > a[j] in an array of n numbers, faster than checking every pair. Name the pattern, the invariant, and the time and space cost."
+      - "Write the recurrence for each of: binary search; merge sort; a routine that makes three calls on halves of its input and does linear extra work. Give the running time each one solves to and say which term dominates."
+    questions:
+      water:
+        - q: "A divide-and-conquer routine makes three recursive calls on halves of its input, then does O(n) extra work to combine. Its running time is…"
+          answer: "O(n^1.58), which is n to the power log2(3)"
+          distractors:
+            - "O(n log n), the same as merge sort does"
+            - "O(n²), because three calls beat two"
+            - "O(n³), one factor of n for each call"
+          why: "The calls triple at each level while the size only halves, so the work per level grows by a factor of 3/2 and the leaves dominate: 3^(log2 n) leaves is n^(log2 3). Karatsuba multiplication has this shape, which is why it beats the schoolbook n² method."
+          source: clrs
+        - q: "Quicksort takes the first element as its pivot. On an already sorted array of n distinct values it runs in…"
+          answer: "O(n²), since every split leaves one side empty"
+          distractors:
+            - "O(n log n), as sorted input is the easiest case for a pivot"
+            - "O(n), as no swaps are needed when data is already in order"
+            - "O(log n), as the first pivot already sits in its final place"
+          why: "Each partition removes just one element, so T(n) = T(n − 1) + n, which sums to about n²/2. Balanced splits are what give n log n, which is why real implementations choose the pivot at random or by median of three."
+          source: erickson
+  - id: proving-correctness
+    name: Proving an algorithm correct
+    layer: vine
+    branch: graphs-and-dp
+    tier: 4
+    needs: [greedy-exchange, invariants, dijkstra]
+    harvest: judged
+    minutes: 60
+    sources: [erickson, clrs, humble-programmer, wiki-loop-variant]
+    summary: >-
+      Read the exchange proofs in Erickson ch. 4 and the Dijkstra section of ch. 8 (Best-First: Dijkstra's
+      Algorithm), the Dijkstra correctness proof in CLRS ch. 22, Dijkstra's 'The Humble Programmer' (testing shows
+      bugs, not their absence) and the Wikipedia article on loop variants for termination. Notes: partial versus
+      total correctness, induction on the loop or recursion, invariants, exchange and contradiction proofs.
+    rubric:
+      - "Separates 'gives the right answer if it stops' from 'always stops'"
+      - "Chooses a proof tool (invariant, induction, exchange, contradiction) and says why it fits"
+      - "Writes the termination argument with a bounded, shrinking quantity"
+      - "Checks the proof against a tricky case such as ties, empty input or negative values"
+    prompts:
+      - "Pick Dijkstra's algorithm or the earliest-finish rule for interval scheduling. Write a proof of correctness in your own words: the claim, the proof tool you use, the invariant or exchange step, and the termination argument. Then say which input would break it if its key assumption failed."
+    questions:
+      water:
+        - q: "A complete correctness argument for a loop-based algorithm must also show termination. The usual way is to point to…"
+          answer: "A quantity that is bounded and strictly shrinks (or grows) every pass"
+          distractors:
+            - "A test run in which the loop was seen to stop on real input"
+            - "A proof showing that the body of the loop does the right thing on each pass"
+            - "A bound on the memory that the loop uses while it is running"
+          why: "A whole number bounded below that strictly decreases each pass cannot decrease forever, so the loop must end. Showing the body is correct says nothing about whether the loop ever reaches the exit."
+          source: wiki-loop-variant
+        - q: "Passing a large suite of test cases does not prove an algorithm is correct because…"
+          answer: "Tests sample the inputs, and a failure may sit on an input never tried"
+          distractors:
+            - "Test cases are not able to check the exact format of what a program prints"
+            - "A proof is only ever needed when the code is written recursively"
+            - "Passing tests only shows that the code compiles and starts to run"
+          why: "Tests can find bugs but cannot show their absence, since the input space is huge or infinite. A proof reasons about every input at once. The two work together: the proof states what to test, and tests catch proof gaps."
+          source: humble-programmer
+  - id: choosing-an-approach
+    name: Choosing an approach
+    layer: canopy
+    branch: linear-and-search
+    tier: 4
+    needs: [binary-search-answer, greedy-exchange, knapsack, dijkstra, divide-and-conquer]
+    harvest: judged
+    minutes: 60
+    sources: [cph, erickson, mit6006]
+    summary: >-
+      Read CPH section 2.3 (the table from input size to target complexity), Erickson ch. 3 ('Warning: Greed is
+      Stupid' and 'The Pattern: Smart Recursion') and MIT 6.006 lecture 20 (Course Review: how to solve an
+      algorithms problem). Notes: reading constraints to infer a target complexity, spotting the pattern from the
+      shape of the question, a decision list (sort? window? graph? DP? greedy?), and how to check a choice on a
+      small example. Yield: your own one-page decision flow.
+    rubric:
+      - "Reads input limits to infer the target complexity"
+      - "Names the clue in a problem that points to each pattern"
+      - "Chooses between greedy and DP, and says how to tell when greedy fails"
+      - "States the trade-off in time, space and implementation risk"
+    prompts:
+      - "Here are three problems in plain words, and you choose a method for each. (1) The cheapest way to connect cities by rail. (2) The most items you can fit in a bag of limited weight, each with a value. (3) The smallest speed that gets a delivery done in time. For each, name the pattern, the invariant, and the time and space cost, and say why the other two patterns do not fit."
+    questions:
+      water:
+        - q: "A problem gives n up to 200,000 and a time limit of a few seconds. The intended complexity is most likely…"
+          answer: "About O(n log n) or O(n)"
+          distractors:
+            - "O(n²), since that is about 4 × 10^10"
+            - "O(2^n), the best that can be done"
+            - "O(n³) with a small constant"
+          why: "Roughly 10^8 to 10^9 simple operations fit in a few seconds. n² is 4 × 10^10 operations, which is far too many, so you need sorting, a heap, a window or a hash map instead. Reading limits first saves hours."
+          source: cph
+        - q: "A greedy rule seems natural but you cannot prove it, and a small counterexample shows it fails. The sensible next step is…"
+          answer: "Switch to a DP or search that considers all choices at each step"
+          distractors:
+            - "Add a tie-breaking rule to the greedy choice and hope that covers it"
+            - "Test it on larger random inputs until it passes"
+            - "Accept it, since a counterexample is just an edge case"
+          why: "A single counterexample disproves the greedy rule outright, and tie-breaking cannot rescue a rule that is wrong on its basic choice. DP keeps all options open by remembering the best answer for each subproblem."
+          source: erickson
+  # ---------- wild seeds ----------
+  - id: fenwick-tree
+    name: Fenwick tree
+    layer: shrub
+    branch: linear-and-search
+    tier: 2
+    needs: [prefix-sums]
+    wild: true
+    harvest: judged
+    minutes: 45
+    sources: [cph, cses]
+    summary: >-
+      Read CPH section 9.2 (binary indexed tree) and the CSES 'dynamic range sum queries' problem. Notes: how
+      index i covers a block whose length is its lowest set bit (CPH writes it as the largest power of two
+      dividing i), point update and prefix query in O(log n), turning range sum into two prefix queries, and when
+      a segment tree (CPH 9.3) is needed instead.
+    rubric:
+      - "Says what each index of the tree stores"
+      - "Writes the update and query loops using the lowest set bit"
+      - "Gives O(log n) for both and O(n) space"
+      - "Explains when this beats plain prefix sums"
+    prompts:
+      - "Explain how you would solve this: an array receives many point updates and many range-sum queries, interleaved. Name the data structure, the invariant, and the time and space cost, and say why plain prefix sums fail here."
+    questions:
+      water:
+        - q: "Why does a Fenwick tree beat a plain prefix-sum array when values keep changing between queries?"
+          answer: "An update touches about log n entries, not up to n prefix values"
+          distractors:
+            - "It stores the sums in sorted order so that queries can binary search"
+            - "It answers every query in constant time with no log factor"
+            - "It needs no extra memory at all beyond the input array itself"
+          why: "A plain prefix array must be rewritten from the changed index onwards, which can be O(n). A Fenwick tree stores block sums so both update and query hop through about log n entries."
+          source: cph
+        - q: "In a Fenwick tree, the entry at index i holds the sum of a block whose length is…"
+          answer: "The lowest set bit of i"
+          distractors:
+            - "The highest set bit of i"
+            - "Always exactly two"
+            - "The number of ones in i"
+          why: "For i = 12 (binary 1100) the lowest set bit is 4, so the entry covers the four items ending at position 12. Jumping by lowest set bits is how queries walk down to zero and updates walk up."
+          source: cph
+  - id: kmp-prefix-function
+    name: KMP and the prefix function
+    layer: herb
+    branch: linear-and-search
+    tier: 3
+    needs: [sliding-window]
+    wild: true
+    harvest: judged
+    minutes: 50
+    sources: [clrs]
+    summary: >-
+      Read CLRS ch. 32 (String Matching): its naive matcher and its section on the Knuth-Morris-Pratt algorithm
+      with the prefix function. Notes: the prefix function (longest proper prefix that is also a suffix), building
+      it in linear time, and using it to scan a text without ever moving back.
+    rubric:
+      - "Defines the prefix function and computes it for a short string"
+      - "Explains the fallback after a mismatch using the table"
+      - "Argues O(n + m) total because the text pointer never moves back"
+      - "Contrasts it with the naive restart, which can cost O(nm)"
+    prompts:
+      - "Explain how you would solve this: find every position where a pattern of length m occurs in a text of length n in O(n + m) time. Name the pattern, the invariant, and the time and space cost."
+    questions:
+      water:
+        - q: "The prefix function value at position i of a string is…"
+          answer: "The length of the longest proper prefix of s[0..i] that is also its suffix"
+          distractors:
+            - "The count of earlier positions in the string that hold the very same character"
+            - "The length of the longest palindrome that ends at position i"
+            - "The index at which the pattern last matched part of the text"
+          why: "This overlap tells you how much of the current match you can keep after a mismatch. For 'abab' it is 2: the prefix 'ab' is also the suffix. 'Proper' means the prefix cannot be the whole string."
+          source: clrs
+        - q: "After a mismatch, KMP resumes matching by…"
+          answer: "Falling back inside the pattern using the table, never moving back in the text"
+          distractors:
+            - "Restarting the pattern one character further along in the text, then re-comparing"
+            - "Re-reading the last m characters of the text before comparing again"
+            - "Jumping ahead in the text by the whole length of the pattern"
+          why: "The table says which shorter prefix of the pattern is still consistent with the text already read, so no text character is examined twice. That gives O(n + m) in total, against O(nm) for the naive restart."
+          source: clrs
+finds:
+  - id: fenwick-lowbit
+    near: [prefix-sums]
+    seed: fenwick-tree
+    text: "A Fenwick tree is a prefix-sum array in disguise: index i stores the sum of a block as long as the lowest set bit of i, so updates and queries hop along about log n indices using the trick i & -i."
+  - id: kmp-failure-links
+    near: [sliding-window, two-pointers]
+    seed: kmp-prefix-function
+    text: "KMP never moves its text pointer backwards. After a mismatch, a table says which shorter prefix of the pattern still matches what was just read, so no text character is looked at twice."
+  - id: timsort-runs
+    near: [binary-search, arrays-strings]
+    text: "The sort behind Python's list.sort and Java's object sorting is Timsort. It looks for runs that are already ordered and merges them, so nearly sorted input sorts in close to linear time."
+  - id: hash-flooding
+    near: [hash-sets-maps, hash-table-internals]
+    text: "Hash flooding is a real attack: crafted keys that all collide turn each hash-map operation into a linear scan. That is why Python and Rust randomise the seed of their default string hash."
+  - id: binary-search-overflow-bug
+    near: [binary-search, edge-case-testing]
+    text: "The (lo + hi) / 2 overflow sat unnoticed in widely used binary search and merge sort code for years. Joshua Bloch wrote it up in 2006 after finding it in the Java standard library."
+  - id: dijkstra-lazy-deletion
+    near: [dijkstra, binary-heap]
+    text: "Much real-world Dijkstra code has no decrease-key. It pushes a fresh heap entry on each improvement and skips stale entries when they pop, which keeps O(E log V) with a plain binary heap."
+  - id: inverse-ackermann
+    near: [union-find]
+    text: "Union-find's cost per operation is the inverse Ackermann function, which stays below 5 for any input that could ever be stored. It is effectively constant, yet provably not exactly constant."
