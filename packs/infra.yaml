@@ -12,23 +12,292 @@ branches:
     title: Network & platform
   - id: data-and-reliability
     title: Data & reliability
-sources: []
+sources:
+  - id: k8s-docs
+    title: Kubernetes documentation
+    url: https://kubernetes.io/docs/
+    note: >-
+      Pages used: Kubernetes Scheduler, Assigning Pods to Nodes, Resource Management for Pods and Containers,
+      Pod Lifecycle, Configure Liveness, Readiness and Startup Probes, Horizontal Pod Autoscaling, Deployments,
+      Images, Secrets and DNS for Services and Pods.
+  - id: pg-docs
+    title: PostgreSQL documentation (current)
+    url: https://www.postgresql.org/docs/current/
+    note: >-
+      Chapters used: Concurrency Control, Indexes, Routine Database Maintenance Tasks (vacuuming), Reliability
+      and the Write-Ahead Log, High Availability (standby servers, failover), Backup and Restore, Table
+      Partitioning and How Connections Are Established.
+  - id: kafka-docs
+    title: "Apache Kafka documentation: Design"
+    url: https://kafka.apache.org/44/design/design/
+    note: Covers persistence, the producer, the consumer, delivery semantics, replication and log compaction.
+  - id: kafka-operations
+    title: "Apache Kafka documentation: Basic Kafka operations"
+    url: https://kafka.apache.org/44/operations/basic-kafka-operations/
+    note: The Modifying topics part covers what adding partitions does to key placement.
+  - id: sre-book
+    title: Site Reliability Engineering (Google SRE book)
+    url: https://sre.google/sre-book/table-of-contents/
+    note: >-
+      Chapters used: 3 Embracing Risk, 4 Service Level Objectives, 6 Monitoring Distributed Systems, 8 Release
+      Engineering, 19 and 20 on load balancing, 22 Addressing Cascading Failures, 26 Data Integrity, and
+      Appendix A, Availability Table.
+  - id: sre-workbook
+    title: The Site Reliability Workbook
+    url: https://sre.google/workbook/table-of-contents/
+    note: Chapters used are 2 Implementing SLOs, 5 Alerting on SLOs and 16 Canarying Releases.
+  - id: otel-docs
+    title: "OpenTelemetry documentation: Concepts"
+    url: https://opentelemetry.io/docs/concepts/
+    note: >-
+      Pages used: Signals (traces, metrics, logs; the metrics page covers cardinality), Context propagation
+      and Semantic conventions.
+  - id: hpbn
+    title: High Performance Browser Networking (Ilya Grigorik)
+    url: https://hpbn.co/
+    note: Chapters used are 2 Building Blocks of TCP, 4 Transport Layer Security, 11 HTTP/1.X and 12 HTTP/2.
+  - id: rfc1035
+    title: "RFC 1035: Domain Names, Implementation and Specification"
+    url: https://www.rfc-editor.org/rfc/rfc1035
+  - id: rfc8446
+    title: "RFC 8446: The Transport Layer Security (TLS) Protocol Version 1.3"
+    url: https://www.rfc-editor.org/rfc/rfc8446
+  - id: rfc9114
+    title: "RFC 9114: HTTP/3"
+    url: https://www.rfc-editor.org/rfc/rfc9114
+  - id: linux-man
+    title: "Linux man pages (man7.org): namespaces(7)"
+    url: https://man7.org/linux/man-pages/man7/namespaces.7.html
+    note: Also pid_namespaces(7) and cgroups(7) on the same site.
+  - id: man-listen
+    title: "Linux man pages (man7.org): listen(2)"
+    url: https://man7.org/linux/man-pages/man2/listen.2.html
+    note: Also tcp(7) on the same site, for tcp_syncookies, tcp_abort_on_overflow and tcp_tw_reuse.
+  - id: bernat-time-wait
+    title: "Coping with the TCP TIME-WAIT state on busy Linux servers (Vincent Bernat)"
+    url: https://vincent.bernat.ch/en/blog/2014-tcp-time-wait-state-linux
+  - id: nginx-https
+    title: "nginx documentation: Configuring HTTPS servers"
+    url: https://nginx.org/en/docs/http/configuring_https_servers.html
+    note: The SSL certificate chains section covers intermediate certificates and the order of a bundle.
+  - id: use-method
+    title: The USE Method (Brendan Gregg)
+    url: https://www.brendangregg.com/usemethod.html
+  - id: redis-docs
+    title: Redis persistence documentation
+    url: https://redis.io/docs/latest/operate/oss_and_stack/management/persistence/
+  - id: redis-eviction
+    title: Redis key eviction documentation
+    url: https://redis.io/docs/latest/develop/reference/eviction/
+  - id: terraform-docs
+    title: Terraform documentation, State
+    url: https://developer.hashicorp.com/terraform/language/state
+    note: The sidebar siblings Purpose, Locking and Refactor state cover the rest of the seed.
+  - id: oci-image-spec
+    title: "OCI Image Format Specification: Filesystem Layers"
+    url: https://github.com/opencontainers/image-spec/blob/main/layer.md
+    note: Covers changesets, digests and whiteouts. The overview is spec.md in the same repository.
+  - id: docker-build-cache
+    title: "Docker docs: Optimize cache usage in builds"
+    url: https://docs.docker.com/build/cache/optimize/
+  - id: pgbouncer-docs
+    title: PgBouncer documentation
+    url: https://www.pgbouncer.org/features.html
+    note: The Features page covers pooling modes and the SQL feature map. Configuration is at pgbouncer.org/config.html.
+  - id: istio-architecture
+    title: "Istio documentation: Architecture"
+    url: https://istio.io/latest/docs/ops/deployment/architecture/
+  - id: istio-security
+    title: "Istio documentation: Security concepts"
+    url: https://istio.io/latest/docs/concepts/security/
+    note: Covers workload identity, mutual TLS and PeerAuthentication modes.
+  - id: argo-cd-docs
+    title: "Argo CD documentation: Automated sync policy"
+    url: https://argo-cd.readthedocs.io/en/stable/user-guide/auto_sync/
+guilds:
+  - id: container-runtime
+    title: What a container is
+    seeds: [linux-namespaces, container-images, k8s-resources, k8s]
+  - id: edge-and-names
+    title: The edge of the network
+    seeds: [dns-ttl, tcp, tls, http2-http3, load-balancing]
+  - id: safe-releases
+    title: Releasing without drama
+    seeds: [k8s-probes, rolling-canary, k8s-autoscaling, gitops-platform]
+  - id: postgres-durability
+    title: Postgres never loses your data
+    seeds: [pg-wal, pg-replication, pg-backup-pitr, pg-ha-architecture]
+  - id: kafka-delivery
+    title: Delivery guarantees in Kafka
+    seeds: [kafka, kafka-consumer-groups, kafka-exactly-once, log-compaction]
+  - id: observability
+    title: Seeing what the system does
+    seeds: [use-method, otel-signals, slo, burn-rate-alerts]
 seeds:
+  # ---------------------------------------------------------------- Network & platform
   - id: tcp
     name: TCP backlog
     layer: ground-cover
     branch: network-and-platform
     tier: 0
     harvest: recall
+    minutes: 30
+    sources: [hpbn, man-listen]
+    summary: >-
+      Read HPBN ch. 2, Building Blocks of TCP (handshake, flow control, slow start), then the backlog text in
+      listen(2) and the tcp_syncookies and tcp_abort_on_overflow entries of tcp(7), on the same site. Notes:
+      what the SYN queue and the accept queue each hold, what a SYN flood attacks, and why a new connection
+      starts slowly.
+    rubric:
+      - Walks through the three-way handshake and says what the server remembers after each step
+      - Tells the half-open (SYN) queue from the accept queue and says which one the listen backlog sizes
+      - Explains how a SYN flood fills the first queue and how SYN cookies avoid keeping state
+      - Describes what clients see when the accept queue overflows (stalled connects, SYN retransmits)
     questions:
       water:
         - q: A SYN flood exhausts…
           answer: The half-open connection queue
           distractors:
-            - Disk space on the server
-            - The DNS cache
-            - TLS session tickets
-          why: SYN cookies let the kernel accept without holding state for half-open connections.
+            - The server's file descriptors for accepted sockets
+            - The DNS resolver cache on the load balancer
+            - The pool of TLS session tickets on the host
+          why: >-
+            Every spoofed SYN makes the kernel remember a half-open connection until the handshake times out.
+            SYN cookies let the kernel accept without holding that state.
+          source: man-listen
+        - q: >-
+            A traffic burst arrives faster than the app calls accept(), and the listen backlog is small. What do
+            clients see by default?
+          answer: Connects that stall and retry with growing delays while the server looks idle
+          distractors:
+            - An instant connection reset with a clear 'connection refused' error returned by the kernel
+            - Normal connects but very slow responses on every socket
+            - An HTTP 503 page generated by the operating system
+          why: >-
+            When the accept queue is full, the kernel by default ignores the request instead of resetting it
+            (tcp_abort_on_overflow is off). The client's TCP retransmits with growing delays, so connects stall
+            rather than fail fast.
+          source: man-listen
+      harvest:
+        - q: >-
+            Slow start doubles the congestion window each round trip. Why does that matter for a 20 KB API
+            response on a brand-new connection?
+          answer: The window starts small, so a warm reused connection is faster
+          distractors:
+            - The kernel buffers the whole response in memory before it sends any bytes
+            - Slow start only applies after the first packet loss is detected
+            - The window starts at the receiver's full advertised window size
+          why: >-
+            A new connection starts with a small window (about ten segments), so even a short response may need
+            two round trips. A kept-alive connection has already grown its window.
+          source: hpbn
+  - id: dns-ttl
+    name: DNS & TTLs
+    layer: ground-cover
+    branch: network-and-platform
+    tier: 0
+    harvest: recall
+    minutes: 40
+    sources: [rfc1035, k8s-docs]
+    summary: >-
+      Read RFC 1035 section 2.1 (Overview), section 3.2.1 (resource record format, including the TTL field) and
+      section 7.4 (Using the cache), then the Kubernetes page DNS for Services and Pods. Notes: stub,
+      recursive and authoritative roles, what a TTL lets a cache do, and why a DNS change is never instant.
+    rubric:
+      - Tells stub resolvers, recursive resolvers and authoritative servers apart
+      - States what a TTL promises (a cache may reuse the answer that long) and what it cannot do (force expiry)
+      - Explains why lowering a TTL only helps after the old TTL has run out
+      - Names a failure mode, such as a stale answer after a failover or a client runtime that caches longer than the TTL
+    questions:
+      water:
+        - q: >-
+            You will move a service to a new IP tomorrow at noon, and its record has a 24-hour TTL. When should
+            you lower the TTL?
+          answer: A full old TTL before the move, so caches have picked up the short one
+          distractors:
+            - At noon, in the same change that updates the IP address, so the two switch together
+            - An hour before the move, because most resolvers re-check the record every hour
+            - Never, since resolvers ignore the TTL you publish anyway
+          why: >-
+            Caches already hold the old record for up to 24 hours. Lowering the TTL only helps once those copies
+            have expired and been refetched with the new, short TTL.
+          source: rfc1035
+        - q: A record has a TTL of 300. What does that let a resolver do?
+          answer: Serve its cached answer for up to five minutes without asking the authoritative server
+          distractors:
+            - Keep the connection to the authoritative server open for five minutes
+            - Retry a failed lookup every five minutes until it succeeds
+            - Hold back any changed record for five minutes before using it
+          why: >-
+            TTL is the lifetime of a cached answer, in seconds. It is permission to reuse the answer, not a
+            schedule for refreshing it, so a change stays invisible until each cache expires.
+          source: rfc1035
+      harvest:
+        - q: >-
+            After a failover you update an A record that carries a one-hour TTL, yet some clients keep hitting the
+            dead IP for most of an hour. What is the most likely cause?
+          answer: Caches still hold the old answer, and each may keep it until its own TTL runs out
+          distractors:
+            - The authoritative server pushes record changes to its caches in hourly batches
+            - UDP dropped the update notices that resolvers wait for before they refresh
+            - Browsers refuse to honour records with a TTL under an hour long
+          why: >-
+            A cache may reuse an answer for as long as the TTL it received allows, and nothing tells it that the
+            record has changed. A client that looked the name up just before the change keeps the dead IP until
+            its copy expires, so a change is only fully visible one full old TTL later.
+          source: rfc1035
+  - id: linux-namespaces
+    name: Namespaces & cgroups
+    layer: root
+    branch: network-and-platform
+    tier: 0
+    harvest: recall
+    minutes: 45
+    sources: [linux-man, k8s-docs]
+    summary: >-
+      Read namespaces(7) and pid_namespaces(7) on man7.org, then the part of the Kubernetes page Resource
+      Management for Pods and Containers on how limits are enforced by the kernel through cgroups. Then run
+      unshare --pid --fork --mount-proc bash and list /proc/self/ns. Notes: the namespace types and what each
+      isolates, what cgroups limit, and why a container is an ordinary process with both applied.
+    rubric:
+      - Names at least four namespace types and what each one isolates
+      - Separates isolation (namespaces change what a process can see) from limits (cgroups cap what it can use)
+      - Says a container is a normal process on the host kernel, not a small virtual machine
+      - Names a consequence of the shared kernel, such as a kernel bug or a privileged container crossing the boundary
+    questions:
+      water:
+        - q: What does a PID namespace change for a process inside it?
+          answer: It sees its own process numbering, so the first process there is PID 1
+          distractors:
+            - It gets a CPU quota that is entirely separate from the host's own CPU quota
+            - It runs on its own private kernel with a scheduler separate from the host's
+            - Its processes become invisible to the host, so the host cannot signal or kill them
+          why: >-
+            A PID namespace gives a fresh numbering of processes. Processes outside are invisible, but the CPU
+            and memory they use are still governed by cgroups, not by this namespace.
+          source: linux-man
+        - q: Two containers share a host, and one runs a memory-hungry job. What stops it from starving the other?
+          answer: A cgroup memory limit on the hungry container
+          distractors:
+            - A mount namespace giving it a private view of the filesystem
+            - A network namespace that separates their sockets and routes
+            - A seccomp profile that filters the system calls it may make
+          why: >-
+            Namespaces limit what a process can see, while cgroups limit what it can consume. Only the cgroup
+            memory controller can cap its memory and trigger an OOM kill when it exceeds that cap.
+          source: k8s-docs
+      harvest:
+        - q: Why can a container not run a different kernel version from its host?
+          answer: It is a process on the shared host kernel, wrapped in namespaces and cgroups
+          distractors:
+            - Container runtimes strip the kernel module loader from every image they build
+            - Image layers are read-only, so the kernel cannot be replaced
+            - The hypervisor pins a single kernel to each physical machine
+          why: >-
+            A namespace only wraps a resource of the one running kernel, so a container has no guest operating
+            system. Its processes make system calls straight to the host kernel, which is why a kernel bug
+            reaches every container on the machine.
+          source: linux-man
   - id: k8s
     name: k8s scheduling
     layer: understory
@@ -37,17 +306,55 @@ seeds:
     needs:
       - tcp
     harvest: recall
+    minutes: 45
+    sources: [k8s-docs]
+    summary: >-
+      Read the Kubernetes docs Kubernetes Scheduler, Assigning Pods to Nodes, and the requests part of Resource
+      Management for Pods and Containers. Notes: filter-then-score, why placement uses requests rather than live
+      usage, taints versus affinity, and how to read a FailedScheduling event.
+    rubric:
+      - Describes scheduling as filtering the feasible nodes and then scoring them
+      - Explains that placement sums requests against a node's allocatable resources, not live usage or limits
+      - Tells taints and tolerations (nodes repel pods) from affinity and selectors (pods attract or choose nodes)
+      - Reads a FailedScheduling message and names the first thing to check
     questions:
       water:
         - q: A pod stays Pending most often because…
           answer: No node satisfies its resource requests or affinity rules
           distractors:
-            - The image is too large to pull
-            - Its Service has not been created
-            - Its ConfigMap is empty
+            - Its container image is too large to pull onto a node in time
+            - Its Service has not been created, so no endpoints exist yet
+            - Its ConfigMap is empty, so there is nothing to mount
           why: >-
-            `kubectl describe pod` shows the scheduler events; requests, taints and affinity are the usual
-            culprits.
+            `kubectl describe pod` shows the scheduler events (FailedScheduling); requests, taints and affinity are
+            the usual culprits. Image pulls and config problems start after scheduling and show up as
+            ContainerCreating or pull and config errors, with the pod already assigned to a node.
+          source: k8s-docs
+        - q: >-
+            A 4-CPU node uses 1 CPU in total, but the pods on it request 3.5 CPU. A new pod requests 2 CPU. Will
+            the scheduler place it there?
+          answer: No, because it sums requests against allocatable and ignores live usage
+          distractors:
+            - Yes, because actual usage is only 1 CPU of 4, which leaves 3 CPUs free
+            - Yes, because limits may be oversubscribed without bound
+            - No, because a node runs at most one pod per CPU core
+          why: >-
+            The scheduler works from declared requests so placement stays predictable. 3.5 + 2 exceeds 4, so
+            this node is filtered out even though it is mostly idle.
+          source: k8s-docs
+      harvest:
+        - q: >-
+            A pod with nodeSelector disktype=ssd stays Pending although many nodes sit idle. What do you check
+            first?
+          answer: Whether any node has that label and room for its requests
+          distractors:
+            - Whether the pod's liveness probe path returns a 200 response
+            - Whether the cluster's etcd has enough free disk space left
+            - Whether the container image is cached on the idle nodes
+          why: >-
+            A nodeSelector is a hard filter. If no node has the label, the scheduler reports that no node
+            matched the selector, and idle but unlabelled nodes do not count.
+          source: k8s-docs
   - id: tls
     name: TLS & certs
     layer: ground-cover
@@ -56,15 +363,229 @@ seeds:
     needs:
       - tcp
     harvest: recall
+    minutes: 45
+    sources: [hpbn, rfc8446, nginx-https]
+    summary: >-
+      Read HPBN ch. 4, Transport Layer Security (handshake, chain of trust, session resumption, revocation),
+      RFC 8446 section 1.2 (Major Differences from TLS 1.2), section 2.3 (0-RTT Data) and section 8 (0-RTT and
+      Anti-Replay), then the SSL certificate chains part of nginx's Configuring HTTPS servers. Notes: what the
+      handshake proves, who vouches for a key, why TLS 1.3 saves a round trip, and what 0-RTT gives up.
+    rubric:
+      - Says what the handshake establishes (shared keys plus authentication of the server)
+      - Explains the chain from leaf to intermediate to a trusted root and what validation checks
+      - Contrasts TLS 1.2 and 1.3 round trips and what resumption or 0-RTT gives up
+      - Names a common production failure such as an expired certificate, a missing intermediate or an SNI mismatch
     questions:
       water:
         - q: The TLS 1.3 handshake is faster mainly because…
           answer: Key exchange and cipher negotiation complete in one round trip
           distractors:
-            - Certificates are no longer sent
-            - It uses RSA key transport
-            - Compression was added
-          why: 1-RTT handshake, 0-RTT for resumption; legacy ciphers were removed.
+            - Certificates are no longer sent at all during the handshake exchange
+            - It uses RSA key transport so that the server has to compute almost nothing
+            - Compression was added to shrink the handshake messages
+          why: >-
+            1-RTT handshake, 0-RTT for resumption; legacy ciphers were removed. Certificates are still sent but
+            now encrypted, and RSA key transport was dropped because it gives no forward secrecy.
+          source: rfc8446
+        - q: >-
+            A command-line client says it cannot verify the first certificate, yet browsers accept the same site.
+            What is the likely cause?
+          answer: The chain omits an intermediate that browsers may have cached
+          distractors:
+            - The leaf certificate is signed with ECDSA, which only browsers support
+            - The server negotiated TLS 1.3, which strict clients reject
+            - Browsers skip the expiry check that other clients enforce
+          why: >-
+            Browsers usually store intermediate certificates they have seen, so a site that sends only its own
+            certificate can still work for them. A command-line client has no such store, which is why the server
+            should send the full chain: its certificate first, then the intermediates.
+          source: nginx-https
+      harvest:
+        - q: >-
+            A payments API enables TLS 1.3 0-RTT early data so that returning clients save a round trip. Which
+            request must it refuse to accept as early data?
+          answer: A non-idempotent payment POST, because an attacker can replay early data
+          distractors:
+            - A large file upload, because early data cannot carry more than a few bytes
+            - A static GET, because early data is never covered by encryption
+            - Any HTTP/2 request, because 0-RTT works only on HTTP/1.1 connections
+          why: >-
+            Early data is sent before the handshake completes and has no replay protection of its own, so a
+            recorded request can be sent again. A server should accept it only for requests that are safe to
+            repeat, or add anti-replay measures; that is the price of saving the round trip.
+          source: rfc8446
+  - id: load-balancing
+    name: Load balancers & health checks
+    layer: understory
+    branch: network-and-platform
+    tier: 1
+    needs:
+      - tcp
+      - dns-ttl
+    harvest: recall
+    minutes: 45
+    sources: [sre-book]
+    summary: >-
+      Read SRE Book ch. 20, Load Balancing in the Datacenter (subsetting, lame duck state, round robin versus
+      least-loaded), skim ch. 19 for DNS-level balancing, and read the load-balancing parts of ch. 22,
+      Addressing Cascading Failures. Notes: how an unhealthy backend leaves the pool, why equal request counts
+      are not equal load, and how lost capacity snowballs; look up L4 versus L7 in your balancer's docs.
+    rubric:
+      - Contrasts L4 and L7 balancing and what each can route on
+      - Explains an active health check and what too-sensitive thresholds cause (flapping, overload of the rest)
+      - Names a policy better than plain round robin and when it wins
+      - Describes connection draining before a backend is taken out
+    questions:
+      water:
+        - q: Round robin sends equal request counts to every backend, yet one runs hot. What is the usual reason?
+          answer: Requests vary in cost, so equal counts are not equal load
+          distractors:
+            - Round robin hashes client IPs, so busy clients pile onto one backend
+            - Health checks consume most of the capacity of the busiest backend
+            - Layer 7 balancers cannot spread HTTP requests evenly at all
+          why: >-
+            Round robin counts requests, not work. A few expensive requests landing on the same backend, or one
+            slow instance, skew load; least-loaded or latency-aware policies react to actual state.
+          source: sre-book
+        - q: >-
+            A balancer ejects a backend after one failed probe at a 1 s interval. What risk does that create
+            during a brief GC pause?
+          answer: Backends flap in and out, and the shifted load can overload the rest
+          distractors:
+            - The balancer closes all client connections to the pool for good
+            - The ejected backend's data is rebalanced onto the other nodes
+            - The probes start being counted as real traffic in the request metrics dashboards
+          why: >-
+            A hair-trigger check turns a pause into capacity loss. The surviving backends take the extra load,
+            slow down and may fail their own checks, so more get ejected: the snowball of a cascading failure.
+            Tolerating several failed probes before ejecting avoids that.
+          source: sre-book
+      harvest:
+        - q: A backend is about to be removed for a deploy. How do you avoid dropping requests it is serving?
+          answer: Stop sending it new requests, let in-flight ones finish, then stop it
+          distractors:
+            - Kill the process straight away and let the clients retry whatever failed
+            - Lower the DNS TTL to zero so clients move elsewhere
+            - Raise the health-check interval so the balancer notices the removal later on
+          why: >-
+            Draining (the lame duck state in the SRE book) separates routing from lifetime. The balancer stops
+            choosing the backend while existing requests complete, and only then does it shut down.
+          source: sre-book
+  - id: container-images
+    name: Images & layers
+    layer: shrub
+    branch: network-and-platform
+    tier: 1
+    needs:
+      - linux-namespaces
+    harvest: recall
+    minutes: 40
+    sources: [oci-image-spec, docker-build-cache, k8s-docs]
+    summary: >-
+      Read the OCI image spec overview (spec.md) and layer.md (changesets and whiteouts), Docker's Optimize
+      cache usage in builds (cache invalidation, order your layers), and the Kubernetes page on Images (pull
+      policy, digests). Notes: an image is a manifest, a config and ordered layers named by digest; how layers
+      stack; why build order affects the cache; tag versus digest.
+    rubric:
+      - Describes an image as a manifest, a config and ordered layers, each addressed by content digest
+      - Explains how read-only layers stack with a writable layer on top, and what a whiteout does
+      - Orders build steps by how often they change so the cache is reused
+      - Says why a digest is immutable while a tag can be moved
+    questions:
+      water:
+        - q: >-
+            You delete a 500 MB file in a later RUN step of a Dockerfile, yet the image does not shrink. Why?
+          answer: The earlier layer still holds the file, and the later layer only hides it
+          distractors:
+            - Layers are compressed, so deletions never change the reported image size at all
+            - The runtime keeps a backup of every file you delete during a build
+            - Deleted files stay in the writable layer until the container exits
+          why: >-
+            Layers are append-only changesets. A deletion adds a whiteout marker in the new layer, but the bytes
+            in the older layer still ship. Delete the file in the same RUN step that creates it, so that no layer
+            ever stores it.
+          source: oci-image-spec
+        - q: Which build order gives the best cache hits for a code-heavy app?
+          answer: Copy the dependency manifests and install first, then copy the source
+          distractors:
+            - Copy the whole source tree first, then install the dependencies it needs
+            - Install dependencies last so they are always the freshest ones
+            - Put every command in one RUN line to maximise reuse of that single layer cache
+          why: >-
+            A changed instruction invalidates every layer after it. Source changes often and dependencies rarely,
+            so putting the stable steps first keeps the expensive install layer cached.
+          source: docker-build-cache
+      harvest:
+        - q: >-
+            A Deployment uses shop/api:latest with imagePullPolicy IfNotPresent. After you push a fix to :latest,
+            some nodes still run the old code. Why?
+          answer: Nodes that cached an image under that tag never pull it again, so the tag drifts
+          distractors:
+            - Registries serve the previous manifest for an hour after a push
+            - Image layers are immutable, so a pushed tag cannot change content
+            - The scheduler only pulls images when node CPU is idle
+          why: >-
+            A tag is a movable pointer, and IfNotPresent trusts whatever the node has under that name. Deploy by
+            digest (or a unique version tag) so every node runs the same bytes.
+          source: k8s-docs
+  - id: time-wait
+    name: TIME_WAIT & port exhaustion
+    layer: root
+    branch: network-and-platform
+    tier: 1
+    needs:
+      - tcp
+    wild: true
+    harvest: recall
+    minutes: 30
+    sources: [bernat-time-wait, hpbn]
+    summary: >-
+      Read Vincent Bernat's article on the TIME-WAIT state (why it exists, the 60 second timer, the ephemeral
+      port range), the tcp_tw_reuse and tcp_max_tw_buckets entries of tcp(7), and HPBN ch. 11, HTTP/1.X, on
+      keepalive connections. Notes: why the side that closes first lingers in TIME_WAIT, how a client runs out
+      of ephemeral ports to one destination, and why connection reuse is the real fix.
+    rubric:
+      - Explains why TIME_WAIT exists (old segments must expire, and a lost final ACK must be answered)
+      - Says which side ends up holding TIME_WAIT and what it occupies (a 4-tuple, hence a local port)
+      - Estimates how fast ports run out from the range size and the 60 second timer
+      - Prefers connection reuse over kernel tuning, and says when tw_reuse is safe
+    questions:
+      water:
+        - q: >-
+            A service opens a new connection to the same upstream IP and port for every request and starts
+            failing with 'cannot assign requested address' at a few hundred requests a second. Why?
+          answer: Closed sockets sit in TIME_WAIT and hold ephemeral ports, so none are free for new connections
+          distractors:
+            - The upstream rejects more than a few hundred SYN packets per second
+            - Each connection leaks a file descriptor until the process restarts
+            - DNS returns the same address too often, which the kernel blocks
+          why: >-
+            A connection is identified by source IP, source port, destination IP and destination port. With
+            only the source port free to vary, about 28,000 default ephemeral ports at 60 seconds each allow
+            roughly 470 new connections a second. Reusing connections avoids it.
+          source: bernat-time-wait
+        - q: What is the best fix for port exhaustion caused by short-lived outbound connections?
+          answer: Reuse connections with keep-alive or a pool
+          distractors:
+            - Shorten the DNS TTL so each connection picks a new upstream address
+            - Raise the TCP backlog so more connections can queue before connecting
+            - Disable TLS so each handshake finishes before the port is needed
+          why: >-
+            The cost is per connection opened, so open fewer. Widening the port range or enabling tcp_tw_reuse
+            only moves the ceiling; a pool removes the churn that fills TIME_WAIT.
+          source: hpbn
+      harvest:
+        - q: >-
+            Why does TCP make the side that closes first wait in TIME_WAIT instead of freeing the port at once?
+          answer: Stray segments from the old connection must expire, and a lost last ACK needs a reply
+          distractors:
+            - The kernel needs the time to zero the socket buffers securely
+            - The peer must finish reading the data that was already sent
+            - Routers along the path keep a flow table entry for that pair of addresses for about a minute
+          why: >-
+            If the port were reused immediately, a stray segment from the old connection could be accepted by
+            the new one. The wait also lets the closer re-ACK a retransmitted FIN if its last ACK was lost.
+          source: bernat-time-wait
   - id: mesh
     name: Service mesh
     layer: canopy
@@ -74,38 +595,599 @@ seeds:
       - k8s
       - tls
     harvest: recall
+    minutes: 50
+    sources: [istio-architecture, istio-security, sre-book]
+    summary: >-
+      Read Istio's Architecture page (data plane proxies, control plane) and its Security concepts page
+      (workload identity, mutual TLS, PeerAuthentication modes), then SRE Book ch. 22, Addressing Cascading
+      Failures, on retries. Pair it with the docs of the mesh you use. Notes: data plane versus control plane,
+      workload identity, the policies moved out of code, and the costs.
+    rubric:
+      - Describes the data plane (per-pod proxies) and the control plane (configuration and certificates)
+      - Explains mTLS with a per-workload identity and what it adds over network-level trust
+      - Names the policies moved out of code, such as retries, timeouts, circuit breaking and traffic shifting
+      - States the costs, including the extra hop, per-pod overhead, harder debugging and retry amplification
     questions:
       water:
         - q: A sidecar mesh moves retries, mTLS and metrics…
           answer: Out of application code into a per-pod proxy
           distractors:
-            - Into the kernel
-            - Into the load balancer only
-            - Into the database
-          why: "Cost: an extra hop per call and more moving parts to run."
+            - Into the kernel's network stack on each node
+            - Into the cloud load balancer in front of the cluster
+            - Into the database driver used by each service
+          why: >-
+            The sidecar proxies are the data plane and mediate all traffic, so retries, mTLS and telemetry are
+            configured rather than coded. A control plane pushes configuration and certificates to them. The
+            price is an extra hop per call and more moving parts to run.
+          source: istio-architecture
+        - q: >-
+            The application makes up to 3 attempts per call, and the mesh sidecar also makes up to 3 attempts per
+            call it forwards. How many requests can a failing backend receive from one user request?
+          answer: Nine
+          distractors:
+            - Three, because the mesh de-duplicates the retries
+            - Six, because the two retry counts add together
+            - One, because retries are idempotent and collapse
+          why: >-
+            Layered retries multiply (3 × 3), and across several hops the factor compounds. This retry
+            amplification can turn a struggling backend into a dead one, so keep retries at a single layer and
+            use budgets.
+          source: sre-book
+      harvest:
+        - q: >-
+            A team turns on strict mTLS mesh-wide and a legacy job sending plain HTTP starts failing. What is
+            the best fix?
+          answer: Bring the job into the mesh, or allow permissive mode on that port while it migrates
+          distractors:
+            - Turn strict mTLS off for the entire namespace for good
+            - Have the job switch off certificate checking in its HTTP client
+            - Make the job connect to the pod IP directly to skip the sidecar
+          why: >-
+            Strict mode rejects connections without a mesh identity. A scoped, temporary exception keeps every
+            other workload protected, whereas disabling it broadly removes the benefit you adopted the mesh for.
+          source: istio-security
+    prompts:
+      - A team of ten services wants to adopt a sidecar mesh for mTLS and retries. Argue for or against, name the two costs you would measure first, and say what you would do differently for a three-service system.
+  - id: k8s-probes
+    name: Liveness vs readiness probes
+    layer: herb
+    branch: network-and-platform
+    tier: 2
+    needs:
+      - k8s
+      - load-balancing
+    harvest: artifact
+    minutes: 40
+    sources: [k8s-docs]
+    summary: >-
+      Read Configure Liveness, Readiness and Startup Probes and the container probes part of Pod Lifecycle.
+      Notes: what each probe triggers on failure (restart, removal from endpoints, holding off the others), when
+      a startup probe is needed, and the classic mistakes of dependency checks and tight timeouts.
+    rubric:
+      - States what each failure does (liveness restarts, readiness removes from endpoints, startup holds off the others)
+      - Explains why a liveness probe must not depend on downstream services
+      - Says what a startup probe is for and how it protects slow starters
+      - Chooses periods, timeouts and thresholds and names what goes wrong if they are too aggressive
+    questions:
+      water:
+        - q: >-
+            A pod's readiness probe fails because the database is down. What does Kubernetes do to the pod?
+          answer: Removes it from Service endpoints but does not restart it
+          distractors:
+            - Restarts the container repeatedly until the database comes back
+            - Evicts the pod and reschedules it on another node
+            - Scales the Deployment up to cover the lost pod
+          why: >-
+            Readiness controls whether traffic is sent to the pod. Only liveness failures restart a container, so
+            a not-ready pod keeps running and rejoins as soon as the probe passes.
+          source: k8s-docs
+        - q: Why is it risky for a liveness probe to call the database?
+          answer: A database outage restarts every pod at once, turning a blip into an outage
+          distractors:
+            - Liveness probes are not allowed to open any network connections from the pod
+            - The kubelet counts the probe's database queries against the pod's CPU limit and throttles it
+            - Probes that touch storage delay the scheduler on that node
+          why: >-
+            Liveness answers one question: is this process wedged in a way only a restart fixes? A shared
+            dependency failing is not that, and restarting every replica adds cold-start load to the recovery.
+          source: k8s-docs
+        - q: >-
+            A service needs about 90 seconds to warm up, and its liveness probe starts checking after 10 seconds
+            with a failure threshold of 3. Pods restart in a loop at startup. What is the cleanest fix?
+          answer: Add a startup probe that allows enough time, so liveness only starts once it passes
+          distractors:
+            - Remove the readiness probe so the pod is never marked as not ready
+            - Set the restart policy to Never so that failed containers stay down
+            - Point the liveness probe at the database to check the real dependency
+          why: >-
+            While a startup probe is running, the kubelet holds off the liveness and readiness probes. A generous
+            startup window protects slow starters without loosening liveness for the rest of the pod's life.
+          source: k8s-docs
+    prompts:
+      - Pick a service you run. Write its Deployment's startup, readiness and liveness probes with timings and a sentence on what each endpoint checks and why. Then prove it works, for example by stopping its dependency and pasting the pod events and endpoints that show readiness failing without a restart.
+  - id: k8s-resources
+    name: Requests, limits & OOMKill
+    layer: root
+    branch: network-and-platform
+    tier: 2
+    needs:
+      - k8s
+      - linux-namespaces
+    harvest: judged
+    minutes: 50
+    sources: [k8s-docs]
+    summary: >-
+      Read Resource Management for Pods and Containers (requests, limits, how the kernel enforces them, and
+      the troubleshooting section on terminated containers) and Pod Quality of Service Classes. Notes: request
+      versus limit, CPU throttling versus memory kills, the QoS classes and eviction order, and how to read
+      OOMKilled and exit code 137.
+    rubric:
+      - Separates requests (scheduling and CPU weight) from limits (enforced ceilings)
+      - Explains why going over a CPU limit throttles while going over a memory limit kills
+      - Names the QoS classes and which are evicted first under node pressure
+      - Diagnoses an OOMKilled container (reason, exit code 137) and chooses between raising the limit and fixing the leak
+    questions:
+      water:
+        - q: A container with a 512Mi memory limit allocates past it. What happens?
+          answer: The kernel OOM-kills the process, and the kubelet restarts it with reason OOMKilled
+          distractors:
+            - The kernel throttles allocations until some memory is freed
+            - The scheduler evicts the pod at its next scheduling cycle
+            - The container quietly swaps to disk and carries on
+          why: >-
+            Memory cannot be taken back, so when a container stays over its limit the kernel's OOM killer ends the
+            process (SIGKILL, exit code 137); enforcement is reactive, so it happens under memory pressure. CPU is
+            different: it is compressible, so overuse is throttled rather than killed.
+          source: k8s-docs
+        - q: >-
+            A service with a CPU limit of 500m shows p99 latency spikes while node CPU is mostly idle. What is the
+            likely cause?
+          answer: CPU throttling, as it spends its allowance early and then stalls
+          distractors:
+            - The node is out of memory and has started swapping
+            - The pod's request is below its limit, so the kernel caps it at the request
+            - The node's CPU requests are overcommitted, so the kernel gives this pod less than it asked for
+          why: >-
+            A 500m limit caps the container at half a core of CPU time on average. A multi-threaded burst can
+            spend that allowance quickly, and the kernel then holds the container back until the next accounting
+            period, which shows up as latency even when the node has idle CPU.
+          source: k8s-docs
+    prompts:
+      - Your Java service is OOMKilled every few hours with a 1Gi limit. Explain how you would work out whether the cause is heap, native or off-heap memory, or a real leak, and what you would change in requests, limits and JVM flags.
+      - Explain why many teams set memory request equal to limit and leave the CPU limit unset. Say when you would disagree.
+  - id: terraform-state
+    name: Terraform state
+    layer: shrub
+    branch: network-and-platform
+    tier: 0
+    harvest: artifact
+    minutes: 50
+    sources: [terraform-docs]
+    summary: >-
+      Read the Terraform docs State overview and its sidebar pages Purpose, Manage state in remote backends and
+      Locking, then Refactor state (state subcommands and moved blocks). Notes: what state maps, why plan
+      depends on it, what locking prevents, how drift is found and fixed, and why state can hold secrets.
+    rubric:
+      - Says what state stores (resource addresses mapped to real object IDs and attributes)
+      - Explains remote backends with locking and what goes wrong with shared local state
+      - Explains drift and how plan, refresh and import reconcile it
+      - Warns that state can hold secrets in plaintext and says how it is protected
+    questions:
+      water:
+        - q: >-
+            Two engineers run terraform apply at the same time against one remote state with no locking. What can
+            go wrong?
+          answer: Both start from the same snapshot, and one write overwrites or corrupts the other's changes
+          distractors:
+            - Terraform merges the runs automatically using resource timestamps
+            - The second apply waits and then re-plans on its own
+            - Each run builds a separate copy of the infrastructure
+          why: >-
+            State is a single document. Without a lock, two read-modify-write cycles interleave and the last
+            writer wins, leaving state that no longer matches reality. Locking makes the second run wait or fail.
+          source: terraform-docs
+        - q: A resource block is renamed in the config with no other change. Without more steps, plan shows…
+          answer: A destroy of the old address and a create of the new one
+          distractors:
+            - A harmless in-place rename of the real object
+            - An error, because state is keyed by cloud IDs
+            - Nothing, since state still matches the real infrastructure
+          why: >-
+            State is keyed by resource address. A new address looks like a new resource and the old one looks
+            orphaned. A moved block (or terraform state mv) tells Terraform it is the same object.
+          source: terraform-docs
+    prompts:
+      - "Prove you understand state in a sandbox: create a small config (the local or random providers are enough), apply it, then cause drift or rename a resource. Paste the plan output before and after, and the moved block, import or state command you used to reconcile it."
+  - id: http2-http3
+    name: HTTP/2 & HTTP/3
+    layer: root
+    branch: network-and-platform
+    tier: 2
+    needs:
+      - tcp
+      - tls
+    harvest: judged
+    minutes: 50
+    sources: [hpbn, rfc9114]
+    summary: >-
+      Read HPBN ch. 12, HTTP/2 (binary framing, multiplexing, header compression, and the note on head-of-line
+      blocking at the TCP level), then RFC 9114 section 2, HTTP/3 Protocol Overview. Notes: what a stream is,
+      why HTTP/2 over TCP still has head-of-line blocking, and what changes when the transport is QUIC.
+    rubric:
+      - Explains streams multiplexed over one connection, with flow control per stream and per connection
+      - Says why one lost packet stalls every stream on HTTP/2 over TCP
+      - Describes what QUIC changes (independent streams over UDP, TLS 1.3 built in, faster setup)
+      - Names a deployment consequence, such as UDP being blocked on some networks and the fallback to HTTP/2
+    questions:
+      water:
+        - q: Why does one lost packet stall every request on an HTTP/2 connection?
+          answer: TCP delivers bytes in order, so all streams wait behind the missing segment
+          distractors:
+            - HTTP/2 handles requests one at a time, so each waits for the previous reply
+            - The server must repeat the TLS handshake before it can recover a lost record
+            - Header compression state is rebuilt from scratch after each loss
+          why: >-
+            HTTP/2 multiplexes many streams over a single TCP byte stream. TCP does not know about streams, so a
+            gap in the bytes holds back everything after it, including streams whose data had already arrived.
+          source: hpbn
+        - q: What lets HTTP/3 avoid that stall?
+          answer: QUIC delivers streams independently, so a loss only delays its own stream
+          distractors:
+            - It sends every request twice over two separate TCP connections to hide any loss
+            - It drops reliability and leaves retransmission up to the application itself
+            - It uses larger packets so that fewer packets are lost overall
+          why: >-
+            QUIC runs over UDP and implements reliability per stream. Loss on one stream does not block the
+            others, and TLS 1.3 is part of the handshake, so setup is faster too.
+          source: rfc9114
+    prompts:
+      - A mobile API gateway serves JSON to apps on flaky cellular networks. Argue for or against enabling HTTP/3 on it. Say what should improve, what could break, and how you would measure it before and after.
+      - Explain to a teammate who says HTTP/2 fixed head-of-line blocking why that is only half true, and what you would show them.
+  - id: secrets-mgmt
+    name: Secrets management
+    layer: vine
+    branch: network-and-platform
+    tier: 3
+    needs:
+      - terraform-state
+      - tls
+    harvest: judged
+    minutes: 50
+    sources: [k8s-docs, terraform-docs]
+    summary: >-
+      Read the Kubernetes pages on Secrets (including Good practices for Kubernetes Secrets and encrypting
+      Secret data at rest) and the Terraform State overview on storing state securely. Notes: base64 is
+      encoding, who can read a Secret through RBAC or etcd, where secrets leak, and rotation with short-lived
+      credentials.
+    rubric:
+      - States that a Kubernetes Secret is only base64-encoded unless encryption at rest is switched on
+      - Lists where secrets leak (git history, image layers, logs, environment dumps, Terraform state)
+      - Explains rotation and why short-lived or dynamic credentials beat long-lived static keys
+      - Describes least-privilege access, such as RBAC and a per-workload identity
+    questions:
+      water:
+        - q: A Kubernetes Secret manifest shows password cGFzc3dvcmQ=. What protects that value?
+          answer: Nothing by itself, since base64 is only an encoding
+          distractors:
+            - The kubelet encrypts it with the node key as soon as it is applied
+            - Base64 is a one-way hash that cannot feasibly be reversed
+            - The API server redacts the field from every response it serves
+          why: >-
+            Base64 is reversible by anyone. Protection comes from RBAC on who can read Secrets, encryption at
+            rest for etcd, and keeping the manifest out of source control.
+          source: k8s-docs
+        - q: >-
+            A team shares infrastructure by committing terraform.tfstate to git, and the config generates a
+            database password. What is the main danger?
+          answer: Runs are not locked against each other, and the password is readable by anyone with repo access
+          distractors:
+            - Git merges concurrent state edits line by line, which Terraform treats as a safe update
+            - The state holds only resource IDs, so nothing sensitive can leak from the file
+            - Terraform encrypts the state on write, so repository access alone reveals nothing
+          why: >-
+            State can hold the real attribute values of the resources it manages, secrets included, so the file
+            is itself a secret. Git gives no state locking and no fine-grained access control. Use a remote
+            backend with locking, encryption and restricted access, and keep state out of version control.
+          source: terraform-docs
+    prompts:
+      - Design how a service gets its database password in production, from creation through delivery to the pod, rotation, and revocation when a person leaves the team. Name what you would use at each step and what each step could leak.
+      - A Terraform module creates a database with a generated password. Describe everywhere that password now lives and how you would shrink that list.
+  - id: k8s-autoscaling
+    name: Horizontal autoscaling
+    layer: understory
+    branch: network-and-platform
+    tier: 3
+    needs:
+      - k8s-resources
+      - k8s-probes
+    harvest: judged
+    minutes: 50
+    sources: [k8s-docs]
+    summary: >-
+      Read Horizontal Pod Autoscaling (the algorithm, metric types, stabilization and scaling behaviour) and
+      skim the Kubernetes pages on node autoscaling. Notes: the desired-replicas formula, why utilisation is
+      measured against requests, how scale-down is damped, and how pod and node scaling interact.
+    rubric:
+      - States the control-loop formula and what the metric is divided by
+      - Explains that CPU utilisation is relative to requests, so wrong requests mean wrong scaling
+      - Describes stabilization windows and why they stop flapping
+      - Explains the link between pod scaling and node scaling (Pending pods trigger new nodes)
+    questions:
+      water:
+        - q: >-
+            An HPA targets 50% CPU utilisation, and its 4 replicas average 100%. Roughly how many replicas does
+            it ask for?
+          answer: Eight
+          distractors:
+            - Five, one step above what runs now
+            - Six, half of the overload added
+            - Twelve, to triple capacity first
+          why: >-
+            desired = ceil(current × currentMetric / targetMetric) = ceil(4 × 100 / 50) = 8. The controller
+            scales proportionally to the gap, subject to the scale-up policy limits.
+          source: k8s-docs
+        - q: A CPU-based HPA never scales a Deployment whose pods declare no CPU request. Why?
+          answer: Utilisation is a share of the request, which is undefined without one
+          distractors:
+            - The metrics server only reports pods that set limits, so the HPA sees nothing
+            - HPA reads memory only unless a custom metric is added
+            - The scheduler hides pods without a request from the autoscaler's view entirely
+          why: >-
+            Utilisation is usage divided by request. With no request there is no denominator, and the HPA
+            reports that it cannot compute the metric.
+          source: k8s-docs
+    prompts:
+      - A queue-consumer Deployment should scale with backlog, not CPU. Describe the scaling signal, how you would expose it to the autoscaler, the thresholds, and two failure modes such as flapping or a thundering herd on the database.
+  - id: rolling-canary
+    name: Rolling & canary deploys
+    layer: understory
+    branch: network-and-platform
+    tier: 3
+    needs:
+      - k8s-probes
+      - load-balancing
+    harvest: judged
+    minutes: 50
+    sources: [k8s-docs, sre-workbook]
+    summary: >-
+      Read the Kubernetes Deployments page (rolling update, maxSurge, maxUnavailable) and SRE Workbook ch. 16,
+      Canarying Releases. Notes: how readiness paces a rollout, what a canary shows that a rolling update does
+      not, and the metrics that gate promotion and rollback. Then reason about how a schema change behaves
+      while old and new versions run side by side.
+    rubric:
+      - Explains maxSurge and maxUnavailable and how readiness gates each step
+      - Tells a rolling update (replace gradually) from a canary (compare a small slice against a baseline)
+      - Names the signals that gate promotion and the condition that triggers rollback
+      - Notes that old and new versions run together, so schemas and messages must be compatible both ways
+    questions:
+      water:
+        - q: >-
+            A 4-replica Deployment rolls out with maxUnavailable 0 and maxSurge 1. What does it do?
+          answer: Starts one new pod, waits for it to be ready, then removes one old pod, and repeats
+          distractors:
+            - Removes one old pod first, then starts its replacement
+            - Starts all four new pods together, then deletes the old ones
+            - Pauses after each step until an operator approves the next
+          why: >-
+            With zero unavailable, capacity never dips below four ready pods. The surge pod must pass readiness
+            before an old one is removed, which is why a good readiness probe is the safety of a rolling update.
+          source: k8s-docs
+        - q: Why can a rolling update finish successfully while users see errors?
+          answer: Ready means the probe passed, not that request error rates are healthy
+          distractors:
+            - Kubernetes waits until every request to the new pods succeeds before it finishes
+            - Rolling updates complete before any new pod receives traffic
+            - Old pods keep serving until the next release overwrites them
+          why: >-
+            A rollout judges pods by readiness alone. A bug that only shows under real traffic passes that gate.
+            A canary compares live error and latency metrics against the baseline and catches what probes cannot.
+          source: sre-workbook
+    prompts:
+      - Design a canary for a payments API. Give the traffic share, the duration, three metrics you compare against the baseline, and the rule that rolls back automatically. Explain how a database migration changes the plan.
+  - id: gitops-platform
+    name: GitOps platform
+    layer: canopy
+    branch: network-and-platform
+    tier: 4
+    needs:
+      - rolling-canary
+      - terraform-state
+      - secrets-mgmt
+    harvest: judged
+    minutes: 60
+    sources: [argo-cd-docs, k8s-docs, terraform-docs, sre-book]
+    summary: >-
+      Read Argo CD's Automated Sync Policy page, the Kubernetes page on declarative management of objects with
+      configuration files, the Terraform State overview again with fresh eyes, and SRE Book ch. 8, Release
+      Engineering (hermetic builds, configuration management, canarying). Notes: desired state in git,
+      pull-based reconciliation, drift handling, promotion across environments, and where secrets stay.
+    rubric:
+      - States the principles (declarative desired state, versioned in git, pulled and continuously reconciled)
+      - Contrasts pull-based reconcilers with push-based CI deploys (credentials, drift detection)
+      - Explains promotion and rollback as git operations
+      - Says where Terraform and the cluster reconciler split responsibility, and how secrets stay out of git
+    questions:
+      water:
+        - q: What does an in-cluster pull-based GitOps agent improve over a CI job that runs kubectl apply?
+          answer: Pipelines need no deploy access to the cluster, and live drift can be undone automatically
+          distractors:
+            - Deploys finish faster because the manifests are compiled ahead of time by the agent
+            - Git stores the running pods' memory contents so that rollbacks restore their state
+            - It removes the need to review changes before they are deployed
+          why: >-
+            A push pipeline needs credentials that can change the cluster and only acts when it runs. With a pull
+            agent the pipeline just commits to git, and the agent compares live state with git and, with
+            self-heal on, reverts out-of-band edits instead of silently keeping them.
+          source: argo-cd-docs
+        - q: Someone edits a Deployment live with kubectl edit while the agent has auto-sync and self-heal on. What happens?
+          answer: The agent reverts the live object to match git
+          distractors:
+            - The live change is committed back to git as a new revision
+            - The agent pauses every sync until a person approves
+            - The API server rejects any edit not made through git
+          why: >-
+            Self-heal treats git as the source of truth and overwrites differences. That makes emergency hand
+            edits temporary, so the real fix must land as a commit.
+          source: argo-cd-docs
+    prompts:
+      - Describe the path from a merged pull request to production for one service change and one database-schema change under GitOps. Name the repos, what reconciles each, and where a rollback happens.
+      - Argue where the boundary between Terraform-managed infrastructure and cluster-reconciled workloads should sit for a platform you know, and what breaks if it blurs.
+  # ---------------------------------------------------------------- Data & reliability
   - id: mvcc
     name: Postgres MVCC
     layer: shrub
     branch: data-and-reliability
     tier: 0
     harvest: recall
+    minutes: 45
+    sources: [pg-docs]
+    summary: >-
+      Read the PostgreSQL docs Concurrency Control (introduction and transaction isolation) and the first part
+      of Routine Vacuuming. Notes: xmin and xmax on a row version, how a snapshot decides visibility, what a
+      dead tuple is, Read Committed versus Repeatable Read, and why long transactions hurt.
+    rubric:
+      - Describes a row version with xmin and xmax and how a snapshot decides what is visible
+      - Explains that UPDATE writes a new version and leaves a dead one behind
+      - Contrasts the snapshots of Read Committed and Repeatable Read
+      - Connects dead tuples to VACUUM, bloat and the long-transaction problem
     questions:
       water:
         - q: An UPDATE in Postgres…
           answer: Writes a new row version; the old one stays until VACUUM
           distractors:
-            - Overwrites the row in place
-            - Takes a table-level lock
-            - Deletes the page and rewrites it
-          why: Readers keep seeing the old version; dead tuples are reclaimed by VACUUM.
+            - Overwrites the row in place and keeps a copy in an undo log
+            - Takes a table-level lock for the duration of the statement
+            - Deletes the page and rewrites it with the new values
+          why: Readers keep seeing the old version; dead tuples are reclaimed by VACUUM. Undo logs belong to other engines such as InnoDB, not Postgres.
+          source: pg-docs
+        - q: In Postgres, why does a long SELECT not block a concurrent UPDATE of the same rows?
+          answer: The SELECT reads its snapshot's versions while the UPDATE writes new ones
+          distractors:
+            - The row locks that SELECT takes are shared and compatible with UPDATE's locks
+            - Postgres copies the whole table into a private area for every reading transaction
+            - The UPDATE is sent to a replica and merged back afterwards
+          why: >-
+            A plain SELECT takes no row locks. Readers see the versions visible to their snapshot, and writers
+            create new versions, so readers and writers do not block each other.
+          source: pg-docs
       harvest:
         - q: A long-running transaction hurts mostly because…
           answer: VACUUM cannot remove dead tuples that transaction might still see
           distractors:
-            - It burns CPU constantly
-            - It locks every index
-            - It blocks all writers
+            - It holds a CPU core busy for the whole time it runs
+            - It takes a lock on every index of every table that it has touched so far
+            - It blocks all writers on the rows it has read
           why: Table bloat grows until the old snapshot is released.
+          source: pg-docs
+  - id: use-method
+    name: The USE method
+    layer: herb
+    branch: data-and-reliability
+    tier: 0
+    harvest: recall
+    minutes: 30
+    sources: [use-method, sre-book]
+    summary: >-
+      Read Brendan Gregg's USE Method page, including its Linux checklist and the Software Resources section,
+      then skim SRE Book ch. 6, Monitoring Distributed Systems, for the four golden signals. Notes:
+      utilization, saturation and errors for each resource (CPU, memory, disk, network, queues), how to walk a
+      resource list instead of guessing, and where the method stops working.
+    rubric:
+      - Defines utilization, saturation and errors and gives an example of each for one resource
+      - Explains why saturation (queueing) can hurt while utilization looks modest
+      - Walks the method as a checklist of resources, then metrics, instead of guessing
+      - Says where it is weak (software resources, complex bottlenecks) and what to use alongside it
+    questions:
+      water:
+        - q: In the USE method, what does 'saturation' mean for a disk?
+          answer: Work waiting in a queue because the device cannot keep up
+          distractors:
+            - The share of the device's capacity that is currently in use
+            - The count of reads and writes that failed with an error
+            - The amount of free space remaining on the volume
+          why: >-
+            Utilization is how busy the resource is, saturation is the extra work it cannot service yet and so
+            queues, and errors are failed operations. Queueing is what turns busy into slow.
+          source: use-method
+        - q: >-
+            A host shows 40% average CPU utilisation, yet requests are slow. Which reading would confirm CPU
+            contention?
+          answer: A run queue longer than the number of cores
+          distractors:
+            - Hardware error counters reported by the CPU
+            - The per-core utilisation averaged over the last day
+            - The number of network interrupts per second
+          why: >-
+            Averages hide bursts. A run queue longer than the core count means runnable threads are waiting for a
+            CPU, which is saturation even when utilisation looks moderate.
+          source: use-method
+      harvest:
+        - q: >-
+            A service stalls although CPU, memory, disk and network all look healthy. What does the USE method
+            suggest looking at next?
+          answer: Software resources such as thread pools, locks and file descriptor limits
+          distractors:
+            - The application's source for obvious inefficiencies
+            - Only the error log, since resource metrics came back clean
+            - A bigger instance type to remove the guesswork
+          why: >-
+            USE also applies to software resources: a thread pool, a mutex or a file descriptor limit can
+            saturate, with waiters queueing, while the hardware sits idle. Gregg treats these as a secondary
+            check after the hardware.
+          source: use-method
+  - id: redis-persistence
+    name: Redis durability & eviction
+    layer: shrub
+    branch: data-and-reliability
+    tier: 0
+    harvest: recall
+    minutes: 40
+    sources: [redis-docs, redis-eviction]
+    summary: >-
+      Read the Redis docs on persistence (RDB snapshots, AOF, fsync policies) and the separate page on key
+      eviction (maxmemory and maxmemory-policy). Notes: what each mode can lose in a crash, the fork cost of snapshots, and how the
+      eviction policies behave for a cache versus a primary store.
+    rubric:
+      - Compares RDB and AOF by data-loss window and restart time
+      - Names the AOF fsync options (always, everysec, no) and the trade-off between them
+      - Explains the maxmemory eviction policies and why noeviction returns errors on writes
+      - Says that a cache and a primary store want different settings
+    questions:
+      water:
+        - q: With AOF fsync set to everysec, how much data can a sudden power loss cost?
+          answer: Around one second of the most recent writes
+          distractors:
+            - Everything since the last RDB snapshot was taken
+            - Nothing, because every write is flushed to disk first
+            - Only the keys that have a TTL set on them
+          why: >-
+            everysec flushes the append-only file once a second in the background. That balances speed against a
+            small window of loss; always is safer but slower, and no leaves the timing to the OS.
+          source: redis-docs
+        - q: Redis fills to maxmemory under the noeviction policy. What do clients see?
+          answer: Write commands fail with an out-of-memory error while reads still work
+          distractors:
+            - The least recently used keys are dropped quietly to make room for the new writes
+            - Redis restarts and reloads its last snapshot
+            - Every command blocks until memory is freed
+          why: >-
+            noeviction protects the data: it refuses writes that would grow memory rather than delete anything.
+            That is right for a primary store and surprising for a cache.
+          source: redis-eviction
+      harvest:
+        - q: >-
+            Cache entries (with TTLs) and job-queue keys (no TTL) share one Redis. Which maxmemory-policy avoids
+            evicting the jobs?
+          answer: volatile-lru
+          distractors:
+            - allkeys-lru
+            - allkeys-lfu
+            - allkeys-random
+          why: >-
+            The volatile policies only consider keys that have an expiry, so keys without a TTL are never
+            evicted (writes fail instead if nothing can be freed). The allkeys policies may remove any key,
+            including jobs. A separate instance is cleaner still.
+          source: redis-eviction
   - id: pgidx
     name: Indexes & planner
     layer: shrub
@@ -114,15 +1196,50 @@ seeds:
     needs:
       - mvcc
     harvest: recall
+    minutes: 50
+    sources: [pg-docs]
+    summary: >-
+      Read the PostgreSQL docs Indexes (types, multicolumn, partial and expression indexes) and Using EXPLAIN.
+      Notes: how to read cost, rows and actual time, when the planner picks a Seq Scan, Bitmap or Index Only
+      scan, and why column order matters in a composite B-tree.
+    rubric:
+      - Reads an EXPLAIN ANALYZE plan, comparing estimated and actual rows at each node
+      - Explains why a Seq Scan can beat an index (low selectivity or a small table)
+      - Orders composite index columns for equality first, range second
+      - Knows when stale statistics mislead the planner and how ANALYZE fixes it
     questions:
       water:
         - q: "`EXPLAIN` shows a Seq Scan on an indexed column because…"
           answer: The planner estimates the index would not be cheaper (small table or low selectivity)
           distractors:
-            - Indexes only work with primary keys
-            - The column type is unsupported
-            - You forgot VACUUM
-          why: Check row estimates with EXPLAIN ANALYZE; stale statistics mislead the planner.
+            - Indexes only work on primary key and unique columns, so this one is ignored
+            - The column's data type is not supported by any index type in Postgres
+            - A recent VACUUM invalidated the index for this table
+          why: Check row estimates with EXPLAIN ANALYZE; stale statistics mislead the planner. Reading most of a table through an index costs more than scanning it once.
+          source: pg-docs
+        - q: A query filters WHERE a = 1 AND b > 10. Which composite B-tree index serves it best?
+          answer: (a, b)
+          distractors:
+            - (b, a), because the range narrows the rows fastest
+            - Two separate single-column indexes, which always win
+            - (a) alone, as a B-tree cannot hold two columns
+          why: >-
+            A B-tree is sorted by its first column, then the second within it. Equality on the leading column
+            pins one contiguous section, and the range on the second column slices it. Reversed, the range
+            leads and the equality cannot narrow it.
+          source: pg-docs
+      harvest:
+        - q: >-
+            EXPLAIN ANALYZE shows a join node estimated at 10 rows that returns 2,000,000. What is the likely fix?
+          answer: Refresh statistics with ANALYZE, or add extended statistics
+          distractors:
+            - Add an index on every column used in the join and its filters
+            - Raise work_mem until the plan changes shape
+            - Run VACUUM FULL to compact the heap
+          why: >-
+            A huge estimate gap means the planner is choosing from wrong numbers, so later plan choices are
+            wrong too. Fresh or extended statistics fix the inputs, while indexes or memory only change symptoms.
+          source: pg-docs
   - id: kafka
     name: Kafka internals
     layer: shrub
@@ -131,15 +1248,217 @@ seeds:
     needs:
       - mvcc
     harvest: recall
+    minutes: 50
+    sources: [kafka-docs, kafka-operations]
+    summary: >-
+      Read the Apache Kafka docs Design (persistence, the producer, the consumer, replication) and the
+      Modifying topics part of Basic Kafka operations. Notes: partitions as append-only logs addressed by
+      offset, how keys pick partitions and what adding partitions changes, replicas and the in-sync set, acks
+      and min.insync.replicas, and where ordering holds.
+    rubric:
+      - Describes a topic as partitioned append-only logs addressed by offsets
+      - States the ordering guarantee and how the key chooses the partition
+      - Explains leaders, followers and the in-sync replicas, and what acks=all with min.insync.replicas buys
+      - Explains retention, where consuming deletes nothing and an offset is only the consumer's position
     questions:
       water:
         - q: Ordering in Kafka is guaranteed…
           answer: Within a partition only
           distractors:
-            - Across the whole topic
-            - Across all topics of a producer
-            - Only with exactly-once enabled
-          why: Pick the partition key to be whatever you need ordered, e.g. an order id.
+            - Across the whole topic regardless of its partition count
+            - Across every topic written by a single producer
+            - Only when exactly-once processing is enabled
+          why: Pick the partition key to be whatever you need ordered, e.g. an order id. Each partition is its own log, and no order is defined between logs.
+          source: kafka-docs
+        - q: >-
+            A topic has replication factor 3, min.insync.replicas=2 and producers use acks=all. Two brokers hosting
+            a partition die. What do producers see for it?
+          answer: Sends fail with a not-enough-replicas error
+          distractors:
+            - Writes continue and the lone survivor acknowledges them
+            - Writes are buffered on the broker and acknowledged later
+            - The topic is re-created automatically with a factor of 1
+          why: >-
+            With one replica left, the in-sync set has fewer members than min.insync.replicas, so the leader
+            refuses to acknowledge. That is the intended trade: refuse writes rather than keep them on one copy.
+          source: kafka-docs
+      harvest:
+        - q: >-
+            You key events by customer_id for per-customer ordering, then grow the topic from 6 to 12 partitions.
+            A consumer now sees one customer's events out of order. Why?
+          answer: The key-to-partition mapping changed, so newer events land in a different partition
+          distractors:
+            - Kafka reorders messages whenever the partition count grows
+            - Consumers reset to offset zero when partitions are added
+            - Keys are hashed with the broker count rather than the partition count
+          why: >-
+            The default partitioner takes the key hash modulo the partition count. After the change a key may map
+            elsewhere, and there is no order across partitions, so size partitions up front or migrate deliberately.
+          source: kafka-operations
+  - id: pg-vacuum
+    name: VACUUM & bloat
+    layer: root
+    branch: data-and-reliability
+    tier: 1
+    needs:
+      - mvcc
+    harvest: recall
+    minutes: 50
+    sources: [pg-docs]
+    summary: >-
+      Read the PostgreSQL docs Routine Vacuuming (recovering disk space, planner statistics, the autovacuum
+      daemon) and the VACUUM reference page. Notes: what VACUUM frees versus VACUUM FULL, the autovacuum trigger
+      formula, and what holds back cleanup (old snapshots, replication slots, prepared transactions).
+    rubric:
+      - Explains that plain VACUUM makes dead space reusable but rarely shrinks the file
+      - Contrasts VACUUM with VACUUM FULL (a rewrite under an exclusive lock)
+      - Gives the autovacuum trigger (threshold plus scale factor times rows) and why big tables need lower factors
+      - Names what blocks cleanup, such as long transactions, abandoned replication slots and prepared transactions
+    questions:
+      water:
+        - q: After deleting half of a big table's rows, a plain VACUUM runs. What happens to the file on disk?
+          answer: It usually stays about the same size, and later inserts reuse the space
+          distractors:
+            - It halves at once because all the empty pages are truncated from the file
+            - It grows temporarily, since VACUUM writes out a full second copy of the table
+            - It shrinks once the planner's statistics are refreshed
+          why: >-
+            Plain VACUUM marks space reusable inside the file and returns it to the OS only when pages at the very
+            end are empty. VACUUM FULL rewrites the table, but needs an exclusive lock.
+          source: pg-docs
+        - q: >-
+            A 50-million-row table keeps the default autovacuum_vacuum_scale_factor of 0.2. Roughly how many dead
+            rows pile up before autovacuum runs on it?
+          answer: About 10 million
+          distractors:
+            - About 50 rows, the base threshold alone
+            - About 500 thousand, one per cent of the table
+            - About 25 million, which is half of the table
+          why: >-
+            The trigger is a threshold of 50 plus 20% of the rows, so about 10 million dead rows on this table.
+            Big tables need a much lower per-table scale factor to be vacuumed in time.
+          source: pg-docs
+      harvest:
+        - q: >-
+            A busy table is 80% dead space and a teammate plans a VACUUM FULL at lunchtime. What should they
+            expect?
+          answer: Reads and writes on the table block during the rewrite, and extra disk is needed
+          distractors:
+            - Only writes block, because VACUUM FULL takes a lock that still lets readers through
+            - Nothing is blocked, as VACUUM FULL works page by page alongside normal traffic
+            - It frees the space in place, so no extra disk is needed while it runs
+          why: >-
+            VACUUM FULL writes a complete new copy of the table and its indexes under an ACCESS EXCLUSIVE lock, so
+            every read and write waits. The old files cannot be released until the new ones are complete, so it
+            needs spare disk about the size of the table. Plain VACUUM and autovacuum avoid the need for it.
+          source: pg-docs
+  - id: pg-wal
+    name: Write-ahead log (WAL)
+    layer: root
+    branch: data-and-reliability
+    tier: 1
+    needs:
+      - mvcc
+    harvest: recall
+    minutes: 50
+    sources: [pg-docs]
+    summary: >-
+      Read the PostgreSQL docs Reliability and the Write-Ahead Log: the WAL introduction, asynchronous commit and
+      WAL configuration (checkpoints, full-page writes). Notes: why log records are flushed before data pages,
+      what a checkpoint is, what crash recovery replays, and how WAL also feeds replication and archiving.
+    rubric:
+      - States the WAL rule that log records reach durable storage before the changed data page does
+      - Explains commit durability (flush at commit) and what synchronous_commit = off gives up
+      - Describes checkpoints and what crash recovery replays after one
+      - Names the other uses of WAL, which are streaming replication, archiving and point-in-time recovery
+    questions:
+      water:
+        - q: Why can Postgres acknowledge a commit before the modified table pages are written to disk?
+          answer: The WAL record is already flushed, so recovery can replay the change
+          distractors:
+            - Table pages are written lazily, but always within about a second of the commit
+            - The OS page cache guarantees data survives a crash
+            - Commits are held in memory until the next checkpoint
+          why: >-
+            Sequential WAL writes are cheap and durable. Random writes to table pages can wait, because after a
+            crash Postgres rebuilds them by replaying the log from the last checkpoint.
+          source: pg-docs
+        - q: What risk does synchronous_commit = off add?
+          answer: The last few transactions can be lost in a crash, but the data stays consistent
+          distractors:
+            - The database can be corrupted after a crash and will need a restore from backup
+            - Replicas permanently diverge from the primary
+            - Commits wait for every replica to confirm
+          why: >-
+            The commit returns before its WAL is flushed, so a crash may drop a short tail of recent commits
+            (about three times wal_writer_delay at most). Because WAL order is kept, the database itself is intact.
+          source: pg-docs
+      harvest:
+        - q: A primary crashes and restarts. What mainly decides how long crash recovery takes?
+          answer: How much WAL was written since the last checkpoint
+          distractors:
+            - The total size of the database on disk
+            - The number of clients that were connected just before the crash
+            - The value of shared_buffers on its own
+          why: >-
+            Recovery replays WAL from the last checkpoint's redo point. Frequent checkpoints shorten recovery but
+            cost more I/O and full-page writes, which is the trade behind checkpoint settings.
+          source: pg-docs
+  - id: otel-signals
+    name: OpenTelemetry signals
+    layer: vine
+    branch: data-and-reliability
+    tier: 1
+    needs:
+      - use-method
+    harvest: recall
+    minutes: 45
+    sources: [otel-docs]
+    summary: >-
+      Read the OpenTelemetry docs Concepts: Signals (traces, metrics, logs), Context propagation and the
+      overview of semantic conventions. Notes: what each signal answers best, spans and trace ids, resource
+      attributes, how the W3C traceparent header carries context, and the cost of cardinality and volume.
+    rubric:
+      - Says what each of metrics, logs and traces answers best
+      - Explains spans, trace ids and parent-child links
+      - Explains context propagation across services and what breaks it
+      - Names the cost levers, which are metric cardinality, log volume and trace sampling
+    questions:
+      water:
+        - q: >-
+            A trace shows the checkout request took 4 s. What lets spans from three different services join into
+            this one trace?
+          answer: Trace context passed in request headers and picked up by each service
+          distractors:
+            - A shared clock that every service synchronises to, so timestamps line up
+            - The database transaction id common to the three services
+            - Matching log line text written by each service
+          why: >-
+            Each service reads the incoming context (trace id and parent span id, for example from the traceparent
+            header) and attaches its spans to it. If a hop drops the header the trace splits in two.
+          source: otel-docs
+        - q: Which signal is the best base for the alert 'error rate above 2% for 5 minutes'?
+          answer: A metric, because it is cheap to aggregate over time
+          distractors:
+            - A trace, because each request has a full record
+            - A log line parsed per request, because it has every field
+            - A profile, because it shows which functions are hot
+          why: >-
+            Metrics are pre-aggregated numbers, so evaluating a rate over minutes is cheap and stable. Traces and
+            logs are for explaining why, once a metric says something is wrong.
+          source: otel-docs
+      harvest:
+        - q: >-
+            Adding user_id as a metric label makes the metrics bill explode. Why, and what is the fix?
+          answer: Each distinct value creates a new time series, so keep per-user detail in traces or logs
+          distractors:
+            - Labels are stored with every sample, so each label doubles disk use
+            - The collector duplicates a metric once for each label name
+            - Metric names must be unique per user, which multiplies them
+          why: >-
+            A metric's cost is the number of unique label combinations. User ids have unbounded cardinality, so
+            use low-cardinality labels (route, status class) and let traces carry the per-user detail.
+          source: otel-docs
   - id: slo
     name: SLOs & error budgets
     layer: vine
@@ -149,15 +1468,529 @@ seeds:
       - kafka
       - pgidx
     harvest: recall
+    minutes: 50
+    sources: [sre-book, sre-workbook]
+    summary: >-
+      Read SRE Book ch. 3, Embracing Risk (error budgets), ch. 4, Service Level Objectives, Appendix A,
+      Availability Table, and SRE Workbook ch. 2, Implementing SLOs. Notes: SLI
+      versus SLO versus SLA, choosing SLIs from user journeys (availability, latency percentiles), the error
+      budget as 1 minus the SLO, and the budget policy that says what happens when it runs out.
+    rubric:
+      - Tells SLI, SLO and SLA apart with an example of each
+      - Computes the error budget for a 99.9% monthly target in minutes
+      - Picks SLIs from what users experience, not from internal resource metrics
+      - Explains the error budget policy, such as slowing or freezing releases when it is spent
     questions:
       water:
         - q: An error budget is…
           answer: The allowed unreliability (1 − SLO) you may spend on risk, like deploys
           distractors:
-            - The on-call budget in rupees
-            - The number of bugs allowed per sprint
-            - A Grafana dashboard
-          why: Burn it too fast and you freeze feature work; that is the SRE bargain.
+            - The on-call team's allowance of out-of-hours pages each quarter
+            - The number of bugs a team may ship in each sprint
+            - A Grafana dashboard that tracks latency for every endpoint of every service
+          why: >-
+            The SLO is a target below 100%, and the gap is a budget that product work may spend on risky changes.
+            Burn it too fast and the agreed policy is to slow or freeze releases; that is the SRE bargain.
+          source: sre-book
+        - q: A 99.9% availability SLO over 30 days allows about how much downtime?
+          answer: About 43 minutes
+          distractors:
+            - About 7 hours
+            - About 4 minutes
+            - About 14 minutes
+          why: >-
+            30 days is 43,200 minutes, and 0.1% of that is 43.2 minutes. Each extra nine divides the budget by
+            ten, so 99.99% leaves only about 4 minutes.
+          source: sre-book
+      harvest:
+        - q: >-
+            A service has a 99.9% SLO, yet each month the team spends under a tenth of its budget and releases
+            rarely. What does SRE advice suggest?
+          answer: Spend the spare budget on faster or riskier releases, as the target may be too tight
+          distractors:
+            - Raise the SLO to 99.99% so that unused reliability can be banked for later
+            - Carry the unspent budget forward without limit
+            - Add change freezes to protect the surplus
+          why: >-
+            The budget exists to be spent. A target that is never approached means reliability is bought at the
+            cost of velocity, so loosen the target or ship more often.
+          source: sre-book
+  - id: pg-replication
+    name: Streaming replication & lag
+    layer: understory
+    branch: data-and-reliability
+    tier: 2
+    needs:
+      - pg-wal
+    harvest: judged
+    minutes: 50
+    sources: [pg-docs]
+    summary: >-
+      Read the PostgreSQL docs High Availability, Load Balancing, and Replication (standby servers, streaming
+      replication, synchronous replication) and Hot Standby (query conflicts). Notes: how a standby replays WAL,
+      async versus sync, replication slots and their disk risk, and read-after-write surprises on replicas.
+    rubric:
+      - Describes streaming replication as shipping WAL that the standby replays
+      - Contrasts async and sync replication in data loss against write latency
+      - Explains replication slots and the disk-fill risk of an abandoned one
+      - Explains replica lag, the read-your-writes problem and hot-standby query conflicts
+    questions:
+      water:
+        - q: >-
+            With asynchronous streaming replication, the primary dies just after acknowledging a commit. What is
+            possible?
+          answer: The standby may lack the commit, so promoting it loses that write
+          distractors:
+            - The commit is always on the standby, because WAL ships before the ack
+            - The standby refuses promotion until it matches the primary
+            - Clients retry and the standby de-duplicates the write itself
+          why: >-
+            Async replication acknowledges once the primary has flushed its own WAL, not when a standby has it.
+            The lag window is the possible data loss; synchronous replication closes it at the cost of latency.
+          source: pg-docs
+        - q: A replication slot's consumer has been offline for weeks. What happens on the primary?
+          answer: WAL is retained for it and can fill the primary's disk
+          distractors:
+            - The slot expires after a day and releases the held WAL
+            - Old WAL is recycled as usual and the consumer resyncs later
+            - The primary pauses writes until the consumer reconnects
+          why: >-
+            A slot is a promise to keep WAL until its consumer has read it. By default nothing limits that, so an
+            abandoned slot can fill the disk. Monitor slot lag and set max_slot_wal_keep_size.
+          source: pg-docs
+    prompts:
+      - Users report 'I saved it and it vanished' after the app began reading from a replica. Explain the cause, give two fixes with their trade-offs, and say how you would measure replica lag.
+  - id: pg-pooling
+    name: Connection pooling
+    layer: herb
+    branch: data-and-reliability
+    tier: 2
+    needs:
+      - tcp
+      - mvcc
+    harvest: judged
+    minutes: 45
+    sources: [pgbouncer-docs, pg-docs]
+    summary: >-
+      Read the PostgreSQL docs on max_connections and How Connections Are Established (a backend process per
+      connection), then PgBouncer's Features page (session, transaction and statement pooling, the SQL feature
+      map) and Configuration page (default_pool_size, max_client_conn). Notes: why a process per connection is
+      costly, session versus transaction pooling, which features break under transaction pooling, and what the
+      pool settings control.
+    rubric:
+      - Explains why Postgres connections are expensive (a backend process each) and why thousands hurt
+      - Contrasts session, transaction and statement pooling
+      - Names features that break under transaction pooling, such as SET, advisory locks and temp tables
+      - Sizes a pool from cores and workload instead of from the number of clients
+    questions:
+      water:
+        - q: >-
+            An app has 2,000 threads each holding a connection, and Postgres struggles at max_connections=2000.
+            What is the best first move?
+          answer: Put a transaction-mode pooler in front so a few server connections serve many clients
+          distractors:
+            - Raise max_connections to 10,000 so that every single thread gets its own backend process
+            - Send every query to read replicas to spread the load
+            - Double shared_buffers and work_mem so that each connection finishes its queries much faster
+          why: >-
+            Each connection is its own backend process with its own memory, so thousands of mostly idle clients
+            are expensive. A pooler multiplexes many clients onto a small number of busy server connections.
+          source: pgbouncer-docs
+        - q: What breaks when a pooler runs in transaction mode?
+          answer: Session state such as SET commands, advisory locks and temp tables does not persist
+          distractors:
+            - Transactions can no longer be rolled back
+            - Queries run on a random replica instead of the primary
+            - Row locks are released at the end of each statement
+          why: >-
+            In transaction mode a client may get a different server connection for each transaction. Anything
+            stored in the session is lost or leaks to another client, so use transaction-scoped alternatives.
+          source: pgbouncer-docs
+    prompts:
+      - Sketch the connection budget for a service, covering app instances times threads, a pooler and Postgres max_connections. Show how you would size the pool and what you would do when one slow query holds connections.
+  - id: pg-partitioning
+    name: Table partitioning
+    layer: understory
+    branch: data-and-reliability
+    tier: 2
+    needs:
+      - pgidx
+      - pg-vacuum
+    harvest: judged
+    minutes: 50
+    sources: [pg-docs]
+    summary: >-
+      Read the PostgreSQL docs on Table Partitioning (declarative partitioning, partition pruning, maintenance,
+      limitations). Notes: range, list and hash methods, what a WHERE clause needs for pruning, retention by
+      dropping a partition instead of DELETE, and the rule that unique keys must include the partition key.
+    rubric:
+      - Chooses range, list or hash for a case and states the partition key
+      - Explains partition pruning and what query shape defeats it
+      - Describes retention by detach or drop instead of DELETE plus VACUUM
+      - States that unique constraints must include the partition key, and that too many partitions cost planning time
+    questions:
+      water:
+        - q: Why is dropping an old monthly partition better than DELETE FROM events WHERE ts < …?
+          answer: It removes the file at once, with no dead tuples to vacuum
+          distractors:
+            - It does the same work but runs in parallel across workers
+            - It keeps the rows queryable through a hidden archive table
+            - DELETE cannot use indexes on a partitioned table
+          why: >-
+            DELETE marks millions of rows dead, writes WAL for each and leaves bloat for VACUUM. Dropping or
+            detaching a partition is a metadata change plus file removal, so it is nearly instant.
+          source: pg-docs
+        - q: A table is partitioned by created_at, but a query filters only on customer_id. What is the effect?
+          answer: Every partition is visited, as pruning needs a condition on the partition key
+          distractors:
+            - Postgres works out the pruning from the customer_id index and visits few partitions
+            - The query fails with an error unless it names one specific partition in its FROM
+            - Only the newest partition is read by default
+          why: >-
+            The planner can skip a partition only when the WHERE clause proves it holds no matching rows, and that
+            needs the partition key. Otherwise each partition is scanned or probed, which adds overhead.
+          source: pg-docs
+    prompts:
+      - You hold three years of events at about 200 million rows a month. Most queries hit the last 30 days, and legal requires 12 months of retention. Design the partitioning (key, granularity), the retention job and the indexes, and name the constraint that will bite you.
+  - id: xid-wraparound
+    name: Transaction ID wraparound
+    layer: root
+    branch: data-and-reliability
+    tier: 2
+    needs:
+      - pg-vacuum
+    wild: true
+    harvest: recall
+    minutes: 30
+    sources: [pg-docs]
+    summary: >-
+      Read the PostgreSQL docs Routine Vacuuming, the section Preventing Transaction ID Wraparound Failures.
+      Notes: 32-bit transaction IDs compared in a circle, what freezing does, autovacuum_freeze_max_age, the
+      warnings that come before Postgres refuses to assign new IDs, and how to recover.
+    rubric:
+      - Explains that transaction IDs are 32-bit and compared circularly, so old rows could look newer
+      - Says what freezing does and why VACUUM must do it
+      - Names the safety stages (anti-wraparound autovacuum, warnings, refusal to assign new IDs)
+      - Describes recovery and what can block it, such as old snapshots or abandoned replication slots
+    questions:
+      water:
+        - q: Why must Postgres periodically freeze old rows?
+          answer: Transaction IDs are 32-bit and compared in a circle, so old rows would start to look newer
+          distractors:
+            - Frozen rows compress much better and shrink the table files on disk
+            - Freezing releases the locks that old rows still hold
+            - Replicas need frozen rows before they can replay the WAL
+          why: >-
+            Visibility depends on comparing transaction IDs, and with 32 bits only about two billion IDs count as
+            the past. A row older than that would appear to be from the future, so VACUUM marks it frozen.
+          source: pg-docs
+        - q: >-
+            If anti-wraparound warnings are ignored until fewer than three million transactions remain, what does
+            Postgres do?
+          answer: It refuses to assign new transaction IDs until a vacuum has run
+          distractors:
+            - It silently overwrites the oldest committed rows to make room for new ones
+            - It switches the cluster to 64-bit IDs and carries on
+            - It restarts and replays WAL from the beginning
+          why: >-
+            Refusing new IDs stops writes so no data can become invisible. Recovery is a manual VACUUM, which
+            only helps if nothing (a long transaction, a slot, a prepared transaction) pins the old horizon.
+          source: pg-docs
+      harvest:
+        - q: A database warns that it must be vacuumed within 39 million transactions. What helps most?
+          answer: End old transactions and drop stale slots, then run a plain database-wide VACUUM
+          distractors:
+            - Restart the server so that the transaction counter resets to zero
+            - Run VACUUM FULL on the biggest tables so that they are rewritten cleanly
+            - Delete files from the pg_xact directory to free up the old transaction IDs
+          why: >-
+            Only vacuuming advances the frozen horizon, and it cannot pass an old transaction, replication slot or
+            prepared transaction, so those go first. VACUUM FULL does not help: it needs a transaction ID of its
+            own, so it fails once none can be assigned. Restarting resets nothing, and removing pg_xact files
+            destroys commit status.
+          source: pg-docs
+  - id: kafka-consumer-groups
+    name: Consumer groups & offsets
+    layer: herb
+    branch: data-and-reliability
+    tier: 2
+    needs:
+      - kafka
+    harvest: judged
+    minutes: 50
+    sources: [kafka-docs]
+    summary: >-
+      Read the Kafka docs Design, The Consumer (consumer position) and Message Delivery Semantics, then the
+      Consumer Configs page (session.timeout.ms, max.poll.interval.ms, partition.assignment.strategy). Notes:
+      one consumer per partition within a group, committed offsets, commit-after-process, rebalances, and
+      consumer lag.
+    rubric:
+      - States that within a group each partition has one consumer, so parallelism is capped by partition count
+      - Explains committed offsets and how commit timing gives at-most-once or at-least-once
+      - Explains what triggers a rebalance, including a consumer that is too slow between polls
+      - Reads consumer lag and says what to do about it
+    questions:
+      water:
+        - q: A topic has 6 partitions and a consumer group has 10 members. What happens?
+          answer: Four members sit idle, since a partition goes to one member of the group at a time
+          distractors:
+            - All ten share each partition by splitting its offset range
+            - Kafka adds four partitions so every member gets one
+            - Each member gets a copy of six tenths of the messages
+          why: >-
+            A partition is assigned to exactly one consumer in a group, so the partition count is the ceiling on
+            useful group size. More members only help as spares for failover.
+          source: kafka-docs
+        - q: A consumer commits its offset and then crashes before processing that batch. On restart…
+          answer: Those messages are skipped, which is at-most-once behaviour
+          distractors:
+            - They are redelivered because offset commits are only advisory to the broker
+            - The group refuses to start until the offsets are reset
+            - Kafka replays the whole partition from the beginning
+          why: >-
+            The committed offset says where to resume, and it already pointed past the batch. Committing after
+            processing flips the failure mode to redelivery (at-least-once), which needs idempotent handling.
+          source: kafka-docs
+    prompts:
+      - A consumer takes 90 seconds per record because it calls a slow API, and the group keeps rebalancing. Explain why, which settings and code changes fix it, and what happens to duplicates in the meantime.
+  - id: log-compaction
+    name: Log compaction
+    layer: shrub
+    branch: data-and-reliability
+    tier: 2
+    needs:
+      - kafka
+    wild: true
+    harvest: recall
+    minutes: 30
+    sources: [kafka-docs]
+    summary: >-
+      Read the Kafka docs Design section Log Compaction (basics and details: guarantees, the cleaner,
+      tombstones). Notes:
+      what a compacted topic keeps, how a delete is written, the guarantees on ordering and offsets, and the
+      kind of data that suits it.
+    rubric:
+      - Explains that compaction keeps at least the latest record per key rather than a time window
+      - Describes a tombstone (null value) and how long it is kept
+      - Says what is guaranteed (order of messages, offsets never change) and what is not (immediate cleanup)
+      - Gives a fitting use such as a changelog or table state
+    questions:
+      water:
+        - q: A compacted topic keeps…
+          answer: At least the latest record for each key
+          distractors:
+            - Every record forever, because retention is switched off
+            - Only the newest N records of each partition
+            - The first record that was written for each key
+          why: >-
+            The cleaner removes older records for a key once a newer one exists, so the topic is a snapshot of
+            the latest value per key, plus whatever has not been cleaned yet.
+          source: kafka-docs
+        - q: How do you delete a key from a compacted topic?
+          answer: Write a record with that key and a null value (a tombstone)
+          distractors:
+            - Delete the segment file on every broker
+            - Send an empty key at the same offset
+            - Shorten retention.ms on the topic until the old record expires from the log
+          why: >-
+            The tombstone is itself a record, so the delete is replicated and ordered like any write. The cleaner
+            drops older values and, after delete.retention.ms, the tombstone too.
+          source: kafka-docs
+      harvest:
+        - q: A compacted topic of user profiles is replayed from the start to rebuild a cache. Why is that safe?
+          answer: The replay reaches the latest value for every key, though older values may appear first
+          distractors:
+            - Compaction rewrites offsets so the replay is already in key order
+            - Consumers skip any record that has a newer version on the topic
+            - Compaction finishes instantly, so only one value per key remains
+          why: >-
+            Compaction guarantees the last value for each key survives and message order is preserved, so a
+            consumer that applies records in order ends at the current state. Cleaning is lazy, so some stale values remain.
+          source: kafka-docs
+  - id: kafka-exactly-once
+    name: Exactly-once semantics
+    layer: root
+    branch: data-and-reliability
+    tier: 3
+    needs:
+      - kafka-consumer-groups
+    harvest: judged
+    minutes: 60
+    sources: [kafka-docs]
+    summary: >-
+      Read the Kafka docs Design, Message Delivery Semantics, and the transactions and idempotent producer
+      sections. Notes: producer id plus sequence numbers, transactional.id, atomic writes of output and offsets,
+      isolation.level=read_committed, and where the guarantee ends (side effects outside Kafka).
+    rubric:
+      - Explains the idempotent producer, where a producer id and sequence number let the broker drop duplicate retries
+      - Explains transactions that write output records and consumed offsets atomically, read with read_committed
+      - Says what the guarantee does not cover, namely side effects outside Kafka such as a database or HTTP call
+      - Describes the idempotent-consumer or outbox pattern as the practical complement
+    questions:
+      water:
+        - q: What does enable.idempotence=true protect against?
+          answer: Duplicate appends to a partition from producer retries after a lost ack
+          distractors:
+            - A consumer reading the same record twice after a group rebalance moves its partition
+            - Messages lost when the leader's disk fails
+            - Out-of-order delivery of records that were sent to different partitions of the topic
+          why: >-
+            The broker tracks each producer's id and per-partition sequence number, so a retried batch whose ack
+            was lost is recognised and not appended again. It says nothing about consumers or other partitions.
+          source: kafka-docs
+        - q: >-
+            A consume-transform-produce app uses Kafka transactions and also calls a payment API inside its loop.
+            What guarantee does the API call get?
+          answer: None; the transaction covers only Kafka, so a retry may repeat the call
+          distractors:
+            - It is rolled back when the transaction aborts
+            - Kafka de-duplicates the HTTP request using the record offset as an idempotency key
+            - It runs exactly once whenever read_committed is set
+          why: >-
+            Kafka can atomically commit its own records and offsets, but it cannot undo an HTTP call. After an
+            abort or crash the batch is reprocessed, so external effects need idempotency keys or an outbox.
+          source: kafka-docs
+    prompts:
+      - A service reads order-paid events, writes to Postgres and publishes invoice-created. Design it for effectively-once results. Compare Kafka transactions, the outbox pattern and an idempotent consumer keyed by event id, pick one, and defend it.
+  - id: burn-rate-alerts
+    name: SLO burn-rate alerts
+    layer: vine
+    branch: data-and-reliability
+    tier: 3
+    needs:
+      - slo
+      - otel-signals
+    harvest: judged
+    minutes: 55
+    sources: [sre-workbook]
+    summary: >-
+      Read SRE Workbook ch. 5, Alerting on SLOs: the approaches compared, burn rate, and multiwindow,
+      multi-burn-rate alerts. Notes: burn rate is the error ratio divided by (1 minus SLO), time to exhaust the
+      budget, why a long and a short window are paired, and which burns page versus ticket.
+    rubric:
+      - Defines burn rate and computes it from an error ratio and an SLO
+      - Converts a burn rate into the time it takes to exhaust the budget
+      - Explains multiwindow alerts, with a long window for significance and a short window for fast reset
+      - Maps fast burns to pages and slow burns to tickets
+    questions:
+      water:
+        - q: The SLO is 99.9% and the current error ratio is 1.44%. What is the burn rate?
+          answer: "14.4"
+          distractors:
+            - "1.44"
+            - "144"
+            - "0.144"
+          why: >-
+            The budget fraction is 0.1% (0.001) and the error ratio is 0.0144, so burn rate = 0.0144 / 0.001 =
+            14.4. At that pace a 30-day budget is gone in about two days.
+          source: sre-workbook
+        - q: Why pair a 1-hour window with a 5-minute window in a paging alert?
+          answer: The long window shows it matters, and the short one lets it stop soon after the fix
+          distractors:
+            - The short window doubles the sampling rate of the metric the rule reads
+            - Prometheus rejects alert rules that use a single window
+            - The two windows are averaged to reduce rounding error
+          why: >-
+            A long window alone keeps firing for up to an hour after the problem is fixed, and a short window alone
+            pages on blips. Requiring both gives significance and a quick reset.
+          source: sre-workbook
+    prompts:
+      - A checkout API has a 99.95% 30-day availability SLO. Write the alert set (windows, burn rates, severity) and say how much budget each alert fires after. Then describe one failure of your design, such as a slow burn you would miss or a noisy case.
+      - Explain to a teammate who alerts on 'error rate above 1% for 5 minutes' why a burn-rate alert is better, and one thing it is worse at.
+  - id: pg-backup-pitr
+    name: Backups & point-in-time recovery
+    layer: understory
+    branch: data-and-reliability
+    tier: 3
+    needs:
+      - pg-wal
+      - pg-replication
+    harvest: artifact
+    minutes: 60
+    sources: [pg-docs, sre-book]
+    summary: >-
+      Read the PostgreSQL docs Backup and Restore, in particular Continuous Archiving and Point-in-Time Recovery,
+      then SRE Book ch. 26, Data Integrity. Notes: logical versus physical backups, base backup plus archived WAL,
+      recovery_target_time, RPO and RTO, and why an untested backup is a hope.
+    rubric:
+      - Contrasts logical backups (pg_dump) with physical ones (base backup plus WAL)
+      - Explains PITR as restoring a base backup and replaying archived WAL up to a target time
+      - States the RPO and RTO of the setup and what limits each
+      - Insists on a tested restore, and explains why a replica is not a backup
+    questions:
+      water:
+        - q: >-
+            At 14:02 someone ran DELETE without a WHERE clause. You have a nightly base backup and continuous WAL
+            archiving. How do you recover?
+          answer: Restore the base backup and replay archived WAL to just before 14:02
+          distractors:
+            - Promote the streaming replica, which should still have kept all the old rows
+            - Run VACUUM so that it brings back the dead tuples that the delete left behind
+            - Rewind the WAL on the primary to 14:02
+          why: >-
+            WAL is a complete history, so replaying it to a chosen target time rebuilds the state just before the
+            mistake. The replica already replayed the delete, and VACUUM only removes dead tuples.
+          source: pg-docs
+        - q: Why is a streaming replica not a backup?
+          answer: It replays destructive changes too, so a bad DELETE or DROP is copied within seconds
+          distractors:
+            - It keeps only a sampled subset of the table's rows
+            - It falls behind and never fully catches up with writes
+            - It lacks the system catalogs that queries need
+          why: >-
+            A replica protects against losing a machine, not against logical errors. Both a corrupt write and an
+            accidental DROP flow to it, so you also need history, which means base backups plus archived WAL.
+          source: sre-book
+    prompts:
+      - "Run a restore drill on a test Postgres: enable WAL archiving, take a base backup, write rows, note the time, delete them, then restore to just before the delete with recovery_target_time and show the rows back. Paste the commands, the key settings and how long it took."
+  - id: pg-ha-architecture
+    name: HA Postgres architecture
+    layer: canopy
+    branch: data-and-reliability
+    tier: 4
+    needs:
+      - pg-replication
+      - pg-backup-pitr
+      - pg-pooling
+    harvest: judged
+    minutes: 60
+    sources: [pg-docs, sre-book]
+    summary: >-
+      Re-read the PostgreSQL docs sections Failover and Synchronous Replication (including planning for high
+      availability) as a design problem, then SRE Book ch. 26, Data Integrity. Notes: a primary plus a synchronous standby, a failover manager,
+      fencing the old primary, pooler cutover, backups to object storage, and the RPO and RTO of the whole design.
+    rubric:
+      - Lays out the primary, standbys, pooler and backups, and says who decides on failover
+      - States the RPO and RTO and which settings produce them (sync versus async)
+      - Explains fencing and split brain, and why the old primary must not take writes
+      - Covers how clients reconnect and how the design is tested (game day, restore drill)
+    questions:
+      water:
+        - q: Why must a failover system fence the old primary?
+          answer: Otherwise two nodes may accept writes and their data diverges
+          distractors:
+            - The old primary would keep the WAL archive locked for everyone
+            - Standbys cannot be promoted until the old primary is shut down
+            - Pooler connections cannot be moved while it is still running
+          why: >-
+            If the old primary returns, or was only partitioned away, clients may still write to it while the new
+            primary also accepts writes. That split brain forks history, so the old node is isolated first.
+          source: pg-docs
+        - q: >-
+            A primary requires one synchronous standby (synchronous_standby_names is set), and that standby becomes
+            unreachable. What do commits on the primary do?
+          answer: They wait until a standby confirms or the setting is changed
+          distractors:
+            - They fall back to asynchronous commit automatically after a short timeout
+            - They fail with an error straight away
+            - They roll back after wal_sender_timeout passes
+          why: >-
+            Synchronous replication trades availability for durability: no standby, no acknowledged commit.
+            Failover managers therefore watch the standby set and can relax the requirement on purpose.
+          source: pg-docs
+    prompts:
+      - Design Postgres for an orders database that must survive the loss of a zone with at most 5 seconds of data loss and restore service in under 15 minutes. Draw the nodes, replication mode, failover manager, pooling and backups, and name the failure you are still exposed to.
+      - Compare running this on a managed cloud database against self-managed Postgres, in terms of what you still own.
 finds:
   - id: hint-bits
     near: [mvcc, pgidx]
@@ -171,3 +2004,27 @@ finds:
   - id: loose-slos
     near: [slo, kafka]
     text: "Google SRE: an SLO stricter than what users notice costs money for nothing. Pick the loosest target users will still be happy with."
+  - id: time-wait-ports
+    near: [tcp, load-balancing]
+    seed: time-wait
+    text: "A client that opens a fresh connection per request to one server IP and port can run out of source ports in under a minute: each closed socket sits in TIME_WAIT for 60 seconds on Linux, holding its 4-tuple. A connection pool beats any sysctl."
+  - id: xid-horizon
+    near: [pg-vacuum, mvcc]
+    seed: xid-wraparound
+    text: "Postgres transaction IDs are 32-bit numbers compared on a circle, so only the next two billion count as the future. Autovacuum freezes old rows long before that; if it cannot, Postgres stops assigning IDs rather than risk invisible data."
+  - id: consumer-offsets-topic
+    near: [kafka, kafka-consumer-groups]
+    seed: log-compaction
+    text: "Kafka stores consumer group offsets in an internal compacted topic, __consumer_offsets. Only the latest offset per group, topic and partition matters, so compaction keeps it small however long the group has run."
+  - id: oom-137
+    near: [linux-namespaces, k8s-resources]
+    text: "Exit code 137 is 128 + 9, meaning the process got SIGKILL. An OOMKilled container is killed by its cgroup at its own limit, even when the node still has gigabytes of free memory."
+  - id: ndots-five
+    near: [dns-ttl, k8s]
+    text: "Kubernetes pods usually get ndots:5 in resolv.conf, so a name with fewer than five dots is tried against every search domain before the real lookup. A trailing dot on api.example.com. skips those wasted queries."
+  - id: traceparent-header
+    near: [otel-signals, load-balancing]
+    text: "The W3C traceparent header is a fixed 55 characters: version, a 32-hex trace id, a 16-hex parent span id and flags, joined by dashes. Any proxy that forwards headers carries your trace for free."
+  - id: nines-arithmetic
+    near: [slo, burn-rate-alerts]
+    text: "Each extra nine divides the allowed downtime by ten: 99.9% leaves about 43 minutes a month, 99.99% about 4, and 99.999% about 26 seconds. One bad 30-minute deploy spends most of a 99.9% month."
