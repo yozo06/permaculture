@@ -10,46 +10,267 @@ branches:
     title: Distributed data
   - id: traffic-and-resilience
     title: Traffic & resilience
-sources: []
+sources:
+  - id: ddia
+    title: Designing Data-Intensive Applications (Kleppmann)
+    url: https://dataintensive.net/
+    note: The reference book for replication, partitioning, storage engines, consistency and stream processing. Chapter numbers in the summaries follow the 1st edition (2017); the 2nd edition renumbers them, so section names are given as well.
+  - id: raft
+    title: In Search of an Understandable Consensus Algorithm (Ongaro & Ousterhout)
+    url: https://raft.github.io/raft.pdf
+  - id: dynamo
+    title: "Dynamo: Amazon's Highly Available Key-value Store"
+    url: https://www.allthingsdistributed.com/files/amazon-dynamo-sosp2007.pdf
+    note: Section 4.2 partitioning, 4.4 data versioning (vector clocks, the shopping cart), 4.5 get and put, 4.6 hinted handoff.
+  - id: spanner
+    title: "Spanner: Google's Globally-Distributed Database"
+    url: https://www.usenix.org/system/files/conference/osdi12/osdi12-final-16.pdf
+    note: Section 2 implementation, section 3 TrueTime, section 4 concurrency control (commit wait).
+  - id: tail
+    title: The Tail at Scale (Dean & Barroso)
+    url: https://www.barroso.org/publications/TheTailAtScale.pdf
+    note: The CACM article, hosted on the author's page. The research.google page for it only carries the abstract.
+  - id: aws-cells
+    title: Reducing the Scope of Impact with Cell-Based Architecture (AWS Well-Architected whitepaper)
+    url: https://docs.aws.amazon.com/wellarchitected/latest/reducing-scope-of-impact-with-cell-based-architecture/reducing-scope-of-impact-with-cell-based-architecture.html
+    note: A short whitepaper; the pages used are "What is a cell-based architecture?", "Cell routing" and "Cell deployment" in the left-hand menu.
+  - id: fpaxos-paper
+    title: Flexible Paxos - Quorum intersection revisited (Howard, Malkhi, Spiegelman)
+    url: https://arxiv.org/abs/1608.06696
+  - id: jump-paper
+    title: A Fast, Minimal Memory, Consistent Hash Algorithm (Lamping & Veach)
+    url: https://arxiv.org/abs/1406.2294
+  - id: hlc-paper
+    title: Logical Physical Clocks and Consistent Snapshots in Globally Distributed Databases (Kulkarni et al.)
+    url: https://cse.buffalo.edu/tech-reports/2014-04.pdf
+    note: The hybrid logical clock paper; section 3 defines the clock and section 3.3 gives the algorithm.
+  - id: latency-table
+    title: Latency Numbers Every Programmer Should Know (Dean and Norvig's table, maintained as a gist)
+    url: https://gist.github.com/jboner/2841832
+  - id: brooker-littles
+    title: Telling Stories About Little's Law (Marc Brooker)
+    url: https://brooker.co.za/blog/2018/06/20/littles-law.html
+  - id: memcache-paper
+    title: Scaling Memcache at Facebook (Nishtala et al.)
+    url: https://www.usenix.org/system/files/conference/nsdi13/nsdi13-final170_update.pdf
+    note: Section 2 (look-aside cache, deletes after writes) and section 3.2.1 (leases for stale sets and thundering herds).
+  - id: mdn-caching
+    title: HTTP caching (MDN guide)
+    url: https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Caching
+    note: Private and shared caches, Vary, validation and request collapse.
+  - id: mdn-cache-control
+    title: Cache-Control header (MDN reference)
+    url: https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Cache-Control
+    note: The s-maxage, stale-while-revalidate and private directives.
+  - id: aws-timeouts
+    title: Timeouts, retries and backoff with jitter (Amazon Builders' Library)
+    url: https://aws.amazon.com/builders-library/timeouts-retries-and-backoff-with-jitter/
+    note: The address redirects to the same article on builder.aws.com.
+  - id: aws-shuffle
+    title: Workload isolation using shuffle-sharding (Amazon Builders' Library)
+    url: https://aws.amazon.com/builders-library/workload-isolation-using-shuffle-sharding/
+    note: The address redirects to the same article on builder.aws.com.
+  - id: sre-book
+    title: Site Reliability Engineering (Google SRE book, free online)
+    url: https://sre.google/sre-book/table-of-contents/
+    note: Chapters used - Embracing Risk, Service Level Objectives, Monitoring Distributed Systems, Handling Overload, Addressing Cascading Failures.
+  - id: azure-saga
+    title: Saga pattern (Azure Architecture Center)
+    url: https://learn.microsoft.com/en-us/azure/architecture/patterns/saga
+  - id: azure-circuit-breaker
+    title: Circuit Breaker pattern (Azure Architecture Center)
+    url: https://learn.microsoft.com/en-us/azure/architecture/patterns/circuit-breaker
+  - id: azure-bulkhead
+    title: Bulkhead pattern (Azure Architecture Center)
+    url: https://learn.microsoft.com/en-us/azure/architecture/patterns/bulkhead
+  - id: outbox-pattern
+    title: Transactional outbox (microservices.io, Chris Richardson)
+    url: https://microservices.io/patterns/data/transactional-outbox.html
+  - id: figma-ratelimit
+    title: An alternative approach to rate limiting (Figma Engineering)
+    url: https://www.figma.com/blog/an-alternative-approach-to-rate-limiting/
+    note: Compares token bucket, fixed window counters and sliding windows, with Redis as the shared store.
+  - id: otel-traces
+    title: Traces (OpenTelemetry documentation)
+    url: https://opentelemetry.io/docs/concepts/signals/traces/
+  - id: principles-chaos
+    title: Principles of Chaos Engineering
+    url: https://principlesofchaos.org/
+  - id: owasp-api
+    title: OWASP API Security Top 10 (2023)
+    url: https://api-security.owasp.org/editions/2023/en/0x11-t10/
+guilds:
+  - id: consensus-core
+    title: Consensus core
+    seeds: [raft, quorum-math, leases-fencing, fpaxos]
+  - id: time-and-order
+    title: Time and order
+    seeds: [cap, consistency-models, logical-clocks, truetime-hlc]
+  - id: failure-handling
+    title: When a dependency misbehaves
+    seeds: [retry-backoff-jitter, circuit-breaker, bulkheads, hedged-requests]
+  - id: observe-and-prove
+    title: Observe and prove
+    seeds: [golden-signals, dist-tracing, slo-error-budgets, chaos-testing]
+  - id: event-flows
+    title: Event flows
+    seeds: [delivery-semantics, idem, sagas, cqrs-events]
+  - id: edge-of-the-system
+    title: The edge
+    seeds: [cache-invalidation, edge-cdn, edge-security, rl]
 seeds:
+  # ------------------------------------------------------------------ distributed data
   - id: cap
     name: CAP & consistency
     layer: ground-cover
     branch: distributed-data
     tier: 0
     harvest: recall
+    minutes: 30
+    sources: [ddia, dynamo]
+    summary: >-
+      Read "The Cost of Linearizability" in DDIA ch. 9 (where the CAP discussion sits), then the shopping-cart
+      example in the Data Versioning section of the Dynamo paper. Notes: what a partition is, what CP and AP
+      each give up, why "CA" is not a real third choice, and the point that linearizability costs latency even
+      when nothing is broken (the idea PACELC names).
+    rubric:
+      - Defines a network partition and says why it cannot be ruled out in a real network
+      - Explains what a CP system does and what an AP system does while partitioned
+      - Says why the "pick two of three" slogan is misleading, and names the latency trade-off that remains without a partition
     questions:
       water:
         - q: Under a network partition, a CP system…
           answer: Refuses some requests rather than return stale or divergent data
           distractors:
-            - Keeps serving every request from any node
-            - Switches to eventual consistency automatically
-            - Loses data
-          why: "PACELC adds: even without a partition, you trade latency for consistency."
+            - Keeps answering every request from whichever node it reaches
+            - Quietly falls back to eventual consistency to stay available
+            - Discards the writes that were accepted on the smaller side
+          why: >-
+            Consistency here means linearizability: if a node cannot be sure it has the latest value it must
+            refuse. PACELC adds that even without a partition you trade latency for consistency.
+          source: ddia
+        - q: A team says its single-region cluster is "CA", so it need not choose. What is wrong with that?
+          answer: Partitions can happen on any network, so the real choice is how the system behaves when one does
+          distractors:
+            - CA systems exist only if every node runs on the same machine type
+            - Partitions affect only multi-region setups, so the team is right
+            - Consistency and availability cannot both be offered, even without faults
+          why: >-
+            A partition is a property of the network, not of geography; a switch failure inside one datacenter
+            will do. So the useful question is what each request does when nodes cannot reach each other.
+          source: ddia
+      harvest:
+        - q: >-
+            A shopping-cart service runs in two datacenters. The link between them breaks for ten minutes and
+            the business insists carts stay writable on both sides. Which design stance is that?
+          answer: Availability over consistency, with the diverging carts merged after the link heals
+          distractors:
+            - Consistency over availability, rejecting writes on the smaller side until healing
+            - Consistency over availability, with one side demoting itself to read-only for the outage
+            - Neither, because a partition makes the question meaningless for carts
+          why: >-
+            Staying writable on both sides gives up linearizability, so the system needs a merge rule (set
+            union of items, CRDTs, or last-write-wins) once the sides can talk again.
+          source: dynamo
   - id: con
     name: Consistent hashing
     layer: ground-cover
     branch: distributed-data
     tier: 0
     harvest: recall
+    minutes: 30
+    sources: [dynamo, ddia]
+    summary: >-
+      Read section 4.2 (Partitioning Algorithm) of the Dynamo paper for the ring and virtual nodes, then
+      "Rebalancing Partitions" in DDIA ch. 6, which explains why hash mod N is a trap. Notes: why hash mod N
+      reshuffles almost everything, how a ring limits the movement, and what virtual nodes fix. Yield: three
+      recall cards.
+    rubric:
+      - Explains why hash mod N remaps nearly all keys when N changes
+      - Describes the ring - keys and nodes on one circle, a key owned by the next node clockwise
+      - Says which keys move when a node joins or leaves
+      - Explains what virtual nodes add and what they cost
     questions:
       water:
         - q: The main benefit of consistent hashing over `hash mod N`?
           answer: Adding or removing a node remaps only about 1/N of the keys
           distractors:
-            - Hashing becomes faster
-            - Collisions become impossible
-            - Keys come out sorted
+            - Hash computation becomes much faster for large key sets
+            - Collisions between distinct keys become impossible
+            - Keys come out sorted so range scans become cheap
           why: Keys map to points on a ring; only the arc next to the new node moves.
+          source: dynamo
+        - q: A cluster of 10 nodes uses `hash mod N` and gains an 11th. About what share of keys changes owner?
+          answer: About 10/11 of them
+          distractors:
+            - About 1/11 of them
+            - About half of them
+            - None, because hashes of existing keys never change
+          why: >-
+            A key stays only if its hash gives the same remainder mod 10 and mod 11, which is rare. A ring
+            moves just the 1/11 of keys that the new node takes over.
+          source: ddia
       harvest:
         - q: Why add virtual nodes to the ring?
           answer: To even out load when nodes are few or unequal in size
           distractors:
-            - To encrypt the keys
-            - To cut memory use
-            - To avoid hashing entirely
+            - To encrypt the keys before placing them on the ring
+            - To cut the memory the ring needs on each client
+            - To avoid hashing the keys at all
           why: Each physical node gets many ring positions, smoothing the arcs it owns.
+          source: dynamo
+  - id: delivery-semantics
+    name: Delivery semantics
+    layer: ground-cover
+    branch: distributed-data
+    tier: 0
+    harvest: recall
+    minutes: 30
+    sources: [ddia]
+    summary: >-
+      Read "Messaging Systems" (acknowledgments and redelivery) and the idempotence part of "Fault Tolerance"
+      in the stream-processing section of DDIA ch. 11. Notes: at-most-once, at-least-once and exactly-once
+      effect, where the ack sits relative to the work, and why "exactly once" in practice means "at least once
+      plus idempotent handling".
+    rubric:
+      - Defines at-most-once and at-least-once by where the acknowledgement happens relative to processing
+      - Explains why a lost ack makes duplicates unavoidable under at-least-once
+      - Says how handlers get an exactly-once effect (dedup key or idempotent update)
+    questions:
+      water:
+        - q: A consumer processes a message, crashes before acking, and restarts. Under at-least-once delivery…
+          answer: The broker redelivers it, so the handler may run a second time
+          distractors:
+            - The message is lost, because it was never acknowledged in time
+            - The broker blocks the whole queue until an operator intervenes
+            - The broker guarantees that the second run is skipped automatically
+          why: >-
+            The broker cannot tell "processed but ack lost" from "not processed", so it must redeliver. That
+            is the price of never losing a message.
+          source: ddia
+        - q: In practice, "exactly-once processing" is achieved by…
+          answer: At-least-once delivery combined with a handler that is idempotent or deduplicates
+          distractors:
+            - A transport protocol that never loses or repeats a message
+            - Acknowledging each message before doing the work
+            - Running a single consumer so redelivery cannot happen
+          why: >-
+            Acking before the work gives at-most-once (messages can vanish), and a single consumer still
+            crashes. The reliable recipe is duplicates plus a dedup check.
+          source: ddia
+      harvest:
+        - q: >-
+            A billing consumer applies charges from a queue with at-least-once delivery, and duplicates
+            appear after rebalances. Which fix is sound?
+          answer: Store each event id with the charge in one transaction and skip ids already seen
+          distractors:
+            - Ack before charging, so a redelivery can never occur
+            - Shrink the batch size so fewer messages can be redelivered
+            - Add a longer pause between polls to avoid rebalances
+          why: >-
+            Duplicates cannot be prevented, only made harmless. Recording the id atomically with the effect
+            makes the second delivery a no-op; acking early would lose charges instead.
+          source: ddia
   - id: replication
     name: Replication
     layer: shrub
@@ -58,15 +279,52 @@ seeds:
     needs:
       - cap
     harvest: recall
+    minutes: 45
+    sources: [ddia]
+    summary: >-
+      Read DDIA ch. 5: "Leaders and Followers" (synchronous vs asynchronous, handling node outages and
+      failover) and "Problems with Replication Lag" (reading your own writes, monotonic reads). Notes: what
+      each replication style promises, the lag anomalies and what can go wrong at failover. Yield: a diagram
+      of one write travelling to its followers.
+    rubric:
+      - Contrasts synchronous, semi-synchronous and asynchronous followers by what a lost leader costs
+      - Describes failover and the risk of a returning old leader
+      - Names two replication-lag anomalies and a remedy for one
     questions:
       water:
         - q: Leader-based replication with async followers risks…
           answer: Acknowledged writes being lost if the leader fails before followers catch up
           distractors:
-            - Double writes
-            - Followers overwriting the leader
-            - Nothing; it is equivalent to sync
-          why: Semi-sync (one follower acks) is the usual middle ground.
+            - Writes being applied twice on the leader after a restart
+            - Followers overwriting newer data held by the leader
+            - Nothing material; it is equivalent to sync replication
+          why: >-
+            The client was told "done" when only the leader had the write. Semi-sync (one follower acks) is
+            the usual middle ground.
+          source: ddia
+        - q: A user saves a profile change, reloads, and sees the old value for a moment. The usual cause is…
+          answer: The read went to a follower that had not yet applied the write
+          distractors:
+            - Two leaders accepted conflicting writes at the same instant
+            - The write was rolled back by the database after commit
+            - The follower's clock was ahead of the leader's clock
+          why: >-
+            Asynchronous followers lag. Remedies include reading your own recent writes from the leader or
+            pinning a user's reads to a replica that has caught up.
+          source: ddia
+      harvest:
+        - q: >-
+            The primary in region A dies and an async replica in region B is promoted. Later, A's old primary
+            returns holding writes B never saw. What should happen to it?
+          answer: Reconcile or discard those writes and bring it back only as a follower
+          distractors:
+            - Let it resume as leader, since it holds the most data
+            - Apply its extra writes on top of B's data, as they cannot conflict
+            - Run both as leaders so that no write is ever lost
+          why: >-
+            Two nodes believing they lead is split-brain. The unreplicated writes diverge from B's history,
+            so they need explicit handling and the old node must stop accepting writes.
+          source: ddia
   - id: raft
     name: Raft
     layer: root
@@ -75,120 +333,52 @@ seeds:
     needs:
       - con
     harvest: recall
+    minutes: 60
+    sources: [raft]
+    summary: >-
+      Read sections 5.1 to 5.4 of the Raft paper and study Figure 8. Notes: terms, the election rules, log
+      replication, and why a leader only counts an old-term entry committed once an entry of its own term is
+      replicated. Yield: three cards and a sketch of a 5-node log.
+    rubric:
+      - Explains terms and how a candidate wins an election
+      - Describes how the leader replicates entries and what makes one committed
+      - Says why a leader cannot commit an entry from an older term by counting replicas alone
+      - Explains how randomized election timeouts avoid endless split votes
     questions:
       water:
         - q: In Raft, a log entry is committed when…
           answer: It is replicated on a majority and the leader has applied an entry from its current term
           distractors:
-            - The leader has written it locally
-            - Any follower acknowledges it
-            - The client receives an acknowledgement
+            - The leader has written it to its own disk and flushed it
+            - Any single follower has acknowledged receiving it
+            - The client has received an acknowledgement from the server
           why: >-
             Majority replication plus a current-term entry prevents an old entry from being committed by a
             stale leader.
-  - id: cell
-    name: Cell architecture
-    layer: canopy
-    branch: distributed-data
-    tier: 2
-    needs:
-      - replication
-      - raft
-    harvest: recall
-    questions:
-      water:
-        - q: Cell-based architecture limits blast radius by…
-          answer: Running many small, independent copies of the whole stack, each serving a slice of customers
+          source: raft
+        - q: Why does Raft use randomized election timeouts?
+          answer: So one follower usually times out first and wins the election unopposed
           distractors:
-            - Caching everything at the edge
-            - Using one very large database
-            - Moving all logic to the client
-          why: A bad deploy or a hot tenant takes down one cell, not the fleet.
-  - id: bp
-    name: Backpressure
-    layer: understory
-    branch: traffic-and-resilience
-    tier: 0
-    harvest: recall
-    questions:
-      water:
-        - q: Backpressure is…
-          answer: A consumer signalling a producer to slow down
-          distractors:
-            - Retrying failed requests with jitter
-            - Caching responses near the client
-            - Spreading requests across replicas
-          why: Bounded queues, pull-based streams and TCP windows are all backpressure.
-      harvest:
-        - q: A bounded queue before a slow worker fills up. Safest failure for a payments API?
-          answer: Reject new work fast with 503 and Retry-After
-          distractors:
-            - Grow the queue without bound
-            - Drop the oldest requests silently
-            - Block the accept loop until space frees
+            - So that the follower with the most up-to-date log always times out before the rest
+            - So that nodes need no clocks and never measure time at all
+            - So the node with the lowest id becomes leader deterministically
           why: >-
-            Fast rejection keeps latency bounded and lets callers back off; unbounded queues turn into memory
-            and timeout failures.
-  - id: rl
-    name: Rate limiting
-    layer: herb
-    branch: traffic-and-resilience
-    tier: 1
-    needs:
-      - bp
-    harvest: recall
-    questions:
-      water:
-        - q: A token bucket allows…
-          answer: Bursts up to the bucket size while enforcing an average rate
-          distractors:
-            - No bursts at all
-            - Unlimited rate when the bucket is empty
-            - Only fixed one-second windows
-          why: Tokens refill at the rate; a full bucket is the burst allowance.
+            Without randomness, followers would time out together and split the vote repeatedly. Random
+            spread breaks the tie; it does not choose by log freshness (the vote rules do that).
+          source: raft
       harvest:
-        - q: Fixed-window counters suffer from…
-          answer: Up to 2× the limit across a window boundary
+        - q: >-
+            A 5-node Raft cluster loses three nodes and the leader survives with one other node. A client
+            sends a write. What happens?
+          answer: It is appended on the leader but cannot commit, since two of five is no majority
           distractors:
-            - Too much memory per client
-            - Clock drift only
-            - Nothing; they are exact
-          why: A burst at the end of one window plus one at the start of the next doubles the real rate.
-  - id: idem
-    name: Idempotency & outbox
-    layer: understory
-    branch: traffic-and-resilience
-    tier: 1
-    needs:
-      - bp
-    harvest: recall
-    questions:
-      water:
-        - q: A transactional outbox solves…
-          answer: Writing to the DB and publishing an event atomically, so neither is lost
-          distractors:
-            - Slow queries
-            - Duplicate consumers
-            - Schema migrations
-          why: The event row commits with the business row; a relay publishes it afterwards, at-least-once.
-  - id: fpaxos
-    name: Flexible Paxos
-    layer: root
-    branch: distributed-data
-    tier: 2
-    needs:
-      - raft
-    wild: true
-    harvest: recall
-    questions:
-      water:
-        - q: Flexible Paxos relaxes…
-          answer: The rule that election and replication quorums are both majorities; they only need to intersect
-          distractors:
-            - The need for a leader
-            - Log ordering
-            - Durability
-          why: "Replicate to 2 of 5, elect with 4 of 5: faster steady state, slower failover."
+            - It commits on the two survivors, since between them they hold the entire latest log
+            - It commits as soon as the leader has written it to disk
+            - The two survivors elect a fresh leader which commits with two votes
+          why: >-
+            Commit needs a majority of the full configuration (3 of 5), not of the nodes that happen to be
+            alive. The cluster stays safe and stops making progress.
+          source: raft
   - id: jump
     name: Jump hash
     layer: ground-cover
@@ -198,15 +388,1531 @@ seeds:
       - con
     wild: true
     harvest: recall
+    minutes: 20
+    sources: [jump-paper]
+    summary: >-
+      Read the short Lamping and Veach paper and trace the loop by hand for a few keys. Notes: what jump hash
+      computes, why it needs no ring or memory, and the restriction on how buckets can change.
+    rubric:
+      - States the input and output of jump hash (key and bucket count to a bucket number)
+      - Explains why growing from n to n+1 buckets moves about 1/(n+1) of the keys
+      - Names the restriction - numbered buckets, change only at the end
     questions:
       water:
         - q: Compared with a hash ring, jump consistent hash gives up…
           answer: Arbitrary node names and removal from the middle; buckets are numbered 0..n−1
           distractors:
-            - Uniform key distribution
-            - Speed
-            - Determinism
+            - An even spread of keys, which only a ring with replicas can offer
+            - Speed, since it must walk the whole ring on every lookup
+            - Determinism, since results depend on lookup order
           why: Great for sharding where you only ever grow or shrink from the end.
+          source: jump-paper
+        - q: Ten buckets become eleven under jump consistent hash. Which keys change bucket?
+          answer: About 1/11 of them, and every one of them moves to the new bucket
+          distractors:
+            - About half of them, shuffling between the ten existing buckets
+            - About 10/11 of them, just as with a plain hash mod N
+            - None of the old keys, as only brand-new keys use the new bucket
+          why: >-
+            Jump hash is built so that a key either stays put or jumps to the newest bucket, never between old
+            buckets. That is the minimum possible movement, 1/(n+1) of the keys.
+          source: jump-paper
+      harvest:
+        - q: >-
+            Ten shards use jump hash and shard 3 must be retired without moving the keys of the others. Can
+            jump hash do that?
+          answer: No; only the last bucket can be dropped cleanly, so shard 3 needs another scheme
+          distractors:
+            - Yes; dropping bucket 3 remaps only the keys that lived on bucket 3
+            - Yes; the algorithm renumbers the remaining buckets and keeps every other key exactly in place
+            - No; jump hash cannot change its bucket count after it is first set
+          why: >-
+            Buckets are just integers 0..n-1. Shrinking to n-1 moves keys from the last bucket only; there is
+            no way to delete a bucket in the middle, so a ring or a mapping table is needed for that.
+          source: jump-paper
+  - id: data-partitioning
+    name: Partitioning & sharding
+    layer: shrub
+    branch: distributed-data
+    tier: 1
+    needs:
+      - con
+    harvest: recall
+    minutes: 45
+    sources: [ddia]
+    summary: >-
+      Read DDIA ch. 6: "Partitioning of Key-Value Data" (by key range and by hash, skewed workloads and hot
+      spots), "Partitioning and Secondary Indexes" and "Rebalancing Partitions". Notes: what each scheme makes
+      cheap and expensive, how a hot key arises, and how to rebalance without a stampede.
+    rubric:
+      - Contrasts range and hash partitioning by the queries each supports
+      - Explains how a hot partition arises and one way to relieve it
+      - Says why a fixed number of partitions simplifies rebalancing compared with hash mod N
+    questions:
+      water:
+        - q: Range-partitioning time-series data by timestamp tends to cause…
+          answer: A hot partition, because all current writes land in the newest range
+          distractors:
+            - Excess cross-partition joins on every single write
+            - Uneven key hashing from frequent collisions
+            - Loss of ordering inside each partition
+          why: >-
+            Time only moves forward, so every new write hits the latest range. Prefixing the key with a source
+            or sensor id spreads writes across partitions.
+          source: ddia
+        - q: Hash partitioning of keys makes which operation expensive?
+          answer: Range scans over adjacent keys, which now spread across every partition
+          distractors:
+            - Single-key lookups by exact id, which must visit all partitions
+            - Adding rows to a partition that already holds data
+            - Spreading write load evenly across the nodes
+          why: >-
+            A good hash destroys key adjacency. That is the trade: even load in exchange for scatter-gather
+            range queries.
+          source: ddia
+      harvest:
+        - q: >-
+            Keys are hash-partitioned by user id, and one celebrity account draws 30% of all writes. What is a
+            sensible relief?
+          answer: Add a small random suffix to that key, spreading its writes, and merge on read
+          distractors:
+            - Add more partitions so the celebrity's partition becomes smaller
+            - Switch to a different hash function so the key lands on another node
+            - Switch to range partitioning, which spreads one key's writes across adjacent ranges
+          why: >-
+            A single key always maps to one partition, whatever the hash or the partition count. Splitting the
+            key itself is the only way to spread it, at the cost of reads that gather several pieces.
+          source: ddia
+  - id: consistency-models
+    name: Consistency models
+    layer: ground-cover
+    branch: distributed-data
+    tier: 1
+    needs:
+      - cap
+    harvest: recall
+    minutes: 45
+    sources: [ddia]
+    summary: >-
+      Read "Linearizability" and "Ordering Guarantees" in DDIA ch. 9, and "Problems with Replication Lag" in
+      ch. 5. Notes: linearizable vs serializable, causal consistency, and session guarantees
+      (read-your-writes, monotonic reads), each in one sentence with an example anomaly it forbids.
+    rubric:
+      - States linearizability as a single-object, real-time guarantee
+      - Distinguishes it from serializability, which is about multi-object transactions
+      - Gives an example anomaly that a weaker model such as causal or eventual consistency allows
+      - Names a session guarantee and the symptom it prevents
+    questions:
+      water:
+        - q: Linearizability differs from serializability in that linearizability concerns…
+          answer: Single objects and real-time order, while serializability concerns whole transactions
+          distractors:
+            - Transactions only, and permits stale reads that serializability forbids
+            - Multiple objects at once, but ignores the order operations were issued in
+            - A single physical machine, because it cannot be replicated
+          why: >-
+            Linearizable: each operation appears to take effect at one instant between its start and end.
+            Serializable: transactions behave as if run one at a time, in some order. Both together is
+            "strict serializable".
+          source: ddia
+        - q: A user posts a comment, refreshes, and it is missing, then it appears. Which guarantee was absent?
+          answer: Read-your-writes, one of the session guarantees
+          distractors:
+            - Atomic commit across several shards
+            - A single total order of all events in the system
+            - Durability of the original write
+          why: >-
+            The write was durable and appeared later; the user's own session just read from a replica that
+            lagged. Read-your-writes keeps a session from missing what it wrote.
+          source: ddia
+      harvest:
+        - q: >-
+            Client A's write of x=1 completes. Afterwards client B starts a read of x and gets the old value
+            0. Which model does this break?
+          answer: Linearizability, since a read starting after a write completes must see it
+          distractors:
+            - Eventual consistency, since replicas never converge on one value
+            - Serializability, whose order must always follow real time
+            - Every model, since any stale read is a violation of all of them
+          why: >-
+            Real-time recency is exactly what linearizability adds. The result is still allowed by sequential
+            and causal consistency, because A and B are not causally linked, and replicas can still converge.
+          source: ddia
+  - id: logical-clocks
+    name: Lamport & vector clocks
+    layer: root
+    branch: distributed-data
+    tier: 1
+    needs:
+      - cap
+    harvest: recall
+    minutes: 45
+    sources: [ddia, dynamo]
+    summary: >-
+      Read "Detecting Concurrent Writes" in DDIA ch. 5, "Ordering Guarantees" (Lamport timestamps) in ch. 9,
+      "Timestamps for ordering events" in ch. 8, and section 4.4 (Data Versioning) of the Dynamo paper. Notes:
+      happened-before, how a Lamport timestamp is computed, what a vector clock adds (detecting concurrency),
+      and why wall-clock last-write-wins loses data.
+    rubric:
+      - Defines happened-before and concurrent events
+      - Explains the Lamport update rule and what a timestamp ordering does and does not imply
+      - Shows how comparing two vector clocks tells ordered from concurrent
+      - Explains why last-write-wins by wall clock can silently drop a causally later write
+    questions:
+      water:
+        - q: If event a happened before b, Lamport timestamps guarantee…
+          answer: ts(a) < ts(b), yet a smaller timestamp does not prove an event came first
+          distractors:
+            - ts(a) < ts(b) exactly when a happened before b, in both directions
+            - ts(a) equals ts(b) so the events can be merged safely
+            - Nothing, since Lamport clocks ignore messages between nodes
+          why: >-
+            The rule only runs one way. Two concurrent events still get different numbers; to detect
+            concurrency you need a vector clock.
+          source: ddia
+        - q: Two versions carry vector clocks [A:2, B:0] and [A:1, B:1]. They are…
+          answer: Concurrent, since neither clock is at least as large in every entry
+          distractors:
+            - Ordered, the first being newer because its A counter is larger
+            - Duplicates, because both clocks sum to the same total
+            - Invalid, since a clock may not hold a zero entry
+          why: >-
+            A dominates B only if every entry is greater or equal. Here A leads in one entry and trails in the
+            other, so the store must keep both versions and let the application merge them.
+          source: dynamo
+      harvest:
+        - q: >-
+            A store resolves conflicts with last-write-wins on wall-clock time, and two servers' clocks differ by
+            200 ms. What can go wrong?
+          answer: A causally later write can lose to an earlier one stamped by a fast clock, with no error
+          distractors:
+            - Every write is rejected whenever the clocks differ at all
+            - Reads return arbitrary values for every key until the two clocks have been resynchronised
+            - Nothing, since last-write-wins always picks the latest in real time
+          why: >-
+            Skewed clocks reorder events that happened in sequence. The losing write is discarded without any
+            error, which is why causality-aware metadata is safer than timestamps.
+          source: ddia
+  - id: lsm-vs-btree
+    name: LSM vs B-tree storage
+    layer: shrub
+    branch: distributed-data
+    tier: 1
+    needs:
+      - latency-numbers
+    harvest: recall
+    minutes: 45
+    sources: [ddia]
+    summary: >-
+      Read DDIA ch. 3, "Data Structures That Power Your Database": SSTables and LSM-trees (memtable,
+      compaction, Bloom filters), B-trees, and "Comparing B-Trees and LSM-Trees". Notes: how a write and a
+      read travel through each, write and read amplification, and which workloads suit which engine.
+    rubric:
+      - Traces a write through an LSM tree - log, memtable, flush, compaction
+      - Traces a read through both engines and says where each can do extra work
+      - Explains write amplification in each design
+      - Picks an engine for a given workload and justifies it
+    questions:
+      water:
+        - q: Compared with B-trees, LSM-tree engines usually favour…
+          answer: Sequential writes and high write throughput, at the price of extra read work
+          distractors:
+            - Faster point reads, because every key sits in one sorted file
+            - In-place updates, which avoid write amplification entirely
+            - Steadier read latency, because compaction never competes with foreground requests for disk bandwidth
+          why: >-
+            Writes go to memory and are flushed as sorted files, so disk writes are sequential. Reads may
+            check several files, and background compaction rewrites data.
+          source: ddia
+        - q: In an LSM tree, a Bloom filter kept per SSTable mainly saves…
+          answer: Disk reads for keys that are not present in that file
+          distractors:
+            - Memory used by the in-memory write buffer
+            - Time spent merging files during compaction
+            - Bytes written to the write-ahead log
+          why: >-
+            A Bloom filter can say "definitely not here", so a lookup can skip most files. It can give false
+            positives, never false negatives.
+          source: ddia
+      harvest:
+        - q: >-
+            A system ingests 90% small appends and rarely reads by key, keeping data for 30 days. Which engine
+            fits better?
+          answer: An LSM-based engine, since appends batch in memory and flush sequentially
+          distractors:
+            - A B-tree, since in-place page updates are cheaper than appends
+            - A B-tree, since LSM engines cannot expire old data efficiently
+            - Either behaves identically for write-heavy workloads
+          why: >-
+            The write path of an LSM engine is mostly sequential I/O, and its read penalty matters little when
+            reads are rare. B-trees update pages in place, causing random writes.
+          source: ddia
+  - id: cell
+    name: Cell architecture
+    layer: canopy
+    branch: distributed-data
+    tier: 2
+    needs:
+      - replication
+      - raft
+    harvest: recall
+    minutes: 40
+    sources: [aws-cells, aws-shuffle]
+    summary: >-
+      Read "What is a cell-based architecture?", "Cell routing" and "Cell deployment" in the AWS cell-based
+      architecture whitepaper, then the shuffle-sharding article in the Builders' Library for blast-radius
+      thinking. Notes: what a cell is, how customers are placed, why the router stays thin, and how a deploy
+      moves cell by cell with rollback.
+    rubric:
+      - Defines a cell as a complete, independent copy of the stack serving a slice of customers
+      - Explains how blast radius shrinks and what stays shared
+      - Says why the router must be thin
+      - Describes how a rollout moves cell by cell
+    questions:
+      water:
+        - q: Cell-based architecture limits blast radius by…
+          answer: Running many small, independent copies of the whole stack, each serving a slice of customers
+          distractors:
+            - Caching every response at the edge, so the origin sees little load and failures rarely reach customers
+            - Putting all customers on one very large database with strong redundancy
+            - Pushing most business logic into the client so servers stay thin
+          why: A bad deploy or a hot tenant takes down one cell, not the fleet.
+          source: aws-cells
+        - q: In a cell architecture, the router that maps customers to cells should be…
+          answer: Thin and simple, since it is the one component that every cell shares
+          distractors:
+            - Rich in business logic so that it can balance cells cleverly
+            - Rebuilt on every deploy so that cells stay in sync
+            - Duplicated inside each cell so there is no shared piece
+          why: >-
+            Whatever is shared is not isolated. Keeping the router to a lookup keeps the failure surface that
+            spans all cells as small as possible.
+          source: aws-cells
+      harvest:
+        - q: >-
+            You roll a config change cell by cell, and cell 1 begins failing. What is the best next step?
+          answer: Halt the rollout and roll cell 1 back; the other cells are untouched
+          distractors:
+            - Continue to cell 2 to confirm the failure is reproducible
+            - Shift cell 1's traffic into the healthy cells to keep users served
+            - Wait until the error rate crosses the paging threshold
+          why: >-
+            The point of cells is that the damage stays inside one. Draining the failing cell into its
+            neighbours would carry the problem to all of them.
+          source: aws-cells
+  - id: fpaxos
+    name: Flexible Paxos
+    layer: root
+    branch: distributed-data
+    tier: 2
+    needs:
+      - raft
+    wild: true
+    harvest: recall
+    minutes: 40
+    sources: [fpaxos-paper, raft]
+    summary: >-
+      Read section 3 (FPaxos) and section 4 (majority, simple and grid quorums) of the Flexible Paxos paper,
+      then compare with the election and replication rules in sections 5.2 and 5.3 of the Raft paper. Notes:
+      the two quorum types, the single condition they must satisfy, and a worked example for five nodes.
+    rubric:
+      - Names the two quorums in a Paxos-style protocol and what each is used for
+      - States that only intersection is required, not that both are majorities
+      - Works a 5-node example and says what it speeds up and what it slows down
+    questions:
+      water:
+        - q: Flexible Paxos relaxes…
+          answer: The rule that election and replication quorums are both majorities; they only need to intersect
+          distractors:
+            - The requirement that one stable leader exists for the whole of a term and handles every client write
+            - The ordering of log entries, which replicas may now apply out of order
+            - Durability, since acknowledged writes may sit only in memory
+          why: "Replicate to 2 of 5, elect with 4 of 5: faster steady state, slower failover."
+          source: fpaxos-paper
+        - q: With 5 nodes and a replication quorum of 2, how large must an election quorum be?
+          answer: 4, so that every election quorum overlaps every replication quorum
+          distractors:
+            - 3, because a majority is always enough
+            - 2, matching the replication quorum
+            - 5, because an election has to include every node
+          why: >-
+            The two quorum sizes must add up to more than the node count: 2 + 4 > 5. With 2 + 3 = 5, a leader
+            elected by 3 nodes might miss a value stored on the other 2.
+          source: fpaxos-paper
+      harvest:
+        - q: >-
+            A cluster of 5 nodes replicates to 2 and elects with 4. Two followers fail. What now?
+          answer: Writes keep committing under the current leader, but no new leader can be elected
+          distractors:
+            - Both writes and elections carry on as normal, since three of the five nodes remain alive
+            - Writes stop at once, though an election can still succeed
+            - Both writes and elections stop, as a majority is no longer alive
+          why: >-
+            Replication needs 2 and three nodes remain, so the leader can commit. An election needs 4, and only
+            3 are up. Three of five is still a majority, yet that is not what this protocol needs, so claiming that
+            both writes and elections stop is wrong.
+          source: fpaxos-paper
+  - id: quorum-math
+    name: "Quorums: R + W > N"
+    layer: root
+    branch: distributed-data
+    tier: 2
+    needs:
+      - replication
+    harvest: judged
+    minutes: 40
+    sources: [dynamo, ddia]
+    summary: >-
+      Read sections 4.5 (get and put, R and W) and 4.6 (hinted handoff) of the Dynamo paper and the
+      "Leaderless Replication" sections of DDIA ch. 5 (quorums, their limits, sloppy quorums). Notes: how N, R
+      and W trade latency and availability, what overlap guarantees, sloppy quorums with hinted handoff, and
+      why R + W > N is not linearizability.
+    rubric:
+      - States the overlap condition and what it buys
+      - Shows how changing R and W shifts read and write latency and availability
+      - Explains a sloppy quorum and hinted handoff and what they give up
+      - Names a case where an overlapping quorum still reads stale data
+    prompts:
+      - >-
+        You run a 5-replica key-value store. Choose N, R and W for (a) a read-heavy profile service and (b) a
+        write-heavy event ingest. For each, say what failures it tolerates and whether reads are guaranteed to
+        see the last write.
+      - >-
+        Explain to a teammate why "R + W > N" does not make a Dynamo-style store linearizable. Give one concrete
+        sequence of events that returns a stale value.
+    questions:
+      water:
+        - q: With N=3 replicas, which setting has R + W > N while reading from only one replica?
+          answer: W=3 and R=1
+          distractors:
+            - W=1 and R=1, which keeps both operations the fastest
+            - W=2 and R=1, which is the usual majority setting
+            - W=1 and R=2, which still sums to three
+          why: >-
+            Overlap needs R + W of at least 4 when N is 3. With R=1 that forces W=3, so every write must reach
+            all replicas, and one failed replica blocks writes.
+          source: dynamo
+        - q: A sloppy quorum gives up…
+          answer: The overlap guarantee, since writes may land on stand-in nodes outside the replica set
+          distractors:
+            - Durability, since stand-in nodes are not allowed to store data
+            - Availability, because every write must wait for the home replicas
+            - Ordering, as writes then reach the replicas in an arbitrary order that nobody can reconstruct
+          why: >-
+            During a failure the write is parked on another node and handed back later (hinted handoff). Writes
+            keep succeeding, but a read quorum may not touch the node holding the newest value.
+          source: ddia
+  - id: truetime-hlc
+    name: TrueTime & hybrid clocks
+    layer: root
+    branch: distributed-data
+    tier: 2
+    needs:
+      - logical-clocks
+      - consistency-models
+    harvest: judged
+    minutes: 60
+    sources: [spanner, ddia, hlc-paper]
+    summary: >-
+      Read section 3 (TrueTime) and the commit-wait rule in section 4.1.2 of the Spanner paper, plus
+      "Unreliable Clocks" (clock readings with a confidence interval) in DDIA ch. 8. For the hybrid logical
+      clock read section 3 (3.3, the algorithm) of the Kulkarni et al. paper. Notes: why time is an interval,
+      what commit wait is for, and how a hybrid clock orders events without special hardware.
+    rubric:
+      - Explains why a node can only know the time within an uncertainty bound
+      - Describes commit wait and what it guarantees about commit timestamps
+      - Describes a hybrid logical clock and what each part is for
+      - Says when you would choose TrueTime-style waiting over a hybrid clock
+    prompts:
+      - >-
+        Your database must give external consistency (a transaction that starts after another finishes sees its
+        effects) across two regions without Spanner's hardware. Describe two designs, what each costs in latency
+        and operations, and which you would pick.
+      - >-
+        Walk through commit wait on a timeline with a clock uncertainty of 5 ms. What does the transaction wait for,
+        and what would break if it did not?
+    questions:
+      water:
+        - q: Spanner's commit wait exists so that…
+          answer: Its commit timestamp has certainly passed everywhere before its effects become visible
+          distractors:
+            - Replicas have time to elect a new Paxos leader when one fails
+            - Clients retry only after the clock uncertainty has healed itself
+            - Locks stay held for as long as the slowest replica in any region takes to reply to the leader
+          why: >-
+            TrueTime returns an interval [earliest, latest]. Waiting until the timestamp is earlier than every
+            node's "earliest" makes later transactions get later timestamps.
+          source: spanner
+        - q: A hybrid logical clock timestamp combines…
+          answer: The local physical clock reading plus a logical counter that breaks ties and keeps causality
+          distractors:
+            - Two physical clocks taken from different datacenters
+            - A vector holding one counter for every node in the cluster, merged element-wise on every message
+            - A random id plus the node's boot time
+          why: >-
+            It stays close to wall-clock time, so values are human-meaningful and bounded, while the counter
+            keeps causal order when physical readings tie or move backwards.
+          source: hlc-paper
+  - id: leases-fencing
+    name: Leases & fencing tokens
+    layer: root
+    branch: distributed-data
+    tier: 2
+    needs:
+      - raft
+      - logical-clocks
+    harvest: judged
+    minutes: 45
+    sources: [ddia, raft]
+    summary: >-
+      Read the lease and fencing-token discussion in DDIA ch. 8 ("The Leader and the Lock", "Fencing tokens")
+      and the term rules in section 5.1 of the Raft paper. Notes: what a lease is, why a paused process can
+      outlive its lease, how a monotonically increasing token lets storage reject a stale holder.
+    rubric:
+      - Explains why a lease is based on time and why a process cannot rely on it alone
+      - Describes a pause that makes a holder act after its lease expired
+      - Explains a fencing token and where the check must happen
+      - Relates the token to Raft's term number
+    prompts:
+      - >-
+        Service A takes a lock lease to write a file in object storage, then stalls for a long GC pause. Describe
+        the exact sequence that corrupts the file, then redesign the protocol with a fencing token.
+      - >-
+        Why can the fencing check not live in the client holding the lock? Say what the storage service must do and
+        what it needs to remember.
+    questions:
+      water:
+        - q: A client holds a lease, stalls for a long pause, then wakes believing it still owns it. What stops its stale write?
+          answer: The storage rejects it, because the write carries a fencing token older than one seen
+          distractors:
+            - The client rechecks its lease timer in the instant just before it sends the write to storage
+            - The client's retry loop notices that the lease has expired
+            - The network closes the connection when the lease runs out
+          why: >-
+            The pause can happen after the client's local check and before the write arrives, so any client-side
+            check races. Only the resource, comparing tokens, can enforce the order.
+          source: ddia
+        - q: A fencing token must be…
+          answer: Strictly increasing each time the lock or lease is granted
+          distractors:
+            - Random, so that no other client can guess it
+            - Equal to the grantee's wall-clock time at the moment of grant
+            - Reused by the same client for every renewal and re-grant
+          why: >-
+            The storage keeps the highest token seen and refuses anything lower. A random or clock-derived
+            value gives no such order across holders.
+          source: ddia
+  - id: sagas
+    name: Sagas & compensation
+    layer: understory
+    branch: distributed-data
+    tier: 2
+    needs:
+      - idem
+      - delivery-semantics
+    harvest: judged
+    minutes: 40
+    sources: [azure-saga, ddia]
+    summary: >-
+      Read the Saga pattern page in the Azure Architecture Center (implementation approaches, strategies to
+      address data anomalies), then "Distributed Transactions and Consensus" in DDIA ch. 9 for what a saga
+      replaces. Notes: orchestration vs choreography, compensating actions, what isolation a saga lacks, and
+      why every step and every compensation must be safe to retry.
+    rubric:
+      - Describes a saga as a chain of local transactions with compensations
+      - Contrasts orchestration with choreography and picks one for a case
+      - Names the isolation anomaly sagas allow and a mitigation
+      - States why steps and compensations must be idempotent
+    prompts:
+      - >-
+        Design the booking of a trip - flight, hotel, payment - as a saga. List each step with its compensation, say
+        who coordinates, and what happens when the payment step fails after the hotel is booked.
+      - >-
+        A compensation itself fails. Walk through what the system does next and why the compensation must be
+        retryable.
+    questions:
+      water:
+        - q: A saga replaces a distributed transaction by…
+          answer: Chaining local transactions, each paired with a compensation to run if a later step fails
+          distractors:
+            - Locking every participating database until all steps have committed
+            - Running every step at once and keeping whichever results arrive first
+            - Having a coordinator roll back by restoring a snapshot taken from every participating service
+          why: >-
+            There is no global rollback, so each completed step has an explicit "semantic undo" such as a
+            refund. The undo is a new transaction, not a database rollback.
+          source: azure-saga
+        - q: Between its steps, a saga lacks which ACID property?
+          answer: Isolation, because other requests can observe the intermediate state
+          distractors:
+            - Atomicity, since a committed step can never be undone once the saga has started
+            - Durability, as completed steps may be forgotten
+            - Consistency, since constraints are never checked
+          why: >-
+            Each local step commits and is visible at once, so a reader may see a half-finished booking.
+            Countermeasures include "pending" states and semantic locks.
+          source: azure-saga
+  - id: cqrs-events
+    name: Event-driven & CQRS
+    layer: canopy
+    branch: distributed-data
+    tier: 3
+    needs:
+      - sagas
+      - idem
+    harvest: judged
+    minutes: 60
+    sources: [ddia]
+    summary: >-
+      Read "Event Sourcing" and "State, Streams, and Immutability" in DDIA ch. 11: the event log as source of
+      truth, deriving several views from it (the CQRS idea), concurrency control when a view lags, and the
+      limits of immutability. Notes: commands vs queries, a log as the source of truth, projections, replay,
+      and the consistency the UI has to live with.
+    rubric:
+      - Separates the command model from the read model and says why that can help
+      - Explains an event log as a source of truth and how a projection is rebuilt
+      - Describes what the user sees after a write when the read model lags
+      - Names a cost of the design - operational, consistency or schema evolution
+    prompts:
+      - >-
+        An order system has heavy read traffic with complex filters and modest write traffic. Sketch a CQRS design
+        with an event log: what is stored, who builds the read model, and how the UI shows a fresh order.
+      - >-
+        Argue for or against event sourcing for a ledger service. Cover replay, schema changes to old events, and
+        deleting personal data.
+    questions:
+      water:
+        - q: CQRS separates…
+          answer: The model that handles commands from the model that serves queries
+          distractors:
+            - Reads and writes onto physically separate servers in every case
+            - Synchronous callers from asynchronous callers within one API
+            - Authenticated users from anonymous ones at the gateway
+          why: >-
+            The split is of models, which may or may not mean separate stores. It lets reads use shapes
+            optimised for queries while writes protect the business rules.
+          source: ddia
+        - q: After a user submits a change, the read model built from the event stream still shows the old data. A sound response is…
+          answer: Return the new state from the command side, or wait for the read model to catch up
+          distractors:
+            - Let the client resubmit the same command until the read model shows it, since duplicates are harmless
+            - Hide the problem by caching the old page for several minutes
+            - Reject the user's next request until the stream catches up
+          why: >-
+            The read side is eventually consistent by design. Echoing the result, or reading at a known version,
+            gives the user their own write without giving up the split.
+          source: ddia
+  - id: active-active
+    name: Multi-region active-active
+    layer: canopy
+    branch: distributed-data
+    tier: 3
+    needs:
+      - cell
+      - quorum-math
+      - truetime-hlc
+      - leases-fencing
+    harvest: judged
+    minutes: 60
+    sources: [spanner, dynamo, ddia]
+    summary: >-
+      Read "Multi-Leader Replication" (multi-datacenter operation, handling write conflicts, including
+      conflict avoidance) and "Leaderless Replication" in DDIA ch. 5, then section 2 (Implementation) of the
+      Spanner paper and section 4.4 of Dynamo. Notes: three ways to accept writes in many regions (home
+      region, conflict-free merge, consensus), their latency, and how users fail over.
+    rubric:
+      - States the central problem - concurrent writes in different regions
+      - Compares home-region ownership, conflict resolution and global consensus on latency and correctness
+      - Describes how traffic is routed and how failover avoids split-brain
+      - Says what you would test before trusting the design
+    prompts:
+      - >-
+        Design a user-profile service that serves users from three regions with writes accepted everywhere. Choose a
+        conflict strategy, state the write latency users will see, and describe what happens when one region is cut off.
+      - >-
+        Your leader-per-region design lets a user be pinned to a home region. A user travels and writes from another
+        region. Walk through the request path and the edge cases.
+    questions:
+      water:
+        - q: The core difficulty of accepting writes in several regions at once is…
+          answer: Concurrent writes to the same data in different regions must be resolved or prevented
+          distractors:
+            - Replicating bytes across oceans is physically impossible
+            - DNS cannot route users to their nearest region
+            - Reads become slower than they would be in one region
+          why: >-
+            Cross-region replication is fine; agreeing on the order of conflicting updates takes either
+            coordination (latency) or a merge rule (weaker guarantees).
+          source: ddia
+        - q: Giving every entity a single home region for writes avoids conflicts by…
+          answer: Sending all writes for that entity to one place while other regions serve read replicas
+          distractors:
+            - Merging concurrent writes with wall-clock timestamps in each region as soon as they arrive there
+            - Running consensus across every region on every write
+            - Letting each region keep its own independent copy that never merges
+          why: >-
+            With one writer per entity there is nothing to merge. The cost is that a user far from home pays
+            round-trip latency on writes, and failover needs a fenced hand-over.
+          source: ddia
+  # ------------------------------------------------------------------ traffic and resilience
+  - id: bp
+    name: Backpressure
+    layer: understory
+    branch: traffic-and-resilience
+    tier: 0
+    harvest: recall
+    minutes: 30
+    sources: [ddia, sre-book]
+    summary: >-
+      Read "Messaging Systems" in DDIA ch. 11 (what happens when producers outrun consumers) and, in the SRE
+      book, "Queue Management" and "Load Shedding and Graceful Degradation" in "Addressing Cascading Failures"
+      plus "Client-Side Throttling" in "Handling Overload". Notes: what pushing back on a producer means,
+      where queues and windows act as backpressure, and what unbounded queues do to latency and memory.
+    rubric:
+      - Defines backpressure as a signal from a slow consumer to a faster producer
+      - Gives two mechanisms, such as bounded queues, pull-based streams and TCP windows
+      - Explains what an unbounded queue turns an overload into
+    questions:
+      water:
+        - q: Backpressure is…
+          answer: A consumer signalling a producer to slow down
+          distractors:
+            - Retrying failed requests with exponential delay and jitter
+            - Caching responses near the client to cut origin load
+            - Spreading requests evenly across the available replicas
+          why: Bounded queues, pull-based streams and TCP windows are all backpressure.
+          source: ddia
+        - q: An unbounded in-memory queue sits between an HTTP handler and a slow downstream. Under overload it mostly turns the problem into…
+          answer: Growing latency and eventual memory exhaustion rather than a clear error
+          distractors:
+            - Higher throughput, as the queue can absorb bursts forever
+            - Dropped requests with no change to latency
+            - Fairer treatment of callers by arrival order
+          why: >-
+            Work waits longer and longer, so most callers time out while the server still processes their
+            abandoned requests, and the queue eventually eats the heap.
+          source: sre-book
+      harvest:
+        - q: A bounded queue before a slow worker fills up. Safest failure for a payments API?
+          answer: Reject new work fast with 503 and Retry-After
+          distractors:
+            - Grow the queue without bound so that nothing is ever refused
+            - Drop the oldest queued requests silently to make space
+            - Block the accept loop until space frees up in the queue
+          why: >-
+            Fast rejection keeps latency bounded and lets callers back off; unbounded queues turn into memory
+            and timeout failures.
+          source: sre-book
+  - id: latency-numbers
+    name: Latency numbers & percentiles
+    layer: ground-cover
+    branch: traffic-and-resilience
+    tier: 0
+    harvest: recall
+    minutes: 30
+    sources: [latency-table, ddia, tail]
+    summary: >-
+      Study the "Latency Numbers Every Programmer Should Know" table (memory, SSD, datacenter round trip, disk
+      seek, cross-ocean packet). Then read "Describing Performance" (percentiles) in DDIA ch. 1 and the
+      opening sections of The Tail at Scale. Notes: the orders of magnitude, how sequential calls add up, and
+      why p99 matters more than the mean.
+    rubric:
+      - Recalls orders of magnitude - memory in nanoseconds, a datacenter round trip in hundreds of microseconds, a cross-ocean trip in tens of milliseconds
+      - Explains why percentiles describe user experience better than averages
+      - Uses the numbers to estimate the cost of a chain of sequential remote calls
+    questions:
+      water:
+        - q: Roughly how much slower is a round trip inside one datacenter than a main-memory read?
+          answer: About 5,000 times slower, microseconds against about a hundred nanoseconds
+          distractors:
+            - About 10 times slower, since both stay within the same building
+            - About 100 times slower, because both operations are limited by the speed of the memory bus
+            - About a million times slower, as a round trip needs a disk seek
+          why: >-
+            A memory read is about 100 ns; an in-datacenter round trip is a few hundred microseconds. That
+            gap of thousands is why chatty services pay dearly for sequential calls.
+          source: latency-table
+        - q: A page makes 50 sequential cache lookups, each a half-millisecond round trip. Time spent on lookups?
+          answer: About 25 ms, which batching or parallel calls could cut sharply
+          distractors:
+            - About 0.5 ms, since cache hits are so fast
+            - About 2.5 ms, because lookups overlap in the network
+            - About 250 ms, as each lookup waits for a disk seek
+          why: >-
+            Latencies add when calls are sequential: 50 times 0.5 ms. Issuing the lookups in parallel, or as one
+            multi-get, turns the sum into roughly one round trip.
+          source: latency-table
+      harvest:
+        - q: >-
+            A service in California queries a database in the Netherlands, three sequential queries per request.
+            What added latency should you expect?
+          answer: Around 450 ms of pure network time, dominated by round trips, not bandwidth
+          distractors:
+            - Under 10 ms, because light in fibre travels almost instantly
+            - About 30 ms, since the three queries are pipelined automatically by the database driver
+            - Negligible once the connections are pooled and kept warm
+          why: >-
+            The classic latency table puts a California-to-Netherlands round trip near 150 ms, so three sequential
+            queries cost roughly 450 ms. Pooling saves handshakes, not distance; the fix is co-location, batching or
+            caching.
+          source: latency-table
+  - id: littles-law
+    name: Little's law
+    layer: ground-cover
+    branch: traffic-and-resilience
+    tier: 0
+    harvest: recall
+    minutes: 25
+    sources: [brooker-littles]
+    summary: >-
+      Read Marc Brooker's "Telling Stories About Little's Law", then derive L = λW on paper: items in the
+      system equal arrival rate times time in the system. Notes: worked examples for thread pools and queues,
+      what the law says when latency rises, and what its long-run averages hide.
+    rubric:
+      - States L = λW and defines each symbol
+      - Uses it to size a pool or predict queue depth from rate and latency
+      - Explains that it relates long-run averages, so it says little about spikes or the latency tail
+    questions:
+      water:
+        - q: A service holds 200 requests in flight on average and each takes 0.5 s. What throughput does it sustain?
+          answer: About 400 requests per second
+          distractors:
+            - About 100 requests per second
+            - About 200 requests per second
+            - About 1,000 requests per second
+          why: >-
+            L = λW, so λ = L / W = 200 / 0.5 = 400. The wrong value 100 comes from multiplying instead of
+            dividing.
+          source: brooker-littles
+        - q: Which statement about Little's law is accurate when applied to a real service?
+          answer: It links long-run averages, so it says little about spikes or the tail of the latency
+          distractors:
+            - It predicts the p99 latency from the arrival rate alone
+            - It holds only when requests arrive at perfectly even intervals
+            - It stops applying once utilisation passes fifty percent
+          why: >-
+            L = λW is an identity between averages taken over a long period. It is a handy capacity check, but a mean
+            hides bursts and slow outliers, so you still need percentiles and a look at how the traffic changes over time.
+          source: brooker-littles
+      harvest:
+        - q: >-
+            At 300 req/s, a downstream call slows from 100 ms to 1 s, and the caller has a pool of 100 threads. What
+            happens?
+          answer: The pool saturates, as 300 are needed in flight but only 100 threads exist, so a queue builds
+          distractors:
+            - Throughput stays at 300 per second, because the threads simply get reused faster by the pool
+            - Nothing changes while CPU use stays below fifty percent
+            - Latency stays flat, because only the downstream got slower
+          why: >-
+            In-flight work is 300 × 1 s = 300, three times the pool. A thread blocked on a slow call is held, so
+            capacity falls to 100 per second and the rest wait or time out.
+          source: brooker-littles
+  - id: rl
+    name: Rate limiting
+    layer: herb
+    branch: traffic-and-resilience
+    tier: 1
+    needs:
+      - bp
+    harvest: recall
+    minutes: 35
+    sources: [figma-ratelimit, sre-book]
+    summary: >-
+      Read the "Token bucket", "Fixed window counters" and sliding-window sections of Figma's rate-limiting
+      post, then "Per-Customer Limits" and "Client-Side Throttling" in the SRE book's Handling Overload
+      chapter. Notes: token bucket, fixed and sliding windows, where the counter lives in a multi-node fleet,
+      and what the client sees on rejection.
+    rubric:
+      - Describes a token bucket and the burst it allows
+      - Compares fixed-window and sliding-window counting
+      - Says how a limiter works across several servers
+      - Explains what a rejected client should see (status, retry hint)
+    questions:
+      water:
+        - q: A token bucket allows…
+          answer: Bursts up to the bucket size while enforcing an average rate
+          distractors:
+            - No bursts at all, since each request needs a fresh slot
+            - An unlimited rate whenever the bucket is empty
+            - Only fixed one-second windows with a hard reset
+          why: Tokens refill at the rate; a full bucket is the burst allowance.
+          source: figma-ratelimit
+        - q: A limiter must work across 20 identical API servers. Which approach keeps the limit roughly right?
+          answer: Keep counters in a shared store keyed by client, and increment them atomically
+          distractors:
+            - Let every server enforce the full limit on its own
+            - Have each server count requests only in its own memory and never share
+            - Ask clients to count their own requests honestly
+          why: >-
+            Independent per-server counters allow up to 20 times the limit. A shared atomic counter (or a
+            small per-server share with periodic sync) keeps the total close to the target.
+          source: figma-ratelimit
+      harvest:
+        - q: Fixed-window counters suffer from…
+          answer: Up to 2× the limit across a window boundary
+          distractors:
+            - Far too much memory used for every client
+            - Clock drift between servers and nothing else
+            - Nothing; they are exact at every instant
+          why: A burst at the end of one window plus one at the start of the next doubles the real rate.
+          source: figma-ratelimit
+  - id: idem
+    name: Idempotency & outbox
+    layer: understory
+    branch: traffic-and-resilience
+    tier: 1
+    needs:
+      - bp
+    harvest: recall
+    minutes: 40
+    sources: [outbox-pattern, ddia]
+    summary: >-
+      Read the Transactional outbox page (microservices.io), then "Keeping Systems in Sync" and the
+      idempotence part of "Fault Tolerance" in DDIA ch. 11, and "The End-to-End Argument for Databases"
+      (operation identifiers) in ch. 12. Notes: the dual-write problem, the outbox with a relay, and
+      idempotency keys on write APIs.
+    rubric:
+      - Explains the dual-write problem - database and broker cannot commit together
+      - Describes the outbox - event row in the same transaction, relay afterwards
+      - Explains how an idempotency key makes a retried request safe
+      - States that the relay delivers at least once, so consumers must dedupe
+    questions:
+      water:
+        - q: A transactional outbox solves…
+          answer: Writing to the DB and publishing an event atomically, so neither is lost
+          distractors:
+            - Slow queries caused by contention on a busy events table
+            - Duplicate delivery to consumers, which it removes entirely
+            - Schema migrations that must run while the service stays online
+          why: The event row commits with the business row; a relay publishes it afterwards, at-least-once.
+          source: outbox-pattern
+        - q: >-
+            A client times out on a payment POST and retries with the same idempotency key, but the first attempt had
+            actually succeeded. What should the server do?
+          answer: Return the stored result of the first attempt and never charge a second time
+          distractors:
+            - Charge again, since a timeout shows the first attempt did not finish
+            - Reject the retry with an error and hide the result of the first attempt
+            - Return success without ever checking whether the first attempt ran
+          why: >-
+            The key is how the server recognises a retry. Saving the key and the outcome together with the effect lets
+            the second request replay the stored answer; without that record a retry can only guess.
+          source: ddia
+      harvest:
+        - q: >-
+            An outbox relay publishes a batch to the broker, then crashes before marking those rows as sent. What
+            follows after restart?
+          answer: The same events are published again, so consumers must tolerate duplicates
+          distractors:
+            - The events are lost, since unmarked rows are skipped on restart
+            - The database rolls back the business write that created them
+            - Consumers see the events out of order but never twice
+          why: >-
+            The relay can only mark rows after publishing, so a crash in between leaves rows unmarked. That is
+            why outbox plus idempotent consumers is the standard pair.
+          source: outbox-pattern
+  - id: cache-invalidation
+    name: Caches & invalidation
+    layer: shrub
+    branch: traffic-and-resilience
+    tier: 1
+    needs:
+      - latency-numbers
+    harvest: recall
+    minutes: 40
+    sources: [memcache-paper, mdn-caching]
+    summary: >-
+      Read section 2 (look-aside cache, deletes after writes) and section 3.2.1 (leases for stale sets and
+      thundering herds) of "Scaling Memcache at Facebook", then "Request collapse" in MDN's HTTP caching
+      guide. Notes: cache-aside, TTLs, the race between an update and a refill, and stampedes on a hot key.
+    rubric:
+      - Describes cache-aside and the order of the database write and the invalidation
+      - Explains the race that leaves a stale value in the cache
+      - Explains a stampede and one protection, such as request coalescing
+      - Chooses a TTL and an invalidation strategy for a given data type
+    questions:
+      water:
+        - q: With cache-aside, what is the safest simple way to handle a database write?
+          answer: Update the database, then delete the cached key so the next read refills it
+          distractors:
+            - Delete the key first, then update the database afterwards
+            - Write the new value into the cache first, then the database
+            - Update the cache and database concurrently without any ordering
+          why: >-
+            If you delete first, a concurrent reader can refill the cache with the old row before the write
+            lands, leaving stale data until the TTL. Deleting afterwards narrows that window.
+          source: memcache-paper
+        - q: A cache stampede happens when…
+          answer: A hot key expires and many requests rebuild it from the origin at once
+          distractors:
+            - Cache memory fills and evicts keys in random order
+            - Two services write different values for the same key
+            - Clients keep connections open to the cache for too long
+          why: >-
+            All concurrent misses go to the origin together, which can overload it exactly when the key was
+            most useful. The Facebook memcache paper calls the write-driven version a thundering herd and tames
+            it with leases.
+          source: memcache-paper
+      harvest:
+        - q: >-
+            A hot key serves 2,000 req/s and rebuilding it takes 800 ms. What protects the database at expiry?
+          answer: Let one request rebuild it while the others wait or get the stale value
+          distractors:
+            - Shorten the TTL so that the rebuild happens more often
+            - Add more cache nodes so that each shares the expiry
+            - Remove the TTL entirely and refresh the value by hand whenever it looks old
+          why: >-
+            During the 800 ms about 1,600 requests would otherwise miss at once. Coalescing them into one
+            rebuild, or serving stale while revalidating, removes that spike.
+          source: memcache-paper
+  - id: golden-signals
+    name: Golden signals
+    layer: vine
+    branch: traffic-and-resilience
+    tier: 1
+    needs:
+      - latency-numbers
+    harvest: recall
+    minutes: 35
+    sources: [sre-book]
+    summary: >-
+      Read "Monitoring Distributed Systems" in the SRE book. Notes: the four golden signals (latency, traffic,
+      errors, saturation), why you separate successful and failed latency, and why percentiles beat averages.
+      Yield: the four signals for a service you run.
+    rubric:
+      - Names the four golden signals and what each measures
+      - Explains why latency of failures is tracked apart from successes
+      - Explains why a high percentile reveals problems the mean hides
+    questions:
+      water:
+        - q: Why does the SRE book advise tracking error latency apart from success latency?
+          answer: A fast failure can drag the average down and hide slow real requests
+          distractors:
+            - Failed requests are never counted in the traffic signal, so error rates look lower
+            - Error responses are always slower than successes
+            - Alerting systems cannot compute latency for errors
+          why: >-
+            A flood of instant 500s makes the mean look healthy. Splitting the two keeps a problem in the real
+            work visible.
+          source: sre-book
+        - q: Which signal measures how full the service is relative to its limits?
+          answer: Saturation
+          distractors:
+            - Latency, which grows only once something has failed
+            - Traffic, since it counts the requests per second
+            - Errors, because they appear as soon as capacity ends
+          why: >-
+            Saturation is how full the most constrained resource is (queue depth, memory, connections). Latency
+            climbing, especially at the 99th percentile, is often the first sign that saturation is near.
+          source: sre-book
+      harvest:
+        - q: >-
+            A dashboard shows steady 80 ms average latency, 0.1% errors and 40% CPU, yet users say checkout is slow.
+            What do you check first?
+          answer: The p99 latency and per-endpoint breakdown of the checkout path
+          distractors:
+            - Scale up the fleet, because slowness is usually a capacity shortfall
+            - Ignore it, since the mean and the error rate show a healthy service
+            - Lower the CPU alert threshold so saturation is caught sooner
+          why: >-
+            A mean can sit flat while a slice of requests takes seconds. Percentiles and per-route views find
+            where the tail is; adding servers would not fix a slow dependency.
+          source: sre-book
+  - id: retry-backoff-jitter
+    name: Timeouts, retries & jitter
+    layer: herb
+    branch: traffic-and-resilience
+    tier: 2
+    needs:
+      - latency-numbers
+      - idem
+    harvest: judged
+    minutes: 40
+    sources: [aws-timeouts, sre-book]
+    summary: >-
+      Read the Builders' Library article "Timeouts, retries, and backoff with jitter", plus "Retries" in
+      "Addressing Cascading Failures" in the SRE book. Notes: how to choose a timeout, exponential backoff,
+      full jitter, retry budgets, and why retries at several layers multiply load.
+    rubric:
+      - Explains how to pick a timeout from observed latency instead of a guess
+      - Describes exponential backoff with jitter and the problem jitter solves
+      - Explains how nested retries amplify load and one defence, such as a retry budget
+      - States which requests are safe to retry
+    prompts:
+      - >-
+        A mobile client calls an API gateway, which calls an order service, which calls a database. Each layer
+        retries three times on failure. Compute the worst-case attempts on the database, then redesign the retry
+        policy across the layers.
+      - >-
+        Write the retry policy for a client of a payment API: timeout, attempts, backoff formula, jitter, and which
+        errors are retried. Justify each choice.
+    questions:
+      water:
+        - q: Exponential backoff without jitter still hurts a recovering server because…
+          answer: Clients that failed together retry together, making synchronised waves of load
+          distractors:
+            - The delays grow too slowly to give the overloaded server any real chance to recover
+            - Each single request is made slower than with a fixed delay
+            - Servers cannot tell a retry apart from a first attempt
+          why: >-
+            Identical delays keep the clients in lock-step. Random jitter spreads the retries over the
+            interval so that arrivals look like a steady trickle rather than a spike.
+          source: aws-timeouts
+        - q: A calls B, B calls C, C calls D, and each caller makes up to 3 attempts. How many calls might D see for one request to A?
+          answer: Up to 27, since attempts multiply at every layer
+          distractors:
+            - Up to 9, because only the last two layers retry
+            - Up to 3, because the layers share one retry
+            - Up to 81, since each layer retries four times
+          why: >-
+            A's three attempts each cause B to try three times, and so on: 3 × 3 × 3. This amplification is why
+            retries belong at one layer, or under a shared retry budget.
+          source: aws-timeouts
+  - id: edge-cdn
+    name: Edge & CDN caching
+    layer: herb
+    branch: traffic-and-resilience
+    tier: 2
+    needs:
+      - cache-invalidation
+    harvest: judged
+    minutes: 40
+    sources: [mdn-caching, mdn-cache-control]
+    summary: >-
+      Read MDN's HTTP caching guide (private vs shared caches, Vary, validation) and its Cache-Control
+      reference (s-maxage, stale-while-revalidate, private). Notes: what a CDN caches and for how long, how
+      the cache key is built, how you purge, and what must never be shared.
+    rubric:
+      - Explains the difference between private and shared caches and the matching directives
+      - Describes how cache keys, Vary and query strings affect hit ratio
+      - Explains validation and stale-while-revalidate
+      - Names what must not be cached at a shared edge and how you prevent it
+    prompts:
+      - >-
+        A news site sees slow pages in distant regions. Design the edge caching: which responses are cacheable and
+        for how long, the cache key, how an editor's correction purges the edge, and how personalised pages stay out.
+      - >-
+        After enabling a CDN, one user sees another user's account page. Explain how that happens and how to
+        prevent it in headers and in configuration.
+    questions:
+      water:
+        - q: In Cache-Control, how does `s-maxage` differ from `max-age`?
+          answer: It applies only to shared caches such as CDNs, and overrides max-age there
+          distractors:
+            - It applies only to the user's browser cache and is ignored by proxies
+            - It sets how long a cache may serve a stale response after expiry
+            - It limits how many seconds a response may be revalidated
+          why: >-
+            A shared cache stores a response for many users. s-maxage lets you give the edge a different
+            lifetime from the browser.
+          source: mdn-cache-control
+        - q: "`stale-while-revalidate` lets a cache…"
+          answer: Serve an expired response at once while fetching a fresh one in the background
+          distractors:
+            - Keep serving expired responses indefinitely whenever the origin cannot be reached
+            - Skip validation for responses that carry an ETag
+            - Revalidate only when the user explicitly reloads the page
+          why: >-
+            Users see no revalidation wait, and the next request gets the refreshed copy. It trades a short
+            period of staleness for steadier latency.
+          source: mdn-cache-control
+  - id: dist-tracing
+    name: Distributed tracing
+    layer: vine
+    branch: traffic-and-resilience
+    tier: 2
+    needs:
+      - golden-signals
+    harvest: judged
+    minutes: 40
+    sources: [otel-traces]
+    summary: >-
+      Read the OpenTelemetry traces concept page: spans and parent span ids, span context, attributes, events,
+      links, status and span kinds (including producer and consumer). Notes: trace, span, how spans assemble
+      into a trace, what each span carries, and how an asynchronous hop through a queue shows up. Yield: a
+      sketch of the spans for one request through three services.
+    rubric:
+      - Defines trace and span and how spans link by parent ids
+      - Explains what a span carries beyond timing - attributes, events, status
+      - Describes how an asynchronous hop shows up, using span kinds or links
+      - Says what a trace answers that metrics and logs do not
+    prompts:
+      - >-
+        Checkout latency p99 doubled but average CPU is flat. Describe how you would use traces to find the cause
+        and which attributes you would want on spans.
+      - >-
+        A message queue sits between two services. Explain how you keep the trace connected across it and what the
+        spans should look like.
+    questions:
+      water:
+        - q: A distributed trace consists of…
+          answer: Spans that share one trace id and each point to their parent span
+          distractors:
+            - One log line per service, joined together later by matching the timestamps on the lines
+            - A metric series per endpoint, grouped by service name
+            - A single span recorded by the first service in the chain
+          why: >-
+            Each unit of work is a span that carries the trace id and the id of its parent. The back end reassembles
+            the tree from those ids, not from clocks, which is why the context must travel with every call.
+          source: otel-traces
+        - q: A request puts a job on a queue and a worker handles it minutes later. How do OpenTelemetry span kinds describe this?
+          answer: A producer span marks the enqueue and a consumer span marks the later processing
+          distractors:
+            - One client span stays open until the worker finishes, however long that takes
+            - An internal span covers both, since the queue sits inside the same system
+            - Two unrelated root spans, because asynchronous work cannot be traced
+          why: >-
+            Producer and consumer kinds exist for work created now and processed later, possibly long after the
+            producer span ended. A link or a propagated parent ties the two halves into one trace.
+          source: otel-traces
+  - id: slo-error-budgets
+    name: SLOs & error budgets
+    layer: vine
+    branch: traffic-and-resilience
+    tier: 2
+    needs:
+      - golden-signals
+    harvest: judged
+    minutes: 45
+    sources: [sre-book]
+    summary: >-
+      Read the Service Level Objectives chapter of the SRE book and the error-budget part of "Embracing Risk". Notes: SLI, SLO and SLA, good events over valid
+      events, error budget arithmetic, and the policy when the budget is spent.
+    rubric:
+      - Defines SLI, SLO and SLA and how they differ
+      - Computes an error budget from an availability target
+      - Describes a budget policy and who decides
+      - Explains how an SLO guards against both over- and under-reliability
+    prompts:
+      - >-
+        Pick an SLI and an SLO for a checkout API. Compute the monthly error budget, and write the policy for what
+        the team does when half of it is spent in a week.
+      - >-
+        Your PM wants "five nines". Explain, with numbers, what that costs, and propose an SLO with a budget policy
+        you would be willing to sign.
+    questions:
+      water:
+        - q: A 99.9% availability SLO over a 30-day month leaves roughly how much error budget?
+          answer: About 43 minutes of full outage, or the same in failed requests
+          distractors:
+            - About 7 hours, which is the 99% figure
+            - About 4 minutes, which belongs to a stricter target
+            - About 72 minutes, as a tenth of the month
+          why: >-
+            0.1% of 43,200 minutes is 43.2. The 7-hour figure is the budget at 99%, a ten times looser target.
+          source: sre-book
+        - q: When the error budget is spent, the usual policy is to…
+          answer: Slow or freeze feature releases and put effort into reliability until it recovers
+          distractors:
+            - Relax the SLO targets so that the service is counted as back inside them again at once
+            - Page the whole company until the incident closes
+            - Roll back every deploy made in the past month
+          why: >-
+            The budget makes reliability and velocity a shared trade-off. Spending it ends risky changes;
+            changing the target to hide the miss defeats the purpose.
+          source: sre-book
+  - id: circuit-breaker
+    name: Circuit breakers
+    layer: understory
+    branch: traffic-and-resilience
+    tier: 3
+    needs:
+      - retry-backoff-jitter
+      - bp
+    harvest: judged
+    minutes: 40
+    sources: [azure-circuit-breaker, sre-book]
+    summary: >-
+      Read the Circuit Breaker pattern page in the Azure Architecture Center and "Load Shedding and Graceful
+      Degradation" in the SRE book's "Addressing Cascading Failures". Notes: closed, open and half-open
+      states, what trips the breaker, the fallback, and how it works with timeouts and retries.
+    rubric:
+      - Describes the three states and the transitions between them
+      - Explains what the breaker protects (the caller and the dependency)
+      - Chooses what trips it and what a fallback returns
+      - Explains how breakers interact with retries
+    prompts:
+      - >-
+        Your service calls a recommendations API that sometimes hangs. Design the breaker: the failure signal, the
+        threshold, the open duration, the fallback, and how you test the half-open probe.
+      - >-
+        A breaker flaps open and closed every few seconds. Diagnose three possible causes and fixes.
+    questions:
+      water:
+        - q: In the half-open state, a circuit breaker…
+          answer: Lets a few trial calls through to test whether the dependency has recovered
+          distractors:
+            - Rejects every call until a second timer elapses
+            - Sends all calls through as normal while logging every error at a much higher volume
+            - Opens only for the slowest percentile of requests
+          why: >-
+            After the open period, a few probes decide the next state: success closes the breaker, failure
+            reopens it. This avoids a full-traffic return to a still-sick service.
+          source: azure-circuit-breaker
+        - q: What should an open breaker's fallback be?
+          answer: A degraded but safe result, such as cached data or a clear error, returned at once
+          distractors:
+            - A hidden retry loop that keeps calling the dependency
+            - A long wait that mimics the dependency's normal latency so callers notice no difference
+            - A fake success that invents a result, such as a made-up confirmation, so callers carry on
+          why: >-
+            The breaker exists to fail fast. A fallback that retries or waits brings back the load and the
+            thread usage it was meant to remove.
+          source: azure-circuit-breaker
+  - id: bulkheads
+    name: Bulkheads & isolation
+    layer: understory
+    branch: traffic-and-resilience
+    tier: 3
+    needs:
+      - littles-law
+      - retry-backoff-jitter
+    harvest: judged
+    minutes: 40
+    sources: [azure-bulkhead, brooker-littles]
+    summary: >-
+      Read the Bulkhead pattern page in the Azure Architecture Center, then Brooker's Little's law post for
+      sizing. Notes: separate pools per dependency or tenant, sizing a pool with Little's law, queue limits,
+      and the cost of unused capacity.
+    rubric:
+      - Explains a bulkhead as a separate resource pool for one dependency or tenant
+      - Sizes a pool from rate and latency with Little's law
+      - Describes how the pool rejects work when full
+      - Names the cost - idle capacity in one pool cannot help another
+    prompts:
+      - >-
+        A service calls three dependencies from one shared thread pool. One becomes slow and the whole service
+        stalls. Redesign it with bulkheads, size each pool from the numbers you assume, and say what each does when
+        full.
+      - >-
+        A multi-tenant API lets one large tenant starve the others. Propose a per-tenant isolation scheme and
+        compare it with simple rate limiting.
+    questions:
+      water:
+        - q: A bulkhead isolates…
+          answer: Resource pools per dependency or tenant, so one slow party cannot exhaust shared capacity
+          distractors:
+            - Network segments, so that packets from one service cannot cross over into another service
+            - Code modules, so that a compile error stays local
+            - Database tables, so that a bad query locks only one of them
+          why: >-
+            Named after ship compartments. When calls to X pile up they fill X's pool only, and the callers of Y
+            and Z keep getting threads.
+          source: azure-bulkhead
+        - q: A dependency gets 200 calls/s and each call takes about 300 ms. By Little's law, roughly how many concurrent calls must its pool allow?
+          answer: About 60, plus some headroom
+          distractors:
+            - About 667, from dividing the rate by the latency
+            - About 200, equal to the request rate
+            - About 60,000, from reading 300 ms as 300 seconds
+          why: >-
+            In-flight calls = rate × time = 200 × 0.3 = 60. Dividing instead of multiplying gives 667, and
+            mixing up the units gives the other figures. Add headroom for bursts.
+          source: brooker-littles
+  - id: hedged-requests
+    name: Hedged requests
+    layer: herb
+    branch: traffic-and-resilience
+    tier: 3
+    needs:
+      - retry-backoff-jitter
+      - golden-signals
+    wild: true
+    harvest: judged
+    minutes: 35
+    sources: [tail]
+    summary: >-
+      Read the "Hedged requests" and "Tied requests" passages in the "Within Request Short-Term Adaptations"
+      part of The Tail at Scale. Notes: why a few slow replicas dominate end-to-end latency in a fan-out, how
+      a hedge after the p95 delay keeps the extra load small, how tied requests cancel the duplicate, and
+      which operations are safe to duplicate (the paper's examples are reads).
+    rubric:
+      - Explains why fan-out makes the tail dominate user latency
+      - Describes a hedged request and why it waits before sending the second copy
+      - Quantifies or reasons about the extra load
+      - States the safety condition for duplicated work
+    prompts:
+      - >-
+        A search request fans out to 100 shards and its p99 is dominated by the slowest shard. Design hedging for the
+        shard calls: when to send the second request, how to cancel, and how to keep the added load bounded.
+      - >-
+        Explain why hedging a "charge card" call is dangerous and what you would add to make it safe.
+    questions:
+      water:
+        - q: A hedged request is sent…
+          answer: After waiting about the p95 latency with no reply, to another replica; first reply wins
+          distractors:
+            - Immediately and to every replica at once, with all of the replies merged together afterwards
+            - Only after the first request has failed with an error code
+            - To the same replica again, with a longer timeout
+          why: >-
+            Waiting for the usual latency means only the slowest few percent of requests are duplicated, so
+            load rises a little, and the second copy rescues most stragglers.
+          source: tail
+        - q: Why not send every request to two replicas at once?
+          answer: It doubles the load, and the extra work can itself raise latency when busy
+          distractors:
+            - Replicas refuse a request that another replica is also handling
+            - It would return two different answers from the replicas that must then be reconciled
+            - Replicas would have to coordinate with each other before they could answer
+          why: >-
+            Load rises by 100% for a small tail gain. A delayed hedge duplicates only the slowest requests, so
+            overhead stays in the low percentages.
+          source: tail
+  - id: edge-security
+    name: Security at the edge
+    layer: vine
+    branch: traffic-and-resilience
+    tier: 3
+    needs:
+      - edge-cdn
+      - rl
+    harvest: judged
+    minutes: 45
+    sources: [owasp-api, sre-book]
+    summary: >-
+      Read the OWASP API Security Top 10 (2023), especially API1 (object-level authorization) and API9
+      (inventory management), and "Load Shedding and Graceful Degradation" in the SRE book's
+      cascading-failures chapter. Notes: what belongs at the edge (TLS, WAF, rate limits, coarse authn), what
+      cannot be done there, and why every host, version and origin address must sit behind the same controls.
+    rubric:
+      - Lists what an edge layer can reasonably enforce
+      - Explains why every host and API version, and the origin itself, must sit behind the same controls
+      - Names an API risk that edge rules cannot fix, with the reason
+      - Describes layers of defence against abusive traffic
+    prompts:
+      - >-
+        Design the edge for a public payments API: TLS, authentication, rate limits, WAF rules and origin
+        protection. Say what each layer stops and what it cannot.
+      - >-
+        A scanner enumerates order ids and reads other customers' orders even though your WAF is on. Explain why
+        and where the fix belongs.
+    questions:
+      water:
+        - q: >-
+            A team puts a WAF and rate limits in front of its v2 API, but an old v1 deployment still answers on its own
+            hostname. What is the main weakness?
+          answer: Calls to the forgotten deployment never pass the edge controls, an inventory-management failure
+          distractors:
+            - The WAF cannot inspect two API versions that use the same TLS certificate
+            - Rate limits for v1 and v2 are counted against one shared client quota
+            - The old version is only a risk once it has reached the end of its support period
+          why: >-
+            Edge controls protect only the traffic that passes through them. OWASP's inventory risk (API9) is about
+            exactly this: deprecated versions and exposed debug endpoints that nobody watches. The same logic says the
+            origin should only accept edge traffic.
+          source: owasp-api
+        - q: Broken object-level authorisation (the top API risk in 2023) cannot be stopped by an edge WAF because…
+          answer: The edge cannot know whether this user may touch that particular object id
+          distractors:
+            - WAFs cannot read the path of a request
+            - The attacks always arrive over encrypted connections that the edge never sees
+            - The attack uses malformed requests that the edge discards anyway
+          why: >-
+            The request looks perfectly valid; only the application knows who owns order 1234. The check has to
+            live in the service, not in a filter in front of it.
+          source: owasp-api
+  - id: chaos-testing
+    name: Chaos & failure testing
+    layer: vine
+    branch: traffic-and-resilience
+    tier: 4
+    needs:
+      - circuit-breaker
+      - slo-error-budgets
+    harvest: judged
+    minutes: 45
+    sources: [principles-chaos]
+    summary: >-
+      Read the Principles of Chaos Engineering page, including its advanced principles (build a hypothesis
+      around steady state, vary real-world events, run in production, automate, minimize blast radius). Notes:
+      a steady-state hypothesis, small blast radius, abort conditions, game days, and how experiments connect
+      to your SLOs and breakers.
+    rubric:
+      - States the steady-state hypothesis as a measurable signal
+      - Plans a small blast radius with a clear abort condition
+      - Chooses a failure to inject and predicts the result
+      - Describes how the findings feed back into fixes and SLOs
+    prompts:
+      - >-
+        Plan a first chaos experiment for a service with a circuit breaker on its recommendations dependency:
+        hypothesis, injected fault, blast radius, abort condition, and what result would make you change the code.
+      - >-
+        Run a game day on paper: the scenario is a zone outage during peak traffic. List the signals you watch, the
+        decisions people make, and what you would measure to know it went well.
+    questions:
+      water:
+        - q: A chaos experiment should begin with…
+          answer: A steady-state hypothesis stated as a measurable signal such as success rate
+          distractors:
+            - Terminating a random production instance to see what happens, then watching the dashboards
+            - A blameless review of the previous outage with the full team
+            - A list of every possible failure mode ranked by likelihood
+          why: >-
+            Without a measurable "normal" you cannot tell whether the fault mattered. The plan states what
+            should stay true and what would count as a surprise.
+          source: principles-chaos
+        - q: What is a sensible way to run the first fault injection?
+          answer: On a small slice of traffic, so any customer impact stays contained
+          distractors:
+            - Across a whole region during the lowest-traffic hour
+            - Without notice to the team, to test their reactions
+            - With several faults injected together, so the worst case shows up first
+          why: >-
+            The principles call for a minimal, contained blast radius. Teams add an automatic stop tied to the steady-state
+            signal. Stacking faults makes the result hard to read, and surprising people is not the goal.
+          source: principles-chaos
+  - id: shuffle-sharding
+    name: Shuffle sharding
+    layer: herb
+    branch: traffic-and-resilience
+    tier: 4
+    needs:
+      - data-partitioning
+      - bulkheads
+    wild: true
+    harvest: judged
+    minutes: 40
+    sources: [aws-shuffle]
+    summary: >-
+      Read the AWS Builders' Library article on shuffle sharding. Notes: giving each customer a small random subset
+      of workers, the combinatorics that make two customers rarely share a subset, and how a client retry across its
+      subset limits blast radius.
+    rubric:
+      - Explains assigning each customer a small random subset of the worker pool
+      - Computes the number of possible subsets and the chance two customers collide
+      - Contrasts the blast radius with plain sharding
+      - Says what the client needs to do to benefit from it
+    prompts:
+      - >-
+        A pool of 12 workers serves many customers. Compare plain sharding into 4 groups of 3 with shuffle sharding
+        of 3 workers per customer. Compute the number of subsets and the share of customers hurt by one poison
+        customer.
+      - >-
+        Describe what the client library must do for shuffle sharding to keep a customer healthy when one of its
+        assigned workers is down.
+    questions:
+      water:
+        - q: Shuffle sharding assigns each customer…
+          answer: A small random subset of workers, so two customers rarely share the same subset
+          distractors:
+            - One fixed worker, so that customers never share capacity
+            - The whole worker pool, with a quota on each customer
+            - A subset chosen by customer size, so that big customers share workers with each other
+          why: >-
+            Many different subsets exist, so the chance that another customer has exactly the same workers is
+            tiny, and a poison customer harms only those who overlap fully.
+          source: aws-shuffle
+        - q: 8 workers, 2 per customer by shuffle sharding. One poison customer takes down its two workers. What share of the other customers shares both workers?
+          answer: About 4% (1 in 28), against 25% with four fixed groups of two
+          distractors:
+            - About 25% (1 in 4), the same as with fixed groups
+            - About 50%, since each worker serves half the customers
+            - None at all, because every customer has a unique pair
+          why: >-
+            Choosing 2 from 8 gives 28 pairs, so about 1 in 28 customers shares both workers. Four fixed groups
+            of two leave a quarter of customers on the broken pair.
+          source: aws-shuffle
 finds:
   - id: flexible-paxos
     near: [raft, con, cap]
@@ -219,3 +1925,23 @@ finds:
   - id: tcp-backpressure
     near: [bp, rl]
     text: "TCP flow control is backpressure you already run in production: the receive window tells the sender exactly how much it may send before the receiver drains."
+  - id: hedge-the-tail
+    near: [hedged-requests, retry-backoff-jitter]
+    seed: hedged-requests
+    text: "In The Tail at Scale, a benchmark reading 1,000 values spread over 100 BigTable servers cut its 99.9th-percentile latency from 1,800 ms to 74 ms by sending a delayed second request, at the cost of only 2% more requests."
+  - id: shuffle-combos
+    near: [shuffle-sharding, data-partitioning, bulkheads]
+    seed: shuffle-sharding
+    text: "Pick 5 workers out of 100 for each customer and there are 75,287,520 different subsets. A poison customer can fully overlap with almost nobody, which is the whole trick."
+  - id: littles-any-system
+    near: [littles-law, bp, bulkheads]
+    text: "Little's law needs no assumption about arrival patterns or service order, only that the system is stable. It holds for a queue, a thread pool, a coffee shop, and the whole of a datacenter."
+  - id: paused-lease-holder
+    near: [leases-fencing, raft, logical-clocks]
+    text: "A process cannot tell that it paused. A garbage collection, a VM migration or a swapped-out page can stop it for seconds, so it may wake up and write while believing its lease is still valid."
+  - id: quorum-overlap-gap
+    near: [quorum-math, consistency-models, replication]
+    text: "R + W > N makes read and write sets overlap, but it does not make a store linearizable: a write that has reached only some replicas can be seen by one reader and missed by the next."
+  - id: truetime-wait
+    near: [truetime-hlc, active-active, logical-clocks]
+    text: "Spanner makes time uncertainty a first-class number: the clock API returns an interval, and a committing transaction simply waits out the interval's width, typically some milliseconds, to keep timestamps honest."
