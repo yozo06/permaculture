@@ -151,3 +151,10 @@ seeds:
             - Where are you going?
             - Good night
           why: "Reply: ಚೆನ್ನಾಗಿದ್ದೀನಿ (chennaagiddeeni) — I am fine."
+finds:
+  - id: pandi-curry
+    near: [food, market, talk]
+    text: "A kitchen word from your own district: ಪಂದಿ ಕರಿ (pandi curry), Kodava pork with kachampuli, the dark Coorg vinegar."
+  - id: kannada-numerals
+    near: [num, script, dirs]
+    text: "Kannada numerals have their own glyphs: ೧ ೨ ೩ (1 2 3). Older road signs in Mysuru show both sets."

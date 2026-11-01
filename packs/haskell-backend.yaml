@@ -210,3 +210,14 @@ seeds:
             - Thunk creation
             - Binary size
           why: Enable with --nonmoving-gc; throughput can drop slightly.
+finds:
+  - id: nonmoving-gc
+    near: [gc, leaks, rts]
+    seed: nonmoving
+    text: "GHC's non-moving garbage collector (--nonmoving-gc) marks the old generation concurrently, trading a little throughput for much shorter pauses."
+  - id: stm-commit
+    near: [stm, lockfree]
+    text: "GHC STM validates at commit with per-TVar locks, so long transactions on hot TVars retry often. Keep transactions short and TVars fine-grained."
+  - id: whnf
+    near: [laziness, gadts, effects]
+    text: "Bang patterns and `seq` only force to weak head normal form. `deepseq` (NFData) is what forces a whole structure."

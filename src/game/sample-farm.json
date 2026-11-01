@@ -1,0 +1,45 @@
+{
+  "v": 2,
+  "day": 12,
+  "energy": 90,
+  "energyMax": 90,
+  "coins": 140,
+  "barrel": 2,
+  "seedSel": null,
+  "compost": [
+    "rl",
+    "gc"
+  ],
+  "cleared": {},
+  "unlocked": [],
+  "volunteers": [],
+  "foraged": [],
+  "focus": {},
+  "cam": {
+    "x": 240,
+    "y": -18
+  },
+  "farmer": {
+    "x": 9,
+    "y": 8,
+    "tx": 9,
+    "ty": 8
+  },
+  "crops": [
+    {"id": "stm", "x": 5, "y": 5, "stage": 2, "lw": 10, "wilted": false, "per": false},
+    {"id": "bracket", "x": 6, "y": 5, "stage": 4, "lw": 11, "wilted": false, "per": true},
+    {"id": "leaks", "x": 5, "y": 6, "stage": 4, "lw": 12, "wilted": false, "per": false},
+    {"id": "gc", "x": 7, "y": 7, "stage": 1, "lw": 8, "wilted": true, "per": false},
+    {"id": "laziness", "x": 7, "y": 5, "stage": 4, "lw": 10, "wilted": false, "per": true},
+    {"id": "con", "x": 12, "y": 5, "stage": 0, "lw": 11, "wilted": false, "per": false},
+    {"id": "bp", "x": 13, "y": 6, "stage": 3, "lw": 8, "wilted": false, "per": false},
+    {"id": "rl", "x": 12, "y": 7, "stage": 1, "lw": 7, "wilted": true, "per": false},
+    {"id": "cap", "x": 14, "y": 5, "stage": 3, "lw": 7, "wilted": false, "per": true},
+    {"id": "mvcc", "x": 5, "y": 12, "stage": 4, "lw": 9, "wilted": false, "per": true},
+    {"id": "k8s", "x": 6, "y": 13, "stage": 2, "lw": 12, "wilted": false, "per": false},
+    {"id": "tcp", "x": 7, "y": 12, "stage": 4, "lw": 6, "wilted": false, "per": true},
+    {"id": "food", "x": 12, "y": 12, "stage": 4, "lw": 12, "wilted": false, "per": false},
+    {"id": "water", "x": 13, "y": 13, "stage": 1, "lw": 10, "wilted": false, "per": false},
+    {"id": "num", "x": 14, "y": 12, "stage": 4, "lw": 6, "wilted": false, "per": true}
+  ]
+}

@@ -18,7 +18,7 @@ The game must be useful with ugly tiles. Art is an unlock, never a prerequisite.
 | **Annuals vs perennials** | Facts and vocab are annuals: cheap, need replanting. A harvested crop becomes a **perennial tree**: rooted, checked once every ten days. "Skilled enough" means mostly perennials. |
 | **Layers** (forest garden) | Every field has seven: canopy (architecture), understory (patterns), shrub (data structures / storage), herb (idioms, techniques), ground cover (fundamentals), root (internals, runtime), vine (cross-cutting: concurrency, observability, security, SRE). A field cannot run two layers ahead of a hollow one. |
 | **Guilds** (companion planting) | Named sets of seeds that go together. A complete guild gives a yield bonus; a wilting member drags the rest. |
-| **Catch and store energy** | A daily energy budget shared by all fields. Unused energy fills the **rain barrel**; a stored day is spent automatically to stop a crop from wilting. No streaks. |
+| **Catch and store energy** | A daily energy budget shared by all fields. Unused energy fills the **rain barrel**; a stored day is spent automatically to stop a crop from wilting. A pack can cap its share (the Workshop uses at most 30%). No streaks. |
 | **Produce no waste** | Wrong answers go to the **compost heap** and come back as reviews. A failed harvest drops the crop back a stage and generates the next seeds. |
 | **Small and slow** | Hard cap on new seeds per day (two). |
 | **Obtain a yield** | Every planting and every harvest leaves an artifact: notes, a solve, a write-up, a decision. No yield, no credit. |
@@ -77,7 +77,7 @@ A pack can be **perennial** (a language, a habit): no readiness, it just lives o
 
 ## 6. Land
 
-The homestead starts with four fields in a 20×20 world; everything beyond the fence is wilderness. Land next to a field can be fenced in with coins (open ground is cheaper than forest). Fields grow one tile at a time in any shape. Later: the seven layers drawn as terraces up a hillside, and chunked worlds per big goal.
+The homestead has one field per pack, laid out on a grid around the barn; the world grows to fit them (20×20 for four fields, 27×27 for up to nine). Everything beyond the fence is wilderness. Land next to a field can be fenced in with coins (open ground is cheaper than forest). Fields grow one tile at a time in any shape. Later: the seven layers drawn as terraces up a hillside, and chunked worlds per big goal.
 
 ## 7. Packs
 

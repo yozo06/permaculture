@@ -13,6 +13,7 @@
     "description": { "type": "string", "maxLength": 400 },
     "readiness_bar": { "type": "integer", "minimum": 0, "maximum": 100, "description": "Default readiness target for this field (player can change it)." },
     "perennial": { "type": "boolean", "description": "true for goals with no end (a language, a habit). Readiness is not shown." },
+    "energy_cap": { "type": "integer", "minimum": 1, "maximum": 100, "description": "The most of each day's energy this field may use, in percent. The Workshop uses 30." },
     "branches": {
       "type": "array", "minItems": 1, "maxItems": 4,
       "items": { "type": "object", "required": ["id", "title"], "additionalProperties": false,
@@ -28,6 +29,17 @@
       "items": { "type": "object", "required": ["id", "title", "seeds"], "additionalProperties": false,
         "properties": { "id": { "$ref": "#/$defs/slug" }, "title": { "type": "string" }, "seeds": { "type": "array", "minItems": 2, "items": { "$ref": "#/$defs/slug" } } } }
     },
+    "finds": {
+      "type": "array",
+      "description": "Wild finds: short facts foraged in the wilderness next to what is growing. Add nothing to readiness.",
+      "items": { "type": "object", "required": ["id", "near", "text"], "additionalProperties": false,
+        "properties": {
+          "id": { "$ref": "#/$defs/slug", "description": "Unique across all packs." },
+          "near": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/slug" }, "description": "Seeds in this pack the find grows next to." },
+          "text": { "type": "string", "minLength": 8, "maxLength": 400 },
+          "seed": { "$ref": "#/$defs/slug", "description": "Optional: a wild seed in this pack that this find can be domesticated into." }
+        } }
+    },
     "seeds": {
       "type": "array", "minItems": 1,
       "items": {
@@ -35,18 +47,18 @@
         "required": ["id", "name", "layer", "branch", "tier", "harvest"],
         "additionalProperties": false,
         "properties": {
-          "id": { "$ref": "#/$defs/slug" },
+          "id": { "$ref": "#/$defs/slug", "description": "Unique across all packs. Never rename or remove a released seed." },
           "name": { "type": "string", "minLength": 1, "maxLength": 48 },
           "layer": { "enum": ["canopy", "understory", "shrub", "herb", "ground-cover", "root", "vine"] },
           "branch": { "$ref": "#/$defs/slug", "description": "Must match a branch id in this pack." },
           "tier": { "type": "integer", "minimum": 0, "maximum": 8, "description": "Depth in the learning tree. 0 = plantable from the start." },
           "needs": { "type": "array", "items": { "$ref": "#/$defs/slug" }, "description": "Seed ids that must be rooted first. Same pack only, for now." },
-          "wild": { "type": "boolean", "description": "Hidden until foraged and domesticated." },
+          "wild": { "type": "boolean", "description": "Hidden until foraged and domesticated. Needs a find that points at it." },
           "harvest": { "enum": ["recall", "solve", "judged", "artifact"] },
-          "minutes": { "type": "integer", "minimum": 5, "maximum": 180, "description": "Energy cost to plant (read the source, write notes)." },
+          "minutes": { "type": "integer", "minimum": 5, "maximum": 180, "description": "Time to plant: read the source, write notes." },
           "sources": { "type": "array", "items": { "$ref": "#/$defs/slug" } },
           "summary": { "type": "string", "maxLength": 600, "description": "What to read and what the yield of planting is." },
-          "rubric": { "type": "array", "items": { "type": "string" }, "description": "For judged harvests: what the grader scores." },
+          "rubric": { "type": "array", "items": { "type": "string" }, "description": "Lines an explanation is rated against: the explain rung of the depth ladder, and judged harvests." },
           "questions": {
             "type": "object", "additionalProperties": false,
             "properties": {
@@ -56,7 +68,7 @@
           },
           "prompts": {
             "type": "array", "items": { "type": "string" },
-            "description": "For judged/artifact harvests: open prompts, one is picked at harvest time."
+            "description": "For judged/solve/artifact harvests: open prompts, one is picked at harvest time."
           }
         }
       }

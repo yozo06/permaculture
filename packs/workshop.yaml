@@ -9,6 +9,7 @@ description: >-
   Building Permaculture is itself a field. Each seed is a feature; planting it means designing it,
   watering it means a day of work, harvesting it means it ships. Capped so the farm never becomes the only crop.
 perennial: true
+energy_cap: 30
 branches:
   - id: engine
     title: Engine & packs

@@ -207,3 +207,15 @@ seeds:
             - Speed
             - Determinism
           why: Great for sharding where you only ever grow or shrink from the end.
+finds:
+  - id: flexible-paxos
+    near: [raft, con, cap]
+    seed: fpaxos
+    text: "Flexible Paxos (Howard, 2016): leader-election and replication quorums need not both be majorities; they only need to intersect. Replicate to 2 of 5, elect with 4 of 5."
+  - id: jump-hash
+    near: [con]
+    seed: jump
+    text: "Jump consistent hash (Lamping & Veach): no ring, no memory, O(log n). Used inside Google for sharding. The price: you can only add or remove buckets at the end."
+  - id: tcp-backpressure
+    near: [bp, rl]
+    text: "TCP flow control is backpressure you already run in production: the receive window tells the sender exactly how much it may send before the receiver drains."

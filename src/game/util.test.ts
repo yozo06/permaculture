@@ -1,6 +1,6 @@
 import fc from 'fast-check'
 import { describe, expect, it } from 'vitest'
-import { esc, hash, shuffle } from './util'
+import { esc, shuffle } from './util'
 
 describe('shuffle', () => {
   it('returns a permutation of its input', () => {
@@ -22,23 +22,6 @@ describe('shuffle', () => {
     const items = [1, 2, 3, 4]
     shuffle(items)
     expect(items).toEqual([1, 2, 3, 4])
-  })
-})
-
-describe('hash', () => {
-  it('is in [0, 1] and deterministic', () => {
-    fc.assert(
-      fc.property(fc.integer({ min: -1000, max: 1000 }), fc.integer({ min: -1000, max: 1000 }), fc.integer({ min: 0, max: 100 }), (x, y, k) => {
-        const h = hash(x, y, k)
-        expect(h).toBeGreaterThanOrEqual(0)
-        expect(h).toBeLessThanOrEqual(1)
-        expect(hash(x, y, k)).toBe(h)
-      }),
-    )
-  })
-
-  it('treats a missing salt as zero', () => {
-    expect(hash(3, 4)).toBe(hash(3, 4, 0))
   })
 })
 

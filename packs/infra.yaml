@@ -158,3 +158,16 @@ seeds:
             - The number of bugs allowed per sprint
             - A Grafana dashboard
           why: Burn it too fast and you freeze feature work; that is the SRE bargain.
+finds:
+  - id: hint-bits
+    near: [mvcc, pgidx]
+    text: "Postgres hint bits: the first reader after a commit writes visibility flags into the page. That is why a read-only workload can produce write I/O."
+  - id: topology-spread
+    near: [k8s, mesh]
+    text: "Topology spread constraints balance pods across zones and nodes without anti-affinity rules. Reach for them before affinity."
+  - id: quic
+    near: [tls, tcp]
+    text: "QUIC runs over UDP and folds TLS 1.3 into its own handshake, so connection setup and encryption finish together in one round trip."
+  - id: loose-slos
+    near: [slo, kafka]
+    text: "Google SRE: an SLO stricter than what users notice costs money for nothing. Pick the loosest target users will still be happy with."
