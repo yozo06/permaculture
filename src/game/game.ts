@@ -1,14 +1,17 @@
 import packDefs from 'virtual:packs'
 import { buildCatalog, LAYER_NAMES, type Seed } from '../engine/catalog'
 import { findCandidates, pickFind } from '../engine/finds'
+import { check } from '../engine/fold'
 import {
   BARN, COMPOST, SIGN, WELL, fenceCost, fieldOf as landFieldOf, hash, homestead, inHomestead, isBuildingTile,
   neighbourFields, terrain as landTerrain, tileKey, wildKind, worldSize, type Terrain,
 } from '../engine/land'
-import { available, capLeft, rootedIds, visible } from '../engine/rules'
-import type { Mcq } from '../engine/types'
-import { looksLikeV2, upgradeV2, type V2Crop, type V2State } from '../engine/v2'
+import { farmFileName, farmFileText, parseFarmFile } from '../engine/log'
+import { RULES, cropOf, ripe as isRipe, thirsty as isThirsty, zone } from '../engine/rules'
+import type { Crop, FarmEvent, FarmState, Mcq, Night } from '../engine/types'
+import { almanacHtml } from './almanac'
 import sampleFarm from './sample-farm.json'
+import { createStore, defaultId, type StorageLike } from './store'
 import { esc, shuffle } from './util'
 import { bagView, needsText, packColor, splitName, treeView, type TreeView } from './views'
 
@@ -24,7 +27,7 @@ interface Drawable {
 }
 
 type Pick =
-  | { kind: 'crop'; crop: V2Crop }
+  | { kind: 'crop'; crop: Crop }
   | { kind: 'tile'; x: number; y: number }
   | { kind: 'barn' }
   | { kind: 'well' }
@@ -66,62 +69,64 @@ const colorOf = (id: string): string => {
   return p ? packColor(p) : '#6DB24F'
 }
 
+/* ---------- the farm ---------- */
+function browserStorage(): StorageLike | null {
+  try { return window.localStorage } catch { return null }
+}
+const store = createStore({ catalog, storage: browserStorage(), sample: sampleFarm, newId: defaultId, now: () => new Date().toISOString() })
+/** The folded farm. Only `act` and `adopt` replace it. */
+let S: FarmState = store.state()
+
 /* ---------- camera ---------- */
 /** World size in tiles, set from the fields by `buildStatics`. 20 for up to four fields, 27 for up to nine. */
-let N = worldSize({})
+let N = worldSize(S.fields)
 const camHome = (): { x: number; y: number } => ({ x: W / 2, y: H / 2 - 8 * N - 8 })
-
-/* ---------- state ---------- */
-/** A fresh farm: the prototype's starting farm, with a field for every pack. */
-function initialState(): V2State {
-  const s = upgradeV2(sampleFarm, catalog)
-  if (!s) throw new Error('src/game/sample-farm.json is not a v2 farm.')
-  N = worldSize(s.fields)
-  s.cam = camHome()
-  return s
+/** The camera, centred on the homestead until the player moves it. */
+function camera(): { x: number; y: number } {
+  const ui = store.ui
+  if (!ui.cam) ui.cam = camHome()
+  return ui.cam
 }
 
-function load(): V2State {
-  let raw: string | null = null
-  try { raw = localStorage.getItem('permaculture-v2') } catch { raw = null }
-  if (raw === null) return initialState()
-  try {
-    const s = upgradeV2(JSON.parse(raw), catalog)
-    if (s) return s
-  } catch { /* fall through to a fresh farm */ }
-  loadFailed = true
-  return initialState()
-}
-let loadFailed = false
-let S: V2State = load()
-function save(): void { try { localStorage.setItem('permaculture-v2', JSON.stringify(S)) } catch { /* storage may be blocked */ } }
-
-/* ---------- rules ---------- */
-const INTERVAL = [1, 2, 3, 4, 5]
-const interval = (c: V2Crop): number => (c.per ? 10 : (INTERVAL[c.stage] ?? 5))
-const due = (c: V2Crop): number => c.lw + interval(c)
-const thirsty = (c: V2Crop): boolean => !c.wilted && S.day >= due(c)
-const ripe = (c: V2Crop): boolean => !c.per && !c.wilted && c.stage === 4 && !thirsty(c)
-const zone = (c: V2Crop): string => (c.per ? 'Z4' : 'Z' + Math.min(4, c.stage + 1))
-const cropAt = (x: number, y: number): V2Crop | undefined => S.crops.find((c) => c.x === x && c.y === y)
+/* ---------- rules the screen asks about ---------- */
+const thirsty = (c: Crop): boolean => isThirsty(c, S.day)
+const ripe = (c: Crop): boolean => isRipe(c, S.day)
 const fieldOf = (x: number, y: number): string | null => landFieldOf(x, y, S.fields, S.cleared)
 const terrain = (x: number, y: number): Terrain => landTerrain(x, y, S.fields, S.cleared)
 const inHome = (x: number, y: number): boolean => inHomestead(x, y, S.fields)
 
-/** Why a field cannot spend this much energy today, or null. Capped fields (the Workshop) have a daily limit. */
-function capRefusal(seed: Seed, cost: number): string | null {
-  const cap = catalog.capOf(seed.pack, S.energyMax)
-  if (cost <= capLeft(seed.pack, catalog, S.energyMax, S.today.spent)) return null
-  return 'The ' + packTitle(seed.pack) + ' uses at most ' + cap + ' energy a day.'
+/** Land and fields change the shape of the world, so the ground has to be redrawn. */
+const LAND_EVENTS = new Set<FarmEvent['type']>(['fenced', 'field-opened', 'snapshot-imported', 'farm-started'])
+let warnedAboutSaving = false
+/** Send an event to the farm. If the rules refuse it, the reason is shown and this returns false. */
+function act(e: FarmEvent): boolean {
+  const why = store.dispatch(e)
+  if (why !== null) { toast(why); return false }
+  S = store.state()
+  if (LAND_EVENTS.has(e.type)) buildStatics()
+  hud()
+  if (store.saveFailed() && !warnedAboutSaving) {
+    warnedAboutSaving = true
+    toast('Your farm could not be saved in this browser. Export it to keep it.')
+  }
+  return true
 }
-/** Take energy for work on a seed, and count it against its field's daily cap. */
-function spend(seed: Seed, cost: number): void {
-  S.energy -= cost
-  S.today.spent[seed.pack] = (S.today.spent[seed.pack] ?? 0) + cost
+/** True (after a toast) if the rules would refuse this event. For gating a sheet before the player does the work. */
+function refused(e: FarmEvent): boolean {
+  const why = check(S, e, catalog)
+  if (why !== null) toast(why)
+  return why !== null
+}
+/** Pick up a farm the store has just replaced (new farm, import). */
+function adopt(): void {
+  S = store.state()
+  buildStatics()
+  clampCam()
+  hud()
 }
 
 /* ---------- pixel helpers ---------- */
-const iso = (x: number, y: number): { sx: number; sy: number } => ({ sx: (x - y) * 16 + S.cam.x, sy: (x + y) * 8 + S.cam.y })
+const iso = (x: number, y: number): { sx: number; sy: number } => { const cam = camera(); return { sx: (x - y) * 16 + cam.x, sy: (x + y) * 8 + cam.y } }
 let g: CanvasRenderingContext2D = ctx
 function px(x: number, y: number, w: number, h: number, c: string): void {g.fillStyle=c;g.fillRect(Math.round(x),Math.round(y),w,h);}
 function diamond(sx: number, sy: number, c: string): void {g.fillStyle=c;for(let r=0;r<TH;r++){const hw=r<8?(r+1)*2:(TH-r)*2;g.fillRect(sx-hw,sy+r,hw*2,1);}}
@@ -139,12 +144,12 @@ function drawBush(sx: number, sy: number): void {blob(sx,sy+11,[6,8,8,6,3],['#3C
 function drawRock(sx: number, sy: number): void {blob(sx,sy+11,[6,8,6,3],['#6E6E7C','#8A8A99','#A0A0AE','#B8B8C4']);}
 function drawTuft(sx: number, sy: number, x: number, y: number): void {for(let i=0;i<3;i++){const ox=Math.floor(hash(x,y,i+30)*12)-6;px(sx+ox,sy+6+Math.floor(hash(x,y,i+40)*5),1,3,'#4E9A3A');}}
 function drawFlowers(sx: number, sy: number, x: number, y: number): void {for(let i=0;i<3;i++){const r=3+Math.floor(hash(x,y,i)*9),hw=r<8?(r+1)*2:(TH-r)*2;const fx=sx-hw+2+Math.floor(hash(x,y,i+7)*(hw*2-4));const c=['#F7D54A','#F2F2EC','#F08BB0'][Math.floor(hash(x,y,i+11)*3)]??'#F7D54A';if(hash(x,y,i+20)<0.35)px(fx,sy+r,1,1,c);}}
-function drawCrop(c: V2Crop, sx: number, sy: number, t: number): void {
-  const cx=sx,cy=sy+12;const seed=catalog.seed(c.id);if(!seed)return;const F={color:colorOf(seed.pack)};
+function drawCrop(c: Crop, sx: number, sy: number, t: number): void {
+  const cx=sx,cy=sy+12;const seed=catalog.seed(c.seed);if(!seed)return;const F={color:colorOf(seed.pack)};
   const w=c.wilted;const gg=w?'#8E6E33':'#3F8F2E',g2=w?'#6E5426':'#2E6E22',g3=w?'#B3924A':'#5BB83A';
   const sway=w?0:Math.round(Math.sin(t/900+c.x*1.7+c.y)*0.6);
   px(cx-3,cy,6,1,'rgba(0,0,0,.15)');
-  if(c.per){px(cx-1,cy-7,2,7,'#6B4A2B');blob(cx+sway,cy-7,[6,10,12,12,10,6],[g2,g2,gg,gg,g3,g3]);px(cx-3+sway,cy-9,2,2,F.color);px(cx+2+sway,cy-11,2,2,F.color);px(cx-1+sway,cy-13,2,1,F.color);return;}
+  if(c.perennial){px(cx-1,cy-7,2,7,'#6B4A2B');blob(cx+sway,cy-7,[6,10,12,12,10,6],[g2,g2,gg,gg,g3,g3]);px(cx-3+sway,cy-9,2,2,F.color);px(cx+2+sway,cy-11,2,2,F.color);px(cx-1+sway,cy-13,2,1,F.color);return;}
   const st=c.stage,dy=w?2:0;
   if(st===0){px(cx,cy-3+dy,1,3,gg);px(cx-2,cy-3+dy,2,1,g3);px(cx+1,cy-4+dy,2,1,g3);}
   else if(st===1){px(cx,cy-6+dy,1,6,gg);px(cx-3+sway,cy-4+dy,3,1,g3);px(cx+1+sway,cy-5+dy,3,1,g3);px(cx-2,cy-2+dy,2,1,g2);px(cx+1,cy-3+dy,2,1,g2);}
@@ -153,7 +158,7 @@ function drawCrop(c: V2Crop, sx: number, sy: number, t: number): void {
     if(st===4&&!w){px(cx-3+sway,cy-5,2,2,F.color);px(cx+2+sway,cy-8,2,2,F.color);px(cx-1+sway,cy-13,2,2,F.color);px(cx-3+sway,cy-5,1,1,'#FFFFFF');px(cx+2+sway,cy-8,1,1,'#FFFFFF');}}
   if(w){px(cx+3,cy-1,1,1,'#B3924A');px(cx-4,cy,1,1,'#B3924A');}
 }
-function drawMarker(c: V2Crop, sx: number, sy: number, t: number): void {
+function drawMarker(c: Crop, sx: number, sy: number, t: number): void {
   const cx=sx;const bob=Math.round(Math.sin(t/260)*1.5);
   if(c.wilted){const y=sy-10+bob;px(cx,y,1,4,'#E0893A');px(cx,y+5,1,1,'#E0893A');return;}
   if(thirsty(c)){const y=sy-11+bob;px(cx,y-1,1,1,'#4FA3E8');px(cx-1,y,3,1,'#4FA3E8');px(cx-2,y+1,5,2,'#4FA3E8');px(cx-1,y+3,3,1,'#2F7FC4');px(cx-1,y+1,1,1,'#DFF2FF');return;}
@@ -280,13 +285,14 @@ function frame(t: number): void {
   ctx.fillStyle = '#8FC8E8'; ctx.fillRect(0, 0, W, H); ctx.fillStyle = '#A4D6F0'; ctx.fillRect(0, 170, W, 130)
   px(438, 24, 12, 12, '#FFE27A'); px(440, 22, 8, 16, '#FFE27A'); px(436, 26, 16, 8, '#FFE27A'); px(441, 25, 6, 6, '#FFF3B8')
   for (const c of clouds) { c.x += c.v; if (c.x > W + 40) c.x = -40; blob(Math.round(c.x), c.y, c.w, ['#E6F2FA', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF']) }
-  ctx.drawImage(gcv, Math.round(S.cam.x - groundOx), Math.round(S.cam.y - 8))
+  const cam = camera()
+  ctx.drawImage(gcv, Math.round(cam.x - groundOx), Math.round(cam.y - 8))
   if (hover) {
     const { sx, sy } = iso(hover.x, hover.y)
     ctx.fillStyle = 'rgba(255,255,255,.28)'
     for (let r = 0; r < TH; r++) { const hw = r < 8 ? (r + 1) * 2 : (TH - r) * 2; ctx.fillRect(sx - hw, sy + r, hw * 2, 1) }
   }
-  const f = S.farmer
+  const f = store.ui.farmer
   const dx = f.tx - f.x, dy = f.ty - f.y
   const dist = Math.hypot(dx, dy)
   const walking = dist > 0.02
@@ -308,7 +314,7 @@ function hud(): void {
   $('hEnergy').style.width = (100 * S.energy / S.energyMax) + '%'
   $('hCoins').textContent = String(S.coins)
   $('hBarrel').textContent = String(S.barrel)
-  save()
+  store.saveUi()
 }
 let toastT: number | undefined
 function toast(m: string): void {
@@ -343,12 +349,13 @@ function toInternal(e: PointerEvent): { ix: number; iy: number; k: number } {
   return { ix: (e.clientX - r.left) * W / r.width, iy: (e.clientY - r.top) * H / r.height, k: W / r.width }
 }
 function tileAt(ix: number, iy: number): { x: number; y: number } | null {
-  const dx = ix - S.cam.x, dy = iy - S.cam.y
+  const cam = camera()
+  const dx = ix - cam.x, dy = iy - cam.y
   const x = Math.floor((dx / 16 + dy / 8) / 2), y = Math.floor((dy / 8 - dx / 16) / 2)
   return (x >= 0 && y >= 0 && x < N && y < N) ? { x, y } : null
 }
 function pick(ix: number, iy: number): Pick | null {
-  let best: { s: number; crop: V2Crop } | null = null
+  let best: { s: number; crop: Crop } | null = null
   for (const c of S.crops) {
     const { sx, sy } = iso(c.x, c.y)
     if (Math.abs(ix - sx) <= 7 && iy >= sy - 16 && iy <= sy + 14 && (!best || c.x + c.y > best.s)) best = { s: c.x + c.y, crop: c }
@@ -360,14 +367,16 @@ function pick(ix: number, iy: number): Pick | null {
 }
 /** Keep some of the world on screen: half its width either way, and its top edge above the bottom of the view. */
 function clampCam(): void {
-  S.cam.x = Math.max(W / 2 - 16 * N, Math.min(W / 2 + 16 * N, S.cam.x))
-  S.cam.y = Math.max(100 - 16 * N, Math.min(H - 40, S.cam.y))
+  const cam = camera()
+  cam.x = Math.max(W / 2 - 16 * N, Math.min(W / 2 + 16 * N, cam.x))
+  cam.y = Math.max(100 - 16 * N, Math.min(H - 40, cam.y))
 }
 cv.addEventListener('pointerdown', (e) => {
   e.preventDefault()
   cv.setPointerCapture(e.pointerId)
   const p = toInternal(e)
-  down = { x: e.clientX, y: e.clientY, cx: S.cam.x, cy: S.cam.y, k: p.k }
+  const cam = camera()
+  down = { x: e.clientX, y: e.clientY, cx: cam.x, cy: cam.y, k: p.k }
   dragging = false
 })
 cv.addEventListener('pointermove', (e) => {
@@ -375,7 +384,7 @@ cv.addEventListener('pointermove', (e) => {
   if (down) {
     const dx = (e.clientX - down.x) * down.k, dy = (e.clientY - down.y) * down.k
     if (!dragging && Math.hypot(dx, dy) > 5) { dragging = true; cv.classList.add('drag') }
-    if (dragging) { S.cam.x = down.cx + dx; S.cam.y = down.cy + dy; clampCam() }
+    if (dragging) { const cam = camera(); cam.x = down.cx + dx; cam.y = down.cy + dy; clampCam() }
   }
   hover = (e.pointerType === 'mouse' && !dragging) ? tileAt(p.ix, p.iy) : null
 })
@@ -385,7 +394,7 @@ cv.addEventListener('pointerup', (e) => {
   down = null
   dragging = false
   cv.classList.remove('drag')
-  if (wasDrag) { save(); return }
+  if (wasDrag) { store.saveUi(); return }
   const { ix, iy } = toInternal(e)
   const p = pick(ix, iy)
   if (!p) return
@@ -398,45 +407,32 @@ cv.addEventListener('pointerup', (e) => {
 })
 cv.addEventListener('pointercancel', () => { down = null; dragging = false; cv.classList.remove('drag') })
 cv.addEventListener('pointerleave', () => { hover = null })
-function walkTo(x: number, y: number): void { S.farmer.tx = x; S.farmer.ty = y }
-$('bHome').addEventListener('click', () => { S.cam = camHome(); save() })
+function walkTo(x: number, y: number): void { const f = store.ui.farmer; f.tx = x; f.ty = y }
+$('bHome').addEventListener('click', () => { store.ui.cam = camHome(); store.saveUi() })
 
 /* ---------- actions ---------- */
-/** True (after a toast) if the player cannot afford this much energy on this seed today. */
-function tooTired(seed: Seed, cost: number, tired: string): boolean {
-  if (S.energy < cost) { toast(tired); return true }
-  const why = capRefusal(seed, cost)
-  if (why) { toast(why); return true }
-  return false
+function onCrop(c: Crop): void {
+  const seed = catalog.seed(c.seed)
+  if (!seed) return
+  if (c.wilted || thirsty(c)) { if (refused({ type: 'watered', seed: seed.id, ok: true })) return; return startWork(seed, 'water') }
+  if (ripe(c)) { if (refused({ type: 'harvested', seed: seed.id, ok: true })) return; return startWork(seed, 'harvest') }
+  if (c.perennial) return toast(seed.name + ' is rooted (perennial). Next check-in on day ' + c.due + '.')
+  toast(seed.name + ' · stage ' + (c.stage + 1) + '/5 · ' + zone(c) + ' · thirsty again on day ' + c.due + '.')
 }
 
-function onCrop(c: V2Crop): void {
-  const seed = catalog.seed(c.id)
-  if (!seed) return
-  if (c.wilted || thirsty(c)) { if (tooTired(seed, 6, 'Out of energy. Sleep to start a new day.')) return; return startWork(seed, c, 'water') }
-  if (ripe(c)) { if (tooTired(seed, 15, 'Harvest takes 15 energy. Sleep first.')) return; return startWork(seed, c, 'harvest') }
-  if (c.per) return toast(seed.name + ' is rooted (perennial). Next check-in on day ' + due(c) + '.')
-  toast(seed.name + ' · stage ' + (c.stage + 1) + '/5 · ' + zone(c) + ' · thirsty again on day ' + due(c) + '.')
-}
 function onTile(x: number, y: number): void {
   const tr = terrain(x, y)
   const k = tileKey(x, y)
   if (tr === 'soil') {
-    if (cropAt(x, y)) return
+    if (S.crops.some((c) => c.x === x && c.y === y)) return
     walkTo(x, y)
-    const sel = S.seedSel
+    const sel = store.ui.seedSel
     if (!sel) return toast('Empty soil. Pick a seed from the barn (or Seed bag) first.')
     const seed = catalog.seed(sel)
-    if (!seed) { S.seedSel = null; return }
-    if (seed.pack !== fieldOf(x, y)) return toast(seed.name + ' belongs in the ' + packTitle(seed.pack) + ' field.')
-    if (S.energy < 10 || S.coins < 10) return toast('Planting needs 10 energy and 10 coins.')
-    const why = capRefusal(seed, 10)
-    if (why) return toast(why)
-    spend(seed, 10); S.coins -= 10
-    S.crops.push({ id: seed.id, x, y, stage: 0, lw: S.day, wilted: false, per: false })
-    S.seedSel = null
+    if (!seed) { store.ui.seedSel = null; return }
+    if (!act({ type: 'planted', seed: seed.id, x, y })) return
+    store.ui.seedSel = null
     hint('Planted <b>' + esc(seed.name) + '</b>. It will be thirsty tomorrow. Tap it then and answer to make it grow.')
-    hud()
     toast('Planted ' + seed.name + '.')
     return
   }
@@ -446,12 +442,12 @@ function onTile(x: number, y: number): void {
   if (first !== undefined) {
     walkTo(x, y)
     const cost = fenceCost(tr)
-    const others = near.slice(1).map((p) => '<button type="button" data-act="expand" data-arg="' + k + '|' + p + '|' + cost + '">Add to ' + esc(packTitle(p)) + ' · ' + cost + ' coins</button>').join('')
+    const others = near.slice(1).map((p) => '<button type="button" data-act="expand" data-arg="' + k + '|' + p + '">Add to ' + esc(packTitle(p)) + ' · ' + cost + ' coins</button>').join('')
     open(chip(first) + '<h2>' + (tr === 'wild' ? 'Clear and fence' : 'Fence it in') + '</h2><p>' + (tr === 'wild' ? 'Fell the trees and ' : '') + 'Add this tile to the ' + esc(packTitle(first)) + ' field. Fields grow one tile at a time, in any shape.</p><p class="sub">Costs ' + cost + ' coins. You have ' + S.coins + '.</p>' +
       (others ? '<div class="branches">' + others + '</div>' : '') +
       foot('Add to ' + packTitle(first) + ' · ' + cost + ' coins', '<button type="button" data-act="close">Not now</button>'))
     const b = primary()
-    if (b) { b.dataset.act = 'expand'; b.dataset.arg = k + '|' + first + '|' + cost }
+    if (b) { b.dataset.act = 'expand'; b.dataset.arg = k + '|' + first }
     return
   }
   if (tr === 'wild') {
@@ -462,80 +458,84 @@ function onTile(x: number, y: number): void {
   toast('Open ground. Land next to a field can be fenced in.')
 }
 
-const COST: Record<Mode, number> = { water: 6, harvest: 15, testout: 10 }
+const COST: Record<Mode, number> = { water: RULES.water.energy, harvest: RULES.harvest.energy, testout: RULES.testOut.energy }
 
 /** What a piece of work looks like on screen: a multiple-choice card, or (for seeds with none) a plain sheet. */
-function startWork(seed: Seed, c: V2Crop | null, mode: Mode): void {
+function startWork(seed: Seed, mode: Mode): void {
   const cards = mode === 'water' || seed.harvest !== 'recall' ? seed.questions.water : (seed.questions.harvest.length ? seed.questions.harvest : seed.questions.water)
-  if (mode === 'water' ? cards.length : seed.harvest === 'recall' && cards.length) return ask(seed, c, mode, cards)
-  if (mode === 'water') return openLog(seed, c)
-  openProof(seed, c, mode)
+  if (mode === 'water' ? cards.length : seed.harvest === 'recall' && cards.length) return ask(seed, mode, cards)
+  if (mode === 'water') return openLog(seed)
+  openProof(seed, mode)
 }
 
-interface Asking { seed: Seed; c: V2Crop | null; mode: Mode; opts: { txt: string; ok: boolean }[]; Q: Mcq }
+interface Asking { seed: Seed; mode: Mode; opts: { txt: string; ok: boolean }[]; Q: Mcq }
 let QC: Asking | null = null
-function ask(seed: Seed, c: V2Crop | null, mode: Mode, bank: Mcq[]): void {
+function ask(seed: Seed, mode: Mode, bank: Mcq[]): void {
   const Q = bank[Math.floor(Math.random() * bank.length)]
   if (!Q) return
   const opts = shuffle([{ txt: Q.answer, ok: true }, ...Q.distractors.map((txt) => ({ txt, ok: false }))])
-  QC = { seed, c, mode, opts, Q }
-  open(chip(seed.pack) + '<h2>' + workTitle(c, mode) + ' · ' + esc(seed.name) + '</h2><p class="sub">' + workSub(seed, c, mode) + '</p><p class="q">' + esc(Q.q) + '</p><div class="opts" id="opts">' + opts.map((o, i) => '<button type="button" data-act="opt" data-arg="' + i + '">' + esc(o.txt) + '</button>').join('') + '</div>')
+  QC = { seed, mode, opts, Q }
+  open(chip(seed.pack) + '<h2>' + workTitle(seed, mode) + ' · ' + esc(seed.name) + '</h2><p class="sub">' + workSub(seed, mode) + '</p><p class="q">' + esc(Q.q) + '</p><div class="opts" id="opts">' + opts.map((o, i) => '<button type="button" data-act="opt" data-arg="' + i + '">' + esc(o.txt) + '</button>').join('') + '</div>')
 }
-const workTitle = (c: V2Crop | null, mode: Mode): string => (mode === 'harvest' ? 'Harvest' : mode === 'testout' ? 'Jump the fence' : (c && c.wilted ? 'Revive' : 'Water'))
-function workSub(seed: Seed, c: V2Crop | null, mode: Mode): string {
+const workTitle = (seed: Seed, mode: Mode): string => (mode === 'harvest' ? 'Harvest' : mode === 'testout' ? 'Jump the fence' : (cropOf(S, seed.id)?.wilted ? 'Revive' : 'Water'))
+function workSub(seed: Seed, mode: Mode): string {
   if (mode === 'testout') return 'Prove you already know it. A clean answer unlocks the seed without its prerequisites.'
+  const c = cropOf(S, seed.id)
   return esc(LAYER_NAMES[seed.layer]) + ' layer · ' + (c ? zone(c) : '') + ' · ' + COST[mode] + ' energy' + (mode === 'harvest' ? ' · premium grade makes it perennial' : '')
 }
 
 /** Watering a seed that has no cards (the Workshop's): log a day of work. */
-let LOG: { seed: Seed; c: V2Crop } | null = null
-function openLog(seed: Seed, c: V2Crop | null): void {
+let LOG: Seed | null = null
+function openLog(seed: Seed): void {
+  const c = cropOf(S, seed.id)
   if (!c) return
-  LOG = { seed, c }
-  open(chip(seed.pack) + '<h2>Log a day of work</h2><p class="sub">' + esc(seed.name) + ' · ' + esc(LAYER_NAMES[seed.layer]) + ' layer · ' + zone(c) + ' · 6 energy</p><p>Did you move <b>' + esc(seed.name) + '</b> forward today?</p><label for="work" class="sub">What you did (optional, only for you: the game does not keep it yet)</label><textarea id="work"></textarea>' +
+  LOG = seed
+  open(chip(seed.pack) + '<h2>Log a day of work</h2><p class="sub">' + esc(seed.name) + ' · ' + esc(LAYER_NAMES[seed.layer]) + ' layer · ' + zone(c) + ' · ' + RULES.water.energy + ' energy</p><p>Did you move <b>' + esc(seed.name) + '</b> forward today?</p><label for="work" class="sub">What you did (optional, only for you: the game does not keep it yet)</label><textarea id="work"></textarea>' +
     '<div class="foot"><button type="button" data-act="close">Not today</button><button type="button" class="pri" data-act="logDone">I moved it forward</button></div>')
 }
 
 /** Harvesting or jumping the fence for a seed whose proof is not a multiple-choice card: show what it must meet. */
-let PROOF: { seed: Seed; c: V2Crop | null; mode: Mode } | null = null
-function openProof(seed: Seed, c: V2Crop | null, mode: Mode): void {
-  PROOF = { seed, c, mode }
+let PROOF: { seed: Seed; mode: Mode } | null = null
+function openProof(seed: Seed, mode: Mode): void {
+  PROOF = { seed, mode }
+  const c = cropOf(S, seed.id)
   const prompt = seed.prompts.length ? seed.prompts[Math.floor(hash(c?.x ?? 0, c?.y ?? 0, S.day) * seed.prompts.length) % seed.prompts.length] : undefined
   const rubric = seed.rubric.length ? '<p class="sub">A good answer:</p><ul>' + seed.rubric.map((r) => '<li>' + esc(r) + '</li>').join('') + '</ul>' : ''
-  open(chip(seed.pack) + '<h2>' + workTitle(c, mode) + ' · ' + esc(seed.name) + '</h2><p class="sub">' + workSub(seed, c, mode) + '</p><p class="q">' + esc(prompt ?? 'Show that you can do this: ' + seed.name + '.') + '</p>' + rubric +
+  open(chip(seed.pack) + '<h2>' + workTitle(seed, mode) + ' · ' + esc(seed.name) + '</h2><p class="sub">' + workSub(seed, mode) + '</p><p class="q">' + esc(prompt ?? 'Show that you can do this: ' + seed.name + '.') + '</p>' + rubric +
     '<div class="foot"><button type="button" data-act="close">Not yet</button><button type="button" class="pri" data-act="proofDone">Done: it meets this</button></div>')
 }
 
-/** Apply the outcome of a piece of work to the farm and describe it. */
-function settle(seed: Seed, c: V2Crop | null, mode: Mode, ok: boolean): string {
-  spend(seed, COST[mode])
+/** Send the outcome of a piece of work to the farm and describe it. Null if the farm refused it (the reason is already on screen). */
+function settle(seed: Seed, mode: Mode, ok: boolean): string | null {
+  const type = mode === 'harvest' ? 'harvested' : mode === 'testout' ? 'unlocked' : 'watered'
+  if (!act({ type, seed: seed.id, ok })) return null
   const name = esc(seed.name)
-  let msg = ''
+  const c = cropOf(S, seed.id)
   if (mode === 'testout') {
-    if (ok) { S.unlocked.push(seed.id); msg = '<b>Over the fence.</b> ' + name + ' is unlocked. Plant it from the seed bag.' }
-    else msg = '<b>Not yet.</b> ' + name + ' stays locked. Root its prerequisites, or try again tomorrow.'
-  } else if (!c) {
-    msg = ''
-  } else if (mode === 'harvest') {
-    if (ok) { S.coins += 30; c.per = true; c.lw = S.day; msg = '<b>Premium grade.</b> +30 coins. ' + name + ' is now a perennial: rooted, it only needs a check-in every 10 days. Seeds that needed it are now unlocked.' }
-    else { c.stage = 2; c.lw = S.day; if (!S.compost.includes(c.id)) S.compost.push(c.id); msg = '<b>Seconds.</b> Composted. ' + name + ' drops back to stage 3 and goes in the review heap.' }
-  } else if (ok) {
-    c.wilted = false; c.stage = Math.min(4, c.stage + 1); c.lw = S.day; S.compost = S.compost.filter((x) => x !== c.id)
-    msg = '<b>Watered.</b> ' + name + ' grows to stage ' + (c.stage + 1) + '/5. Next watering on day ' + due(c) + ' (' + zone(c) + ').'
-  } else {
-    c.wilted = true; c.stage = Math.max(0, c.stage - 1); c.lw = S.day; if (!S.compost.includes(c.id)) S.compost.push(c.id)
-    msg = '<b>Wilted.</b> ' + name + ' drops a stage and goes in the compost heap. Revive it tomorrow.'
+    return ok ? '<b>Over the fence.</b> ' + name + ' is unlocked. Plant it from the seed bag.' : '<b>Not yet.</b> ' + name + ' stays locked. Root its prerequisites, or try again tomorrow.'
   }
-  hud()
-  return msg
+  if (!c) return ''
+  if (mode === 'harvest') {
+    return ok
+      ? '<b>Premium grade.</b> +' + RULES.harvest.coins + ' coins. ' + name + ' is now a perennial: rooted, it only needs a check-in every ' + RULES.perennialInterval + ' days. Seeds that needed it are now unlocked.'
+      : '<b>Seconds.</b> Composted. ' + name + ' drops back to stage ' + (c.stage + 1) + ' and goes in the review heap.'
+  }
+  if (ok) {
+    return c.perennial
+      ? '<b>Checked in.</b> ' + name + ' stays rooted. Next check-in on day ' + c.due + '.'
+      : '<b>Watered.</b> ' + name + ' grows to stage ' + (c.stage + 1) + '/5. Next watering on day ' + c.due + ' (' + zone(c) + ').'
+  }
+  return '<b>Wilted.</b> ' + name + (c.perennial ? '' : ' drops a stage and') + ' goes in the compost heap. Revive it tomorrow.'
 }
 
 function answer(i: number): void {
   if (!QC) return
-  const { seed, c, mode, opts, Q } = QC
+  const { seed, mode, opts, Q } = QC
   const chosen = opts[i]
   if (!chosen) return
   QC = null
+  const msg = settle(seed, mode, chosen.ok)
+  if (msg === null) return close()
   const optsEl = $('opts')
   ;[...optsEl.children].forEach((el, j) => {
     if (!(el instanceof HTMLButtonElement)) return
@@ -543,7 +543,6 @@ function answer(i: number): void {
     if (opts[j]?.ok) el.classList.add('ok')
     else if (j === i) el.classList.add('bad')
   })
-  const msg = settle(seed, c, mode, chosen.ok)
   const r = document.createElement('div')
   r.className = 'res'
   r.innerHTML = msg + '<br><span class="sub">' + esc(Q.why) + '</span>'
@@ -554,31 +553,24 @@ function answer(i: number): void {
   primary()?.focus()
 }
 /** The sheets without cards finish here: the player says it was done. */
-function finishPlain(seed: Seed, c: V2Crop | null, mode: Mode): void {
-  const body = chip(seed.pack) + '<h2>' + workTitle(c, mode) + ' · ' + esc(seed.name) + '</h2><div class="res">' + settle(seed, c, mode, true) + '</div>' + foot('Back to the farm')
-  open(body)
+function finishPlain(seed: Seed, mode: Mode): void {
+  const msg = settle(seed, mode, true)
+  if (msg === null) return close()
+  open(chip(seed.pack) + '<h2>' + workTitle(seed, mode) + ' · ' + esc(seed.name) + '</h2><div class="res">' + msg + '</div>' + foot('Back to the farm'))
 }
 
 function expand(arg: string): void {
-  const [k, pack, cost] = arg.split('|')
-  const c = Number(cost)
+  const [k, pack] = arg.split('|')
   const m = k ? /^(\d+),(\d+)$/.exec(k) : null
-  if (!k || !m || !pack || !Object.hasOwn(S.fields, pack) || !Number.isFinite(c)) return
-  const x = Number(m[1]), y = Number(m[2])
-  const tr = terrain(x, y)
-  if (x >= N || y >= N || tr === 'soil' || tr === 'path' || isBuildingTile(x, y) || !neighbourFields(x, y, S.fields, S.cleared).includes(pack)) return
-  if (S.coins < c) return toast('Not enough coins. Harvest something first.')
-  S.coins -= c
-  S.cleared[k] = pack
-  buildStatics()
-  hud()
+  if (!m || !pack) return
+  if (!act({ type: 'fenced', x: Number(m[1]), y: Number(m[2]), pack })) return
   close()
   toast('Fenced in. The ' + packTitle(pack) + ' field grew.')
 }
 
 function openBag(): void {
-  let html = '<h2>Seed bag</h2><p class="sub">Each seed is a topic. Plant it in its own field, water it by answering, harvest it to make it perennial. 10 energy + 10 coins to plant.</p>'
-  for (const sec of bagView(S, catalog)) {
+  let html = '<h2>Seed bag</h2><p class="sub">Each seed is a topic. Plant it in its own field, water it by answering, harvest it to make it perennial. ' + RULES.plant.energy + ' energy + ' + RULES.plant.coins + ' coins to plant, and ' + RULES.newSeedsPerDay + ' new seeds a day.</p>'
+  for (const sec of bagView(S, catalog, store.ui.seedSel)) {
     const labels = [
       sec.perennial ? 'perennial' : '',
       sec.capPercent !== null ? "uses at most " + sec.capPercent + "% of the day's energy (" + catalog.capOf(sec.pack, S.energyMax) + ')' : '',
@@ -593,13 +585,13 @@ function openBag(): void {
     if (sec.lockedCount) html += '<div class="row locked slim"><div class="n">' + sec.lockedCount + ' locked<small>see the learning tree</small></div></div>'
     html += '</div>'
   }
-  html += '<h3>Your farm</h3><p class="sub">Saved in this browser only. Export it before clearing site data or moving machines.</p><div class="branches"><button type="button" data-act="export">Export farm</button><button type="button" data-act="import">Import farm</button></div>'
+  html += '<h3>Your farm</h3><p class="sub">Saved in this browser only, as a log of everything you did. Export it before clearing site data or moving machines.</p><div class="branches"><button type="button" data-act="export">Export farm</button><button type="button" data-act="import">Import farm</button></div>'
   html += foot('Close', '<button type="button" class="link" data-act="reset">Reset farm</button>')
   open(html)
 }
 function exportFarm(): void {
-  const data = JSON.stringify(S)
-  const name = 'permaculture-farm-day' + S.day + '.json'
+  const data = farmFileText(store.events())
+  const name = farmFileName(S.day)
   try {
     const blob = new Blob([data], { type: 'application/json' })
     const a = document.createElement('a')
@@ -613,7 +605,7 @@ function exportFarm(): void {
   open('<h2>Export farm</h2><p class="sub">A file named <b>' + esc(name) + '</b> should have downloaded. If not, copy this and keep it somewhere safe.</p><label for="exp" class="sub">Farm data</label><textarea id="exp" readonly>' + esc(data) + '</textarea>' + foot('Close', '<button type="button" data-act="copyExp">Copy</button>'))
 }
 function importFarm(): void {
-  open('<h2>Import farm</h2><p class="sub">Choose an exported file, or paste its contents. This replaces the farm in this browser.</p><input type="file" id="impFile" accept="application/json,.json"><label for="imp" class="sub">Or paste here</label><textarea id="imp"></textarea>' + foot('Import', '<button type="button" data-act="close">Cancel</button>'))
+  open('<h2>Import farm</h2><p class="sub">Choose an exported file, or paste its contents. This replaces the farm in this browser. Farms saved by the first prototype work too.</p><input type="file" id="impFile" accept="application/json,.json"><label for="imp" class="sub">Or paste here</label><textarea id="imp"></textarea>' + foot('Import', '<button type="button" data-act="close">Cancel</button>'))
   const b = primary()
   if (b) b.dataset.act = 'doImport'
   byIdAs('impFile', HTMLInputElement).addEventListener('change', (e) => {
@@ -624,18 +616,29 @@ function importFarm(): void {
   })
 }
 function doImport(): void {
-  let obj: unknown
-  try { obj = JSON.parse(byIdAs('imp', HTMLTextAreaElement).value) } catch { return toast('That is not valid farm data.') }
-  const next = looksLikeV2(obj) ? upgradeV2(obj, catalog) : null
-  if (!next) return toast('That file is not a Permaculture farm (format v2).')
-  S = next
-  buildStatics()
-  clampCam()
-  hud()
+  const parsed = parseFarmFile(byIdAs('imp', HTMLTextAreaElement).value)
+  if (parsed.kind === 'error') return toast(parsed.message)
+  const problem = parsed.kind === 'log' ? store.importLog(parsed.events) : store.importSnapshot(parsed.snapshot)
+  if (problem) return toast(problem)
+  adopt()
   close()
   toast('Farm imported. Day ' + S.day + '.')
 }
-function openWell(): void { open('<h2>Rain barrel</h2><p>' + S.barrel + ' of 5 days stored.</p><p class="sub">Catch and store energy. End a day with 30+ energy left and the barrel fills by one. When a crop is about to wilt, the barrel spends a day to keep it alive. It never grows a crop; only you do.</p>' + foot()) }
+
+/** Reset and the first-visit welcome both end here. */
+function startNewFarm(kind: 'fresh' | 'sample'): void {
+  store.newFarm(kind)
+  adopt()
+  close()
+  toast(kind === 'sample' ? 'Sample farm loaded. Day ' + S.day + '.' : 'A new farm. Day ' + S.day + '.')
+}
+function openReset(): void {
+  open('<h2>Start a new farm?</h2><p>This replaces the farm in this browser. Export it first if you want to keep it.</p><p class="sub"><b>Start fresh</b>: day 1, ' + RULES.start.coins + ' coins, nothing planted. <b>Sample farm</b>: the prototype farm on day 12, with crops already growing.</p><div class="branches"><button type="button" data-act="newFarm" data-arg="fresh">Start fresh</button><button type="button" data-act="newFarm" data-arg="sample">Sample farm</button></div>' + foot('Cancel'))
+}
+function openWelcome(): void {
+  open('<h2>Welcome to Permaculture</h2><p>A farm where the crops are the things you are learning. Plant a seed from the barn, water it by answering a question, and it grows. Miss a day and it wilts.</p><p class="sub">Your farm starts empty, with a field for each pack. You can plant ' + RULES.newSeedsPerDay + ' new seeds a day. Everything is saved in this browser.</p><div class="branches"><button type="button" data-act="newFarm" data-arg="sample">Try the sample farm</button></div>' + foot('Start planting'))
+}
+function openWell(): void { open('<h2>Rain barrel</h2><p>' + S.barrel + ' of ' + RULES.barrel.max + ' days stored.</p><p class="sub">Catch and store energy. End a day with ' + RULES.barrel.fillAt + '+ energy left and the barrel fills by one. When a crop is about to wilt, the barrel spends a day to keep it alive. It never grows a crop; only you do.</p>' + foot()) }
 function openCompost(): void {
   const items = S.compost.map((id) => catalog.seed(id)).filter((s): s is Seed => s !== undefined)
   open('<h2>Compost heap</h2><p class="sub">Produce no waste. A failed answer is not lost; it is the next thing to review.</p><div>' + (items.length ? items.map((s) => '<div class="row"><div class="n">' + esc(s.name) + '<small>' + esc(packTitle(s.pack)) + ' · tap the crop to revive it</small></div></div>').join('') : '<p>Empty. Nothing failed recently.</p>') + '</div>' + foot())
@@ -646,17 +649,15 @@ function openForage(x: number, y: number): void {
   if (!fd) return toast('The forest is quiet today. Plant something new and come back.')
   const link = fd.near.map(nameOf).join(', ')
   open('<div><span class="chip" style="--c:#4F8F3C">Zone 5 · wilderness</span></div><h2>Wild find</h2><p class="sub">Observe and interact. Nothing here counts toward readiness; it widens the edge of what you are growing. Related to: ' + esc(link) + '.</p><div class="find">' + esc(fd.text) + '</div>' +
-    foot('Forage · 5 energy', '<button type="button" data-act="close">Leave it</button>'))
+    foot('Forage · ' + RULES.forage.energy + ' energy', '<button type="button" data-act="close">Leave it</button>'))
   const b = primary()
-  if (b) { b.dataset.act = 'forage'; b.dataset.arg = fd.id }
+  if (b) { b.dataset.act = 'forage'; b.dataset.arg = fd.id + '|' + x + '|' + y }
 }
-function forage(id: string): void {
-  const fd = catalog.find(id)
-  if (!fd || S.foraged.includes(id)) return
-  if (S.energy < 5) return toast('Out of energy. Sleep first.')
-  S.energy -= 5; S.coins += 3; S.foraged.push(id)
-  hud()
-  let html = '<h2>Foraged</h2><p>+3 coins. Noted in your field journal.</p>'
+function forage(arg: string): void {
+  const [id, xs, ys] = arg.split('|')
+  const fd = id ? catalog.find(id) : undefined
+  if (!fd || !act({ type: 'foraged', x: Number(xs), y: Number(ys), find: fd.id })) return
+  let html = '<h2>Foraged</h2><p>+' + RULES.forage.coins + ' coins. Noted in your field journal.</p>'
   const wild = fd.seed && !S.volunteers.includes(fd.seed) ? catalog.seed(fd.seed) : undefined
   if (wild) {
     html += '<p>This one could be domesticated: <b>' + esc(wild.name) + '</b> would become a volunteer seed in the ' + esc(packTitle(wild.pack)) + ' field (needs ' + esc(needsText(wild, catalog)) + ').</p>' + foot('Domesticate ' + wild.name, '<button type="button" data-act="close">Leave it wild</button>')
@@ -669,15 +670,16 @@ function forage(id: string): void {
 }
 function domesticate(id: string): void {
   const seed = catalog.seed(id)
-  if (!seed || !seed.wild || S.volunteers.includes(id)) return
-  S.volunteers.push(id)
-  save()
+  if (!seed || !act({ type: 'domesticated', seed: id })) return
   close()
   toast(seed.name + ' added to your seed bag as a volunteer.')
 }
 
 /* ---------- learning tree ---------- */
-let treePack: string = catalog.packs[0]?.pack ?? ''
+const treePack = (): string => {
+  const saved = store.ui.treeTab
+  return saved && catalog.pack(saved) ? saved : (catalog.packs[0]?.pack ?? '')
+}
 const SVG_FONT = 'font-family="DM Sans,system-ui"'
 function treeSvg(v: TreeView): string {
   const narrow = v.columnWidth < 200
@@ -705,7 +707,7 @@ function treeSvg(v: TreeView): string {
   return s + '</svg>'
 }
 function openTree(): void {
-  const v = treeView(treePack, S, catalog)
+  const v = treeView(treePack(), S, catalog)
   if (!v) return
   let html = '<h2>Learning tree</h2><p class="sub">Everything you could grow, including what you cannot reach yet. A seed unlocks when the seeds it needs are <b>rooted</b> (harvested to perennial). Pick a branch to focus; the seed bag puts it first.</p>'
   html += '<div class="tabs">' + catalog.packs.map((p) => '<button type="button" data-act="treeTab" data-arg="' + esc(p.pack) + '"' + (p.pack === v.pack ? ' class="on"' : '') + '><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:' + packColor(p) + ';margin-right:6px;vertical-align:-1px"></span>' + esc(p.title) + '</button>').join('') + '</div>'
@@ -722,51 +724,29 @@ function openTree(): void {
 }
 
 /* ---------- almanac ---------- */
-function openAlmanac(): void {
-  const capped = catalog.packs.filter((p) => p.energy_cap !== undefined)
-  const capNotes = capped.map((p) => '<li>The <b>' + esc(p.title) + '</b> field is capped: all its work together may use at most ' + p.energy_cap + '% of a day\'s energy (' + catalog.capOf(p.pack, S.energyMax) + ' of ' + S.energyMax + '), so it never becomes the only crop.</li>').join('')
-  open('<h2>Almanac</h2><p class="sub">The rules of this farm, as they stand today. Everything here is in the game right now.</p>' +
-    '<h3>The loop</h3><ul><li><b>Seeds are topics.</b> Plant one in its field: 10 energy, 10 coins. It sprouts at stage 1 of 5.</li><li><b>Water = answer.</b> A thirsty crop shows a droplet. Tap it and answer one question (6 energy). Right: it grows a stage. Wrong: it wilts, drops a stage, and goes in the compost heap.</li><li><b>Harvest = prove it.</b> A stage-5 crop sparkles. Answer a harder question (15 energy). Premium: +30 coins and the crop becomes a <b>perennial tree</b>, rooted for good. Seconds: composted, back to stage 3.</li></ul>' +
-    '<h3>Thirst and zones</h3><ul><li>After watering, a crop is thirsty again after 1, 2, 3, 4 or 5 days depending on its stage (Z1 daily, out to Z4). Perennials ask for a check-in every 10 days.</li><li>Two days past thirsty without water: it wilts overnight, unless the rain barrel saves it.</li><li>This is spaced repetition. The map is your retention: inner zones should be small, outer zones full.</li></ul>' +
-    '<h3>Energy and the rain barrel</h3><ul><li>90 energy a day. Sleep restores it.</li><li>End a day with 30+ energy left and the barrel stores one day (max 5). It spends a day automatically to stop a crop from wilting.</li>' + capNotes + '</ul>' +
-    '<h3>Fields and land</h3><ul><li>Every pack is a field. They sit on a grid around the barn, and the world grows to fit them. Drag to pan; everything beyond the homestead is wilderness.</li><li>Tap land next to a field to fence it in: 25 coins for open ground, 40 to clear forest. Fields grow one tile at a time, any shape.</li><li>Some seeds are not questions. The Workshop\'s are days of work on the game itself: you log the day, and you harvest when it ships.</li></ul>' +
-    '<h3>Wilderness (Zone 5)</h3><ul><li>Tap trees to forage a <b>wild find</b>: a fact next to what you are growing. 5 energy, +3 coins, no readiness credit.</li><li>Some finds can be <b>domesticated</b> into volunteer seeds that appear in your seed bag.</li></ul>' +
-    '<h3>Learning tree</h3><ul><li>Every seed of every field, including locked ones, is on the tree. A seed unlocks when what it needs is rooted.</li><li>Pick a branch to focus; the seed bag puts it first. Or jump the fence: pass a harvest-grade question to unlock a seed early.</li><li>Guilds are sets of seeds that belong together. The tree shows how many of each are rooted; there is no bonus yet.</li></ul>' +
-    '<h3>Buildings</h3><ul><li><b>Barn</b>: seed bag. <b>Well</b>: rain barrel. <b>Compost heap</b>: what to review. <b>Signpost</b>: this almanac.</li></ul>' +
-    '<h3>Not here yet</h3><p class="sub">Guild bonuses, layers as terraces, real weather from Coorg, the rival farm, the Sunday walk, the market, judged write-ups and timed solves, your own notes on each crop, loading your own pack in the browser, the village.</p>' + foot())
-}
+function openAlmanac(): void { open(almanacHtml(catalog, S.energyMax)) }
 
 /* ---------- sleep ---------- */
+function morningReport(night: Night): string {
+  const names = (ids: string[]): string => esc(ids.map(nameOf).join(', '))
+  const thirstyNow = S.crops.filter(thirsty).map((c) => c.seed)
+  return '<h2>Day ' + S.day + '</h2><p>Energy restored to ' + S.energyMax + '.' + (night.barrelFilled ? ' Rain barrel +1 (you ended the day with energy to spare).' : '') + '</p>' +
+    (thirstyNow.length ? '<p><b>Thirsty:</b> ' + names(thirstyNow) + '.</p>' : '<p>Nothing is thirsty. Plant something, or forage.</p>') +
+    (night.saved.length ? '<p><b>Rain barrel saved:</b> ' + names(night.saved) + '.</p>' : '') +
+    (night.wilted.length ? '<p><b>Wilted overnight:</b> ' + names(night.wilted) + '. Revive them today.</p>' : '') +
+    '<p class="sub">New wild finds have grown in the forest.</p>' + foot('Start the day')
+}
 function sleep(): void {
   const night = $('night')
   const bSleep = byIdAs('bSleep', HTMLButtonElement)
   night.style.opacity = '1'
   bSleep.disabled = true
   setTimeout(() => {
-    const before = S.energy
-    S.day += 1
-    const saved: string[] = [], wiltedNow: string[] = [], thirstyNow: string[] = []
-    for (const c of S.crops) {
-      if (c.wilted || c.per) continue
-      if (S.day > due(c) + 1) {
-        if (S.barrel > 0) { S.barrel--; c.lw = S.day - interval(c); saved.push(nameOf(c.id)) }
-        else { c.wilted = true; if (!S.compost.includes(c.id)) S.compost.push(c.id); wiltedNow.push(nameOf(c.id)) }
-      }
-    }
-    for (const c of S.crops) if (thirsty(c)) thirstyNow.push(nameOf(c.id))
-    let barrelUp = false
-    if (before >= 30 && S.barrel < 5) { S.barrel++; barrelUp = true }
-    S.energy = S.energyMax
-    S.today = { spent: {} }
-    hud()
+    const slept = act({ type: 'slept' })
     setTimeout(() => {
       night.style.opacity = '0'
       bSleep.disabled = false
-      open('<h2>Day ' + S.day + '</h2><p>Energy restored to ' + S.energyMax + '.' + (barrelUp ? ' Rain barrel +1 (you ended the day with energy to spare).' : '') + '</p>' +
-        (thirstyNow.length ? '<p><b>Thirsty:</b> ' + esc(thirstyNow.join(', ')) + '.</p>' : '<p>Nothing is thirsty. Plant something, or forage.</p>') +
-        (saved.length ? '<p><b>Rain barrel saved:</b> ' + esc(saved.join(', ')) + '.</p>' : '') +
-        (wiltedNow.length ? '<p><b>Wilted overnight:</b> ' + esc(wiltedNow.join(', ')) + '. Revive them today.</p>' : '') +
-        '<p class="sub">New wild finds have grown in the forest.</p>' + foot('Start the day'))
+      if (slept && S.night) open(morningReport(S.night))
     }, 700)
   }, 750)
 }
@@ -775,46 +755,43 @@ function sleep(): void {
 sheet.addEventListener('click', (e) => {
   const b = e.target instanceof Element ? e.target.closest('button') : null
   if (!b || b.disabled) return
-  const act = b.dataset.act
+  const what = b.dataset.act
   const arg = b.dataset.arg ?? ''
-  if (act === 'close') close()
-  else if (act === 'opt') answer(Number(arg))
-  else if (act === 'logDone') { const w = LOG; LOG = null; if (w && S.crops.includes(w.c)) finishPlain(w.seed, w.c, 'water') }
-  else if (act === 'proofDone') { const w = PROOF; PROOF = null; if (w && (w.mode === 'testout' || (w.c && S.crops.includes(w.c)))) finishPlain(w.seed, w.c, w.mode) }
-  else if (act === 'seed') {
+  if (what === 'close') close()
+  else if (what === 'opt') answer(Number(arg))
+  else if (what === 'logDone') { const seed = LOG; LOG = null; if (seed && cropOf(S, seed.id)) finishPlain(seed, 'water') }
+  else if (what === 'proofDone') { const w = PROOF; PROOF = null; if (w && (w.mode === 'testout' || cropOf(S, w.seed.id))) finishPlain(w.seed, w.mode) }
+  else if (what === 'seed') {
     const seed = catalog.seed(arg)
     if (!seed) return
-    S.seedSel = arg
+    store.ui.seedSel = arg
     hint('Seed in hand: <b>' + esc(seed.name) + '</b>. Tap an empty soil tile in the <b>' + esc(packTitle(seed.pack)) + '</b> field to plant it.')
-    save()
+    store.saveUi()
     close()
-  } else if (act === 'reset') { S = initialState(); buildStatics(); hud(); close(); toast('Farm reset to day ' + S.day + '.') }
-  else if (act === 'export') exportFarm()
-  else if (act === 'import') importFarm()
-  else if (act === 'doImport') doImport()
-  else if (act === 'copyExp') {
+  } else if (what === 'reset') openReset()
+  else if (what === 'newFarm') startNewFarm(arg === 'sample' ? 'sample' : 'fresh')
+  else if (what === 'export') exportFarm()
+  else if (what === 'import') importFarm()
+  else if (what === 'doImport') doImport()
+  else if (what === 'copyExp') {
     const t = byIdAs('exp', HTMLTextAreaElement)
     const done = () => toast('Copied.')
     const fail = () => { t.focus(); t.select(); toast('Select all and copy.') }
     if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t.value).then(done, fail)
     else fail()
-  } else if (act === 'expand') expand(arg)
-  else if (act === 'forage') forage(arg)
-  else if (act === 'domesticate') domesticate(arg)
-  else if (act === 'treeTab') { if (catalog.pack(arg)) { treePack = arg; openTree() } }
-  else if (act === 'focus') {
+  } else if (what === 'expand') expand(arg)
+  else if (what === 'forage') forage(arg)
+  else if (what === 'domesticate') domesticate(arg)
+  else if (what === 'treeTab') { if (catalog.pack(arg)) { store.ui.treeTab = arg; store.saveUi(); openTree() } }
+  else if (what === 'focus') {
     const [packId, branchId] = arg.split('|')
     const pack = packId ? catalog.pack(packId) : undefined
-    if (!pack || !branchId || !pack.branches.some((br) => br.id === branchId)) return
-    if (S.focus[pack.pack] === branchId) delete S.focus[pack.pack]
-    else S.focus[pack.pack] = branchId
-    save()
-    openTree()
-  } else if (act === 'testout') {
+    if (!pack || !branchId) return
+    if (act({ type: 'focus-set', pack: pack.pack, branch: S.focus[pack.pack] === branchId ? null : branchId })) openTree()
+  } else if (what === 'testout') {
     const seed = catalog.seed(arg)
-    if (!seed || !visible(seed, S) || available(seed, S) || rootedIds(S).has(seed.id) || S.crops.some((c) => c.id === seed.id)) return
-    if (tooTired(seed, 10, 'Needs 10 energy. Sleep first.')) return
-    startWork(seed, null, 'testout')
+    if (!seed || refused({ type: 'unlocked', seed: seed.id, ok: true })) return
+    startWork(seed, 'testout')
   }
 })
 byId('bBag').addEventListener('click', openBag)
@@ -822,4 +799,5 @@ byId('bTree').addEventListener('click', openTree)
 byId('bAlm').addEventListener('click', openAlmanac)
 byId('bSleep').addEventListener('click', sleep)
 hud()
-if (loadFailed) toast('Your saved farm could not be read. Starting a fresh one.')
+if (store.loadProblem) toast(store.loadProblem)
+else if (store.firstVisit) openWelcome()

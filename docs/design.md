@@ -47,7 +47,22 @@ The game must be useful with ugly tiles. Art is an unlock, never a prerequisite.
 | 5 | Z3 | 5 days |
 | perennial | Z4 | 10 days |
 
-Two days past thirsty without water, a crop wilts overnight unless the barrel has a day to spend.
+Two days past thirsty without water, a crop wilts overnight unless the barrel has a day to spend. The barrel fills before it is spent, so a crop never wilts overnight while the barrel holds a day. Perennials do not wilt from neglect; a wrong check-in wilts them until the next day.
+
+### Numbers
+
+| Rule | Value |
+|---|---|
+| Energy per day | 90 |
+| Plant | 10 energy, 10 coins |
+| New seeds per day | 2 |
+| Water | 6 energy |
+| Harvest | 15 energy; premium pays 30 coins |
+| Jump the fence | 10 energy |
+| Forage | 5 energy; pays 3 coins |
+| Fence a tile | 25 coins on open ground, 40 in forest |
+| Rain barrel | +1 day when a day ends with 30 or more energy; holds 5 |
+| Compost | everything in the heap is due again the next day |
 
 ### The depth ladder
 
@@ -89,7 +104,7 @@ Pack #0 is the **Workshop**: the game's own backlog as seeds, capped at 30% of d
 
 - **Local-first.** A farm is an append-only event log in the player's browser. Farm state is a pure fold over the log. Export is the log. Multi-device merge is a later, easy step because events have ids and the fold is deterministic.
 - **Static hosting.** The game is files on GitHub Pages. No server until the village.
-- **Engine / game / packs.** `engine/`: pure rules with property tests. `game/`: renderer and UI. `packs/`: data, validated in CI.
+- **Engine / game / packs.** `src/engine/`: pure rules with property tests. `src/game/`: renderer and UI. `packs/`: data, validated in CI.
 - **AI is optional and bring-your-own-key.** Authoring (catalogues, questions, the pack forge) is offline work committed as data. Runtime AI (judged harvests, wild finds, gap audits) uses the player's own key, stored only in their browser, with calls made browser-to-provider. A local model works. The no-AI game is complete.
 - **Village (Phase 3).** A player may publish a read-only snapshot: the map and the trees, never the compost heap or failed answers. Opt-in, revocable. Visiting means watering one crop by answering a question from the neighbour's pack; the gift lands in their log. Farms have codes; identity comes later if ever. Grades are not comparable across models or players.
 - **Haskell backend** is the village server, when there is a village. Not before.

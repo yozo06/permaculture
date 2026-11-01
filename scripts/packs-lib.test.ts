@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
 import { buildCatalog } from '../src/engine/catalog'
-import { upgradeV2 } from '../src/engine/v2'
+import { apply, fieldsToOpen, fold } from '../src/engine/fold'
 import sampleFarm from '../src/game/sample-farm.json'
 import { bagView, treeView } from '../src/game/views'
 import { collectPacks, defaultPacksDir, loadPacks, packFiles } from './packs-lib.mjs'
@@ -109,8 +109,8 @@ describe('adding a seed to a YAML file', () => {
     // Seeds come before finds in the file, so the new seed goes in just ahead of `finds:`.
     edit(dir, 'infra.yaml', (t) => t.replace('\nfinds:\n', '\n' + NEW_SEED.trimEnd() + '\nfinds:\n'))
     const catalog = buildCatalog(collectPacks(dir))
-    const state = upgradeV2(sampleFarm, catalog)
-    if (!state) throw new Error('the sample farm should upgrade')
+    const imported = fold([{ type: 'snapshot-imported', snapshot: sampleFarm }], catalog)
+    const state = fieldsToOpen(imported, catalog).reduce((s, e) => apply(s, e, catalog), imported)
 
     const bag = bagView(state, catalog).find((s) => s.pack === 'infra')
     expect(bag?.seeds.find((s) => s.id === 'dns-ttl')).toMatchObject({ name: 'DNS TTLs', status: 'ready', harvest: 'recall' })

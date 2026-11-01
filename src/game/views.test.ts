@@ -2,16 +2,17 @@ import { describe, expect, it } from 'vitest'
 import { collectPacks } from '../../scripts/packs-lib.mjs'
 import { buildCatalog } from '../engine/catalog'
 import type { PackDef } from '../engine/types'
-import { upgradeV2, type V2State } from '../engine/v2'
+import { apply, fieldsToOpen, fold } from '../engine/fold'
+import type { FarmState } from '../engine/types'
 import sampleFarm from './sample-farm.json'
 import { bagView, splitName, treeView } from './views'
 
 const catalog = buildCatalog(collectPacks())
 
-function farm(catalogToUse = catalog): V2State {
-  const s = upgradeV2(sampleFarm, catalogToUse)
-  if (!s) throw new Error('the sample farm should upgrade')
-  return s
+/** The prototype's farm with a field opened for every pack, as the game loads it. */
+function farm(c = catalog): FarmState {
+  const imported = fold([{ type: 'snapshot-imported', snapshot: sampleFarm }], c)
+  return fieldsToOpen(imported, c).reduce((s, e) => apply(s, e, c), imported)
 }
 
 describe('the sample farm', () => {
@@ -72,9 +73,7 @@ describe('bagView', () => {
   })
 
   it('marks the seed in hand', () => {
-    const s = farm()
-    s.seedSel = 'tls'
-    expect(bagView(s, catalog).flatMap((x) => x.seeds).filter((x) => x.selected).map((x) => x.id)).toEqual(['tls'])
+    expect(bagView(farm(), catalog, 'tls').flatMap((x) => x.seeds).filter((x) => x.selected).map((x) => x.id)).toEqual(['tls'])
   })
 })
 

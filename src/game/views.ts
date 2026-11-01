@@ -1,8 +1,7 @@
 // What the seed bag and the learning tree draw, worked out from the packs and the farm. Pure: no DOM.
 import { HARVEST_NAMES, LAYER_NAMES, type Catalog, type Seed } from '../engine/catalog'
-import { available, rootedIds, visible } from '../engine/rules'
-import type { PackDef } from '../engine/types'
-import type { V2State } from '../engine/v2'
+import { available, cropOf, rooted, visible } from '../engine/rules'
+import type { FarmState, PackDef } from '../engine/types'
 
 export const DEFAULT_COLOR = '#6DB24F'
 export const packColor = (p: PackDef): string => p.color ?? DEFAULT_COLOR
@@ -10,9 +9,9 @@ export const packColor = (p: PackDef): string => p.color ?? DEFAULT_COLOR
 export type SeedStatus = 'ready' | 'growing' | 'rooted' | 'locked'
 
 /** Where a seed stands: rooted (a perennial), growing (in the ground), ready to plant, or locked. */
-export function seedStatus(seed: Seed, state: V2State): SeedStatus {
-  const crop = state.crops.find((c) => c.id === seed.id)
-  if (crop) return crop.per ? 'rooted' : 'growing'
+export function seedStatus(seed: Seed, state: FarmState): SeedStatus {
+  const crop = cropOf(state, seed.id)
+  if (crop) return crop.perennial ? 'rooted' : 'growing'
   return available(seed, state) ? 'ready' : 'locked'
 }
 
@@ -46,7 +45,8 @@ export interface BagSection {
   lockedCount: number
 }
 
-export function bagView(state: V2State, catalog: Catalog): BagSection[] {
+/** `selected` is the seed in the player's hand, if any. */
+export function bagView(state: FarmState, catalog: Catalog, selected: string | null = null): BagSection[] {
   const sections: BagSection[] = []
   for (const pack of catalog.packs) {
     if (!Object.hasOwn(state.fields, pack.pack)) continue
@@ -60,7 +60,7 @@ export function bagView(state: V2State, catalog: Catalog): BagSection[] {
       if (status === 'locked') { lockedCount++; continue }
       seeds.push({
         id: seed.id, name: seed.name, layer: LAYER_NAMES[seed.layer], harvest: HARVEST_NAMES[seed.harvest], status,
-        focus: focusTitle !== null && seed.branch === focusId, selected: state.seedSel === seed.id,
+        focus: focusTitle !== null && seed.branch === focusId, selected: selected === seed.id,
       })
     }
     const tier = (s: BagSeed) => catalog.seed(s.id)?.tier ?? 0
@@ -141,7 +141,7 @@ export function splitName(name: string): string[] {
   return i > 0 ? [name.slice(0, i), name.slice(i + 1)] : [name]
 }
 
-export function treeView(packId: string, state: V2State, catalog: Catalog): TreeView | null {
+export function treeView(packId: string, state: FarmState, catalog: Catalog): TreeView | null {
   const pack = catalog.pack(packId)
   if (!pack) return null
   const seeds = catalog.seedsOf(packId).filter((s) => visible(s, state))
@@ -162,7 +162,7 @@ export function treeView(packId: string, state: V2State, catalog: Catalog): Tree
       cell.forEach((seed, i) => {
         const row = Math.floor(i / perRow)
         const inRow = Math.min(perRow, cell.length - row * perRow)
-        const crop = state.crops.find((c) => c.id === seed.id)
+        const crop = cropOf(state, seed.id)
         const status = seedStatus(seed, state)
         const node: TreeNode = {
           id: seed.id, name: seed.name, lines: splitName(seed.name), status, wild: seed.wild,
@@ -176,13 +176,13 @@ export function treeView(packId: string, state: V2State, catalog: Catalog): Tree
     y += (rows - 1) * ROW_GAP + TIER_GAP
   }
 
-  const rooted = rootedIds(state)
+  const have = rooted(state)
   const edges: TreeEdge[] = []
   for (const seed of seeds) {
     const to = at.get(seed.id)
     for (const need of seed.needs) {
       const from = at.get(need)
-      if (from && to) edges.push({ from: { x: from.x, y: from.y }, to: { x: to.x, y: to.y }, rooted: rooted.has(need) })
+      if (from && to) edges.push({ from: { x: from.x, y: from.y }, to: { x: to.x, y: to.y }, rooted: have.has(need) })
     }
   }
 

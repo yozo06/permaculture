@@ -14,12 +14,12 @@ const ids = (xs: { id: string }[]) => xs.map((f) => f.id)
 
 describe('findCandidates', () => {
   it('prefers finds near a growing crop', () => {
-    const crops = [{ id: 'one', per: false }, { id: 'two', per: true }]
+    const crops = [{ seed: 'one', perennial: false }, { seed: 'two', perennial: true }]
     expect(ids(findCandidates({ crops, foraged: [] }, catalog))).toEqual(['f-one'])
   })
 
   it('then finds near anything planted', () => {
-    expect(ids(findCandidates({ crops: [{ id: 'two', per: true }], foraged: [] }, catalog))).toEqual(['f-two'])
+    expect(ids(findCandidates({ crops: [{ seed: 'two', perennial: true }], foraged: [] }, catalog))).toEqual(['f-two'])
   })
 
   it('then any find, but never one already foraged', () => {

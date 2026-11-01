@@ -21,10 +21,11 @@ Better distractors, better `why` lines, a missing layer, a guild that should exi
 
 ## Code
 
-- The game lives in `src/` and is built by Vite from TypeScript: `npm run dev` to play locally, `npm test` for the tests, `npm run build` for the site. The game reads `packs/*.yaml` at build time, so a new seed needs no code. See `docs/design.md` §9 for the phases.
+- The game lives in `src/` and is built by Vite from TypeScript: `npm run dev` to play locally, `npm test` for the tests, `npm run build` for the site. It is split in two. `src/engine/` holds every rule as pure TypeScript with no DOM, and `src/game/` draws the farm and the sheets. The game reads `packs/*.yaml` at build time, so a new seed needs no code. See `docs/design.md` §9 for the phases.
 - Keep the loop honest: a change should make plant → water → harvest truer, faster or clearer. Features that do not serve the loop wait.
 - No leaderboards, no streak shaming, no accounts before the village needs them.
-- The engine stays pure: state is a fold over an event log. If a change makes that harder, it is probably wrong.
+- The engine stays pure: `src/engine/` has no DOM, no clock and no randomness, and a farm is a fold over its event log. A new rule is a new event and a check in `src/engine/fold.ts`, with a property test. If a change makes that harder, it is probably wrong.
+- Rules and numbers live in `RULES` (`src/engine/rules.ts`). The Almanac is written from it, and a test checks the tables in `docs/design.md` against it, so change all three together.
 - Run `npm run validate`, `npm test` and `npm run build` before pushing. CI runs all three on every PR.
 
 ## Hosting and cost

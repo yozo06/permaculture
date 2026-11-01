@@ -1,9 +1,11 @@
 // The prototype's save format ("v2") and the conversion that makes any v2 farm fit the current packs.
 // A save file is untrusted: keep what is usable, drop the rest, never throw.
 import type { Catalog } from './catalog'
-import { fieldOf, nextFreeSlot, tileKey, type Cleared, type Fields } from './land'
+import { fieldOf, tileKey, type Cleared, type Fields } from './land'
+import { RULES, interval } from './rules'
+import type { Crop, FarmState } from './types'
 
-export interface V2Crop {
+export interface V2CropSnapshot {
   id: string
   x: number
   y: number
@@ -14,7 +16,8 @@ export interface V2Crop {
   per: boolean
 }
 
-export interface V2State {
+/** A v2 save as the prototype wrote it. `fromV2` reads it defensively; this is only what a good one looks like. */
+export interface V2Snapshot {
   v: 2
   day: number
   energy: number
@@ -31,7 +34,7 @@ export interface V2State {
   /** pack id -> branch id */
   focus: Record<string, string>
   cam: { x: number; y: number }
-  crops: V2Crop[]
+  crops: V2CropSnapshot[]
   farmer: { x: number; y: number; tx: number; ty: number }
   /** pack id -> slot */
   fields: Record<string, number>
@@ -106,19 +109,19 @@ function readFocus(raw: unknown, catalog: Catalog): Record<string, string> {
   return focus
 }
 
-function readToday(raw: unknown, catalog: Catalog): V2State['today'] {
+function readSpent(raw: unknown, catalog: Catalog): Record<string, number> {
   const spent: Record<string, number> = {}
   if (isRecord(raw) && isRecord(raw.spent)) {
     for (const [pack, n] of Object.entries(raw.spent)) {
       if (catalog.pack(pack) && typeof n === 'number' && Number.isFinite(n) && n > 0) spent[pack] = n
     }
   }
-  return { spent }
+  return spent
 }
 
 /** Crops must be known seeds, one per seed and per tile, standing on their own pack's field. */
-function readCrops(raw: unknown[], catalog: Catalog, fields: Fields, cleared: Cleared): V2Crop[] {
-  const crops: V2Crop[] = []
+function readCrops(raw: unknown[], day: number, catalog: Catalog, fields: Fields, cleared: Cleared): Crop[] {
+  const crops: Crop[] = []
   const seeds = new Set<string>()
   const tiles = new Set<string>()
   for (const item of raw) {
@@ -130,48 +133,44 @@ function readCrops(raw: unknown[], catalog: Catalog, fields: Fields, cleared: Cl
     if (fieldOf(x, y, fields, cleared) !== seed.pack || seeds.has(seed.id) || tiles.has(tileKey(x, y))) continue
     seeds.add(seed.id)
     tiles.add(tileKey(x, y))
-    crops.push({
-      id: seed.id, x, y, stage: Math.max(0, Math.min(4, Math.round(finite(item.stage, 0)))),
-      lw: finite(item.lw, 0), wilted: item.wilted === true, per: item.per === true,
-    })
+    const perennial = item.per === true
+    const stage = perennial ? RULES.maxStage : Math.max(0, Math.min(RULES.maxStage, Math.round(finite(item.stage, 0))))
+    const wilted = item.wilted === true
+    const due = Math.round(finite(item.lw, 0)) + interval({ perennial, stage })
+    // Phase 0 let a wilted crop be revived at once; keep that.
+    crops.push({ seed: seed.id, x, y, stage, due: wilted ? Math.min(due, day) : due, wilted, perennial })
   }
   return crops
 }
 
 /**
- * Turn a parsed v2 farm into a farm that fits `catalog`: legacy field keys and find ids renamed, every pack
- * given a field, anything that points at a missing seed dropped. Returns null if it is not a v2 farm at all.
- * Running it on its own output changes nothing. (B3 turns this into `fromV2`.)
+ * Turn a parsed v2 farm into the engine's farm state, fitted to `catalog`: legacy field keys and find ids renamed,
+ * anything that points at a missing seed dropped. Returns null if it is not a v2 farm at all. It does not open
+ * fields for packs the save never knew; the game does that with `field-opened` events.
+ * Camera, farmer position and the seed in hand are not part of a farm and are left behind.
  */
-export function upgradeV2(value: unknown, catalog: Catalog): V2State | null {
-  if (!looksLikeV2(value) || !Array.isArray(value.crops) || !isRecord(value.farmer)) return null
+export function fromV2(value: unknown, catalog: Catalog): FarmState | null {
+  if (!looksLikeV2(value)) return null
   const fields = readFields(value.fields, catalog)
-  // Packs added since the save was made get the next free slot, in catalog order.
-  for (const p of catalog.packs) if (!Object.hasOwn(fields, p.pack)) fields[p.pack] = nextFreeSlot(fields)
   const cleared = readCleared(value.cleared, fields)
-  const energyMax = finite(value.energyMax, 90) > 0 ? finite(value.energyMax, 90) : 90
+  const energyMax = finite(value.energyMax, RULES.energyMax) > 0 ? Math.round(finite(value.energyMax, RULES.energyMax)) : RULES.energyMax
   const known = (ids: unknown) => unique(strings(ids).filter((id) => catalog.seed(id)))
-  const fm = value.farmer
-  const cam = isRecord(value.cam) ? { x: finite(value.cam.x, 240), y: finite(value.cam.y, -18) } : { x: 240, y: -18 }
-  const crops = readCrops(value.crops, catalog, fields, cleared)
+  const day = Math.max(1, Math.round(finite(value.day, 1)))
   return {
-    v: 2,
-    day: Math.max(1, Math.round(finite(value.day, 1))),
-    energy: Math.max(0, Math.min(energyMax, finite(value.energy, energyMax))),
+    day,
+    energy: Math.max(0, Math.min(energyMax, Math.round(finite(value.energy, energyMax)))),
     energyMax,
-    coins: Math.max(0, finite(value.coins, 0)),
-    barrel: Math.max(0, Math.min(5, Math.round(finite(value.barrel, 0)))),
-    seedSel: typeof value.seedSel === 'string' && catalog.seed(value.seedSel) ? value.seedSel : null,
-    compost: known(value.compost),
+    coins: Math.max(0, Math.round(finite(value.coins, 0))),
+    barrel: Math.max(0, Math.min(RULES.barrel.max, Math.round(finite(value.barrel, 0)))),
+    fields,
     cleared,
+    crops: readCrops(Array.isArray(value.crops) ? value.crops : [], day, catalog, fields, cleared),
+    compost: known(value.compost),
     unlocked: known(value.unlocked),
     volunteers: known(value.volunteers),
     foraged: unique(strings(value.foraged).map((id) => LEGACY_FINDS[id] ?? id).filter((id) => catalog.find(id))),
     focus: readFocus(value.focus, catalog),
-    cam,
-    crops,
-    farmer: { x: finite(fm.x, 9), y: finite(fm.y, 8), tx: finite(fm.tx, 9), ty: finite(fm.ty, 8) },
-    fields,
-    today: readToday(value.today, catalog),
+    today: { planted: 0, spent: readSpent(value.today, catalog) },
+    night: null,
   }
 }

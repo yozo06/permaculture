@@ -10,12 +10,14 @@ Any goal is a **pack**: a YAML file of seeds with layers, prerequisites and ques
 
 ## Status
 
-Phase 0: playable prototype, procedural pixel art, 36 seeds, drag-to-pan world, learning tree, wild finds, almanac. Everything runs in your browser; your farm is saved there. Export it from the seed bag before clearing site data.
+Phase 0: playable prototype, procedural pixel art, 36 seeds, drag-to-pan world, learning tree, wild finds, almanac. Everything runs in your browser; your farm is saved there as a log of what you did. Export it from the seed bag before clearing site data.
 
 ## Repo
 
 ```
 src/       the game: TypeScript, built with Vite
+  engine/  the rules: pure TypeScript, a farm is a fold over an event log
+  game/    the canvas, the sheets, saving
 packs/     one YAML per goal · schema/ · validated in CI
 docs/      design.md (the rules) · pack-format.md
 scripts/   validate-packs.mjs

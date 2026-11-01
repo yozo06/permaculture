@@ -1,33 +1,55 @@
-// The Phase 0 rules the pack loader needs. B3 grows this into the full rule set.
+// Every number and predicate the game plays by. docs/design.md and the Almanac are checked against RULES.
 import type { Catalog, Seed } from './catalog'
+import type { Crop, FarmState } from './types'
 
-/** The part of a farm these rules read. */
-export interface Rooting {
-  crops: readonly { id: string; per: boolean }[]
-  unlocked: readonly string[]
-  volunteers: readonly string[]
-}
+export const RULES = {
+  energyMax: 90,
+  start: { day: 1, coins: 140, barrel: 0 },
+  plant: { energy: 10, coins: 10 },
+  newSeedsPerDay: 2,
+  water: { energy: 6 },
+  harvest: { energy: 15, coins: 30 },
+  testOut: { energy: 10 },
+  forage: { energy: 5, coins: 3 },
+  fence: { open: 25, forest: 40 },
+  barrel: { fillAt: 30, max: 5 },
+  wiltAfter: 2,
+  intervals: [1, 2, 3, 4, 5],
+  perennialInterval: 10,
+  zones: ['Z1', 'Z2', 'Z2', 'Z3', 'Z3'],
+  perennialZone: 'Z4',
+  maxStage: 4,
+} as const
+
+/** Days between waterings. */
+export const interval = (c: Pick<Crop, 'perennial' | 'stage'>): number =>
+  c.perennial ? RULES.perennialInterval : (RULES.intervals[c.stage] ?? RULES.intervals[RULES.maxStage])
+
+export const zone = (c: Pick<Crop, 'perennial' | 'stage'>): string =>
+  c.perennial ? RULES.perennialZone : (RULES.zones[c.stage] ?? RULES.zones[RULES.maxStage])
+
+export const thirsty = (c: Crop, day: number): boolean => !c.wilted && day >= c.due
+/** A wilted crop can be brought back once its day has come. */
+export const revivable = (c: Crop, day: number): boolean => c.wilted && day >= c.due
+export const ripe = (c: Crop, day: number): boolean =>
+  c.stage === RULES.maxStage && !c.wilted && !c.perennial && !thirsty(c, day)
+
+export const cropOf = (s: Pick<FarmState, 'crops'>, seedId: string): Crop | undefined => s.crops.find((c) => c.seed === seedId)
 
 /** Seed ids of perennial crops: the ones that count as rooted. */
-export const rootedIds = (s: Rooting): Set<string> => new Set(s.crops.filter((c) => c.per).map((c) => c.id))
+export const rooted = (s: Pick<FarmState, 'crops'>): Set<string> => new Set(s.crops.filter((c) => c.perennial).map((c) => c.seed))
 
 /** Wild seeds stay hidden until they have been domesticated. */
-export const visible = (seed: Seed, s: Rooting): boolean => !seed.wild || s.volunteers.includes(seed.id)
+export const visible = (seed: Seed, s: Pick<FarmState, 'volunteers'>): boolean => !seed.wild || s.volunteers.includes(seed.id)
 
 /** Can this seed be planted now: it is visible and unlocked, or everything it needs is rooted. */
-export function available(seed: Seed, s: Rooting): boolean {
+export function available(seed: Seed, s: Pick<FarmState, 'crops' | 'unlocked' | 'volunteers'>): boolean {
   if (!visible(seed, s)) return false
   if (s.unlocked.includes(seed.id)) return true
-  const rooted = rootedIds(s)
-  return seed.needs.every((n) => rooted.has(n))
+  const have = rooted(s)
+  return seed.needs.every((n) => have.has(n))
 }
 
 /** Energy this field may still spend today; Infinity when the pack has no cap. */
-export function capLeft(
-  packId: string,
-  catalog: Catalog,
-  energyMax: number,
-  spent: Readonly<Record<string, number>>,
-): number {
-  return catalog.capOf(packId, energyMax) - (spent[packId] ?? 0)
-}
+export const capLeft = (s: Pick<FarmState, 'energyMax' | 'today'>, packId: string, catalog: Catalog): number =>
+  catalog.capOf(packId, s.energyMax) - (s.today.spent[packId] ?? 0)
