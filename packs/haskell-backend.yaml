@@ -12,7 +12,101 @@ branches:
     title: Runtime & performance
   - id: types-and-effects
     title: Types & effects
-sources: []
+sources:
+  - id: pcph
+    title: Parallel and Concurrent Programming in Haskell (Simon Marlow)
+    url: https://simonmar.github.io/pages/pcph.html
+    note: The author's page links the free online edition and the O'Reilly page; chapter numbers in the seed summaries follow that edition.
+  - id: base-pkg
+    title: base (Hackage documentation)
+    url: https://hackage.haskell.org/package/base
+    note: Data.Foldable (its Overview on strict and lazy folds), Data.Maybe, Data.Either, Data.Ord, Data.Coerce, Data.IORef, System.IO, System.IO.Unsafe, System.Timeout, Control.Exception, Control.Concurrent and GHC.Stats.
+  - id: transformers-pkg
+    title: transformers (Hackage documentation)
+    url: https://hackage.haskell.org/package/transformers
+    note: StateT, ExceptT, ReaderT and their definitions; the mtl package (https://hackage.haskell.org/package/mtl) adds the classes.
+  - id: containers-pkg
+    title: containers (Hackage documentation)
+    url: https://hackage.haskell.org/package/containers
+    note: Data.Map and Data.Map.Strict (the module headers cover strict versus lazy values and point to HashMap), Data.IntMap and Data.Set. HashMap itself lives in unordered-containers (https://hackage.haskell.org/package/unordered-containers).
+  - id: text-pkg
+    title: text (Hackage documentation)
+    url: https://hackage.haskell.org/package/text
+    note: Data.Text (including copy), Data.Text.Encoding (decodeUtf8'). The bytestring package (https://hackage.haskell.org/package/bytestring) has the same ideas for raw bytes, including Data.ByteString.copy.
+  - id: vector-pkg
+    title: vector (Hackage documentation)
+    url: https://hackage.haskell.org/package/vector
+  - id: parse-dont-validate
+    title: "Parse, don't validate (Alexis King)"
+    url: https://lexi-lambda.github.io/blog/2019/11/05/parse-don-t-validate/
+  - id: readert-pattern
+    title: The ReaderT Design Pattern (FP Complete)
+    url: https://web.archive.org/web/20240124135910/https://www.fpcomplete.com/blog/readert-design-pattern/
+    note: The original site is offline (the post was published in June 2017), so this is the Internet Archive copy of the post.
+  - id: three-layer-cake
+    title: Three Layer Haskell Cake (Matt Parsons)
+    url: https://www.parsonsmatt.org/2018/03/22/three_layer_haskell_cake.html
+    note: Layer 1 is the ReaderT pattern, layer 2 mtl-style classes, layer 3 pure business logic.
+  - id: servant-docs
+    title: Servant documentation and tutorial
+    url: https://docs.servant.dev/en/latest/
+    note: The tutorial pages "A web API as a type" and "Serving an API", plus the cookbook recipe on using a custom monad.
+  - id: quickcheck-pkg
+    title: QuickCheck (Hackage documentation)
+    url: https://hackage.haskell.org/package/QuickCheck
+    note: Hedgehog (https://hackage.haskell.org/package/hedgehog) is the main alternative, with integrated shrinking.
+  - id: katip-pkg
+    title: katip (Hackage documentation)
+    url: https://hackage.haskell.org/package/katip
+    note: A structured logging library; the same ideas apply to co-log or any JSON logger.
+  - id: effectful-pkg
+    title: effectful (Hackage documentation)
+    url: https://hackage.haskell.org/package/effectful
+    note: The package page carries the README, including the "What about mtl?" section.
+  - id: conduit-pkg
+    title: conduit (Hackage documentation)
+    url: https://hackage.haskell.org/package/conduit
+    note: The package page carries the README, with its Evaluation strategy and Resource allocation sections.
+  - id: wai-extra-pkg
+    title: "wai-extra: Network.Wai.Middleware.RequestSizeLimit"
+    url: https://hackage.haskell.org/package/wai-extra/docs/Network-Wai-Middleware-RequestSizeLimit.html
+    note: Request body size limits as WAI middleware, which servant and Warp applications can use.
+  - id: lock-free
+    title: Non-blocking algorithm (Wikipedia)
+    url: https://en.wikipedia.org/wiki/Non-blocking_algorithm
+    note: Defines wait-free, lock-free and obstruction-free. Jeff Preshing's An Introduction to Lock-Free Programming (https://preshing.com/20120612/an-introduction-to-lock-free-programming/) covers compare-and-swap loops.
+  - id: ghc-smp
+    title: "GHC User's Guide: Using Concurrent Haskell (-threaded and -N)"
+    url: https://downloads.haskell.org/ghc/latest/docs/users_guide/using-concurrent.html
+  - id: ghc-rts
+    title: "GHC User's Guide: Runtime system (RTS) options"
+    url: https://downloads.haskell.org/ghc/latest/docs/users_guide/runtime_control.html
+    note: Garbage collector options, runtime statistics (-T, -s, -S) and tracing (-l).
+  - id: ghc-profiling
+    title: "GHC User's Guide: Profiling"
+    url: https://downloads.haskell.org/ghc/latest/docs/users_guide/profiling.html
+    note: Cost centres, time profiles and the heap profile breakdowns (-hc, -hT and the rest).
+  - id: ghc-strict
+    title: "GHC User's Guide: Bang patterns and Strict Haskell"
+    url: https://downloads.haskell.org/ghc/latest/docs/users_guide/exts/strict.html
+  - id: ghc-pragmas
+    title: "GHC User's Guide: Pragmas"
+    url: https://downloads.haskell.org/ghc/latest/docs/users_guide/exts/pragmas.html
+    note: INLINE, INLINABLE, NOINLINE, SPECIALIZE and UNPACK.
+  - id: ghc-gadts
+    title: "GHC User's Guide: Generalised Algebraic Data Types (GADTs)"
+    url: https://downloads.haskell.org/ghc/latest/docs/users_guide/exts/gadt.html
+  - id: ghc-linear
+    title: "GHC User's Guide: Linear types"
+    url: https://downloads.haskell.org/ghc/latest/docs/users_guide/exts/linear_types.html
+  - id: ghc-deriving
+    title: "GHC User's Guide: Deriving strategies"
+    url: https://downloads.haskell.org/ghc/latest/docs/users_guide/exts/deriving_strategies.html
+    note: The neighbouring sections cover generalised newtype deriving, deriving any class and deriving via.
+  - id: ghc-optimisation
+    title: "GHC User's Guide: Optimisation (code improvement)"
+    url: https://downloads.haskell.org/ghc/latest/docs/users_guide/using-optimisation.html
+    note: Flag entries for -fworker-wrapper, -fstrictness, -fcpr-anal, -fspecialise, -ffull-laziness and -fcse. The -ddump-simpl and -dsuppress-* flags are in the same guide's page on debugging the compiler (https://downloads.haskell.org/ghc/latest/docs/users_guide/debugging.html).
 seeds:
   - id: laziness
     name: Laziness model
@@ -20,101 +114,240 @@ seeds:
     branch: types-and-effects
     tier: 0
     harvest: recall
+    minutes: 30
+    sources: [pcph]
+    summary: >-
+      Read Marlow's PCPH chapter 2, the section 'Lazy Evaluation and Weak Head Normal Form'. Yield: a page on
+      what a thunk is, when it is forced, why it runs at most once, and one example each of laziness that helps
+      (an infinite or half-used structure) and laziness that costs (a deferred error or a pile of suspended
+      work).
+    rubric:
+      - Says a thunk is a suspended computation that runs only when its value is demanded
+      - Explains that an evaluated thunk is overwritten with its result, so it never runs twice
+      - Separates naming a value (let) from demanding it (pattern match, case, seq)
+      - Gives one case where laziness helps and one where it hides cost or errors
     questions:
       water:
         - q: "`let xs = [1..] in take 3 xs` works because…"
           answer: Lists are built lazily; only the demanded cons cells get evaluated
           distractors:
-            - GHC detects infinite lists and truncates them
-            - take forces the whole list first
-            - "[1..] is special finite syntax"
+            - GHC detects infinite lists and truncates them at compile time
+            - take forces the whole list first, then discards the rest
+            - "[1..] is shorthand for a list capped at some fixed length, such as 1000"
           why: Thunks are evaluated on demand; take only pattern-matches three cells.
+          source: pcph
+        - q: "Given `ys = map expensive [1..1000]`, a program evaluates only `head ys`. What runs?"
+          answer: Only the first call to `expensive`; the other 999 stay unevaluated
+          distractors:
+            - All 1000 calls run as soon as ys is bound, because let evaluates its right side
+            - None of them, since head only inspects the spine and never the element
+            - Only the first call runs, and ys is rebuilt from scratch on every later use
+          why: >-
+            map produces cons cells whose heads are thunks. Evaluating head ys forces the first element only, and
+            the evaluated thunk is updated in place, so nothing is recomputed later.
+          source: pcph
+      harvest:
+        - q: A service parses config into a record with lazy fields and reports a bad value only hours later, on first use. What explains it?
+          answer: The error sat inside an unevaluated thunk until something demanded the field
+          distractors:
+            - GHC defers every exception until the program exits, then prints them together
+            - The parser ran on a background thread that failed without reporting anything
+            - Lazy fields are skipped by the parser unless they are marked strict
+          why: >-
+            Building a record does not evaluate its lazy fields. The failure stays suspended, which is why boundary
+            code usually forces (or uses strict fields for) parsed values at startup so bad config fails fast.
+          source: pcph
   - id: stm
     name: STM retry
     layer: shrub
     branch: types-and-effects
     tier: 1
     harvest: recall
+    minutes: 45
+    sources: [pcph]
+    summary: >-
+      Read PCPH chapter 10 (Software Transactional Memory): 'Running Example: Managing Windows', 'Blocking',
+      'Merging with STM', 'Bounded Channels' and 'Performance'. Yield: notes on TVar, atomically, retry and
+      orElse, why transactions compose where lock-based code does not, and a sketch of a bounded queue built
+      from TVars that blocks when full or empty.
+    rubric:
+      - States that a transaction either commits all its writes or none, as if it ran alone
+      - Explains retry as blocking until a TVar the transaction read changes
+      - Explains orElse as trying an alternative when the first branch retries
+      - Says why side effects other than TVar writes cannot appear inside atomically
     questions:
       water:
         - q: Inside an STM transaction, what does `retry` do?
           answer: Blocks until a TVar it read changes, then re-runs the transaction
           distractors:
-            - Re-runs the transaction immediately in a busy loop
-            - Throws an exception to the caller
-            - Commits the writes made so far
+            - Re-runs the transaction immediately in a busy loop until it succeeds
+            - Throws an exception to the caller that atomically can catch and handle
+            - Commits the writes made so far and ends the transaction early
           why: retry parks the thread and wakes it when any TVar read so far is written by another transaction.
+          source: pcph
+        - q: What does `orElse a b` do inside a transaction?
+          answer: Runs `a`; if `a` retries, undoes its writes and runs `b` instead
+          distractors:
+            - Runs a and b in parallel and keeps whichever finishes first
+            - Runs b only when a throws an exception, and commits both sets of writes
+            - Runs a and then b, committing both as a single transaction
+          why: >-
+            orElse is the choice operator for blocking. The writes made by the branch that retried are rolled back,
+            so the alternative starts from a clean view.
+          source: pcph
       harvest:
         - q: Why can you not run IO inside `atomically`?
           answer: A transaction may run several times before committing, so effects would repeat
           distractors:
-            - IO is too slow for the STM scheduler
-            - The runtime has no way to time IO
-            - STM runs only on the main thread
+            - IO is too slow for the STM scheduler to track reliably
+            - The runtime has no way to time IO inside a transaction
+            - STM transactions run only on the main thread
           why: Transactions are optimistic and can be re-executed; IO effects cannot be rolled back.
+          source: pcph
+        - q: Two threads move money between the same two TVar accounts in opposite directions. With STM instead of MVar locks, what happens?
+          answer: No deadlock; the runtime detects the conflict and re-runs one transaction
+          distractors:
+            - The same deadlock, because each transaction takes its TVars in program order
+            - Both transactions abort forever, since STM has no way to resolve conflicts
+            - A deadlock exception is thrown to whichever thread locked second
+          why: >-
+            STM has no lock order for the programmer to get wrong. Transactions validate at commit; on a conflict
+            one is discarded and re-run, so the opposite orderings cannot wedge each other.
+          source: pcph
   - id: bracket
     name: bracket & cleanup
     layer: herb
     branch: types-and-effects
     tier: 1
     harvest: recall
+    minutes: 30
+    sources: [pcph, base-pkg]
+    summary: >-
+      Read PCPH chapter 9 (Cancellation and Timeouts): 'Masking Asynchronous Exceptions' and 'The bracket
+      Operation'. Then the bracket, finally and mask entries in base's Control.Exception. Yield: notes on the
+      three parts of bracket, what masking protects, and an example where a hand-written try/finally leaks a
+      connection that bracket would not.
+    rubric:
+      - Names the three parts of bracket and says when release runs
+      - Explains why acquire and release run with asynchronous exceptions masked
+      - Gives a case where hand-written cleanup leaks a resource
+      - Notes the limit, that a blocking operation inside mask can still be interrupted
     questions:
       water:
         - q: "`bracket acquire release use` runs `release` when…"
           answer: "`use` finishes, throws, or the thread gets an async exception"
           distractors:
-            - Only when `use` returns normally
-            - Only on asynchronous exceptions
-            - Only if `acquire` failed
+            - Only when `use` returns normally, since errors skip cleanup
+            - Only on asynchronous exceptions, not on ordinary failures
+            - Only if `acquire` itself fails part of the way through
           why: bracket masks async exceptions during acquire/release and always runs release.
+          source: pcph
+        - q: Why prefer `bracket` over writing `acquire >>= use >>= release` by hand?
+          answer: The hand-written version leaks the resource if `use` throws or is cancelled
+          distractors:
+            - The hand-written version cannot return a value from use to the caller
+            - bracket runs use on a separate thread so that failures stay isolated
+            - The hand-written version runs release twice whenever use throws an error or exits
+          why: >-
+            Plain sequencing never reaches release when an exception unwinds past it. bracket installs the handler
+            for you and masks the gap between acquiring and installing it.
+          source: pcph
       harvest:
         - q: What does `mask` change for the `acquire` step?
           answer: Async exceptions are deferred until an interruptible op or unmask
           distractors:
-            - Sync exceptions are swallowed
-            - GC is paused for the duration
-            - Nothing; mask only affects release
+            - Synchronous exceptions are caught and swallowed until acquire returns
+            - The garbage collector is paused so acquire cannot be interrupted
+            - Nothing changes; mask applies only to the release function
           why: Without mask, a Ctrl-C between acquire and the handler install would leak the resource.
+          source: pcph
   - id: gc
     name: GC generations
     layer: root
     branch: runtime-and-performance
     tier: 1
     harvest: recall
+    minutes: 40
+    sources: [ghc-rts]
+    summary: >-
+      Read the User's Guide section 'RTS options to control the garbage collector' (-A, -n, -F, -G, -c, -I, -qg,
+      -qn) and run a program with +RTS -s. Yield: notes on the nursery and the old generation, what makes an
+      object get promoted, why a copying collector needs headroom, and which flags trade pause time against
+      throughput.
+    rubric:
+      - Describes generations, the nursery, and what promotion means
+      - Explains why most objects die young and why that makes minor collections cheap
+      - Says -A is per capability and what raising it costs
+      - Reads allocation, max residency and GC time off a +RTS -s report
     questions:
       water:
         - q: GHC's default garbage collector is…
           answer: A generational copying collector
           distractors:
-            - Reference counting
-            - Mark-and-sweep only
-            - There is no GC; memory is arena-allocated
+            - Reference counting, with a cycle detector for loops
+            - Mark-and-sweep only, with no generations at all
+            - There is no GC; memory is arena-allocated per request
           why: Young objects live in the nursery and get copied to the old generation if they survive.
+          source: ghc-rts
+        - q: A service runs with `-N8 -A64m`. Roughly how much memory do the nurseries take in total?
+          answer: About 512MB, since -A applies to each capability
+          distractors:
+            - 64MB in total, shared by all eight capabilities
+            - 64MB plus a fixed 8MB of bookkeeping per capability
+            - About 128MB, one nursery for each of the two generations
+          why: >-
+            Each capability allocates into its own nursery, so the allocation area is -A times -N. Forgetting this is
+            how a "small" -A change ends up using gigabytes.
+          source: ghc-rts
       harvest:
         - q: Raising -A (nursery size) usually means…
           answer: Fewer minor GCs, more memory per capability
           distractors:
-            - More minor GCs, less memory
-            - No change to GC frequency
-            - The old generation shrinks
+            - More minor GCs, less memory in use at any moment
+            - No change to GC frequency, only to the heap profile
+            - The old generation shrinks to make room for the nursery
           why: >-
             A bigger nursery fills more slowly, so minor collections are rarer; cost is memory and cache
             locality.
+          source: ghc-rts
   - id: leaks
     name: Space leaks
     layer: root
     branch: runtime-and-performance
     tier: 1
     harvest: recall
+    minutes: 45
+    sources: [pcph, base-pkg, containers-pkg, ghc-profiling, ghc-strict]
+    summary: >-
+      Read the Overview in base's Data.Foldable docs (strict versus lazy folds), the User's Guide profiling
+      chapter on heap profiling (-hc, -hT) and the thunk part of PCPH chapter 2. Yield: a list of the three
+      common ways a lazy program holds memory (thunk chains, retained references, lazy state) and, for each, how
+      a heap profile would show it.
+    rubric:
+      - Defines a space leak as memory held longer than the program needs it
+      - Explains how a lazy accumulator builds a chain of thunks
+      - Names at least two other causes, such as retained references or lazy state or map values
+      - Says which tool shows it (+RTS -s residency, a heap profile) and how a strict version fixes it
     questions:
       water:
         - q: The classic `foldl` space leak happens because…
           answer: The lazy accumulator builds a chain of thunks before anything is forced
           distractors:
-            - The list is evaluated strictly up front
-            - Too many capabilities run the fold
-            - foldl allocates a new list per step
+            - The list is evaluated strictly up front and held in memory
+            - Too many capabilities run the fold at the same time
+            - foldl allocates a brand new copy of the list at every step
           why: foldl' (or a bang on the accumulator) forces each step and keeps memory flat.
+          source: base-pkg
+        - q: A request counter does `Map.insertWith (+) path 1` on a lazy `Data.Map` for each hit, and memory keeps growing. Why?
+          answer: Each value becomes a chain of unevaluated (+) thunks until someone reads it
+          distractors:
+            - insertWith copies the whole map on every update, so old versions pile up in memory
+            - The map keeps every previous version around for later rollback
+            - The keys are boxed and never garbage collected while the map lives
+          why: >-
+            The lazy Data.Map stores whatever expression it is given. Updating a hot key 10 million times leaves a
+            10 million deep (+) chain; Data.Map.Strict evaluates each sum on insert.
+          source: containers-pkg
       harvest:
         - q: Which RTS flag gives you a heap profile broken down by cost centre?
           answer: "-hc"
@@ -123,6 +356,17 @@ seeds:
             - "-N"
             - "-A64m"
           why: "-hc profiles by cost centre; -hy by type, -hd by closure description."
+          source: ghc-profiling
+        - q: A -hT heap profile shows memory dominated by THUNK closures and I# boxes, and the live data is a growing state record. Which change is most likely to fix it?
+          answer: Make the record's fields strict so each update stores an evaluated value
+          distractors:
+            - Raise -A so the nursery absorbs the thunks before they are promoted
+            - Switch to the non-moving collector so that old thunks are freed concurrently
+            - Add more capabilities with -N so the thunks are evaluated in parallel
+          why: >-
+            The thunks are live data, so no collector setting can free them. Strict fields (or bangs) evaluate each
+            update when it is made, so the old values become garbage immediately.
+          source: ghc-strict
   - id: rts
     name: Threaded RTS
     layer: root
@@ -131,15 +375,52 @@ seeds:
     needs:
       - gc
     harvest: recall
+    minutes: 40
+    sources: [ghc-smp, ghc-rts, pcph]
+    summary: >-
+      Read the User's Guide on using Concurrent Haskell with -threaded and -N, the -qg, -qn and -I options in
+      the RTS options page, then PCPH chapter 15, 'RTS Options to Tweak'. Yield: notes on capabilities vs OS
+      threads vs Haskell threads, what -threaded changes, how parallel GC synchronises capabilities, and how to
+      size -N inside a container.
+    rubric:
+      - Distinguishes capabilities, OS threads and Haskell (green) threads
+      - Says what -N sets and what -threaded adds to the runtime
+      - Explains why parallel GC can hurt when capabilities exceed available CPU
+      - Names a flag to limit or turn off parallel GC and when to try it
     questions:
       water:
         - q: "`-N4` with the threaded runtime gives you…"
           answer: "4 capabilities: OS threads that run Haskell threads in parallel"
           distractors:
-            - 4 green threads
-            - 4 separate heaps with no sharing
-            - Nothing unless you also use forkOS
-          why: Capabilities are the parallel slots; green threads are multiplexed onto them.
+            - 4 green threads, all multiplexed onto one OS thread
+            - 4 separate heaps with no sharing between them
+            - Nothing unless you also use forkOS for every thread
+          why: >-
+            Each capability is serviced by an OS thread and runs Haskell (green) threads one at a time, so N
+            capabilities give N-way parallelism. Extra OS threads can exist for blocking foreign calls, but they are
+            not capabilities.
+          source: ghc-smp
+        - q: A service runs `-N16` in a container limited to 4 CPUs of quota and shows long GC pauses. What is the likely cause?
+          answer: Sixteen capabilities compete for four CPUs, so GC threads wait on descheduled peers
+          distractors:
+            - The RTS silently caps -N at the number of physical cores, so the extra ones just idle
+            - Capabilities beyond the thread count deadlock the collector
+            - The nursery is shared, so sixteen capabilities collide on one allocation area
+          why: >-
+            Parallel GC makes every capability meet at a barrier. If the OS has not scheduled some of them, the rest
+            spin or wait, so pause time grows. Match -N to the CPUs you actually get.
+          source: pcph
+      harvest:
+        - q: A latency-sensitive service on -N8 has 200 ms pauses although its live heap is small. The pause is GC threads waiting on each other. What do you try first?
+          answer: Limit GC threads with -qn, or turn parallel GC off with -qg
+          distractors:
+            - Lower -A so each collection has less data to copy
+            - Lower -I so the idle collector fires sooner
+            - Add -threaded so the collector can run concurrently with Haskell code
+          why: >-
+            With a small heap, the pause is mostly synchronisation, not copying. Fewer GC participants (-qn) or a
+            single-threaded collection (-qg) removes the barrier cost. -N only works with the threaded runtime anyway.
+          source: ghc-rts
   - id: lockfree
     name: Lock-free structures
     layer: shrub
@@ -148,15 +429,50 @@ seeds:
     needs:
       - stm
     harvest: recall
+    minutes: 40
+    sources: [pcph, base-pkg, lock-free]
+    summary: >-
+      Read the Wait-freedom and Lock-freedom parts of the Wikipedia article on non-blocking algorithms, PCPH
+      chapter 15 'Shared Concurrent Data Structures', and the Data.IORef docs in base (atomicModifyIORef' and
+      the note on atomicity). Yield: notes on what lock-free and wait-free promise, how a compare-and-swap retry
+      loop works, when an IORef beats an MVar or TVar, and what contention does to one hot location.
+    rubric:
+      - Defines lock-free (the system makes progress) versus wait-free (every thread does)
+      - Describes a compare-and-swap retry loop and when it can starve a thread
+      - Says what atomicModifyIORef' guarantees and what its prime changes
+      - Explains how contention on one location hurts and one way to reduce it
     questions:
       water:
         - q: A compare-and-swap loop can starve a thread because…
           answer: Another thread keeps winning the CAS, so it never commits
           distractors:
-            - CAS takes a global lock
-            - The GC blocks CAS
-            - CAS only works on 8-bit values
+            - CAS takes a global lock that other threads hold for long periods
+            - The GC blocks CAS operations until the next major collection
+            - CAS only works on 8-bit values, so larger updates are split
           why: Lock-free guarantees system progress, not per-thread progress; that is wait-free.
+          source: lock-free
+        - q: What does the prime in `atomicModifyIORef'` change compared with `atomicModifyIORef`?
+          answer: It forces the new value, so thunks do not pile up inside the IORef
+          distractors:
+            - It upgrades the operation from lock-free to wait-free
+            - It adds a lock so that only one thread at a time is able to update the value
+            - It lets the update function itself run in IO instead of purely
+          why: >-
+            Both versions are atomic. The lazy one stores an unevaluated application, so a hot counter becomes a long
+            thunk chain; the strict one evaluates it before returning.
+          source: base-pkg
+      harvest:
+        - q: Eight threads bump one shared counter in a tight loop, and an MVar-guarded Int is slow because each release hands the lock to a waiting thread. Which change usually helps first?
+          answer: Use an IORef with atomicModifyIORef', so no thread blocks or hands over
+          distractors:
+            - Use a plain IORef with readIORef and writeIORef, since each call is atomic
+            - Wrap every increment in forkIO so the waiting threads run in parallel
+            - Raise -A so that fewer collections interrupt the increments
+          why: >-
+            MVar promises fairness, so a releasing thread must hand the MVar to a waiter and every increment pays a
+            thread switch. atomicModifyIORef' updates in place in one atomic step and never blocks; the prime forces
+            the value so thunks do not pile up. A separate read then write would lose updates.
+          source: pcph
   - id: gadts
     name: GADTs & type-level
     layer: ground-cover
@@ -165,15 +481,50 @@ seeds:
     needs:
       - laziness
     harvest: recall
+    minutes: 45
+    sources: [ghc-gadts]
+    summary: >-
+      Read the User's Guide section 'Generalised Algebraic Data Types (GADTs)', including its rules for pattern
+      matching on a GADT and for rigid types. Yield: notes on how a match refines a type variable, the typed
+      expression evaluator as the standard example, why a function matching on a GADT needs a signature, and how
+      an existential constructor hides a type.
+    rubric:
+      - Explains that each constructor can fix the type index it returns
+      - Shows how pattern matching brings a type equality into scope in that branch
+      - Says why such functions need explicit type signatures
+      - Gives one real use, such as a typed expression tree or a state-indexed type
     questions:
       water:
         - q: A GADT lets a constructor…
           answer: Refine the type parameter, so pattern matching learns type information
           distractors:
-            - Have more than one name
-            - Be used at the kind level only
-            - Skip the type checker
+            - Have more than one name, one for each module that uses it
+            - Be used at the kind level only, never in ordinary terms
+            - Skip the type checker when it is applied to a literal
           why: "`eval :: Expr Int -> Int` is safe because matching on `IntLit` refines `a ~ Int`."
+          source: ghc-gadts
+        - q: Why does a function that pattern matches on a GADT usually need an explicit type signature?
+          answer: The type differs per branch, so GHC cannot infer one result type
+          distractors:
+            - Each branch is compiled on its own, so GHC needs a signature to join them
+            - Signatures tell GHC which constructors are missing from the match
+            - GADT syntax cannot be parsed unless a signature appears before the body
+          why: >-
+            Inside a branch, matching adds a local equality such as a ~ Int. Inferring a type across branches that
+            each know something different has no single answer, so you state the rigid type up front.
+          source: ghc-gadts
+      harvest:
+        - q: "A typed expression tree is a GADT with constructors such as `IsZero :: Expr Int -> Expr Bool` and `If :: Expr Bool -> Expr a -> Expr a -> Expr a`. What does that buy over a plain, untyped `Expr` type?"
+          answer: Ill-typed trees, such as `If (Lit 3) a b`, cannot be built at all
+          distractors:
+            - Evaluation becomes lazy, so unused branches are never type checked
+            - Every `Expr` value carries its type at runtime, so `eval` can check it
+            - Pattern matches on `Expr` no longer need a type signature in any case
+          why: >-
+            Each constructor fixes the type index it returns, so the type checker refuses a tree that puts an Int
+            where a Bool belongs. Matching on `IsZero` or `If` also tells GHC which type that branch has, so
+            `eval :: Expr a -> a` needs no runtime tag checks. The types are erased; the guarantee is compile time only.
+          source: ghc-gadts
   - id: effects
     name: Effect systems
     layer: canopy
@@ -183,15 +534,50 @@ seeds:
       - gadts
       - bracket
     harvest: recall
+    minutes: 60
+    sources: [readert-pattern, effectful-pkg]
+    summary: >-
+      Read FP Complete's The ReaderT Design Pattern (the sections 'Avoiding WriterT and StateT', 'Avoiding
+      ExceptT' and 'Has typeclass approach'), then the effectful package page, especially 'What about mtl?'.
+      Yield: a one-page comparison of three ways to structure effects (a concrete ReaderT Env IO, mtl-style
+      classes, an effect library): boilerplate, speed, testability and what a new teammate must learn, ending
+      with the one you would pick for a new service.
+    rubric:
+      - Describes ReaderT Env IO and where capabilities and state live
+      - Names mtl-style classes and an effect library as the alternatives
+      - Compares them on boilerplate, performance risk and testability
+      - Makes a choice for a concrete service and says what would change your mind
     questions:
       water:
         - q: The ReaderT-over-IO pattern avoids…
           answer: Deep transformer stacks and their lifting overhead
           distractors:
-            - All use of IO
-            - Exceptions entirely
-            - The need for a configuration record
+            - All use of IO, by pushing every effect behind a type class
+            - Exceptions entirely, since errors become values in the Env
+            - The need for a configuration record shared by every function
           why: One ReaderT Env IO layer; capabilities live in the Env.
+          source: readert-pattern
+        - q: What is the strongest argument for keeping a logger, DB pool and config as fields of one Env record?
+          answer: A test can swap any capability by building a different Env
+          distractors:
+            - The compiler can then prove that no capability is used twice
+            - Capabilities no longer need to be initialised inside IO
+            - It removes the need for exception handling around them
+          why: >-
+            The record is plain data passed to the app, so tests build one with fake clients, and production builds
+            one with real pools. No transformer instance or type class machinery is needed for that swap.
+          source: readert-pattern
+      harvest:
+        - q: A StateT-over-ExceptT-over-IO stack loses state updates made by a worker thread forked in a handler. How does the ReaderT-over-IO pattern avoid that?
+          answer: State lives in shared references in the Env, not in a threaded monad value
+          distractors:
+            - ReaderT copies the state back into the parent thread when the worker thread finishes
+            - forkIO is disallowed inside ReaderT, so worker threads never exist
+            - The Env is immutable, so forked threads can never observe changes
+          why: >-
+            A StateT value is passed along the call chain; a forked thread receives a copy and its changes vanish. An
+            IORef or TVar in the Env is one shared mutable cell that every thread sees.
+          source: readert-pattern
   - id: nonmoving
     name: Non-moving GC
     layer: root
@@ -201,15 +587,1422 @@ seeds:
       - rts
     wild: true
     harvest: recall
+    minutes: 30
+    sources: [ghc-rts]
+    summary: >-
+      Read the User's Guide entry for --nonmoving-gc in 'RTS options to control the garbage collector', and the
+      notes on -c and -I next to it. Yield: notes on why a copying old generation causes long pauses on large
+      heaps, how the non-moving collector marks concurrently and frees in place, and what you give up
+      (throughput, some memory overhead).
+    rubric:
+      - Explains why copying a large old generation produces long stop-the-world pauses
+      - Says the non-moving collector marks concurrently and reclaims memory without moving it
+      - Names the trade-off in throughput and when it is worth it
+      - Says how to enable it and how to check its effect with +RTS -s or the eventlog
     questions:
       water:
         - q: GHC's non-moving collector mainly reduces…
           answer: Pause times for the old generation
           distractors:
-            - Allocation cost
-            - Thunk creation
-            - Binary size
+            - Allocation cost for short-lived objects in the nursery
+            - Thunk creation during lazy evaluation of large structures
+            - Binary size of programs built with the threaded runtime
           why: Enable with --nonmoving-gc; throughput can drop slightly.
+          source: ghc-rts
+        - q: What does the non-moving collector do differently from the default for the old generation?
+          answer: Marks live data concurrently and frees dead segments in place
+          distractors:
+            - Copies the old data in parallel across every capability
+            - Compacts the heap into one contiguous block at each cycle
+            - Reference-counts old objects and frees them when the count hits zero
+          why: >-
+            Because objects are not moved, marking can run alongside the program and the stop-the-world part shrinks
+            to a short synchronisation, at the cost of fragmentation and some extra bookkeeping.
+          source: ghc-rts
+      harvest:
+        - q: A service with a 6GB live heap has p99 latency dominated by major-GC pauses. Which change targets that directly?
+          answer: Run with --nonmoving-gc and compare pause times against throughput
+          distractors:
+            - Raise -A to 1GB so major collections never happen
+            - Switch to -c compacting collection to shrink the pauses on the old generation
+            - Disable the idle GC with -I0 and leave everything else alone
+          why: >-
+            Long pauses on a big old generation come from copying it. Concurrent marking avoids that copy; -A only
+            helps minor collections, -c is slower than copying, and -I0 affects idle periods, not busy ones.
+          source: ghc-rts
+  - id: purity
+    name: Purity & referential transparency
+    layer: ground-cover
+    branch: types-and-effects
+    tier: 0
+    harvest: recall
+    minutes: 25
+    sources: [base-pkg, ghc-optimisation]
+    summary: >-
+      Read the System.IO.Unsafe docs in base (unsafePerformIO and the precautions it lists), the 'IO monad'
+      entry in System.IO, and the -fcse and -ffull-laziness entries in the User's Guide optimisation flags.
+      Yield: notes on what referential transparency lets GHC do, what an IO a value actually is, and why a
+      global IORef made with unsafePerformIO needs NOINLINE.
+    rubric:
+      - Defines referential transparency as swapping an expression for its value without changing behaviour
+      - Explains that an IO action is a description that does something only when it is run
+      - Names two things purity makes safe, such as sharing, inlining, reordering or dropping unused code
+      - Says what can go wrong with unsafePerformIO
+    questions:
+      water:
+        - q: "`let act = print 1 in act >> act` prints…"
+          answer: 1 twice, because naming an action does not run it
+          distractors:
+            - 1 once, because act is a shared value that is evaluated one time
+            - Nothing at all, because let never executes IO
+            - 1 once, then a type error on the second use of act
+          why: >-
+            An IO action is a value that describes an effect. Binding it with let runs nothing; each time it is
+            placed in the sequence, it runs.
+          source: base-pkg
+        - q: What does GHC gain from knowing that a call `f x` has no side effects?
+          answer: It may share, inline or float the call without changing results
+          distractors:
+            - It may cache the result of f on disk between separate program runs
+            - It can skip type checking at every place where f is called from another module
+            - It can guarantee that f x terminates for all inputs
+          why: >-
+            Purity is the licence for optimisation: duplicate work can be shared (-fcse), expressions floated out of loops
+            (-ffull-laziness) and calls inlined or evaluated earlier once GHC proves them strict. It says nothing about
+            termination; a pure function can still loop forever.
+          source: ghc-optimisation
+      harvest:
+        - q: A teammate caches a database lookup using unsafePerformIO inside a function GHC inlines in three places. In production the query sometimes runs once and sometimes three times. Why?
+          answer: GHC treats the call as pure, so it may duplicate, share or float it freely
+          distractors:
+            - unsafePerformIO runs on a pool thread, so the count depends on thread scheduling
+            - The thunk is re-evaluated after every garbage collection cycle
+            - The database driver caches some queries and not others
+          why: >-
+            By promising purity you let the optimiser treat the call as an expression, and which copy it keeps is
+            its decision. Effects belong in IO; global singletons need NOINLINE and care.
+          source: base-pkg
+  - id: error-values
+    name: Maybe, Either & total functions
+    layer: ground-cover
+    branch: types-and-effects
+    tier: 0
+    harvest: recall
+    minutes: 30
+    sources: [base-pkg, parse-dont-validate]
+    summary: >-
+      Read the Data.Maybe, Data.Either and Text.Read (readMaybe) docs in base, then the section 'Turning partial
+      functions total' in Parse, don't validate. Yield: notes on when to return Maybe, Either or throw, how
+      traverse short-circuits, and a list of partial functions to ban (head, fromJust, read, !!) with a total
+      replacement for each.
+    rubric:
+      - Says when Maybe is enough and when Either with a typed error is needed
+      - Explains that Either short-circuits on the first Left in a monadic or traversal chain
+      - Lists partial functions to avoid and a total replacement for each
+      - Says what a total function is and why exhaustive matches matter
+    questions:
+      water:
+        - q: "`traverse parseInt` over four strings, where only the second and fourth fail, returns…"
+          answer: A Left carrying the error for the second item only
+          distractors:
+            - A Right list of the good values, with the bad ones dropped
+            - A Left with both errors collected into a list
+            - A Right list with Left placeholders in the failed positions
+          why: >-
+            Either's Monad and Applicative stop at the first Left. Collecting every error needs a validation
+            applicative, which is a different type on purpose.
+          source: base-pkg
+        - q: "What is the safest replacement for `read s :: Int` on user input?"
+          answer: "`readMaybe s`, with the Nothing case handled at the call site"
+          distractors:
+            - "`read` wrapped in a `catch` for ErrorCall around the whole handler"
+            - "`reads s`, taking the head of the list it returns"
+            - "`fromJust (readMaybe s)`, because the input was already checked"
+          why: >-
+            read throws on bad input, and head or fromJust only move the crash. readMaybe returns the failure as a
+            value the type system makes you handle.
+          source: base-pkg
+      harvest:
+        - q: A lookup returns `Maybe User`, and callers treat Nothing as 'create a default user' both when the user is missing and when the database is down. What does this show?
+          answer: Maybe cannot say why it failed, so an Either with a typed error is needed
+          distractors:
+            - Maybe is lazy, so the error shows up too late and a strict Maybe is needed
+            - Matching on Nothing is partial, so fromMaybe must replace it everywhere
+            - Callers should catch an exception, since Maybe is only meant for parsing
+          why: >-
+            Nothing carries one bit. When different causes need different handling, encode them in a sum type in Left,
+            so the caller must decide what to do for each.
+          source: base-pkg
+  - id: newtypes-deriving
+    name: Newtypes & deriving strategies
+    layer: herb
+    branch: types-and-effects
+    tier: 0
+    harvest: recall
+    minutes: 30
+    sources: [ghc-deriving, base-pkg]
+    summary: >-
+      Read the User's Guide section on deriving strategies and its neighbours (generalised newtype deriving,
+      deriving any other class, deriving via), plus the Data.Coerce docs in base. Yield: notes on the zero
+      runtime cost of a newtype, what stock, newtype, anyclass and via each do, and an example where two
+      strategies give different output for the same type.
+    rubric:
+      - Explains that a newtype is erased at runtime but is a distinct type at compile time
+      - Names the four strategies and what each one derives from
+      - Gives a case where stock and newtype deriving produce different behaviour, such as Show or ToJSON
+      - Says why wrapping ids and units in newtypes prevents mix-ups
+    questions:
+      water:
+        - q: At runtime, `newtype UserId = UserId Int` differs from a plain `Int` by…
+          answer: "Nothing: the wrapper is erased after type checking"
+          distractors:
+            - One extra pointer indirection on every access to the value
+            - A tag word that pattern matching must check each time
+            - An allocation per construction unless the field is made strict
+          why: >-
+            A newtype has the same representation as its field, so wrapping is free. That is why it is the standard
+            way to make ids, units and validated strings distinct types.
+          source: base-pkg
+        - q: "With `newtype OrderId = OrderId Int deriving newtype Show`, `show (OrderId 5)` gives…"
+          answer: "5, because the instance is reused from Int"
+          distractors:
+            - "OrderId 5, which is the shape that stock deriving writes"
+            - A compile error, since newtypes cannot derive Show
+            - The empty string, because the wrapper is erased at runtime
+          why: >-
+            The newtype strategy reuses the underlying type's instance, while stock deriving writes the constructor
+            name. Erasure is about representation, not about which instance gets picked.
+          source: ghc-deriving
+      harvest:
+        - q: In an API, `newtype UserId = UserId Text` derives ToJSON with the newtype strategy, and `data User` derives it with anyclass through Generic. What do clients receive for a user's id field?
+          answer: A bare JSON string for the id, inside a JSON object for the user
+          distractors:
+            - A JSON object that wraps the string under a UserId key
+            - A JSON object for both, since derived instances always use Generic
+            - A compile error, because the two strategies cannot be mixed in one module
+          why: >-
+            The newtype strategy borrows Text's instance, so the id is just a string. DeriveAnyClass produces an empty
+            instance that falls back to default methods (here Generic). Pick the strategy per type on purpose.
+          source: ghc-deriving
+  - id: folds
+    name: Folds & foldl'
+    layer: ground-cover
+    branch: runtime-and-performance
+    tier: 0
+    harvest: recall
+    minutes: 30
+    sources: [base-pkg]
+    summary: >-
+      Read the Overview in base's Data.Foldable docs (recursive, corecursive and short-circuit folds) and the
+      entries for foldr, foldl, foldl' and foldMap. Yield: each fold written as a loop on paper, which ones can
+      stop early on an infinite list, which run in constant space, and the rule of thumb for choosing between
+      foldr and foldl'.
+    rubric:
+      - Writes foldr and foldl as recursion and says how each associates
+      - Explains why foldr can stop early on a lazy combiner
+      - Explains why foldl' keeps memory flat and when plain foldl leaks
+      - Says what foldl' forces (the accumulator to WHNF) and what it does not
+    questions:
+      water:
+        - q: Which fold can return a result from an infinite list when the combining function is lazy in its second argument?
+          answer: "`foldr`, since the combiner may stop before demanding the rest"
+          distractors:
+            - "`foldl'`, because forcing the accumulator ends the loop early"
+            - "`foldl`, because it starts from the left, where the list begins"
+            - None of them, since every fold must traverse the entire list
+          why: >-
+            foldr f z (x:xs) = f x (foldr f z xs), and if f ignores its second argument the recursive call is never
+            demanded. This is how any and takeWhile-style functions work on infinite lists.
+          source: base-pkg
+        - q: Why is `foldl' (+) 0 xs` safe on ten million Ints, where lazy `foldl` can exhaust memory?
+          answer: foldl' forces the accumulator at every step, so no thunk chain forms
+          distractors:
+            - foldl' reverses the list first, so that the additions happen in order
+            - foldl' splits the list and sums the chunks in parallel
+            - foldl' fuses the list away, so it is never allocated at all
+          why: >-
+            Lazy foldl builds (((0+x1)+x2)+...) as unevaluated thunks and only collapses it at the end. With -O GHC's
+            strictness analysis often rescues simple cases, but you should not rely on it.
+          source: base-pkg
+      harvest:
+        - q: Running totals over 50 million rows use `foldl'` with a tuple accumulator (count, total), and memory still grows. Why?
+          answer: foldl' forces only the tuple constructor, so each field stays a thunk chain
+          distractors:
+            - foldl' does not work on tuples; it needs a list as the accumulator
+            - Tuples are always boxed on the heap and never collected until the whole fold ends
+            - The list is retained because foldl' keeps a reference to its head
+          why: >-
+            foldl' evaluates the accumulator to weak head normal form, which for a pair is just the (,) constructor.
+            Use a strict data type or bang patterns on the fields so each step evaluates them.
+          source: base-pkg
+  - id: containers
+    name: Map, IntMap & HashMap
+    layer: shrub
+    branch: runtime-and-performance
+    tier: 0
+    harvest: recall
+    minutes: 40
+    sources: [containers-pkg]
+    summary: >-
+      Read the module headers of Data.Map.Strict, Data.IntMap.Strict and Data.Set in containers (the notes on
+      strict versus lazy values, Ord keys and the performance information). The Data.Map header also points to
+      HashMap in unordered-containers for the contrast. Yield: a table of lookup and insert costs, which key
+      constraint each needs (Ord or Hashable), what ordering they give, and the lazy versus strict value
+      distinction.
+    rubric:
+      - States the cost of lookup and insert for Map, IntMap and HashMap
+      - Says which key class each requires and what ordering it offers
+      - Explains persistence, so an update shares most of the old structure
+      - Explains why the Strict modules matter for values that are updated often
+    questions:
+      water:
+        - q: When would `Data.Map` be a better fit than a `HashMap` for a service's lookup table?
+          answer: When you need keys in order, such as the next key above a threshold
+          distractors:
+            - When the key type has no Eq instance, since Map does not need one
+            - When keys are mostly Ints, which Map hashes faster than HashMap does
+            - When the table never changes after startup, since only Map is read-only
+          why: >-
+            Map is an ordered tree, so it supports range queries and sorted traversal, and it needs only Ord. HashMap
+            is usually faster for point lookups but has no useful key order.
+          source: containers-pkg
+        - q: "`Map.insert` into a map of a million entries returns a new map. About what does that cost?"
+          answer: O(log n) new nodes along one path, with the rest shared
+          distractors:
+            - O(n), because the whole map has to be copied
+            - O(1), because the update mutates the structure in place
+            - O(log n), but the old map is invalidated and must not be used
+          why: >-
+            Maps are persistent. Only the nodes on the path from the root to the changed key are rebuilt, so the old
+            version stays valid and cheap to keep, for example as a snapshot.
+          source: containers-pkg
+      harvest:
+        - q: Events are kept in a Map keyed by timestamp, and everything older than a cutoff must be dropped. Which approach fits?
+          answer: Split the map at the cutoff and keep the upper part
+          distractors:
+            - Filter every entry and rebuild the map, as a HashMap would need
+            - Scan linearly and delete the old keys one at a time
+            - Move to a Set, because a Map cannot be ordered by its keys
+          why: >-
+            Ordered keys let split (or dropWhileAntitone) cut the tree in O(log n). A HashMap has no order, so it would
+            force a full scan.
+          source: containers-pkg
+  - id: text-bytestring
+    name: Text vs ByteString vs String
+    layer: shrub
+    branch: runtime-and-performance
+    tier: 0
+    harvest: recall
+    minutes: 35
+    sources: [text-pkg]
+    summary: >-
+      Read the text package overview (Data.Text, its note on strict versus lazy types, Data.Text.Encoding) and
+      the Data.Text.copy entry; the bytestring docs named in the source note show the same ideas for raw bytes.
+      Yield: notes on what each type holds (Unicode text, raw bytes, a linked list of Chars), strict versus lazy
+      variants, when you must decode, and the trap where a small slice keeps a huge buffer alive.
+    rubric:
+      - States what Text, ByteString and String each represent and what each costs
+      - Says when to decode or encode, and with which function for untrusted bytes
+      - Explains strict versus lazy variants and when lazy ones are used
+      - Describes how a slice can retain a large buffer, and the copy that fixes it
+    questions:
+      water:
+        - q: An HTTP body arrives as a ByteString. Before treating it as Text you must…
+          answer: Decode it using its encoding, because bytes have no text meaning of their own
+          distractors:
+            - Do nothing, since the two types convert for free with coerce
+            - Unpack it into a String first, which is the shared common type
+            - Call length to check that it is not empty
+          why: >-
+            A ByteString is bytes; Text is validated Unicode. Decoding is where invalid input shows up, so it is also a
+            security boundary.
+          source: text-pkg
+        - q: Why is `String` a poor choice for large volumes of text in a service?
+          answer: Each Char sits in its own list cell, costing memory and cache misses
+          distractors:
+            - String is always lazy, so two strings cannot be compared
+            - String supports only ASCII characters, so any other script has to use Text instead
+            - String cannot be used as a key in a Map
+          why: >-
+            A String is a list of boxed Chars, several words per character. Text and ByteString are packed arrays, much
+            smaller and friendlier to the cache.
+          source: text-pkg
+      harvest:
+        - q: A cache keeps `T.take 8 body` slices of 100 MB request bodies held as strict Text, and memory never drops. Why, and what is the fix?
+          answer: Each slice keeps its whole buffer alive; copy the slice with T.copy
+          distractors:
+            - Text memory is never collected unless it is freed by hand
+            - take returns a lazy Text, so the chunks stay until forced
+            - The cache stores a thunk of take, which retains only the length
+          why: >-
+            A strict Text slice is an offset and length into a shared array, so holding eight characters holds all
+            hundred megabytes. Data.Text.copy gives the slice an array of its own and breaks the link. The same trap and
+            the same fix exist for ByteString, with Data.ByteString.copy.
+          source: text-pkg
+  - id: typeclass-laws
+    name: Typeclass laws
+    layer: ground-cover
+    branch: types-and-effects
+    tier: 1
+    needs:
+      - purity
+    harvest: recall
+    minutes: 35
+    sources: [base-pkg]
+    summary: >-
+      Read the class docs in base for Functor, Semigroup, Monoid, Monad and Ord, including their laws and the
+      note on Double's Ord instance. Yield: each law as an equation, one real lawless instance (Double's Ord
+      with NaN, or a non-associative Semigroup), and what a refactor is allowed to assume because the laws hold.
+    rubric:
+      - States the laws of Functor, Semigroup and Monoid as equations
+      - Explains what an optimisation or refactor may assume because of a law
+      - Gives a real example of an instance that breaks a law
+      - Says the compiler does not check laws, so tests or proofs have to
+    questions:
+      water:
+        - q: Which law does `Semigroup` require of `<>`?
+          answer: "Associativity: (a <> b) <> c equals a <> (b <> c)"
+          distractors:
+            - "Commutativity: a <> b equals b <> a"
+            - "Idempotence: a <> a equals a for every a"
+            - "Identity: some element e exists with e <> a equal to a"
+          why: >-
+            Only associativity is required, so grouping is free but order is not. Identity is added by Monoid;
+            commutativity and idempotence are extra properties some types happen to have.
+          source: base-pkg
+        - q: A big `foldMap` can be split into chunks and combined as a tree because…
+          answer: Associativity lets the grouping of <> change without changing the result
+          distractors:
+            - Commutativity lets the chunks be combined in any order at all, even right to left
+            - The identity element makes empty chunks free to reorder
+            - "`<>` is always strict in both of its arguments"
+          why: >-
+            Chunks must still be combined left to right; what changes is the bracketing. Treating a monoid as
+            commutative is the common mistake that breaks ordered results such as lists.
+          source: base-pkg
+      harvest:
+        - q: A Map keyed by Double starts losing lookups once a NaN key is inserted. What is the underlying problem?
+          answer: compare treats NaN as greater than every key in both directions, so the key order is inconsistent
+          distractors:
+            - NaN is hashed to an arbitrary bucket, so the tree files it in an unpredictable place
+            - Double has no Ord instance, so Map quietly falls back to Eq and scans every entry
+            - Map refuses NaN at insert time and silently drops the entry instead of storing it
+          why: >-
+            compare x y returns GT whenever neither x < y nor x == y holds, so both compare nan 1 and compare 1 nan
+            say GT. That breaks the ordering laws the tree's search depends on, and lookups walk the wrong way. Avoid
+            Double keys, or wrap them in a type with a total Ord.
+          source: base-pkg
+  - id: eval-model
+    name: Thunks, WHNF & forcing
+    layer: root
+    branch: runtime-and-performance
+    tier: 1
+    needs:
+      - laziness
+    harvest: recall
+    minutes: 40
+    sources: [pcph, ghc-strict]
+    summary: >-
+      Re-read PCPH chapter 2 (WHNF, the Eval monad, deepseq) and the User's Guide section 'Bang patterns and
+      Strict Haskell'. Yield: notes on how a thunk is represented and updated, what WHNF means for each kind of
+      value, and a table of seq, bang patterns, $!, evaluate, force and deepseq with what each forces and when.
+    rubric:
+      - Defines weak head normal form for a data constructor and for a function
+      - Describes a thunk being evaluated and then overwritten with its value
+      - Says what seq, a bang pattern, evaluate and deepseq each force
+      - Gives a case where forcing to WHNF is not enough
+    questions:
+      water:
+        - q: "`length [undefined, undefined, undefined]` evaluates to…"
+          answer: 3, since length walks the cells without forcing the elements
+          distractors:
+            - undefined, because length must inspect every element
+            - 0, because undefined elements are skipped when counting
+            - A type error, because undefined has no known element type
+          why: >-
+            Weak head normal form of a list only fixes its outer constructor. length pattern matches on the spine and
+            never touches the elements.
+          source: pcph
+        - q: "`seq a b` guarantees…"
+          answer: "`a` is evaluated to weak head normal form before `b` is returned"
+          distractors:
+            - "`a` is evaluated completely, including every nested field"
+            - "`a` and `b` are evaluated in parallel on two capabilities"
+            - "`b` is evaluated first, then `a`, to find out its type"
+          why: seq stops at the outermost constructor; deepseq is the one that walks the whole structure.
+          source: pcph
+      harvest:
+        - q: A decoded record is passed through `evaluate` to catch bad data before caching. Failures still appear later, from inside the cache. What is the gap?
+          answer: evaluate forces only to WHNF, so nested fields stay thunks that can throw
+          distractors:
+            - evaluate runs the thunks on another thread, which dies without reporting
+            - evaluate works only on strict ByteString and ignores records
+            - evaluate forces the fields but not the outer constructor
+          why: >-
+            evaluate on a record forces its constructor, not its fields. To surface errors up front, use deepseq/force
+            with an NFData instance, or strict fields so construction itself forces them.
+          source: pcph
+  - id: strict-data
+    name: Strictness annotations & StrictData
+    layer: herb
+    branch: runtime-and-performance
+    tier: 1
+    needs:
+      - laziness
+    harvest: recall
+    minutes: 30
+    sources: [ghc-strict, ghc-pragmas]
+    summary: >-
+      Read the User's Guide section 'Bang patterns and Strict Haskell' (BangPatterns, StrictData, Strict) and
+      the UNPACK entry in 'Pragmas'. Yield: notes on what a bang on a field or pattern forces, what StrictData
+      changes module-wide and how a field opts back out with a tilde, and what UNPACK removes.
+    rubric:
+      - Says what a strict field forces and when (at construction)
+      - Explains what StrictData changes and how to make one field lazy again
+      - Explains what UNPACK saves and when it applies
+      - Says why strict fields prevent thunk build-up in long-lived state
+    questions:
+      water:
+        - q: "With StrictData on, evaluating `P 1 undefined` for `data P = P Int Int` to WHNF…"
+          answer: Throws, because building the constructor forces both fields
+          distractors:
+            - Returns the P value, and the second field fails only when it is read
+            - Compiles with a warning but still evaluates the fields lazily
+            - Throws only if the second field is used somewhere later on
+          why: >-
+            A strict field is evaluated as the constructor is built. That is the point: a bad value is caught where it
+            is made, not wherever it is eventually read.
+          source: ghc-strict
+        - q: "What does a field declared as `{-# UNPACK #-} !Int` save?"
+          answer: The separate heap box for the Int, so the number sits inside the constructor
+          distractors:
+            - The strictness check itself, because unpacked fields are always evaluated lazily
+            - The garbage collector's scan of that field during minor collections
+            - The need for an NFData instance when the type is forced deeply
+          why: >-
+            A normal Int field is a pointer to a boxed Int. Unpacking stores the raw machine word inline, saving an
+            allocation and an indirection. It needs the field to be strict.
+          source: ghc-pragmas
+      harvest:
+        - q: A `Stats` record with lazy fields lives in a state monad and is updated a million times with `modify'` and record updates such as `s { hits = hits s + 1 }`. Memory climbs. Which single change helps most?
+          answer: Turn on StrictData, or bang the fields, so each update stores a value
+          distractors:
+            - Mark the state with a lazy tilde pattern so it is collected sooner
+            - Use the lazy variant of the state monad, which frees old states earlier
+            - Replace the record with a tuple, which is always evaluated
+          why: >-
+            modify' only forces the record to its outer constructor. The fields remain thunks unless they are strict,
+            which is why StrictData is the usual default for state types.
+          source: ghc-strict
+  - id: vectors
+    name: Vector & unboxed arrays
+    layer: shrub
+    branch: runtime-and-performance
+    tier: 1
+    needs:
+      - containers
+    harvest: recall
+    minutes: 35
+    sources: [vector-pkg]
+    summary: >-
+      Read the vector package docs: Data.Vector (boxed), Data.Vector.Unboxed, Data.Vector.Storable, the Mutable modules
+      and the fusion notes. Yield: notes on what each flavour stores, bounds-checked versus unsafe indexing, how
+      freeze and thaw copy, and when a Map is still the better structure.
+    rubric:
+      - Distinguishes boxed, unboxed and storable vectors by what they store
+      - Says why appending one element at a time is a trap
+      - Explains freeze, thaw and unsafeFreeze with respect to copying
+      - Names a case where a vector is wrong and a Map or list is better
+    questions:
+      water:
+        - q: "`Data.Vector.Unboxed` of `Double` differs from boxed `Data.Vector` of `Double` by…"
+          answer: Storing raw numbers in one flat array, with no pointers to boxed values
+          distractors:
+            - Allowing lazy elements, so unevaluated thunks can sit in the slots of the array
+            - Using a linked list of chunks that grows as elements are added
+            - Requiring every element to have an NFData instance
+          why: >-
+            A boxed vector holds pointers to heap values, which may be thunks. An unboxed one holds the numbers
+            themselves, evaluated, which is smaller and much friendlier to the cache.
+          source: vector-pkg
+        - q: Building a vector one element at a time with `snoc` in a loop of n steps costs about…
+          answer: O(n squared), because each snoc copies the vector
+          distractors:
+            - O(n log n), as it rebalances a tree on every append
+            - O(n), since snoc amortises like a growable array
+            - O(n) only when the vector is unboxed
+          why: >-
+            Vectors are immutable arrays, so snoc allocates a new one and copies. Build with generate, fromList,
+            unfoldr or a mutable vector in ST, and freeze it once.
+          source: vector-pkg
+      harvest:
+        - q: A hot loop sums a million Doubles from a boxed `Vector Double` and allocates heavily. Which change is the most direct fix?
+          answer: Switch to Data.Vector.Unboxed and sum with a strict fold
+          distractors:
+            - Convert the vector to a list so that fusion can remove the loop
+            - Use lazy foldl so elements are not forced until the end
+            - Add an UNPACK pragma on the vector argument of the function
+          why: >-
+            The boxed vector makes the loop chase pointers to separate Double boxes. Unboxed storage keeps the numbers
+            in one array and lets the fold run without allocating per element.
+          source: vector-pkg
+  - id: readert-pattern
+    name: ReaderT & handle patterns
+    layer: understory
+    branch: types-and-effects
+    tier: 2
+    needs:
+      - bracket
+      - newtypes-deriving
+    harvest: judged
+    minutes: 45
+    sources: [readert-pattern, three-layer-cake]
+    summary: >-
+      Read FP Complete's The ReaderT Design Pattern end to end (especially 'Better globals', 'Avoiding WriterT
+      and StateT' and 'Has typeclass approach'), then Layer 1 of Three Layer Haskell Cake. Yield: notes on why
+      mutable state lives in IORef or TVar fields of the Env, how helpers run actions across threads, and how a
+      test swaps one capability, a function in the Env or a small record of functions, for a fake.
+    rubric:
+      - Shows an Env record that holds configuration, resources and mutable references
+      - Explains why state lives in references rather than StateT (exceptions and forked threads)
+      - Shows how a handle, a record of functions, lets a test replace one capability
+      - Names a cost, such as a growing Env or functions that hide which capabilities they use
+    prompts:
+      - >-
+        Sketch a ReaderT Env IO design for an order service. List what goes in Env, which functions take a narrow
+        handle instead of the whole Env, and how a test replaces the payment client. Explain one failure that a StateT
+        stack would have caused.
+      - >-
+        You inherit a service with a four-layer transformer stack. Argue for or against flattening it to ReaderT Env
+        IO, naming what you gain, what you lose, and how you would migrate one endpoint first.
+    questions:
+      water:
+        - q: In `ReaderT Env IO`, where do configuration and mutable state live?
+          answer: In the Env record, with mutable state held in IORef or TVar fields
+          distractors:
+            - In the monad's state, which each action threads on to the next
+            - In global variables created once with unsafePerformIO
+            - In the ReaderT type parameter, rewritten by local per request
+          why: >-
+            The reader layer only passes the Env down. Anything that must change is a mutable reference inside it,
+            which every thread holding the Env shares.
+          source: readert-pattern
+        - q: Why does the pattern keep state in a TVar or IORef instead of StateT when handlers can be cancelled?
+          answer: A StateT update is lost when an exception unwinds past it
+          distractors:
+            - StateT cannot be placed on top of IO at all
+            - An IORef is faster than StateT in every possible case
+            - StateT values are collected as soon as a handler returns
+          why: >-
+            With StateT the new state is a return value. If an exception or cancellation cuts the computation, the
+            value never reaches the caller. A reference is updated in place, so effects done before the exception remain.
+          source: readert-pattern
+  - id: async-exceptions
+    name: Async exceptions & timeouts
+    layer: vine
+    branch: types-and-effects
+    tier: 2
+    needs:
+      - bracket
+    harvest: judged
+    minutes: 50
+    sources: [pcph, base-pkg, ghc-optimisation]
+    summary: >-
+      Read PCPH chapter 9 (Cancellation and Timeouts), especially 'Catching Asynchronous Exceptions' and
+      'Timeouts', then chapter 11 ('Symmetric Concurrency Combinators', 'Timeouts Using race'), the
+      System.Timeout docs in base and the -fomit-yields entry in the User's Guide optimisation flags. Yield:
+      notes on how throwTo delivers an exception, what mask protects, why a catch-all SomeException handler is
+      dangerous, and how timeout and race cancel work.
+    rubric:
+      - Explains that timeout, killThread and cancel work by throwing an asynchronous exception
+      - Explains what mask does and that blocking operations are still interruptible
+      - Says why a catch-all handler can swallow cancellation and how to avoid that
+      - States a limit, such as non-allocating loops or uninterruptible foreign calls
+    prompts:
+      - >-
+        Write fetchWithDeadline, which calls two upstream services at once, returns the first answer, cancels the
+        other, and closes its HTTP connection even when cancelled mid-request. Say which exceptions your handlers must
+        never swallow.
+      - >-
+        A request handler wraps work in a handler that catches SomeException, logs it and returns a default. Explain,
+        step by step, how this breaks client disconnects and deploy shutdowns, and write the fix.
+    questions:
+      water:
+        - q: A handler catches `SomeException`, logs it and carries on. The server cancels the thread when a client disconnects. What goes wrong?
+          answer: The cancellation is swallowed and the thread keeps running
+          distractors:
+            - The log call itself throws, so the thread dies without cleanup
+            - The handler's finalisers are skipped, which leaks the connection
+            - The cancel exception is re-thrown to the whole server process
+          why: >-
+            Cancellation arrives as an asynchronous exception, and SomeException matches it. If the handler treats it
+            as an ordinary failure and continues, the thread outlives the request it was cancelled for.
+          source: pcph
+        - q: "`timeout 1000000 action` returns Nothing after one second by…"
+          answer: Throwing an asynchronous exception to the thread running the action
+          distractors:
+            - Killing the OS thread that is running the action
+            - Setting a flag that the action must poll often enough to notice the deadline
+            - Running the action in a child process that is killed on expiry
+          why: >-
+            timeout arranges for a private exception to be thrown to your thread when the timer fires. Cleanup in
+            bracket and finally still runs, but code that never allocates or sits in a foreign call may not notice for a while.
+          source: base-pkg
+        - q: In `race a b`, when `a` finishes first, what happens to `b`?
+          answer: It is cancelled with an asynchronous exception and its cleanup runs
+          distractors:
+            - It keeps running in the background and its result is simply dropped when it finishes
+            - It is paused until the caller asks for its result
+            - It restarts from the beginning on another thread
+          why: >-
+            race, concurrently and withAsync tie the lifetimes of their threads together, so a loser or a failed sibling
+            is cancelled instead of leaking, as long as its code respects async exceptions.
+          source: pcph
+  - id: property-testing
+    name: "Property testing: QuickCheck & Hedgehog"
+    layer: vine
+    branch: types-and-effects
+    tier: 2
+    needs:
+      - typeclass-laws
+    harvest: judged
+    minutes: 50
+    sources: [quickcheck-pkg]
+    summary: >-
+      Read the QuickCheck docs on Hackage (Arbitrary and shrink, forAll, ==>, classify, cover, checkCoverage),
+      then skim Hedgehog's integrated shrinking for the contrast. Yield: notes on how a generator and its
+      shrinker interact, how shrinking finds a small counterexample, why discard-heavy preconditions fail, and
+      one property of each shape you write yourself (round trip, idempotence, invariant, model).
+    rubric:
+      - Writes at least three properties of different shapes
+      - Explains how a generator produces valid and interesting inputs
+      - Explains shrinking and what a good minimal counterexample looks like
+      - States what properties cannot show, since they sample inputs
+    prompts:
+      - >-
+        Pick a pure function in a service you know (a parser, a price calculator, a state machine). Write three
+        properties of different shapes, say which bug each could catch, and describe what a shrunk counterexample for
+        one would look like.
+      - >-
+        A property using ==> keeps reporting that it gave up. Explain why, show how to build the generator so it
+        produces only valid inputs, and add a cover check so you know the interesting cases are being reached.
+    questions:
+      water:
+        - q: A property passes its 100 tests, but you suspect the generator mostly produces empty lists. Which QuickCheck combinator warns when too few non-trivial cases occur?
+          answer: "`cover`, which checks that a stated share of tests lands in a named class"
+          distractors:
+            - "`once`, which runs the property a single time on a hand-picked input"
+            - "`shrink`, which reports the smallest value the generator can produce"
+            - "`expectFailure`, which downgrades a failing property to a warning"
+          why: >-
+            classify and label only count cases. cover also states the share you require and prints a warning when a run
+            falls short; checkCoverage turns that warning into a failure. It guards against a green run that never
+            reached the interesting inputs.
+          source: quickcheck-pkg
+        - q: A QuickCheck type has an invariant, such as a sorted list. Why can a hand-written `shrink` for it mislead you?
+          answer: Shrinking is separate from generation, so it can produce values the generator never would
+          distractors:
+            - shrink runs only on inputs that passed, so it never sees a failing value
+            - shrink is limited to one step, so it cannot reduce a failure below its first candidate
+            - shrink replaces the random seed, so the same failure is not reproducible
+          why: >-
+            A failing input is reduced by trying whatever shrink returns, and nothing forces those candidates to obey
+            the generator's invariant. A failure on an unsorted list may then be reported for a value that could never
+            occur. Hedgehog avoids this by building shrinks into the generator itself.
+          source: quickcheck-pkg
+        - q: A property uses `==>` with a precondition that fewer than one input in a hundred satisfies, and QuickCheck gives up. The fix is to…
+          answer: Build a generator that produces valid inputs directly
+          distractors:
+            - Raise the number of tests until enough inputs happen to pass
+            - Wrap the property in once so that it runs a single time
+            - Replace ==> with when, which silently discards bad inputs
+          why: >-
+            Filtering random values wastes almost every case. Generating valid data by construction (for example from a
+            smart constructor) keeps each test useful and avoids hidden bias.
+          source: quickcheck-pkg
+  - id: type-driven-design
+    name: "Type-driven design: parse, don't validate"
+    layer: understory
+    branch: types-and-effects
+    tier: 2
+    needs:
+      - newtypes-deriving
+      - error-values
+      - typeclass-laws
+    harvest: judged
+    minutes: 50
+    sources: [parse-dont-validate]
+    summary: >-
+      Read Alexis King's Parse, don't validate in full, especially 'Turning partial functions total', 'The power
+      of parsing' and 'The danger of validation'. Yield: notes on the difference between a check that returns
+      unit or Bool and one that returns a stronger type, the NonEmpty example, shotgun parsing, and how smart
+      constructors keep an invariant true everywhere.
+    rubric:
+      - Moves checks to one boundary step that returns a more precise type or an error
+      - Uses types such as NonEmpty, newtypes or sum types so an illegal state cannot be built
+      - Hides constructors behind smart constructors or abstract modules where needed
+      - Names a rule that types cannot enforce and says where it is checked instead
+    prompts:
+      - >-
+        A checkout endpoint accepts a JSON cart with items (non-empty), quantities (positive), a currency and an optional
+        discount code. Design the Haskell types and the single parsing step so that downstream code never re-validates.
+        Show one illegal state that is now unrepresentable and one rule you could not encode.
+      - >-
+        Take a module in a codebase you know that has Bool-returning validators. Show how you would replace one with a
+        parser, what callers gain, and what the migration costs.
+    questions:
+      water:
+        - q: "Why is `validateEmail :: Text -> Bool` weaker than `parseEmail :: Text -> Either Err Email`?"
+          answer: The Bool throws away what was learned, so later code must re-check or trust
+          distractors:
+            - Bool cannot express failure at all, so only Either can say that a check failed
+            - validateEmail runs slower, because it examines every character twice
+            - Functions that return Bool cannot be covered by unit tests
+          why: >-
+            After parseEmail succeeds, the Email type is evidence the check happened. After validateEmail returns True,
+            the value is still plain Text, so every later function must either trust it or check again.
+          source: parse-dont-validate
+        - q: What is 'shotgun parsing'?
+          answer: Checks scattered through processing code, so bad input is caught late
+          distractors:
+            - Parsing the same input in parallel to find the fastest parser
+            - Using one huge regular expression to cover every field of the input at once
+            - Trying several encodings on the input until one of them succeeds
+          why: >-
+            Mixing validation with processing means some of the work, and some effects, may already have happened when
+            a late check fails. Parse everything first, then act on the typed result.
+          source: parse-dont-validate
+  - id: streaming
+    name: Streaming with conduit
+    layer: understory
+    branch: runtime-and-performance
+    tier: 2
+    needs:
+      - leaks
+      - folds
+    harvest: judged
+    minutes: 45
+    sources: [conduit-pkg, base-pkg]
+    summary: >-
+      Read the conduit package page on Hackage (its README sections 'Evaluation strategy' and 'Resource
+      allocation') and the hGetContents entry in base's System.IO. Yield: notes on why lazy IO leaks handles and
+      hides errors, how a conduit pipeline pulls bounded chunks from source to sink, and how ResourceT or
+      bracket guarantees cleanup. The same ideas apply to streaming or pipes.
+    rubric:
+      - Shows data pulled in bounded chunks from source through transforms to sink
+      - Explains where each resource is opened and guaranteed closed
+      - Says where an error in the middle surfaces and what cleanup follows
+      - Names a measurement, such as max residency or a heap profile, that shows memory is flat
+    prompts:
+      - >-
+        Sketch a pipeline that reads a 10 GB CSV, filters rows and writes JSON lines to numbered part files without
+        holding more than a few chunks in memory. Say where errors surface, where files close, and what you would
+        measure to prove memory stays flat.
+      - >-
+        Explain why `mapM` over a very large list in IO can exhaust memory, how a streaming version differs, and what
+        you give up by streaming (random access, simplicity).
+    questions:
+      water:
+        - q: Why is lazy IO such as `hGetContents` risky in a long-running service?
+          answer: The handle stays open until the data is consumed, and read errors surface late
+          distractors:
+            - It reads the entire file into memory before it returns anything to the caller, so it cannot stream
+            - It opens a new file handle for every character it produces
+            - It cannot read files larger than two gigabytes
+          why: >-
+            The string is produced on demand, so the file stays open until the last byte is read, and a read failure
+            appears wherever the data is later forced. Streaming libraries make open, read and close explicit.
+          source: base-pkg
+        - q: A conduit pipeline copies a 20 GB file through a transform in constant memory because…
+          answer: Chunks are pulled one at a time and each is released before the next
+          distractors:
+            - It memory-maps the file and lets the OS page it in and out
+            - The GC treats the stream as weak references and drops it
+            - Chunks are compressed in memory as they arrive
+          why: >-
+            The sink asks the pipeline for the next piece only when it is ready, so at most a few chunks are alive at
+            once. That pull-based demand is also what gives back-pressure.
+          source: conduit-pkg
+  - id: profiling-eventlog
+    name: Profiling & the eventlog
+    layer: vine
+    branch: runtime-and-performance
+    tier: 2
+    needs:
+      - leaks
+    harvest: judged
+    minutes: 50
+    sources: [ghc-profiling, ghc-rts, pcph]
+    summary: >-
+      Read the User's Guide chapter on profiling (cost centres, -p, -hc, -hT, -hi), the RTS options -s, -S and
+      -l, then PCPH chapter 15, 'Event Logging and ThreadScope'. Yield: a table of which tool answers which
+      question (time, allocation, residency, scheduling), and notes on how a profiling build distorts
+      optimisation.
+    rubric:
+      - Picks the right tool for the question (time profile, heap profile, eventlog)
+      - Reads a heap profile band or a cost-centre entry correctly
+      - Acknowledges profiling overhead and how cost centres change optimisation
+      - Shows a before and after measurement, not a feeling
+    prompts:
+      - >-
+        Write a small program with a leak or a hot loop. Capture a heap profile and an eventlog, say what each shows,
+        fix the problem, and report before and after numbers (max residency, GC time, allocation).
+      - >-
+        Your production binary is not built with -prof. List what you can still learn about a memory problem from
+        the RTS alone, and what you would add to the build first.
+    questions:
+      water:
+        - q: Which RTS flag produces a heap profile by closure type without a profiling build?
+          answer: "-hT"
+          distractors:
+            - "-hc"
+            - "-hy"
+            - "-hd"
+          why: >-
+            -hc, -hy and -hd need cost-centre information from a profiling build. -hT only counts closures by type, so
+            it works on an ordinary optimised binary, which is handy in production.
+          source: ghc-profiling
+        - q: A `-prof -fprof-auto` build blames a function, but tuning it does not speed up the production binary. A likely reason is…
+          answer: Cost centres block inlining and other optimisations, so the profile is skewed
+          distractors:
+            - Profiling builds use a different garbage collector with other timings than normal builds
+            - A profile counts only the time spent inside the garbage collector
+            - "-fprof-auto drops every function shorter than ten lines"
+          why: >-
+            Cost centres sit between expressions and stop GHC from inlining and fusing them, so the profiled program is
+            not the optimised one. Use selective cost centres or the eventlog when you need fidelity.
+          source: ghc-profiling
+        - q: Which tool shows when each capability was running, idle or collecting garbage over time?
+          answer: ThreadScope reading an eventlog written with -l
+          distractors:
+            - A `.prof` report produced by +RTS -p
+            - The `+RTS -s` summary printed when the program exits
+            - A heap profile from -hc
+          why: >-
+            The eventlog records scheduler and GC events with timestamps per capability, so you can see idle gaps and
+            long pauses. Other outputs are totals and cannot show when something happened.
+          source: pcph
+  - id: specialise-inline
+    name: Inlining & specialisation
+    layer: root
+    branch: runtime-and-performance
+    tier: 2
+    needs:
+      - eval-model
+    harvest: judged
+    minutes: 50
+    sources: [ghc-pragmas, ghc-optimisation, base-pkg]
+    summary: >-
+      Read the User's Guide on the INLINE, INLINABLE, NOINLINE and SPECIALIZE pragmas, and the -fspecialise,
+      -fcross-module-specialise and -fexpose-all-unfoldings flag entries. Add the NOINLINE advice in base's
+      System.IO.Unsafe. Yield: notes on what dictionary passing costs, how specialisation removes it, why cross-
+      module calls need an exposed unfolding, and when NOINLINE is required.
+    rubric:
+      - Explains dictionary passing as the cost of unspecialised class-polymorphic code
+      - Names the pragma or flag used and why it works across modules
+      - Points to evidence in Core, such as a specialised copy or missing dictionary arguments
+      - States a cost or risk, such as code size, compile time or a missing NOINLINE
+    prompts:
+      - >-
+        Take a small overloaded function (a generic sum, or an mtl-style loop with a MonadState constraint). Compile
+        with -O2, dump the Core, show the dictionary passing, add a pragma or a concrete type, show the Core again and
+        explain what changed and what it cost.
+      - >-
+        A library exports a polymorphic function that is slow at Int in an application. Explain three ways to fix it
+        (library side, application side, build flags) and the trade-offs of each.
+    questions:
+      water:
+        - q: A polymorphic `Num a =>` library function is slow when other modules call it at Int. Which pragma lets any importing module specialise it?
+          answer: INLINABLE, which keeps its unfolding available across modules
+          distractors:
+            - NOINLINE, which stops GHC from copying the function body anywhere
+            - SCC, which makes GHC share one dictionary between all callers
+            - UNPACK on the dictionary argument of the function
+          why: >-
+            Specialisation needs the function's body at the call site. INLINABLE exports it without forcing inlining,
+            so each importer can create a copy for the types it uses.
+          source: ghc-pragmas
+        - q: Why does a top-level `counter = unsafePerformIO (newIORef 0)` need a NOINLINE pragma?
+          answer: Inlining would duplicate the newIORef call and create several separate counters
+          distractors:
+            - Without it GHC would evaluate the IORef at compile time
+            - Top-level IO actions are otherwise run once for every thread that happens to use them
+            - The pragma is what makes the IORef atomic
+          why: >-
+            counter is an expression, and the optimiser may copy an expression into each use. Each copy then runs
+            newIORef afresh. NOINLINE keeps one shared definition.
+          source: base-pkg
+  - id: worker-wrapper
+    name: Worker/wrapper & unboxing
+    layer: root
+    branch: runtime-and-performance
+    tier: 3
+    needs:
+      - specialise-inline
+      - strict-data
+    harvest: judged
+    minutes: 55
+    sources: [ghc-optimisation]
+    summary: >-
+      Read the User's Guide flag entries for -fworker-wrapper, -fstrictness and -fcpr-anal (its $wsumIO example
+      shows a worker). Yield: notes on what strictness analysis proves, how the wrapper unpacks arguments for a
+      worker over Int#, what CPR does for results, and why laziness blocks all of it.
+    rubric:
+      - Explains strictness analysis as proving an argument is always evaluated
+      - Describes the wrapper and worker split and why the worker takes unboxed arguments
+      - Spots boxed allocation in Core ($w names, I# and D# constructors) and a fix
+      - Mentions CPR or strict fields as related ways to avoid boxing results
+    prompts:
+      - >-
+        Write a loop over a list of Doubles that computes mean and variance. Compile with -O2, dump Core, and find the
+        worker ($w...) and any boxing. Change strictness with bangs or a strict data type and show how the worker's
+        type and the allocation in +RTS -s change.
+      - >-
+        A loop returns a pair (count, total). Explain how constructed-product-result analysis can avoid allocating the
+        pair, what in the code can stop it, and how you would confirm the change in Core and in +RTS -s.
+    questions:
+      water:
+        - q: GHC compiles a strict loop `go acc n` over Ints into a worker taking `Int#`. The benefit is…
+          answer: No Int box is allocated per iteration, so the loop does not allocate
+          distractors:
+            - The loop is run in parallel across capabilities
+            - The arguments are evaluated lazily and then shared between calls of the loop
+            - The loop is evaluated at compile time and removed
+          why: >-
+            The wrapper evaluates and unpacks the arguments once; the worker then loops on raw machine integers in
+            registers. Without the split, each iteration would allocate a fresh boxed Int.
+          source: ghc-optimisation
+        - q: A function returns its second argument only when the first is positive. Why can GHC not pass that second argument unboxed?
+          answer: It is not strict in that argument, so evaluating it early might diverge
+          distractors:
+            - Unboxed arguments must come first in a function's argument list
+            - Only the first argument of a function can ever be unboxed
+            - Unboxing is allowed only for functions marked INLINE
+          why: >-
+            Unboxing means evaluating the argument before the call. If some paths never use it, evaluating it early
+            could loop or throw where the original would not, so GHC must keep it as a possibly-unevaluated pointer.
+          source: ghc-optimisation
+  - id: structured-logging
+    name: Structured logging
+    layer: vine
+    branch: runtime-and-performance
+    tier: 3
+    needs:
+      - text-bytestring
+      - readert-pattern
+    harvest: judged
+    minutes: 45
+    sources: [katip-pkg, readert-pattern]
+    summary: >-
+      Read katip's Hackage docs (LogEnv, Namespace, Severity, the 'KatipContext: Logging With Context' section,
+      scribes) and the ReaderT pattern post's Env example with a log function. Yield: notes on why fields beat
+      interpolated sentences, how request-scoped context rides in the Env, severity filtering, redacting
+      secrets, and what a logger does under load.
+    rubric:
+      - Lists fields that make lines joinable, such as request id, tenant, event name and duration
+      - Gives events with severities and says why some are not logged at INFO
+      - Names secrets or personal data to redact and a mechanism for it
+      - Addresses load, with bounded buffers, sampling or dropping
+    prompts:
+      - >-
+        Design the logging for a payment webhook handler. List the fields every line carries, the events you log and
+        at what severity, what you must never log, and how you would stop a log flood from slowing requests.
+      - >-
+        A support engineer cannot connect the five log lines of one failed request. Describe the change to the logging
+        setup that fixes this, and how it fits in a ReaderT Env app.
+    questions:
+      water:
+        - q: Why log status and order id as separate JSON fields instead of one interpolated sentence?
+          answer: Tools can filter, group and alert on fields without fragile text parsing
+          distractors:
+            - JSON logs always take less disk space than text logs
+            - Show instances cannot render whole sentences safely in a typical Haskell program
+            - A sentence cannot carry a severity level
+          why: >-
+            A field can be queried by name and counted. A sentence has to be matched with a regular expression that
+            breaks the next time someone rewords the message.
+          source: katip-pkg
+        - q: A request id must appear on every log line from a handler and its helpers. In a ReaderT Env app, the simplest approach is to…
+          answer: Put it in the logging context carried by the Env, and set it per request
+          distractors:
+            - Pass it as an extra argument to every logging call
+            - Store it in a global IORef that each request overwrites
+            - Include it in the message text and parse it out later
+          why: >-
+            Context carried by the environment follows the call chain automatically, and each request gets its own copy.
+            A global is shared across concurrent requests, so lines would be tagged with the wrong id.
+          source: katip-pkg
+  - id: observability
+    name: Runtime metrics & observability
+    layer: vine
+    branch: runtime-and-performance
+    tier: 3
+    needs:
+      - profiling-eventlog
+      - rts
+    harvest: judged
+    minutes: 50
+    sources: [ghc-rts, base-pkg, pcph]
+    summary: >-
+      Read the User's Guide RTS options -T, -s and -S, the GHC.Stats docs in base (getRTSStats), and PCPH
+      chapter 15, 'Event Logging and ThreadScope' (traceEvent markers). Yield: a short list of RTS numbers to
+      export (allocation rate, live bytes, GC time and pauses) and the symptom each one points to, next to the
+      usual request metrics.
+    rubric:
+      - Picks metrics from both the RTS and the application (rate, errors, duration)
+      - Explains what each metric would show when something is wrong
+      - Says how -T and getRTSStats, or the eventlog, supply the numbers
+      - Ties alert thresholds to user impact, not just raw values
+    prompts:
+      - >-
+        Define five runtime and application metrics you would export from a Haskell HTTP service. For each, give the
+        question it answers and an alert threshold idea. Add one eventlog user event you would emit around a critical
+        section and what you would learn from it.
+      - >-
+        p99 latency doubles every afternoon. Describe the dashboard panels and RTS numbers you would check, in order,
+        to tell a GC problem from a load problem.
+    questions:
+      water:
+        - q: Which RTS option makes `getRTSStats` work at runtime so a service can export GC metrics, without printing a summary at exit?
+          answer: "-T"
+          distractors:
+            - "-s"
+            - "-S"
+            - "-hT"
+          why: >-
+            -T collects the statistics silently so the program can read them. -s and -S also collect them but print
+            their reports, and -hT is a heap profile, a different mechanism.
+          source: ghc-rts
+        - q: A dashboard shows p99 latency spikes that line up with rising max live bytes and long major GCs. The service most likely…
+          answer: Retains more data over time, so each major GC has more to copy
+          distractors:
+            - Is network bound, since GC time cannot affect latency
+            - Has too few capabilities, so requests queue before the GC runs
+            - Runs with the idle GC off, which delays collections
+          why: >-
+            Copying cost grows with live data, and a stop-the-world pause delays every in-flight request. Rising
+            residency points at a leak or a growing cache rather than at the network.
+          source: ghc-rts
+  - id: servant-api
+    name: API design with servant
+    layer: canopy
+    branch: types-and-effects
+    tier: 3
+    needs:
+      - type-driven-design
+      - gadts
+    harvest: judged
+    minutes: 60
+    sources: [servant-docs]
+    summary: >-
+      Work through the servant tutorial pages 'A web API as a type' and 'Serving an API': combinators such as
+      :>, :<|>, Capture, ReqBody and Get/Post, 'Failing, through ServerError', then 'Using another monad for
+      your handlers' (hoistServer) for a ReaderT app. Yield: notes on how one type yields server, client and
+      docs, how handler types are computed from the API type, and where the approach strains (compile times,
+      error messages).
+    rubric:
+      - Writes the API as a type with captures, query, body and header combinators
+      - Explains that handler types follow from the API type, so drift is a compile error
+      - Handles errors with ServerError and runs the app monad with hoistServer
+      - Names a trade-off such as compile time, error messages or versioning
+    prompts:
+      - >-
+        Design the API type for an orders service: list, create (with an idempotency key header), get and cancel, with
+        auth and typed errors. Give the type, the Server skeleton, what the compiler refuses if a handler drifts, and
+        one servant trade-off you would accept.
+      - >-
+        Explain how you would add a v2 of one endpoint without breaking v1 clients, using servant types.
+    questions:
+      water:
+        - q: In servant, the handler for `Capture "id" Int :> Get '[JSON] User` has the type…
+          answer: Int -> Handler User, computed from the API type
+          distractors:
+            - Request -> IO Response, as in a bare WAI application
+            - Int -> IO (Maybe User), with failures reported as Nothing
+            - Any function at all, since handlers are not checked against the API
+          why: >-
+            The Server type family turns each combinator into a function argument or result, so a handler with the wrong
+            shape is a compile error rather than a runtime surprise.
+          source: servant-docs
+        - q: Handlers run in `ReaderT Env Handler`. What does servant's `hoistServer` do?
+          answer: Applies a natural transformation that runs your monad down to Handler
+          distractors:
+            - Lifts constant lookups out of the per-request loop
+            - Converts the whole API type into a WAI Application without needing any handlers
+            - Moves the handlers to a pool of worker threads
+          why: >-
+            serve wants handlers in Handler. hoistServer takes a function from your monad to Handler, typically
+            running the ReaderT with the Env, and applies it to every handler in the API.
+          source: servant-docs
+  - id: safe-parsing
+    name: Safe parsing of untrusted input
+    layer: vine
+    branch: types-and-effects
+    tier: 3
+    needs:
+      - type-driven-design
+      - text-bytestring
+    harvest: judged
+    minutes: 50
+    sources: [parse-dont-validate, text-pkg, base-pkg, wai-extra-pkg]
+    summary: >-
+      Re-read Parse, don't validate with a security eye, the Data.Text.Encoding docs for decodeUtf8', the wai-
+      extra RequestSizeLimit middleware and the base docs for readMaybe. Yield: a checklist of limits to apply
+      before parsing (body size, nesting depth, time), total decoding with Either, parsing into domain types
+      once, and what error text is safe to show a client.
+    rubric:
+      - Names concrete abuse routes such as size, nesting, encoding, numeric blow-ups and slow clients
+      - Places each defence at a layer (proxy, WAI middleware, parser, domain type)
+      - Uses total functions (Either or Maybe) instead of read and exceptions for input
+      - Returns errors that help the client without leaking internals
+    prompts:
+      - >-
+        List the ways a hostile client could hurt a JSON-over-HTTP Haskell endpoint with only crafted bytes, and for each
+        give the limit or check and where it lives (proxy, middleware, parser, domain type).
+      - >-
+        A webhook handler uses `decode`, `read` and `fromJust` on the body. Rewrite its parsing as a total function
+        returning Either, and say which failures become a 400 and which a 500.
+    questions:
+      water:
+        - q: Which function turns untrusted bytes into Text without risking an exception?
+          answer: "`decodeUtf8'`, which returns an Either"
+          distractors:
+            - "`decodeUtf8`, which replaces invalid bytes with a replacement character"
+            - "`decodeLatin1`, which rejects bytes above 127"
+            - "`T.unpack`, which validates the bytes while converting"
+          why: >-
+            decodeUtf8 throws on invalid UTF-8, which becomes a 500 for any client who sends bad bytes. The primed
+            version returns the failure as a value so you can answer 400.
+          source: text-pkg
+        - q: A JSON endpoint decodes request bodies of any size with `decode`. What is the first defence to add?
+          answer: A byte limit on the body, applied before any parsing starts
+          distractors:
+            - Switching to eitherDecode so that large bodies fail with a Left
+            - A larger -A, so big bodies fit in the nursery
+            - Compressing the body with gzip middleware first
+          why: >-
+            A size-limit middleware rejects an oversized body before your handler or parser sees it, so memory and CPU are
+            bounded. Swapping in a decoder that returns a Left still reads the whole body first. Put the cap at the proxy
+            as well.
+          source: wai-extra-pkg
+  - id: linear-types
+    name: Linear types
+    layer: herb
+    branch: types-and-effects
+    tier: 3
+    needs:
+      - gadts
+      - bracket
+    wild: true
+    harvest: judged
+    minutes: 40
+    sources: [ghc-linear]
+    summary: >-
+      Read the User's Guide section on linear types (the LinearTypes extension, the %1 arrow, and the
+      Limitations part). Yield: notes on what consumed exactly once means, how linear and unrestricted arrows
+      mix, why most existing libraries are not linear, and one resource-safety API it could make impossible to
+      misuse.
+    rubric:
+      - Explains linear as used exactly once, not at most once
+      - Shows a signature where close consumes a handle so it cannot be used again
+      - Explains what stays unrestricted and why
+      - Mentions limits, such as an experimental status, little library support, and that exceptions still need handling
+    prompts:
+      - >-
+        Sketch, with types only, a linear API for a file or DB connection handle so that forgetting to close it, or using
+        it after close, is a type error. Say what the linear arrow guarantees here and where you would still need bracket.
+    questions:
+      water:
+        - q: "`f :: a %1 -> b` says that `f`…"
+          answer: Uses its argument exactly once when its result is used exactly once
+          distractors:
+            - Runs in constant time and never allocates on the heap
+            - Is evaluated at most once, and its result is then cached
+            - Takes its argument by reference, which avoids a copy
+          why: >-
+            Linearity is a promise about how many times the argument is consumed, checked by the type checker. It
+            says nothing about speed or evaluation order.
+          source: ghc-linear
+        - q: Which statement about GHC's LinearTypes extension is accurate for production code today?
+          answer: It is marked experimental, so syntax, inference and error messages may still change
+          distractors:
+            - It is part of GHC2021, and its inference of linearity is considered stable
+            - It makes every function in a module linear, so unused arguments are rejected
+            - It works only for IO code, since pure functions cannot be linear
+          why: >-
+            The User's Guide gives the extension (since GHC 9.0) an experimental status and tells you to expect bugs and
+            bad error messages; multiplicity polymorphism and several pattern forms are still incomplete. It is opt-in per
+            module and per function arrow, so you adopt it where a resource-safety API justifies the cost.
+          source: ghc-linear
+  - id: reading-core
+    name: Reading GHC Core
+    layer: root
+    branch: runtime-and-performance
+    tier: 4
+    needs:
+      - worker-wrapper
+    harvest: artifact
+    minutes: 60
+    sources: [ghc-optimisation, ghc-profiling]
+    summary: >-
+      Dump the Core of a small function with -ddump-simpl (and -dsuppress-all to cut the noise; both flags are
+      listed on the guide's debugging page, linked from the source note). Then read the optimisation flag
+      entries for -ffull-laziness, -fworker-wrapper and -fcpr-anal. Yield: a one-page cheat sheet of what let
+      (allocation), case (forcing), lambdas, $w workers, $s specialisations, I# boxes and dictionary arguments
+      look like, and which patterns signal a problem.
+    rubric:
+      - Reads let as allocation and case as forcing
+      - Recognises $w workers, $s specialisations and dictionary arguments
+      - Spots boxing (I#, D#) in a hot path
+      - Connects a Core change to a measurable difference in allocation or time
+    prompts:
+      - >-
+        Pick a function from a service you know. Dump its optimised Core with -ddump-simpl and the suppress flags,
+        annotate it line by line (what allocates, where it forces, what is boxed, where dictionaries are passed), then
+        make one change and prove it with a second dump and +RTS -s numbers.
+    questions:
+      water:
+        - q: In `-ddump-simpl` output, which construct usually means a heap allocation of a suspended computation?
+          answer: A let binding of a non-trivial expression
+          distractors:
+            - A case expression on a variable
+            - A top-level lambda with no free variables
+            - A type application to a known type
+          why: >-
+            let allocates a thunk (or closure) for its right-hand side; case forces a value. Reading Core is mostly
+            counting lets in the hot path and asking whether each is needed.
+          source: ghc-optimisation
+        - q: A name like `$wgo` in Core is a sign that…
+          answer: Worker/wrapper split go, and the worker takes unboxed arguments
+          distractors:
+            - go was specialised to one type class instance
+            - go was marked NOINLINE by the programmer
+            - go was floated out to the top level of the module
+          why: >-
+            The $w prefix marks a worker. Specialised copies are named $s, and floated-out bindings usually get lvl
+            names, so the prefix tells you which transformation made the binding.
+          source: ghc-optimisation
+  - id: effect-libraries
+    name: Effect libraries vs mtl
+    layer: understory
+    branch: types-and-effects
+    tier: 4
+    needs:
+      - effects
+      - readert-pattern
+    harvest: judged
+    minutes: 55
+    sources: [effectful-pkg, readert-pattern, transformers-pkg, ghc-optimisation]
+    summary: >-
+      Read the effectful package page ('What about mtl?') next to the definitions of StateT and ExceptT in the
+      transformers docs, and the -fspecialise entry in the User's Guide optimisation flags. Yield: notes on the
+      n-by-m instance problem in mtl, why layer order changes semantics (StateT over Either versus the reverse),
+      how effectful avoids transformer stacks, and the speed risk of unspecialised polymorphic code.
+    rubric:
+      - Shows the same capability in at least two styles
+      - Explains the layer-order semantics issue or the instance cost in mtl
+      - Discusses runtime cost and when specialisation or static dispatch matters
+      - Makes a recommendation tied to team size and risk, not taste
+    prompts:
+      - >-
+        Take one feature (logging, a DB call, config and retry). Sketch it three ways: ReaderT Env IO with records, mtl
+        classes, and an effect library. Compare boilerplate, testability, speed risk and what a new teammate must learn,
+        then pick one and justify it.
+      - >-
+        Show with a small example that StateT over Either and ExceptT over State behave differently after a failure, and
+        say how a service would choose between them.
+    questions:
+      water:
+        - q: After an error mid-computation, which keeps the state changes made so far, StateT s (Either e) or ExceptT e (State s)?
+          answer: "`ExceptT e (State s)`, because the state sits beneath the error layer"
+          distractors:
+            - "`StateT s (Either e)`, because state is threaded through every step"
+            - Both keep it, since the order of the layers is only cosmetic
+            - Neither does, because an error always rolls state back to the start
+          why: >-
+            StateT s (Either e) a is s -> Either e (a, s), so a Left carries no state. ExceptT e (State s) a is
+            s -> (Either e a, s), so the final state is returned either way.
+          source: transformers-pkg
+        - q: An mtl-style function `MonadState Int m => m ()` is slow in a hot loop in another module. A common cause is…
+          answer: It is compiled once against a dictionary, never specialised to a stack
+          distractors:
+            - mtl classes allocate a fresh thread for each call
+            - MonadState always forces the state lazily, which keeps every old version alive
+            - Class constraints disable the garbage collector's nursery
+          why: >-
+            Polymorphic code receives the monad's operations as a dictionary at runtime, so each bind is an unknown call.
+            Specialisation (INLINABLE, SPECIALIZE) or a static-dispatch library removes that indirection.
+          source: ghc-optimisation
+  - id: service-architecture
+    name: Service architecture
+    layer: canopy
+    branch: runtime-and-performance
+    tier: 4
+    needs:
+      - servant-api
+      - structured-logging
+      - readert-pattern
+    harvest: artifact
+    minutes: 75
+    sources: [servant-docs, readert-pattern, three-layer-cake, base-pkg]
+    summary: >-
+      Pull the earlier seeds together. Re-read Three Layer Haskell Cake (the layers from IO orchestration to
+      pure business logic), servant's 'Using another monad for your handlers' and the ReaderT post's
+      'Initializing resources', plus the 'Terminating the program' notes in base's Control.Concurrent. Yield: a
+      diagram and a short note laying out a Haskell service as HTTP edge, ReaderT application layer, pure domain
+      core and adapters, with resource lifetimes, timeouts, pools and shutdown marked.
+    rubric:
+      - Separates edge, application, pure domain and adapters, with dependencies pointing inward
+      - Shows resource lifetimes tied to startup, bracket and shutdown
+      - Places timeouts, retries and bounded queues at the boundaries
+      - Says where logs and metrics come from and what is deliberately left out
+    prompts:
+      - >-
+        Draw a module and dependency diagram for a Haskell order service with an HTTP edge, application layer, domain
+        core and adapters for the database and a payment API. Mark where resources are acquired and released, where
+        timeouts and retries live, where logs and metrics are emitted, and what happens on SIGTERM. Name two things you
+        left out on purpose.
+    questions:
+      water:
+        - q: In a 'functional core, imperative shell' service, business rules such as pricing live in…
+          answer: Pure functions over plain data, called by thin effectful handlers
+          distractors:
+            - The IO handlers, so that rules can read the database directly
+            - Database triggers, so rules apply no matter who writes
+            - Type class instances on the HTTP request types
+          why: >-
+            Pure rules are easy to test and to reason about, because they cannot touch the outside world. The shell
+            fetches the data, calls them, and performs the resulting effects.
+          source: three-layer-cake
+        - q: On SIGTERM during a deploy, which design lets in-flight requests finish and resources close cleanly?
+          answer: Stop accepting, wait for handlers to finish, then release pools in bracket
+          distractors:
+            - Kill every handler thread at once and let the OS close the sockets
+            - Exit the main thread, since the runtime finalises everything else on exit
+            - Restart the process and replay the lost requests from the logs
+          why: >-
+            When main returns, other Haskell threads are simply abandoned without running cleanup. Graceful shutdown means
+            draining the server, then letting bracket release the pools in reverse order of acquisition.
+          source: base-pkg
+guilds:
+  - id: laziness-and-space
+    title: Laziness and space
+    seeds: [laziness, eval-model, folds, strict-data, leaks]
+  - id: runtime-visibility
+    title: Seeing the runtime
+    seeds: [gc, rts, profiling-eventlog, observability]
+  - id: the-optimiser
+    title: Working with the optimiser
+    seeds: [specialise-inline, worker-wrapper, reading-core]
+  - id: concurrency-safety
+    title: Safe concurrency
+    seeds: [stm, lockfree, bracket, async-exceptions]
+  - id: types-as-design
+    title: Types as design
+    seeds: [newtypes-deriving, error-values, type-driven-design, safe-parsing, servant-api]
+  - id: service-shape
+    title: The shape of a service
+    seeds: [readert-pattern, effects, structured-logging, service-architecture]
 finds:
   - id: nonmoving-gc
     near: [gc, leaks, rts]
@@ -219,5 +2012,27 @@ finds:
     near: [stm, lockfree]
     text: "GHC STM validates at commit with per-TVar locks, so long transactions on hot TVars retry often. Keep transactions short and TVars fine-grained."
   - id: whnf
-    near: [laziness, gadts, effects]
+    near: [laziness, eval-model, strict-data]
     text: "Bang patterns and `seq` only force to weak head normal form. `deepseq` (NFData) is what forces a whole structure."
+  - id: linear-arrow
+    near: [gadts, bracket, newtypes-deriving]
+    seed: linear-types
+    text: "GHC 9.0 added LinearTypes. A function typed a %1 -> b must consume its argument exactly once, and the check is purely static: it does not by itself change the generated code, which is why it is aimed at safer APIs rather than speed."
+  - id: text-utf8
+    near: [text-bytestring, safe-parsing, containers]
+    text: "Since text-2.0, Data.Text stores UTF-8 internally instead of UTF-16. Converting valid UTF-8 bytes to Text now means validating them, not transcoding them, which makes decode and encode much cheaper."
+  - id: omit-yields
+    near: [async-exceptions, rts, worker-wrapper]
+    text: "GHC checks for a pending async exception or context switch when a thread allocates. A tight loop that never allocates can ignore killThread and timeout. Compiling with -fno-omit-yields adds the checks back, for a few percent of code size."
+  - id: small-strict-fields
+    near: [strict-data, worker-wrapper, vectors]
+    text: "With -O, GHC already unpacks strict fields that are no larger than a pointer (-funbox-small-strict-fields). A field written as !Int lives inside its constructor without an UNPACK pragma; the pragma matters for bigger fields."
+  - id: lazy-map-values
+    near: [containers, leaks, folds]
+    text: "Data.Map (the lazy one) stores whatever expression you hand it as a value. Updating a counter with insertWith (+) a million times builds a million-step thunk chain; Data.Map.Strict evaluates each sum as it is inserted."
+  - id: delimited-continuations
+    near: [effects, effect-libraries, readert-pattern]
+    text: "GHC 9.6 added delimited-continuation primops (prompt# and control0#) to the runtime. They are for library authors, and let effect systems capture continuations natively rather than through free-monad interpretation."
+  - id: eventlog-markers
+    near: [profiling-eventlog, observability]
+    text: "traceMarkerIO and traceEventIO in Debug.Trace write your own labelled events into the eventlog, so ThreadScope can show a request starting and ending next to the GC and scheduler activity."
