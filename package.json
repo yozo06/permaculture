@@ -6,17 +6,28 @@
     "doc": "docs"
   },
   "scripts": {
-    "validate": "node scripts/validate-packs.mjs",
-    "extract-packs": "node scripts/extract-packs.mjs",
-    "serve": "npx --yes serve game"
+    "dev": "vite",
+    "build": "npm run typecheck && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.node.json",
+    "validate": "node scripts/validate-packs.mjs"
   },
   "keywords": [],
   "author": "",
   "license": "MIT",
   "devDependencies": {
+    "@types/node": "^26.6.6",
     "ajv": "^8.20.0",
-    "js-yaml": "^4.3.2"
+    "fast-check": "^4.10.2",
+    "js-yaml": "^4.3.2",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.5",
+    "vitest": "^5.0.5"
   },
   "private": true,
-  "type": "module"
+  "type": "module",
+  "engines": {
+    "node": ">=22.12"
+  }
 }

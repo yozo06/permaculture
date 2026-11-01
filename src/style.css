@@ -1,0 +1,79 @@
+/* Layout: one-screen farm game. Pixel-art isometric world in the middle (drag to pan), a wooden HUD above, an action bar below, cards float over the farm. Single committed look (a game), no light/dark split. */
+:root{
+  --sky:#8FC8E8;
+  --ink:#1A1610; --panel:#2B2318; --panel-2:#3B3020; --line:#5C4A2E; --line-2:#7A6340;
+  --cream:#F4EAD0; --muted:#C6B48E; --dim:#8F7F60;
+  --green:#6DB24F; --ochre:#E0A93E; --blue:#5FA8C9; --purple:#B089D6; --red:#D9534F; --water:#4FA3E8;
+  --font-display:'Pixelify Sans','DM Sans',system-ui,sans-serif;
+  --font-body:'DM Sans',system-ui,sans-serif;
+  color-scheme:dark;
+}
+html,body{height:100%;margin:0}
+[hidden]{display:none!important}
+textarea{width:100%;box-sizing:border-box;min-height:140px;resize:vertical;background:var(--ink);color:var(--cream);border:1px solid var(--line-2);border-radius:8px;padding:10px;font-family:ui-monospace,monospace;font-size:12px}
+input[type=file]{color:var(--muted);font-size:13px}
+body{background:var(--ink);color:var(--cream);font-family:var(--font-body);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:12px;box-sizing:border-box}
+*{box-sizing:border-box}
+.game{max-width:960px;margin:0 auto;display:flex;flex-direction:column;gap:10px}
+.hud{display:flex;flex-wrap:wrap;align-items:center;gap:8px 18px;background:var(--panel);border:2px solid var(--line);border-radius:8px;padding:8px 14px}
+.logo{font-family:var(--font-display);font-weight:700;font-size:20px;letter-spacing:.08em;color:var(--green);margin-right:auto}
+.stat{display:flex;align-items:center;gap:8px;font-size:13px}
+.stat .k{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.1em}
+.stat .v{font-family:var(--font-display);font-size:18px;font-variant-numeric:tabular-nums;min-width:2ch}
+.meter{width:90px;height:10px;background:var(--panel-2);border:1px solid var(--line-2);border-radius:3px;overflow:hidden}
+.meter i{display:block;height:100%;background:var(--green);width:100%;transition:width .3s}
+.stage{position:relative;width:100%;background:var(--sky);border:2px solid var(--line);border-radius:8px;overflow:hidden;aspect-ratio:480/300;max-width:100%}
+canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rendering:crisp-edges;touch-action:none;cursor:grab}
+canvas.drag{cursor:grabbing}
+.night{position:absolute;inset:0;background:#0A0F2A;opacity:0;pointer-events:none;transition:opacity .7s}
+.toast{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);background:rgba(26,22,16,.92);color:var(--cream);border:1px solid var(--line-2);border-radius:6px;padding:8px 12px;font-size:13px;max-width:min(90%,420px);text-align:center;opacity:0;transition:opacity .25s;pointer-events:none}
+.toast.on{opacity:1}
+.corner{position:absolute;right:8px;top:8px;display:flex;gap:6px}
+.corner button{min-height:32px;padding:0 10px;font-size:12px;background:rgba(26,22,16,.8)}
+.bar{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;background:var(--panel);border:2px solid var(--line);border-radius:8px;padding:8px 14px}
+.hint{flex:1 1 240px;min-width:0;font-size:13px;color:var(--muted);line-height:1.4}
+.hint b{color:var(--cream);font-weight:600}
+.acts{display:flex;flex-wrap:wrap;gap:8px;margin-left:auto}
+button{font-family:var(--font-body);font-size:14px;font-weight:600;min-height:44px;padding:0 16px;border-radius:6px;border:2px solid var(--line-2);background:var(--panel-2);color:var(--cream);cursor:pointer}
+button:hover{border-color:var(--muted)}
+button:focus-visible{outline:2px solid var(--green);outline-offset:2px}
+button.pri{background:var(--green);border-color:#4C8A36;color:#10200C}
+button.pri:hover{background:#7CC25E}
+button:disabled{opacity:.6;cursor:default}
+.veil{position:fixed;inset:0;background:rgba(10,8,5,.6);display:flex;align-items:center;justify-content:center;padding:16px;z-index:20}
+.veil[hidden]{display:none}
+.sheet{width:100%;max-width:480px;max-height:90vh;overflow:auto;background:var(--panel);border:2px solid var(--line-2);border-radius:10px;padding:18px 20px;display:flex;flex-direction:column;gap:14px}
+.sheet h2{font-family:var(--font-display);font-size:22px;margin:0;font-weight:600;text-wrap:balance}
+.sheet h3{font-family:var(--font-display);font-size:16px;margin:8px 0 0;font-weight:600;color:var(--green)}
+.sheet p{margin:0;line-height:1.5}
+.sheet ul{margin:0;padding-left:18px;line-height:1.5;font-size:14px}
+.sub{font-size:12px;color:var(--muted)}
+.chip{display:inline-block;padding:3px 8px;border-radius:4px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#10200C;background:var(--c,var(--green))}
+.q{font-size:16px;line-height:1.5}
+.opts{display:flex;flex-direction:column;gap:8px}
+.opts button{text-align:left;min-height:48px;padding:10px 14px;font-weight:500;line-height:1.35}
+.opts button.ok{background:#2F5A24;border-color:var(--green)}
+.opts button.bad{background:#5A2622;border-color:var(--red)}
+.opts button:disabled{cursor:default;opacity:.85}
+.res{padding:12px 14px;border-radius:6px;background:var(--panel-2);border:1px solid var(--line-2);font-size:14px;line-height:1.5}
+.res b{font-family:var(--font-display);font-size:17px;font-weight:600}
+.row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line);font-size:14px}
+.row:first-child{border-top:0}
+.row .n{display:flex;flex-direction:column;gap:2px;min-width:0}
+.row .n small{color:var(--muted);font-size:12px}
+.row button{min-height:36px;padding:0 12px;font-size:13px;flex:none}
+.row.locked{opacity:.6}
+.fh{display:flex;align-items:center;gap:8px;font-family:var(--font-display);font-size:16px;margin-top:6px}
+.fh i{width:12px;height:12px;border-radius:3px;display:inline-block}
+.sheet .foot{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.link{background:none;border:0;color:var(--dim);font-weight:500;min-height:36px;padding:0 4px;text-decoration:underline}
+.link:hover{color:var(--muted);border:0}
+.tabs{display:flex;flex-wrap:wrap;gap:6px}
+.tabs button{min-height:34px;padding:0 10px;font-size:13px}
+.tabs button.on{border-color:var(--cream)}
+.tree{width:100%;height:auto;display:block;background:var(--ink);border:1px solid var(--line);border-radius:8px}
+.branches{display:flex;gap:8px;flex-wrap:wrap}
+.branches button{flex:1 1 150px;min-height:38px;font-size:13px}
+.find{background:var(--panel-2);border:1px solid var(--line-2);border-radius:8px;padding:12px 14px;font-size:14px;line-height:1.55}
+@media (prefers-reduced-motion:reduce){.night,.toast,.meter i{transition:none}}

@@ -21,11 +21,11 @@ Better distractors, better `why` lines, a missing layer, a guild that should exi
 
 ## Code
 
-- `game/` is the playable prototype. Until Phase 1 it is a single HTML file with its own inline seed list; packs are extracted from it, not loaded by it. See `docs/design.md` §9 for the phases.
+- The game lives in `src/` and is built by Vite from TypeScript: `npm run dev` to play locally, `npm test` for the tests, `npm run build` for the site. For now the seeds are still listed inside the game; loading them from `packs/` is the next step. See `docs/design.md` §9 for the phases.
 - Keep the loop honest: a change should make plant → water → harvest truer, faster or clearer. Features that do not serve the loop wait.
 - No leaderboards, no streak shaming, no accounts before the village needs them.
 - The engine stays pure: state is a fold over an event log. If a change makes that harder, it is probably wrong.
-- Run `npm run validate` before pushing. CI runs it on every PR.
+- Run `npm run validate`, `npm test` and `npm run build` before pushing. CI runs all three on every PR.
 
 ## Hosting and cost
 
