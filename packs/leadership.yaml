@@ -1,0 +1,1450 @@
+# Leadership — Permaculture pack (v0, full catalogue)
+# Format: docs/pack-format.md · Licence: CC-BY-SA 4.0 (packs/LICENSE.md)
+pack: leadership
+version: 0
+title: Leadership
+color: "#D98CA6"
+perennial: false
+description: >-
+  Senior backend behavioural skills: running incidents, owning outcomes, mentoring, and telling trade-off stories.
+branches:
+  - id: incidents-and-ownership
+    title: Incidents & ownership
+  - id: people-and-decisions
+    title: People & decisions
+sources:
+  - id: sre-incidents
+    title: Site Reliability Engineering, chapter Managing Incidents
+    url: https://sre.google/sre-book/managing-incidents/
+    note: Roles, when to declare, clear live handoff, live incident document, best practices.
+  - id: sre-postmortem
+    title: The Site Reliability Workbook, chapter Postmortem Culture
+    url: https://sre.google/workbook/postmortem-culture/
+    note: Bad versus good example postmortem, blameless language, action items, organizational incentives, sharing and review.
+  - id: sre-oncall
+    title: Site Reliability Engineering, chapter Being On-Call
+    url: https://sre.google/sre-book/being-on-call/
+    note: Caps on on-call time and incidents per shift, team-size arithmetic, burnout, clear escalation paths.
+  - id: sre-error-budget
+    title: The Site Reliability Workbook, Appendix B Example Error Budget Policy
+    url: https://sre.google/workbook/error-budget-policy/
+    note: An example policy with thresholds, exceptions and escalation.
+  - id: pagerduty
+    title: PagerDuty Incident Response documentation, Incident Commander training
+    url: https://response.pagerduty.com/training/incident_commander/
+    note: Purpose of the commander, the size-up, stabilize, update, verify loop, assigning time-boxed tasks, polling for strong objections, transfer of command, treating unclear severity as the higher one. Open source docs.
+  - id: allspaw
+    title: Blameless PostMortems and a Just Culture (John Allspaw, Etsy Code as Craft)
+    url: https://www.etsy.com/codeascraft/blameless-postmortems/
+    note: Etsy blocks scripted fetches (403), so the text was confirmed in the Wayback Machine copy of this page; it is live in a normal browser. Covers just culture, hindsight bias, accountability without blame, and first versus second stories.
+  - id: bergstrom-traps
+    title: Understanding Incidents, Three Analytical Traps (Johan Bergstrom, on Adaptive Capacity Labs)
+    url: https://www.adaptivecapacitylabs.com/2021/01/11/understanding-incidents-three-analytical-traps/
+    note: Counterfactual reasoning, normative language and mechanistic reasoning, with transcript of a short lecture.
+  - id: nygard-adr
+    title: Documenting Architecture Decisions (Michael Nygard)
+    url: https://www.cognitect.com/blog/2011/11/15/documenting-architecture-decisions
+    note: The original ADR post. Title, status, context, decision, consequences; numbered records kept in the repo; superseded rather than deleted.
+  - id: edmondson
+    title: How Fearless Organizations Succeed (Amy Edmondson, strategy+business)
+    url: https://www.strategy-business.com/article/How-Fearless-Organizations-Succeed
+    note: Edmondson's own summary of her definition, what psychological safety is not, and the leader behaviours that build it. The formal definition comes from her 1999 paper Psychological Safety and Learning Behavior in Work Teams (Administrative Science Quarterly, doi 10.2307/2666999).
+  - id: rework-interviewing
+    title: A guide to structured interviewing (Google re:Work)
+    url: https://rework.withgoogle.com/intl/en/guides/a-guide-to-structured-interviewing-for-better-hiring-practices
+    note: Sections on defining hiring attributes, drafting questions, behavioral versus hypothetical questions, and using a rubric.
+  - id: star-method
+    title: Using the STAR method for your next behavioral interview (MIT Career Advising and Professional Development)
+    url: https://capd.mit.edu/resources/the-star-method-for-behavioral-interviews/
+    note: Situation, Task, Action, Result with a suggested time split, I versus we, quantified results and takeaways.
+  - id: staffeng
+    title: StaffEng (Will Larson), Work on what matters
+    url: https://staffeng.com/guides/work-on-what-matters/
+    note: Snacking, preening, chasing ghosts, existential issues, editing and finishing things.
+  - id: staffeng-strategy
+    title: StaffEng (Will Larson), Writing engineering strategy
+    url: https://staffeng.com/guides/engineering-strategy/
+    note: When to write a strategy, writing design documents first, diagnosis and guiding policies, being specific and opinionated, how to tell it works.
+  - id: staffeng-exec
+    title: StaffEng (Will Larson), Present to executives
+    url: https://staffeng.com/guides/present-to-executives/
+    note: Lead with the summarizing idea, the SCQA opening paragraph, aligning with stakeholders before the meeting, never presenting a problem without an answer.
+  - id: eng-practices
+    title: Google Engineering Practices, How to write code review comments
+    url: https://google.github.io/eng-practices/review/reviewer/comments.html
+    note: Comment on the code, explain why, label severity, point out problems versus give directions, praise.
+  - id: sbi
+    title: Situation-Behavior-Impact (Untools)
+    url: https://untools.co/situation-behavior-impact/
+    note: SBI is a Center for Creative Leadership tool. The page also covers the optional intent question.
+  - id: amazon-2016
+    title: Amazon 2016 letter to shareholders (High-Velocity Decision Making)
+    url: https://www.aboutamazon.com/news/company-news/2016-letter-to-shareholders
+    note: Two-way doors and light-weight process, deciding with about 70 percent of the information, disagree and commit.
+  - id: shapeup
+    title: Shape Up, Set Boundaries (Basecamp)
+    url: https://basecamp.com/shapeup/1.2-chapter-03
+    note: Appetite versus estimate, fixed time with variable scope, and the soft no for raw ideas.
+  - id: larson-saying-no
+    title: Saying no (Will Larson, Irrational Exuberance)
+    url: https://lethain.com/saying-no/
+    note: Explaining team constraints with data (velocity), then priorities - document asks, set guiding principles, test new asks against them.
+  - id: larson-migrations
+    title: Migrations, the sole scalable fix to tech debt (Will Larson, Irrational Exuberance)
+    url: https://lethain.com/migrations/
+    note: The derisk, enable, finish playbook; start with the hardest adopters; tooling over tickets; shutting down the legacy system.
+  - id: hogan-delegation
+    title: Delegation is an art, not a science (Lara Hogan)
+    url: https://larahogan.me/blog/delegation-is-an-art/
+    note: Delegate the outcome without the how; at most three pro tips; how you will support, when to reach out, what success looks like.
+  - id: outcomes-vs-outputs
+    title: Outcomes vs. Outputs, What's the Difference and Why Does It Matter? (Teresa Torres, Product Talk)
+    url: https://www.producttalk.org/2024/07/outcomes-vs-outputs/
+    note: An output is what you ship; an outcome is the change it causes. Output teams are done at shipping, outcome teams when the impact shows up.
+  - id: design-docs-google
+    title: Design Docs at Google (Malte Ubl)
+    url: https://www.industrialempathy.com/posts/design-docs-at-google/
+    note: Anatomy of a design doc, goals and non-goals, alternatives considered, length, and when not to write one.
+  - id: cone-of-uncertainty
+    title: The Cone of Uncertainty (Construx, Steve McConnell)
+    url: https://www.construx.com/resources/the-cone-of-uncertainty/
+    note: Why early estimates span a wide range, how decisions narrow it, and why commitments should wait.
+  - id: atlassian-comm
+    title: Incident communication best practices (Atlassian)
+    url: https://www.atlassian.com/incident-management/incident-communication
+    note: Audiences, update cadence (never more than an hour without one), first contact, regular updates even when there is nothing new.
+guilds:
+  - id: running-the-incident
+    title: Running the incident
+    seeds: [incident-roles, mitigate-first, status-cadence, incident-handover, multi-team-incident]
+  - id: learning-loop
+    title: The learning loop
+    seeds: [just-culture, postmortem-doc, contributing-factors, action-items, learning-from-incidents]
+  - id: sustainable-oncall
+    title: Sustainable on-call
+    seeds: [incident-severity, escalation-ownership, oncall-health, error-budget-talk]
+  - id: decision-trail
+    title: The decision trail
+    seeds: [design-docs, adr, tradeoff-narrative, writing-for-decisions]
+  - id: growing-people
+    title: Growing people
+    seeds: [feedback-sbi, review-mentoring, delegation, psych-safety, structured-interviewing]
+  - id: staff-reach
+    title: Staff reach
+    seeds: [saying-no, estimating, stakeholder-updates, influence, technical-strategy]
+finds:
+  - id: ics-lineage
+    near: [incident-roles, multi-team-incident]
+    seed: ics-wildfire
+    text: "Google's incident roles are not a software invention. Its SRE book says the process rests on the Incident Command System, a modular structure from emergency services. One commander, named roles and a shape that grows with the incident carry over from emergency scenes to outages."
+  - id: counterfactual-find
+    near: [postmortem-doc, contributing-factors]
+    seed: counterfactual-trap
+    text: "Count the 'should have' sentences in your last postmortem. Each describes a world that never happened, and only looks obvious because the outcome is now known. Swap each for what the person saw and why acting on it made sense then."
+  - id: two-way-doors-find
+    near: [disagree-commit, adr]
+    seed: two-way-doors
+    text: "Bezos's 2016 letter calls many decisions two-way doors and argues against one-size-fits-all decision making, so a choice you can walk back through deserves a lighter process than one you cannot. A week of review spent on a choice you can undo in an afternoon is a cost, not caution."
+  - id: strong-objections
+    near: [mitigate-first, incident-roles]
+    text: "PagerDuty trains commanders to propose a plan and ask 'any strong objections?' rather than 'does everyone agree?'. The first surfaces the concerns that matter and lets the call move on; the second invites everyone to talk at once."
+  - id: no-someone
+    near: [incident-roles, delegation]
+    text: "In an incident, 'can someone look at the database?' tends to be answered by nobody. PagerDuty's commander training says to name one person per task and time-box it in minutes, because a request to a room lets each person assume another will take it."
+  - id: glue-promotion
+    near: [influence, delegation, owning-outcomes]
+    text: "Tanya Reilly's talk Being Glue describes the unblocking, onboarding and documenting that hold a team together, and how it can go unrewarded at promotion time. Choose it deliberately, share it around, and tell the story of it as technical leadership."
+  - id: no-action-no-postmortem
+    near: [postmortem-doc, action-items]
+    text: "The SRE Workbook quotes a line attributed to Google's Ben Treynor Sloss: to users, a postmortem with no follow-up action is indistinguishable from no postmortem. Writing the document is only half of the practice; the other half is the action items getting done."
+seeds:
+  - id: incident-roles
+    name: Incident roles
+    layer: ground-cover
+    branch: incidents-and-ownership
+    tier: 0
+    harvest: judged
+    minutes: 30
+    sources: [sre-incidents, pagerduty]
+    summary: "Read Managing Incidents (the roles section: recursive separation of responsibilities, with incident command, operations, communication and planning) and PagerDuty's Incident Commander training (Purpose, and Assigning Tasks). Notes: what the commander, the hands-on operator and the communicator each own, what the commander must not do, and how roles merge on a small incident."
+    rubric:
+      - "Names the incident commander, the person doing hands-on changes and the person communicating outward, and says what each owns"
+      - "Explains why the commander coordinates and delegates instead of fixing things personally"
+      - "States that one person holds command at a time and that any role not delegated stays with the commander"
+      - "Says how roles combine or split as the incident grows, with one example"
+    prompts:
+      - "Write about a real incident you were part of, however small. Which roles existed, who held each, and what went right or wrong because roles were clear or blurred?"
+      - "Describe a time you were debugging hands-on while everyone also asked you for updates. What would you change if roles had been explicit?"
+    questions:
+      water:
+        - q: "A latency spike becomes a full checkout outage. The engineer running queries on the primary database is also answering the support lead's questions. As incident commander you should…"
+          answer: "Name a separate person to handle communication so the engineer can stay on the database"
+          distractors:
+            - "Leave the engineer to answer support as well, since they hold the freshest knowledge of the system"
+            - "Take over the database queries yourself so that the engineer is free to talk to support"
+            - "Hand command to the support lead, since they are the one asking the most questions"
+          why: "Operating and communicating are separate jobs. When one person does both, either the fix or the updates suffer. The commander assigns the missing role and stays on coordination rather than picking up hands-on work."
+          source: sre-incidents
+        - q: "Three engineers each try their own fix on production at once, and afterwards nobody can tell which change helped. The roles model names this failure…"
+          answer: "Freelancing: changes made outside the coordinated operations role, so cause and effect are lost"
+          distractors:
+            - "A staffing shortage: with more engineers on the operations side the parallel experiments would be attributable"
+            - "A tooling gap: a better deploy dashboard would make simultaneous changes safe to attribute"
+            - "A severity mistake: a lower severity would have kept fewer people hands-on in production"
+          why: "Google's incident chapter treats uncoordinated changes as a hazard of its own. Routing production changes through one operations role keeps the timeline readable and prevents one fix undoing another."
+          source: sre-incidents
+  - id: incident-severity
+    name: Severity & declaring an incident
+    layer: ground-cover
+    branch: incidents-and-ownership
+    tier: 0
+    harvest: judged
+    minutes: 30
+    sources: [sre-incidents, pagerduty]
+    summary: "Read 'When to Declare an Incident' in Managing Incidents and, in PagerDuty's Incident Commander training, the Size-Up step and 'Executive Swoop - Questioning Severity'. Notes: the declaration questions, why an unclear case is treated as the higher severity, why severity is reviewed afterwards instead of argued mid-incident, and the levels, thresholds and pages you would define for a service you own."
+    rubric:
+      - "States at least two declaration triggers, such as needing a second team, customer-visible impact, or no solution after about an hour"
+      - "Explains why declaring early is cheap and declaring late is expensive"
+      - "Defines levels with measurable thresholds and says who is paged and what is communicated at each"
+      - "Says what to do when severity is uncertain and when to revisit the classification"
+    prompts:
+      - "Write the severity scale for a service you own: three to five levels, a measurable threshold for each, and who is paged at each. Then name a past incident you would now classify differently."
+      - "Recall an incident that was declared late or never declared. What signal should have triggered the declaration?"
+    questions:
+      water:
+        - q: "Checkout errors are at 4% and climbing. You cannot tell whether this is a SEV-2 or a SEV-1. During the incident you should…"
+          answer: "Treat it as the higher severity and revisit the classification in the postmortem"
+          distractors:
+            - "Hold the response at SEV-2 until the metrics prove that the higher level applies"
+            - "Spend ten minutes agreeing a severity with the team before paging anyone further"
+            - "Pick the lower level so executives are not woken for something that may self-correct"
+          why: "Rounding up costs a few extra people some attention. Debating levels or under-calling delays the very response that limits damage. The classification can be corrected calmly afterwards."
+          source: pagerduty
+        - q: "A teammate has been alone on an unexplained cache anomaly for 70 minutes. No customer has complained. Applying Google's declaration questions, you…"
+          answer: "Declare an incident, because an hour of focused work without a solution is itself a trigger"
+          distractors:
+            - "Wait for the first customer complaint, since only visible customer impact justifies declaring"
+            - "Keep it a ticket because no second team is needed to investigate it yet"
+            - "Ask for a root-cause hypothesis first and declare once there is one to describe"
+          why: "The questions are alternatives: a second team needed, customer-visible, or still unsolved after an hour. Any one is enough, and a quickly closed incident costs far less than a late one."
+          source: sre-incidents
+  - id: owning-outcomes
+    name: Owning outcomes
+    layer: ground-cover
+    branch: incidents-and-ownership
+    tier: 0
+    harvest: judged
+    minutes: 30
+    sources: [outcomes-vs-outputs, staffeng]
+    summary: "Read Product Talk's Outcomes vs. Outputs (a team is done when what it shipped has the expected impact) and 'Work on what matters' on staffeng.com (snacking, preening, chasing ghosts, and 'Finish things'). Notes: the difference between finishing a task and owning the result it was meant to produce, and how you check afterwards that anything changed."
+    rubric:
+      - "Distinguishes finishing assigned tasks from being accountable for the result those tasks were meant to produce"
+      - "Gives a way to check the outcome after shipping, such as a metric, a user conversation or a dated look-back"
+      - "Names at least one trap, such as easy low-impact work or visible work that does not matter"
+      - "Says what an owner does when blocked: raise it early instead of waiting"
+    prompts:
+      - "Describe something you owned end to end. What outcome was it meant to produce, how did you check that it did, and what did you do when it did not?"
+      - "Tell about a time you delivered everything asked of you and the result still missed. What would owning the outcome have changed?"
+    questions:
+      water:
+        - q: "Your team ships the new retry logic on schedule. Two weeks later payment timeouts have not moved. Someone who owns the outcome would…"
+          answer: "Look at the timeout data, find why the change did not help, and re-plan"
+          distractors:
+            - "Close the ticket, because the work was delivered as it was specified and accepted"
+            - "Wait for the next planning cycle, where product can decide whether to revisit the problem"
+            - "Ask for a new ticket that says exactly which timeouts to fix before touching it again"
+          why: "An output is done when it ships; an outcome is done when the behaviour or number it was meant to change has moved. The owner keeps going until the measure moves or they learn why it will not."
+          source: outcomes-vs-outputs
+        - q: "You spend most of the week on small tidy-ups that feel good to finish, while the migration you were asked to lead slips. The StaffEng guide would call the tidy-ups…"
+          answer: "Snacking: easy, rewarding work that quietly crowds out the high-impact work"
+          distractors:
+            - "Preening: low-impact work done mainly because leaders will see it and approve"
+            - "Chasing ghosts: pushing changes imported from a previous company's context"
+            - "Existential work: the kind that has to be done before anything else can matter"
+          why: "Snacks are easy wins that give a sense of progress while the hard, high-impact work waits. Preening is the neighbouring trap: low-impact work chosen because leaders will see it."
+          source: staffeng
+  - id: mitigate-first
+    name: Mitigate before root cause
+    layer: understory
+    branch: incidents-and-ownership
+    tier: 1
+    needs: [incident-roles, incident-severity]
+    harvest: judged
+    minutes: 30
+    sources: [sre-incidents, pagerduty]
+    summary: "Read the Best Practices for Incident Management list at the end of Managing Incidents (especially Prioritize) and the Stabilize step in PagerDuty's Incident Commander training (list actions and their risks, decide, assign). Notes: stop the damage, restore service, preserve evidence, in that order; and the mitigations your own stack offers (rollback, flag off, failover, shed load)."
+    rubric:
+      - "States the order: stop the damage, restore service, preserve evidence for later analysis"
+      - "Lists at least three mitigations that do not need the root cause, such as rollback, flag off, failover, load shedding or scaling"
+      - "Explains how to capture evidence quickly while mitigating, such as logs, snapshots and timestamps"
+      - "Names a case where a mitigation is itself risky and says how you would decide"
+    prompts:
+      - "Write about an incident where a fast mitigation existed but the team kept hunting for the cause, or the reverse. Who decided, and what did it cost?"
+      - "List five mitigations available today for your service's worst plausible outage, and say what evidence each would destroy if used first."
+    questions:
+      water:
+        - q: "A rollback of the 40-minute-old deploy is ready, but the root cause is unknown and an engineer asks for ten more minutes to find it. As incident commander you…"
+          answer: "Roll back now after capturing the logs and state you need, and keep investigating afterwards"
+          distractors:
+            - "Hold the rollback until the cause is confirmed so that the fix is certain to be the right one"
+            - "Roll back, then delete the bad build so that nobody can redeploy it by accident"
+            - "Ask the author of the change to approve the rollback before you take any action"
+          why: "Users are hurting while the team investigates. A quick evidence capture keeps the option of diagnosing later, so restoring service first loses almost nothing."
+          source: sre-incidents
+        - q: "In a database overload, a responder wants to restart the primary. The restart would wipe in-memory query statistics that might explain the overload. The sound approach is…"
+          answer: "Capture the statistics and queue state quickly, then restart, since restoring service comes first"
+          distractors:
+            - "Never restart while the cause is unknown, because diagnosis outranks recovery in an incident for the whole team"
+            - "Restart immediately, since statistics are never worth any delay once users are affected"
+            - "Restart a replica instead, because it will reveal exactly the same information as the primary"
+          why: "The order is stop the damage, restore service, then preserve evidence. Cheap, fast evidence capture honours the third without delaying the second. A replica rarely shares the primary's live state."
+          source: sre-incidents
+  - id: status-cadence
+    name: Status updates during an incident
+    layer: herb
+    branch: incidents-and-ownership
+    tier: 1
+    needs: [incident-roles]
+    harvest: judged
+    minutes: 25
+    sources: [atlassian-comm, pagerduty, sre-incidents]
+    summary: "Read Atlassian's Incident communication best practices ('Tailor alerts and communications to the right audience', 'Part 1: First contact', 'Part 2: Regular updates'), the Update step in PagerDuty's Incident Commander training, and the communication role in Managing Incidents. Notes: who writes updates, a cadence you would commit to for internal and public readers, and the shape of a good update: impact, what is known, what is being done, when the next one comes."
+    rubric:
+      - "Gives a regular cadence for internal and external updates and says who owns each"
+      - "Includes the parts of a good update: current impact, what is known, what is being done, and when the next update comes"
+      - "Explains why an update with no news is still sent"
+      - "Separates confirmed facts from speculation in the wording"
+    prompts:
+      - "Write three status updates (first, mid-incident, resolved) for a real or realistic incident in your system, aimed at customers rather than engineers."
+      - "Describe an incident where stakeholders were left guessing. What update would you have sent, and when?"
+    questions:
+      water:
+        - q: "Twenty-five minutes into an outage nothing has changed, and the next scheduled update is due. The person owning communication should…"
+          answer: "Send it anyway, saying nothing has changed and when the next update will come"
+          distractors:
+            - "Skip it and send one larger update once there is real progress to report to readers"
+            - "Share the current best guess about the cause so that the update contains something concrete"
+            - "Push the next update later, since frequent updates with no news erode confidence"
+          why: "A predictable rhythm tells readers someone is in control, so they stop interrupting responders to ask. Even a line saying nothing is new beats silence, which people read as chaos, and a stated next-update time lets them stop checking. Guesses get read as facts."
+          source: atlassian-comm
+        - q: "Pick the status update that best follows good practice during a payments outage."
+          answer: "About 15% of card payments have failed since 14:05 UTC. We are rolling back a change. Next update by 14:45."
+          distractors:
+            - "Payments may be experiencing intermittent issues caused by a third party. We are investigating further."
+            - "A bad configuration change by the platform team broke checkout. The revert should fix it for everyone very soon."
+            - "We are aware of the issue and our engineers are working hard to resolve it as soon as possible."
+          why: "It states measurable impact, the start time, the current action and a committed next update, with no blame. The others are vague, speculative or point fingers before the facts are known."
+          source: atlassian-comm
+  - id: incident-handover
+    name: Handovers & fatigue
+    layer: herb
+    branch: incidents-and-ownership
+    tier: 1
+    needs: [incident-roles]
+    harvest: judged
+    minutes: 25
+    sources: [sre-incidents, pagerduty]
+    summary: "Read 'Clear, Live Handoff' in Managing Incidents and 'Transfer of Command' in PagerDuty's Incident Commander training. Notes: how to hand over explicitly, what the briefing contains, reasons to hand over (fatigue, changed complexity), and why a more senior person arriving does not move command by itself."
+    rubric:
+      - "Describes an explicit two-way handover: the outgoing commander states it, the incoming one acknowledges, and the room is told"
+      - "Lists what the briefing contains: current state, hypotheses, actions in flight, who is doing what, and the next update time"
+      - "Names at least two reasons to hand over, including fatigue"
+      - "Treats a handover as normal practice, not a failure"
+    prompts:
+      - "Write the handover brief you would give an incoming commander for an incident you remember, in under 200 words. Then note what you forgot to say at the time."
+      - "Describe a long incident you were in. When should the first person have been relieved, and what stopped it?"
+    questions:
+      water:
+        - q: "You have been commander for four hours and your decisions are slowing. A more senior director joins the call. The right handover is…"
+          answer: "Brief whoever you choose, announce to the whole call who now holds command, and wait for their acknowledgement"
+          distractors:
+            - "Let the director take over by default, because seniority outranks the commander role"
+            - "Quietly stop speaking so that command passes to whoever speaks up next"
+            - "Stay in command until the incident ends, because a handover mid-incident wastes time"
+          why: "Command has to be unambiguous at every moment. An explicit, acknowledged handover removes doubt about who decides, and arrival of a senior person does not transfer it implicitly."
+          source: pagerduty
+        - q: "An incident is still open at the end of the day in London, and a commander in another timezone will take over. The outgoing commander should…"
+          answer: "Brief them live by voice or video, say the handover aloud, and stay until they confirm"
+          distractors:
+            - "Post a written summary in the channel and sign off so the successor can read in at their own pace"
+            - "Update the incident document thoroughly and rely on it to carry the whole handover"
+            - "Send the new commander's name to the team in chat and leave once it is posted"
+          why: "A document records state but cannot confirm that the successor has understood it. Google's guidance is a live briefing with an explicit acknowledgement, so no moment exists without a commander."
+          source: sre-incidents
+  - id: escalation-ownership
+    name: Ownership & escalation
+    layer: understory
+    branch: incidents-and-ownership
+    tier: 1
+    needs: [owning-outcomes]
+    harvest: judged
+    minutes: 25
+    sources: [sre-oncall, pagerduty, sre-postmortem]
+    summary: "Read 'Clear escalation paths' in Being On-Call, 'Assigning Tasks' in PagerDuty's Incident Commander training (one named person, time-boxed), and the line in the Postmortem Culture chapter that escalation is not a sin. Notes: concrete triggers for escalating, how to word an escalation (situation, ask, deadline), and why escalating is part of owning the outcome, not a handoff of it."
+    rubric:
+      - "Gives escalation triggers that are not just 'when I feel stuck', such as a passed time-box, rising impact, or authority or access you lack"
+      - "Words an escalation with the situation, the specific ask and a by-when"
+      - "Distinguishes asking for help from handing off the responsibility"
+      - "Explains the cost of waiting too long compared with escalating too early"
+    prompts:
+      - "Write the escalation message you wish you had sent in a real situation where a problem sat too long. Include situation, ask and by-when."
+      - "When did you escalate too late? What was the earliest signal you could have acted on?"
+    questions:
+      water:
+        - q: "You are on call, 30 minutes in. The runbook has not worked, the service owner is asleep, and impact is rising. Owning the outcome means you…"
+          answer: "Page the owner now with what you tried and what you need, and keep working while they join"
+          distractors:
+            - "Finish the remaining runbook steps first so that nobody is woken without exhausting every option"
+            - "Escalate to your manager so that responsibility for the outcome moves to someone senior"
+            - "Post in the team channel and wait for volunteers, so that no one is paged without consent"
+          why: "Escalation is a tool the on-call person uses to reach the outcome faster. It comes with context so the helper can act at once, and the escalator stays engaged rather than handing the problem away."
+          source: sre-oncall
+        - q: "A message sat in a busy channel for 20 minutes with no replies: 'Anyone know why the queue is backing up?' Which rewrite is an effective escalation?"
+          answer: "Queue depth on orders-worker has grown for 20 minutes. I need the owning team to look by 15:30, otherwise I will page them."
+          distractors:
+            - "Hi all, just checking in again on the queue. No rush, whenever someone has a moment to look."
+            - "The orders team has clearly ignored this. Can a manager step in and make them respond?"
+            - "Raising a flag on the queue. It might be nothing, but I wanted to mention it just in case."
+          why: "It states the facts, the specific ask and a deadline with a consequence, so the reader knows what to do and by when. PagerDuty trains commanders to hand out work the same way: a named owner, a clear task, a time-box. The others are vague, accusatory or invite the reader to ignore it."
+          source: pagerduty
+  - id: just-culture
+    name: Just culture & local rationality
+    layer: root
+    branch: incidents-and-ownership
+    tier: 1
+    needs: [owning-outcomes]
+    harvest: judged
+    minutes: 40
+    sources: [allspaw, sre-postmortem]
+    summary: "Read Allspaw's Blameless PostMortems and a Just Culture and, in the Postmortem Culture chapter, the 'Use blameless language' part of Organizational Incentives. Notes: hindsight bias, why people act sensibly given what they knew at the time, first stories versus second stories, and where accountability still sits when you do not blame. Then try turning one 'why did you' question into a 'what did you see' question."
+    rubric:
+      - "Explains why a blame response makes people hide information, with a concrete consequence"
+      - "Says people choose what makes sense from what they knew at the time, and why hindsight distorts judgement"
+      - "Shows where accountability remains: giving a detailed account and helping fix the system"
+      - "Rewrites a blameful question into one about the system"
+    prompts:
+      - "Take a blameful sentence you have heard or written about an incident ('X should have checked') and rewrite it as questions about the system. What answers would you now get?"
+      - "Tell about a time someone was blamed, or not, after a mistake. What did the team learn, or stop sharing?"
+    questions:
+      water:
+        - q: "After a bad config push a manager asks, 'Why didn't you check it first?' To get the engineer's true account, a better opening is…"
+          answer: "What did the situation look like when you applied it, and what did you expect to happen?"
+          distractors:
+            - "Who approved the change, and why was the checklist skipped this time around?"
+            - "Can you promise this will not happen again, so that we can close this review out and move on?"
+            - "Let us skip the details; I only need to know whether this was human error or not."
+          why: "Etsy's blameless reviews gather what the person did, saw and expected at each step, because the action made sense to them then. 'Why didn't you' invites defence, and an engineer who expects a reprimand holds back the very details the system needs to be fixed."
+          source: allspaw
+        - q: "Someone criticises blameless postmortems as 'letting people off the hook'. The best reply is…"
+          answer: "Engineers stay accountable for explaining what happened and for fixing the conditions that allowed it"
+          distractors:
+            - "Accountability is suspended during the review and returns when performance reviews are written each year"
+            - "Blamelessness protects only engineers who have never caused an incident before this one"
+            - "People are held to account in the review in front of the team, which acts as a deterrent"
+          why: "A just culture separates blame from responsibility. People are asked to be open and then to help improve the system, which is more demanding than being told off, and it keeps information flowing."
+          source: allspaw
+  - id: postmortem-doc
+    name: Writing the postmortem
+    layer: shrub
+    branch: incidents-and-ownership
+    tier: 2
+    needs: [just-culture, mitigate-first]
+    harvest: artifact
+    minutes: 60
+    sources: [sre-postmortem, allspaw]
+    summary: "Read the Postmortem Culture chapter of the SRE Workbook, including the bad and good example postmortems and 'Why Is This Postmortem Better?'. Notes: the sections a postmortem needs (summary, impact in numbers, timeline, root causes and trigger, what went well, where we got lucky, action items), how to write without naming culprits, and how fast and how widely to share it."
+    rubric:
+      - "Gives impact in measurable terms and a timeline with detection and mitigation times"
+      - "Describes causes as conditions in the system, with no individual named as the cause"
+      - "Has a section on what went well and where luck helped"
+      - "Has action items with an owner, a priority and a tracking link"
+      - "Is published within days and shared with the people who would benefit"
+    prompts:
+      - "Write a blameless postmortem of a real incident you were part of, anonymised. Include summary, impact, timeline, contributing factors, what went well and action items."
+      - "Take a blameful postmortem you have read and rewrite its summary and cause paragraphs so that no person is the cause."
+    questions:
+      water:
+        - q: "Two postmortems describe the same outage. Which one shows the habits of a good postmortem?"
+          answer: "Impact stated in numbers with linked data, causes framed as gaps in the system, shared company-wide within days"
+          distractors:
+            - "A vivid account of who made which mistake, kept within the team and published once quarterly reviews finish"
+            - "A short note on the fix applied, calling the impact significant, shared once all the follow-ups are closed"
+            - "The full chat log pasted in without a summary, written by the on-call engineer alone and shared on request"
+          why: "The workbook contrasts postmortems that quantify impact, locate causes in the system and publish quickly with ones that blame people, stay vague and arrive months late. Speed and reach keep the lessons fresh."
+          source: sre-postmortem
+        - q: "A draft says, 'The root cause was Priya running the migration without a dry run.' The best revision is…"
+          answer: "The migration tool ran destructive steps without requiring a dry run or a confirmation prompt"
+          distractors:
+            - "The root cause was an engineer's decision under pressure to skip validation steps"
+            - "Priya, who was new to the team, ran a migration she had not been trained on"
+            - "A migration ran without a dry run, and the engineer has since been reminded of the process and checklist"
+          why: "Blameless writing describes what the system allowed, which gives the team something to change. Each alternative still points at a person, or relies on a reminder, which fixes nothing."
+          source: sre-postmortem
+  - id: oncall-health
+    name: On-call health & toil
+    layer: vine
+    branch: incidents-and-ownership
+    tier: 2
+    needs: [incident-handover, escalation-ownership]
+    harvest: judged
+    minutes: 40
+    sources: [sre-oncall]
+    summary: "Read Being On-Call in the SRE book. Notes: the caps (share of time on call, incidents per shift, operations work versus engineering), team-size arithmetic, signs of burnout, and levers for fixing an unhealthy rota: removing noisy alerts, compensation, clear escalation paths, handing back the pager."
+    rubric:
+      - "Approximates the caps: no more than about a quarter of time on call, about two incidents per shift, operations work capped near half of time"
+      - "Explains why a rota below a minimum team size is unsafe"
+      - "Names at least three signals of an unhealthy rota, such as night pages, repeated alerts or no follow-up"
+      - "Gives two concrete levers to improve it and says which you would pull first"
+    prompts:
+      - "Audit the on-call load for a rota you know: pages per shift, night pages, repeated alerts, time spent on follow-up. Say what is unhealthy and what you would change first."
+      - "Write a one-page proposal to your manager to fix an on-call problem you have lived with, using numbers."
+    questions:
+      water:
+        - q: "A single-site team of five engineers shares one 24/7 pager rota. By Google's team-size guidance, the most likely problem is…"
+          answer: "Too few people: a single-site rota needs about eight to keep on-call near a quarter of time"
+          distractors:
+            - "Too many people: the pager rotates so slowly that nobody stays practised at responding to pages"
+            - "Nothing: team size matters less than how many alerts the system happens to fire"
+            - "Too little process: a written rota solves size problems regardless of the headcount"
+          why: "With a quarter of time on call as the ceiling, the arithmetic needs enough people to rotate through. A small rota means more nights and weekends each, and exhaustion follows."
+          source: sre-oncall
+        - q: "One week of on-call produced eleven pages, nine of them the same disk alert at 3am that cleared itself. The best first move is…"
+          answer: "Fix or remove the alert so it stops waking people, since repeated noise is toil you can eliminate"
+          distractors:
+            - "Raise the on-call stipend so that the repeated pages are fairly compensated for the lost sleep they cause"
+            - "Shorten shifts to three days so that the burden of the noise is shared more widely"
+            - "Add a second engineer to each shift so the pages can be split between two people"
+          why: "Compensation and rota tweaks share the pain but leave the cause. An alert that fires without needing action is pure waste; deleting or fixing it improves every future shift."
+          source: sre-oncall
+  - id: contributing-factors
+    name: Contributing factors, not one root cause
+    layer: root
+    branch: incidents-and-ownership
+    tier: 3
+    needs: [postmortem-doc]
+    harvest: judged
+    minutes: 45
+    sources: [allspaw, bergstrom-traps, sre-postmortem]
+    summary: "Read Allspaw's article (first versus second stories), Bergstrom's Three Analytical Traps (the mechanistic-reasoning trap) and, in the Postmortem Culture chapter, the 'Depth' notes on the good example and 'Repeating incidents'. Notes: why complex failures need several conditions together, how to find them by asking what made sense at the time, and what a single 'root cause' statement hides."
+    rubric:
+      - "Explains why a complex failure usually needs several conditions together and none is sufficient alone"
+      - "Lists at least three distinct contributing factors for one real incident, across technical, process and organisational areas"
+      - "Shows how asking what made sense at the time brings the factors out"
+      - "Explains the downside of a single root cause: a narrow fix and blame on the last step"
+    prompts:
+      - "For one real incident, list at least four contributing factors and say what would have had to be true for each not to contribute. Then say what a single root-cause statement would have hidden."
+      - "Pick a public postmortem and find the factors it lists. Which one would you have missed with a root-cause template?"
+    questions:
+      water:
+        - q: "A deploy took down search. The facts: a missing alert, an untested config path, an overloaded reviewer, and a late-night deploy. Calling the root cause 'the author's bad config' mainly…"
+          answer: "Stops the analysis at the last human step and hides the conditions that let it become an outage"
+          distractors:
+            - "Keeps the postmortem short and focused, which is the main benefit of choosing one cause"
+            - "Is accurate, since only the config change was necessary for the outage to take place"
+            - "Is fair provided that the report also names the reviewer who approved the same change as well"
+          why: "Every listed condition had to be present for the config error to reach customers. Naming only the last step narrows the fixes to one place and makes the person who touched it the story."
+          source: allspaw
+        - q: "A faulty certificate-renewal script causes an outage and is fixed. Two weeks later a different expired certificate causes another. The pattern suggests…"
+          answer: "The fix removed one trigger but not the missing expiry monitoring and ownership that let certificates lapse"
+          distractors:
+            - "The script fix was incomplete, so the same script needs another round of testing"
+            - "Certificates are inherently unreliable, so the occasional repeat is an acceptable cost"
+            - "The on-call engineer should have noticed the expiry, so more training is the lasting fix"
+          why: "Fixing the trigger leaves the conditions in place for the next trigger. Looking for factors such as monitoring gaps and unclear ownership changes what the team builds next."
+          source: sre-postmortem
+  - id: action-items
+    name: Action items that get done
+    layer: herb
+    branch: incidents-and-ownership
+    tier: 3
+    needs: [postmortem-doc]
+    harvest: artifact
+    minutes: 40
+    sources: [sre-postmortem]
+    summary: "Re-read the action-item parts of the SRE Workbook's Postmortem Culture chapter ('Concrete action items', 'Missing ownership' and 'Reward action item closeout'). Notes: an owner, a priority, a tracking link and a verifiable end state for each item; preventive versus mitigating items; why 'improve monitoring' fails; and how completion gets reviewed."
+    rubric:
+      - "Each item has one named owner, a priority, a tracking link and a done state anyone can verify"
+      - "Separates items that prevent recurrence from items that only reduce impact or speed detection"
+      - "Avoids vague verbs such as improve or investigate without a deliverable"
+      - "Says how completion is reviewed: a date, a forum, and who chases"
+    prompts:
+      - "Take the action items from a real postmortem (yours or a public one) and rewrite each with an owner, a priority, a tracking link and a verifiable end state. Mark which are preventive."
+      - "Find an action item from your history that never got done. Why not, and how would you design the process so it does?"
+    questions:
+      water:
+        - q: "A postmortem lists 'Improve alerting for the payment queue.' Which rewrite is a testable action item?"
+          answer: "Page on-call when payment-queue age exceeds 5 minutes; owner Ana, P1, ticket OPS-412, done when a staged alert fires"
+          distractors:
+            - "Look into whether alerting for the payment queue could be made better, with the payments team as owner"
+            - "Ensure that on-call engineers pay closer attention to the payment queue dashboard during their shifts"
+            - "Add better monitoring to the payment queue and consider tuning alert thresholds in the next quarter"
+          why: "A good item can be checked by someone who was not in the room: a threshold, a named owner, a priority, a tracker link and a test. 'Look into' and 'pay attention' cannot be verified."
+          source: sre-postmortem
+        - q: "Six weeks after an outage, only the 'write documentation' item is complete; the code fix and rate-limit change are open. What process change helps most?"
+          answer: "Give each item a priority and a tracker link, and review open items regularly with someone chasing owners"
+          distractors:
+            - "Cut the list to a single item so there is less for anyone to forget over time"
+            - "Make completion a personal commitment judged at the annual performance review"
+            - "Wait for a repeat outage, which will supply the motivation to prioritise the fix"
+          why: "Items rot when nobody reviews them against competing work. Visible priority, a tracker and a recurring review with an owner-chaser turn good intentions into scheduled work."
+          source: sre-postmortem
+  - id: error-budget-talk
+    name: Error-budget conversations
+    layer: vine
+    branch: incidents-and-ownership
+    tier: 3
+    needs: [oncall-health]
+    harvest: judged
+    minutes: 45
+    sources: [sre-error-budget]
+    summary: "Read Appendix B of the SRE Workbook, the example error budget policy. Notes: how an SLO implies a budget, what the example policy does when the budget is spent, which exceptions it allows, who breaks ties, and how to hold the conversation with product when reliability and features compete."
+    rubric:
+      - "Explains that the budget is the unreliability the SLO allows over a window"
+      - "States what the example policy does when the budget is spent and one legitimate exception"
+      - "Frames the conversation as a shared, data-led decision with product, not engineering vetoing features"
+      - "Says who breaks ties when the two sides disagree"
+    prompts:
+      - "Role-play: you own the service, 90% of the budget is spent with two weeks left, and product wants a launch. Write what you say, what data you show and what you propose."
+      - "Draft an error-budget policy for a service you own: window, thresholds, consequences, exceptions and who settles disagreements."
+    questions:
+      water:
+        - q: "A service burned most of its quarterly error budget in one 3-hour outage. Product wants a risky launch next week. The most useful conversation starts from…"
+          answer: "The remaining budget and the SLO, agreeing in advance what spending or exhausting it triggers"
+          distractors:
+            - "Engineering's standing right to refuse any launch the team feels uneasy about"
+            - "The number of incidents last quarter compared with other teams in the company"
+            - "A promise of zero outages across the launch period in exchange for approval to proceed with it"
+          why: "A policy agreed in advance turns an argument about opinions into a decision about a shared number. Both sides know the rules before the budget is spent, so nobody feels ambushed."
+          source: sre-error-budget
+        - q: "Under the workbook's example policy, one incident consumes 30% of the four-week budget. The policy requires…"
+          answer: "A postmortem with at least one top-priority action item addressing the cause"
+          distractors:
+            - "An immediate company-wide feature freeze until the SLO has recovered for the service"
+            - "A rollback of the most recent release across every service owned by the team"
+            - "A review by the CTO, who decides whether the team may keep deploying at all"
+          why: "The example sets a 20% single-incident threshold. Crossing it forces learning with a prioritised fix. Halts on releases are tied to exhausting the whole budget, and the CTO settles disputes about the policy itself."
+          source: sre-error-budget
+  - id: multi-team-incident
+    name: Running a multi-team incident
+    layer: canopy
+    branch: incidents-and-ownership
+    tier: 3
+    needs: [mitigate-first, status-cadence, incident-handover, oncall-health]
+    harvest: judged
+    minutes: 60
+    sources: [sre-incidents, pagerduty]
+    summary: "Re-read Managing Incidents end to end, plus PagerDuty's Incident Commander training on span of control and splitting off sub-teams. Notes: one commander with area leads beneath, one live state document, channel discipline, liaisons for outside parties, and relieving people during long incidents."
+    rubric:
+      - "Describes one commander in charge with area leads for sub-teams, each owning a part of the response"
+      - "Names how information flows: a single state document, one place for decisions, liaisons for outsiders"
+      - "Explains how to relieve people in a long incident and keep the commander fresh"
+      - "Names two failure modes at scale, such as duplicate work or conflicting changes, and how to prevent them"
+    prompts:
+      - "Describe an incident that crossed team boundaries. How did you decide who led, how did information move, and what would you structure differently?"
+      - "Sketch in text the command structure for a six-team outage at your company: roles, channels, update owners and handover points."
+    questions:
+      water:
+        - q: "Storage, network and application teams are each chasing separate theories of the same outage, and their changes overlap. As overall commander you…"
+          answer: "Give each area a lead who reports to you, agree who may change production, and keep one shared state document"
+          distractors:
+            - "Let each team run its own incident and compare their notes after the outage is over"
+            - "Ask the most senior engineer from each team to join your call and debate until all agree"
+            - "Take over all the hands-on work yourself so that a single person orders every change"
+          why: "Structure grows by delegating areas, not by merging everyone into one debate. A single state document and one change authority stop duplicated effort and conflicting fixes."
+          source: sre-incidents
+        - q: "Eight hours in, the same five people are still on the incident and decisions are getting worse. The commander should…"
+          answer: "Plan relief now: bring in fresh responders, hand roles over with briefings, and send people to rest"
+          distractors:
+            - "Press on, since swapping people loses context at the worst possible moment"
+            - "Pause all work on the incident until morning so that the whole team returns rested"
+            - "Keep the commander and operations lead in place but send everyone else home at once"
+          why: "Fatigue is a hazard, and the best practices list says to watch for overwhelm. Planned rotation with proper briefings preserves context while restoring judgement, which a pause would not."
+          source: sre-incidents
+  - id: learning-from-incidents
+    name: Learning from incidents as a programme
+    layer: canopy
+    branch: incidents-and-ownership
+    tier: 4
+    needs: [contributing-factors, action-items, multi-team-incident]
+    harvest: judged
+    minutes: 60
+    sources: [sre-postmortem, allspaw]
+    summary: "Read 'Organizational Incentives' in the SRE Workbook's Postmortem Culture chapter (Reward Postmortem Outcomes, Share Postmortems Openly, Respond to Postmortem Culture Failures) and re-read Allspaw. Notes: how a company turns single incidents into shared learning: review forums, a findable repository, reading groups, leaders taking part, and how to tell whether it works."
+    rubric:
+      - "Describes a recurring forum where postmortems are reviewed and closed out"
+      - "Says how postmortems are shared and found across teams"
+      - "Names ways leaders reinforce the culture, such as taking part, recognition and modelling no-blame"
+      - "Proposes a way to tell the programme is working that is not simply 'fewer incidents'"
+    prompts:
+      - "Design a lightweight incident-learning programme for a 40-engineer organisation: triggers, review forum, repository, and how you would know after six months that it works."
+      - "Describe a postmortem that changed something beyond the team that wrote it. How did the learning travel?"
+    questions:
+      water:
+        - q: "Postmortems at your company get written but nobody reads other teams' reports. A change that best builds shared learning is…"
+          answer: "A regular review forum and a shared repository, with leaders attending and good write-ups recognised"
+          distractors:
+            - "A rule that every postmortem is emailed to all staff on the day it is completed"
+            - "A quarterly ranking of teams by the number of incidents each of them had"
+            - "A longer template with more fields, so that every report captures the same detail"
+          why: "Reading happens when there is a place and an occasion for it, and when seniors visibly care. Mass email and rankings add noise or fear without creating a reason to learn."
+          source: sre-postmortem
+        - q: "A VP proposes measuring the incident programme by 'fewer postmortems written this quarter'. The main risk is…"
+          answer: "Teams will declare fewer incidents or write fewer postmortems, so learning drops while the number looks good"
+          distractors:
+            - "The count is too noisy to be statistically meaningful over a single quarter"
+            - "Writers will treat the metric as a deadline and publish thinner postmortems sooner"
+            - "Executives will stop attending reviews because the volume of reports has fallen"
+          why: "A measure of output rewards hiding the work. Better signals are action-item completion, reuse of lessons across teams and how quickly people report problems."
+          source: sre-postmortem
+  - id: ics-wildfire
+    name: Incident Command System origins
+    layer: root
+    branch: incidents-and-ownership
+    tier: 4
+    needs: [multi-team-incident]
+    wild: true
+    harvest: judged
+    minutes: 20
+    sources: [sre-incidents]
+    summary: "Read the sentence in Managing Incidents saying Google's incident management is based on the Incident Command System, and follow its footnote to FEMA's incident management material. Notes: what ICS is, why emergency services standardised on a modular command structure, and which of its properties software borrowed."
+    rubric:
+      - "Says ICS is a standard, modular command structure from emergency services"
+      - "Names two properties that make it work, such as a single commander, clear roles or a structure that scales"
+      - "Connects each property to a practice in software incident response"
+      - "Notes one place where software differs from a physical emergency"
+    prompts:
+      - "Pick two ICS ideas (single commander, scalable structure, span of control, common terminology) and explain how you would apply each in your team's next incident."
+    questions:
+      water:
+        - q: "Google says its incident management is built on a framework from emergency services. Which property makes it fit software outages?"
+          answer: "It scales: the same roles work for a small incident and for a very large one"
+          distractors:
+            - "It removes the need for written procedures while the incident is under way"
+            - "It lets each responder act on their own judgement without coordinating with anyone"
+            - "It requires all responders to work from one room, which keeps communication tight"
+          why: "A modular structure lets the same roles stretch from two people to hundreds, with sub-areas added as needed. That consistency lets people from different teams pick up their part quickly."
+          source: sre-incidents
+        - q: "A small incident has only two people involved. Command-system thinking suggests…"
+          answer: "Still name who commands and who does the hands-on work, even if one person holds extra roles"
+          distractors:
+            - "Skip roles entirely, as they apply only once an incident passes a size threshold"
+            - "Wait for a full team to assemble so that every role can be properly filled"
+            - "Have both people command jointly so that neither feels demoted in the response"
+          why: "Roles are cheapest to practise when the stakes are small, and the structure is the same one used when the incident grows. A single decider avoids two people issuing conflicting instructions."
+          source: sre-incidents
+  - id: counterfactual-trap
+    name: Counterfactual language in reviews
+    layer: herb
+    branch: incidents-and-ownership
+    tier: 3
+    needs: [postmortem-doc]
+    wild: true
+    harvest: judged
+    minutes: 20
+    sources: [bergstrom-traps, allspaw]
+    summary: "Read Bergstrom's Three Analytical Traps (the first trap, counterfactual reasoning) and the hindsight-bias and first-versus-second-story parts of Allspaw's article, then scan a real postmortem for 'should have' sentences. Notes: why such sentences describe what did not happen, and how to turn them into what the person saw, expected and did."
+    rubric:
+      - "Defines a counterfactual statement (should have, could have, if only) with an example"
+      - "Explains why such statements teach little about what actually happened"
+      - "Rewrites at least two of them as what was seen, what was expected and why it was reasonable"
+      - "Names hindsight bias as the reason they feel natural"
+    prompts:
+      - "Highlight every 'should have', 'could have' and 'failed to' in a real postmortem or incident thread. Rewrite each as what was seen, what was expected and why that was reasonable."
+    questions:
+      water:
+        - q: "A review document says, 'The engineer should have noticed the disk was at 98%.' What does that sentence mainly contribute?"
+          answer: "A story about something that did not happen, resting on knowledge that exists only afterwards"
+          distractors:
+            - "A precise statement of the missed control, which moves the follow-up forward quickly"
+            - "A neutral account of the facts, because it names no character flaw in the engineer"
+            - "Evidence of the root cause, because it identifies the step that was skipped on the day of the outage"
+          why: "Counterfactuals judge the past using the present's knowledge. They say nothing about what the engineer actually saw, what was on their screen or what competed for their attention."
+          source: bergstrom-traps
+        - q: "Which rewrite replaces a counterfactual with something the team can learn from?"
+          answer: "The disk graph sat on a dashboard nobody had open, and its alert threshold was 99% with pages going to a retired channel"
+          distractors:
+            - "The engineer failed to monitor the disk graph, which a careful operator would have checked"
+            - "Had the alert been set at 90%, the outage would never have happened in the first place"
+            - "Disk usage rose without anyone paying sufficient attention to the graph for several days"
+          why: "It describes conditions that actually existed, and each can be changed. The others either blame attention or imagine a different past, and neither says what to build."
+          source: bergstrom-traps
+  - id: star-stories
+    name: STAR stories for interviews
+    layer: herb
+    branch: people-and-decisions
+    tier: 0
+    harvest: artifact
+    minutes: 40
+    sources: [star-method, rework-interviewing]
+    summary: "Read MIT CAPD's guide to the STAR method (Situation, Task, Action, Result, with a suggested time split, 'I' over 'we', and quantified results) and the behavioral-questions part of Google re:Work's structured interviewing guide. Then draft one story. Notes: what interviewers score (your actions), how to quantify a result, and how to end on what you learned."
+    rubric:
+      - "Opens with a brief situation and task a stranger can follow in about twenty seconds"
+      - "Spends most of the time on what you personally did, naming others' parts without hiding behind 'we'"
+      - "Ends with a result that is measured or observable, plus what you would do differently"
+      - "Is true, specific to one event, and fits about two minutes"
+    prompts:
+      - "Write a STAR story about a time you handled something that went wrong in production. Keep it near 300 words and make the result measurable."
+      - "Write a STAR story about a time you disagreed with a technical decision. Say what you did and what happened."
+    questions:
+      water:
+        - q: "An interviewer asks, 'Tell me about a time you improved reliability.' The strongest structure for your answer is…"
+          answer: "Brief context, the problem you owned, the steps you took, and a measured result"
+          distractors:
+            - "A tour of your architecture, followed by the tools the team chose and why they won"
+            - "A list of the skills involved, each one tied to a technology that is used in your stack"
+            - "A description of how the whole team succeeded, with credit shared equally among all of you"
+          why: "Behavioural questions look for evidence of what you did in a real case and what it achieved. Context orients the listener, but the action and the result are what get scored."
+          source: star-method
+        - q: "Your story spends three minutes on the situation, then ends, 'we fixed it and it worked'. The main weakness is…"
+          answer: "The action and result are thin, so the interviewer cannot see what you did or what changed"
+          distractors:
+            - "The story lacks a villain, which gives it no tension to hold the interviewer's interest"
+            - "Using 'we' is always disqualifying, even when the whole team really did act together"
+            - "Interviewers score tool names above outcomes, and the story names no tools at all, which they notice"
+          why: "The points in a behavioural answer sit in your own steps and the measurable result. A long set-up with a vague finish leaves the listener unable to evaluate anything you did."
+          source: star-method
+  - id: saying-no
+    name: Saying no & prioritising
+    layer: ground-cover
+    branch: people-and-decisions
+    tier: 0
+    harvest: judged
+    minutes: 35
+    sources: [larson-saying-no, shapeup, amazon-2016]
+    summary: "Read Will Larson's Saying no (the Priorities part: list the asks, set guiding principles, test a new ask against current work), Shape Up's Set Boundaries chapter (the soft 'maybe some day' for raw ideas) and the disagree-and-commit passage of Amazon's 2016 letter. Notes: how to say no or not now without damaging the relationship, how to offer a smaller version, and how to make the trade-off visible (what falls off if this goes in)."
+    rubric:
+      - "Says no to the request, not the person, and gives the reason in terms the requester cares about"
+      - "Makes the trade-off explicit: what would be dropped, delayed or reduced"
+      - "Offers an alternative such as smaller scope, a later date or a different owner"
+      - "Hands the choice to the person entitled to make it when priorities conflict"
+    prompts:
+      - "Write the reply you would send to a stakeholder asking for a two-week feature while your team is full. Include the trade-off and an alternative."
+      - "Recall a time you said yes and regretted it. What would a good 'not now' have looked like?"
+    questions:
+      water:
+        - q: "Product asks for a new report this sprint. The team is fully committed to a payments deadline. The strongest reply is…"
+          answer: "We can do it only by dropping something; here are the options, which do you prefer?"
+          distractors:
+            - "We will fit it in, though expect some slippage on the payments deadline as a result"
+            - "We are too busy right now, so please try again with the request next quarter"
+            - "I will check with the team and let you know whether it is going to be possible"
+          why: "It treats the capacity as real and gives the decision to the person who owns priorities. Silent slippage and flat refusals both hide the trade-off that the requester needs to see."
+          source: larson-saying-no
+        - q: "You think a request is low value, but a director wants it. The best approach is…"
+          answer: "State your concern once with data, ask the director to decide the trade-off, then do the work"
+          distractors:
+            - "Do it slowly so that the cost shows up without having to confront anyone"
+            - "Refuse outright, since low-value work should never be allowed onto the roadmap"
+            - "Agree for now and quietly drop it if the director seems to forget about it later"
+          why: "You owe the decision-maker your honest view and the cost, not a veto. Once they have chosen with full information, committing fully is the disagree-and-commit move, and delivering well keeps trust. Slow-walking or dropping it quietly burns it."
+          source: amazon-2016
+  - id: feedback-sbi
+    name: Feedback with situation-behaviour-impact
+    layer: herb
+    branch: people-and-decisions
+    tier: 0
+    harvest: judged
+    minutes: 30
+    sources: [sbi]
+    summary: "Read the Situation-Behavior-Impact description at Untools. Notes: the three parts, the difference between behaviour (what a camera would record) and interpretation, how impact is stated as effect rather than judgement of character, and the optional intent question that follows."
+    rubric:
+      - "Names the situation with a time and place"
+      - "States behaviour as something observable, with no motive or character label"
+      - "States impact as a concrete effect on the work, the team or you"
+      - "Invites a reply, for example by asking about intent, instead of lecturing"
+      - "Rewrites at least one vague criticism in the format"
+    prompts:
+      - "Write SBI feedback for a real colleague, one positive and one constructive. Then rewrite a piece of vague feedback you have received (for example 'be more proactive') in the format."
+    questions:
+      water:
+        - q: "Which feedback follows Situation-Behaviour-Impact?"
+          answer: "In Tuesday's design review you interrupted Sam three times, and she stopped offering her option."
+          distractors:
+            - "You are often dismissive in meetings, which shows that you do not respect your teammates or their time."
+            - "Be more careful about letting others speak, as it affects how people see you overall."
+            - "In meetings you obviously feel that your ideas matter more than everyone else's ideas."
+          why: "It names an occasion, describes what could be observed and states a concrete effect. The alternatives judge character or motive, which the person can only defend against."
+          source: sbi
+        - q: "After your feedback, the colleague says, 'I interrupted because I thought we were out of time.' The best next step is…"
+          answer: "Treat it as information about intent, acknowledge it, and discuss how to meet the aim without the impact"
+          distractors:
+            - "Say that intent is irrelevant and end the conversation there so the message stays clear"
+            - "Drop the feedback, because good intent means that there was no real problem"
+            - "Add a second behaviour from last month to show that the pattern is longer-standing"
+          why: "Intent and impact can differ, and SBI exists to surface the gap. Hearing the intent shows you the reason; discussing how to reach it without the effect is where the change comes from."
+          source: sbi
+  - id: design-docs
+    name: Design docs & RFCs
+    layer: shrub
+    branch: people-and-decisions
+    tier: 0
+    harvest: artifact
+    minutes: 60
+    sources: [design-docs-google, staffeng-strategy]
+    summary: "Read Design Docs at Google by Malte Ubl (context and scope, goals and non-goals, the actual design, alternatives considered, length, and 'When not to write a design doc'), then the design-document advice in Will Larson's Writing engineering strategy ('Write five design docs'). Notes: the sections a design doc needs, who reviews it, and when it is not worth writing. Read one real design doc from your own company too."
+    rubric:
+      - "States the problem and goals, with explicit non-goals"
+      - "Compares at least two alternatives, including doing nothing, on the same criteria"
+      - "Sets out risks, a rollout and how the change would be reversed"
+      - "Is short enough to be read and ends with a clear ask: decision, reviewers, date"
+    prompts:
+      - "Write a design doc of two pages or fewer for a real change you want to make. Include goals and non-goals, two alternatives and a rollout."
+      - "Critique a design doc you wrote against the rubric: what was missing, and what did reviewers ask that it should have answered?"
+    questions:
+      water:
+        - q: "A reviewer says your RFC reads like an announcement rather than a proposal. The most likely missing element is…"
+          answer: "Alternatives that were seriously considered, with the reasons each was set aside"
+          distractors:
+            - "A longer implementation section containing class diagrams and detailed sequence charts"
+            - "A list of every team that has already signed off before reviewers get to see it"
+            - "A timeline showing that the developers are already well on the way to finishing"
+          why: "A proposal invites a choice, and a choice needs options. Showing the alternatives and why they lost lets reviewers test your reasoning instead of just approving your conclusion."
+          source: design-docs-google
+        - q: "When is a design doc probably not worth writing?"
+          answer: "For a reversible, low-risk change that one reviewer can judge during an ordinary code review"
+          distractors:
+            - "For a schema change to a ledger table that would be painful to undo once data is flowing"
+            - "For a change that needs several teams to alter their services and agree on a shared contract"
+            - "For a choice between two designs where the reviewers already disagree about which is better"
+          why: "A design doc is overhead that pays off when the answer is ambiguous or needs consensus and senior review. When one reviewer can judge a small, reversible change in code review, the doc adds cost without adding insight."
+          source: design-docs-google
+  - id: psych-safety
+    name: Psychological safety
+    layer: vine
+    branch: people-and-decisions
+    tier: 1
+    needs: [feedback-sbi]
+    harvest: judged
+    minutes: 40
+    sources: [edmondson]
+    summary: "Read Amy Edmondson's How Fearless Organizations Succeed (strategy+business): her definition of psychological safety, what it is not (niceness or low standards), and the leader behaviours that build it, such as framing the work and responding with appreciation. Her 1999 paper in Administrative Science Quarterly is the original definition. Notes: the definition, what it is not, and three leader behaviours you could use."
+    rubric:
+      - "Defines it as a shared belief that speaking up, asking and admitting error will not be punished"
+      - "Says it is compatible with high standards and distinguishes it from being nice"
+      - "Lists three leader behaviours that build it, each with an example sentence"
+      - "Describes one signal that it is missing in a team you know"
+    prompts:
+      - "Describe a team where it was safe, or unsafe, to say 'I don't know' or 'I broke it'. What did the leader do that made the difference?"
+      - "Write what you will say in your next team meeting to make it easier to raise a problem, and what you will do the first time someone does."
+    questions:
+      water:
+        - q: "A junior engineer hid a failed migration for a day for fear of the reaction. The most direct fix is…"
+          answer: "Respond to the next piece of bad news with thanks and curiosity, visibly, so reporting problems is rewarded"
+          distractors:
+            - "Add a mandatory migration checklist that needs sign-off from a senior engineer"
+            - "Ask the junior engineer to be braver, since speaking up is a professional duty"
+            - "Remove all consequences for failed migrations by lowering the quality bar for them"
+          why: "People infer safety from how leaders react to the last bad news. A thankful, curious response shows that reporting early is welcome, and it does so without lowering any standard."
+          source: edmondson
+        - q: "A manager says, 'We have psychological safety; I never raise my voice.' The flaw is…"
+          answer: "Safety is the team's shared belief, shown by whether people really speak up, not the manager's intent"
+          distractors:
+            - "Safety needs regular social events outside work so that trust can build up between people"
+            - "Safety is about politeness, so avoiding a raised voice is basically enough to have it"
+            - "Safety applies to formal meetings only, where raising one's voice is the main risk"
+          why: "It is measured in the experience of the team: do people ask questions, flag errors and disagree? A leader can be calm and still be someone nobody dares to tell bad news."
+          source: edmondson
+  - id: adr
+    name: Architecture decision records
+    layer: shrub
+    branch: people-and-decisions
+    tier: 1
+    needs: [design-docs]
+    harvest: artifact
+    minutes: 40
+    sources: [nygard-adr]
+    summary: "Read Michael Nygard's Documenting Architecture Decisions. Notes: the five fields (title, status, context, decision, consequences), why one decision per short document, why records live in the repo and are numbered, and why a reversed decision is superseded rather than deleted."
+    rubric:
+      - "Lists the fields: title, status, context, decision and consequences"
+      - "Writes the context as neutral forces at play, not an argument for the answer"
+      - "Writes the decision in the active voice ('We will…') and consequences as good, bad and neutral"
+      - "Explains why records are numbered, kept in the repo and superseded rather than edited"
+    prompts:
+      - "Write an ADR for a real decision your team made in the last six months. Use all five fields and include at least one negative consequence."
+      - "Pick an old decision nobody can explain and write the ADR you wish had existed."
+    questions:
+      water:
+        - q: "Two years on, the team replaces the queue technology that an ADR chose. What should happen to that ADR?"
+          answer: "Keep it, mark its status superseded, and link to the new ADR that replaces it"
+          distractors:
+            - "Delete it so that new engineers are not misled by a choice that is now out of date"
+            - "Edit it in place to describe the new technology so that the record stays current"
+            - "Move it to a wiki archive and keep only the latest decision in the repository"
+          why: "The value of the log is the history of why things changed. A superseded record shows that the old decision was once sound and explains the world that led to the new one."
+          source: nygard-adr
+        - q: "Which sentence belongs in the decision section of an ADR?"
+          answer: "We will publish domain events through a transactional outbox rather than by dual writes."
+          distractors:
+            - "Teams want reliable events, and dual writes have lost messages for us in the past."
+            - "Event delivery becomes at-least-once, so consumers must de-duplicate messages themselves."
+            - "Status: accepted by the platform group on 12 March after two review rounds."
+          why: "The decision section states the choice in full sentences, in the active voice. The other lines are context, consequences and status, which have their own sections in the template."
+          source: nygard-adr
+  - id: estimating
+    name: Estimating under uncertainty
+    layer: herb
+    branch: people-and-decisions
+    tier: 1
+    needs: [saying-no]
+    harvest: judged
+    minutes: 40
+    sources: [cone-of-uncertainty, shapeup]
+    summary: "Read Construx's The Cone of Uncertainty (why early estimates span a wide range, how decisions narrow it, and why commitments should wait) and Shape Up's Set Boundaries chapter (appetite versus estimate, fixed time with variable scope). Notes: why an estimate starts from a design and an appetite starts from a budget, how unknowns widen the range early on, and how to give a range with a confidence and a date to re-estimate."
+    rubric:
+      - "Distinguishes an estimate (how long will this take) from an appetite (how much is this worth)"
+      - "Gives estimates as ranges with a confidence and assumptions, not as one date"
+      - "Names sources of uncertainty, such as unknowns, dependencies and interruptions, and how to shrink them"
+      - "Explains fixed time with variable scope as a lever when the range is too wide"
+    prompts:
+      - "Take work you will do soon. Give a range with your confidence, list the three biggest unknowns, and say what you will have learned by when to narrow it."
+      - "Recall an estimate that was badly wrong. What was unknown at the time, and what would have shown it sooner?"
+    questions:
+      water:
+        - q: "A stakeholder wants 'a date' for a project built on a vendor integration nobody on the team has used. The most honest answer is…"
+          answer: "A range with a confidence level, naming the vendor unknowns and when a spike will narrow it"
+          distractors:
+            - "A single date padded by half again for safety, so there is something to plan against"
+            - "No answer at all until the integration has been fully designed, since any date is just a guess"
+            - "The date the team feels most optimistic about, to be revised as problems show up"
+          why: "Early on, the real spread is wide and a single date hides it. A range with its unknowns tells the stakeholder what could move and what you will do to learn it."
+          source: cone-of-uncertainty
+        - q: "Leadership has six weeks of appetite for an idea that engineers sized at ten weeks. The Shape Up response is…"
+          answer: "Treat six weeks as the budget and reshape the scope until a version fits that time"
+          distractors:
+            - "Keep the scope and add engineers until the estimate shrinks to fit six weeks"
+            - "Run the ten-week plan, because estimates should never be changed by a budget"
+            - "Halve the estimate on paper to show leadership a more acceptable delivery date to plan around"
+          why: "An appetite is a decision about value; the design bends to it. Adding people late rarely shortens work, and pretending the estimate is smaller only moves the surprise to the deadline."
+          source: shapeup
+  - id: review-mentoring
+    name: Mentoring through code review
+    layer: herb
+    branch: people-and-decisions
+    tier: 1
+    needs: [feedback-sbi]
+    harvest: judged
+    minutes: 35
+    sources: [eng-practices]
+    summary: "Read Google's engineering practices page on how to write code review comments. Notes: comment on the code, not the person; explain why; label severity (Nit, Optional, FYI); when to point out a problem and when to give the answer; praise that teaches."
+    rubric:
+      - "Frames comments about the code and gives the reason"
+      - "Uses severity labels so the author knows what is required"
+      - "Chooses between a question, naming a problem and giving the fix according to what the learner needs"
+      - "Includes praise that explains why something is good"
+    prompts:
+      - "Take three real review comments of yours that were terse or sharp, or write three, and rewrite them to teach: code-focused, reasoned and labelled."
+      - "Describe a review exchange that taught you something. What did the reviewer do?"
+    questions:
+      water:
+        - q: "A junior's change contains a subtle race condition. To help them grow rather than just fix it, you…"
+          answer: "Describe the failing interleaving and ask how they would make the section safe"
+          distractors:
+            - "Push a commit that fixes the race and tell them the change has been merged"
+            - "Write 'This is a race condition, fix it' and approve once they change something"
+            - "Approve with a nit about naming and mention the race later in the team chat"
+          why: "Pointing at the problem and letting the author find the fix builds skill and often finds a better fix, because they know the code. Rewriting it for them teaches only that you will."
+          source: eng-practices
+        - q: "Your comment reads, 'You always write confusing functions.' A better version following Google's guidance is…"
+          answer: "This function does three things; splitting it would make the validation easier to test."
+          distractors:
+            - "Nit: functions this long are hard to read, so please fix it before merging."
+            - "Why would anyone write a function this confusing in the first place, honestly?"
+            - "I find your functions harder to follow than most of the rest of the team's work here."
+          why: "It talks about the code, gives a reason and offers a benefit. The labelled nit misuses the label for something blocking, and the others criticise the person."
+          source: eng-practices
+  - id: stakeholder-updates
+    name: Stakeholder updates
+    layer: herb
+    branch: people-and-decisions
+    tier: 1
+    needs: [saying-no]
+    harvest: artifact
+    minutes: 35
+    sources: [staffeng-exec, atlassian-comm]
+    summary: "Read 'Present to executives' on staffeng.com (lead with the summarizing idea, the SCQA opening paragraph, aligning with readers before the meeting) and Atlassian's Incident communication best practices for how a steady update rhythm earns trust. Notes: bottom line first, a status colour with the reason, risks and the decision needed, ranges for dates, and a steady cadence so people stop asking."
+    rubric:
+      - "Opens with the status and the one thing the reader must know or do"
+      - "Separates progress, risks and decisions needed, each kept short"
+      - "Gives dates as ranges and says what changed since the last update"
+      - "Is sent on a stated cadence, even when nothing changed"
+    prompts:
+      - "Write the weekly update for a project you run (or a realistic one) in under 150 words, with status, risks and an ask."
+      - "Rewrite a long status email you have sent so that a busy executive gets what they need in 30 seconds."
+    questions:
+      water:
+        - q: "A project slipped two weeks because of a vendor delay. Which opening helps a busy sponsor most?"
+          answer: "Status amber: launch moves from 12 to 26 June. I need a decision on vendor escalation by Friday."
+          distractors:
+            - "Hi all, here is this week's update. We made good progress on several fronts, including the following."
+            - "Unfortunately the vendor has let us down again, which is entirely out of our control as a team."
+            - "Overall things are going well, and there is a minor risk around the vendor that we are watching."
+          why: "It leads with status, the change in date and the specific decision needed, so the sponsor can act. The others bury the news, assign blame or soften a real slip."
+          source: staffeng-exec
+        - q: "A stakeholder keeps pinging you for status between your weekly updates. The most durable fix is…"
+          answer: "Publish updates on a steady cadence with one status page, so answers exist without asking"
+          distractors:
+            - "Send updates more often, daily if need be, so that nobody ever has to ask you anything about status"
+            - "Ask the stakeholder to stop messaging you and wait until the weekly note arrives"
+            - "Give them read access to the task tracker so they can follow every ticket"
+          why: "People ask when they cannot predict when they will hear. A reliable rhythm and one findable page replace anxiety with certainty, as incident status updates do for customers."
+          source: atlassian-comm
+  - id: delegation
+    name: Delegation
+    layer: understory
+    branch: people-and-decisions
+    tier: 1
+    needs: [feedback-sbi]
+    harvest: judged
+    minutes: 35
+    sources: [hogan-delegation]
+    summary: "Read Lara Hogan's Delegation is an art, not a science (describe the outcome without the how, offer at most three pro tips, and say how you will support, when to reach out, and what success looks like). Notes: what to delegate and what to keep, how to state the outcome and constraints rather than the steps, check-in points, and what delegating a stretch task gives the person."
+    rubric:
+      - "Delegates an outcome with context and constraints, not just a list of steps"
+      - "Says why this person was chosen and what growth the task offers"
+      - "Sets check-in points and a way to ask for help, instead of hovering"
+      - "States what the delegator keeps: accountability and unblocking"
+      - "Names one thing worth not delegating"
+    prompts:
+      - "Write the delegation message for something you currently hold that someone else could own. Include outcome, constraints, check-in dates and what you keep."
+      - "Tell about a time you did something yourself that should have been delegated, or delegated it badly. What happened?"
+    questions:
+      water:
+        - q: "You hand a pipeline clean-up to a mid-level engineer, then redo it when the first PR differs from what you would write. The result is…"
+          answer: "They learn that their ownership is nominal, and you remain the bottleneck"
+          distractors:
+            - "They learn the standard faster, because they see your finished version straight away"
+            - "The pipeline is better, so the cost is worth paying for a critical system like this"
+            - "Nothing lasting, since they are expected to ask if they want different behaviour"
+          why: "Redoing signals that the real owner is you. People stop investing in work they expect to be rewritten, and you keep the load you delegated to relieve."
+          source: hogan-delegation
+        - q: "Which delegation message sets the person up best?"
+          answer: "Own getting deploy time under ten minutes by month end; call me if the options need a trade-off, and let us check in Thursday."
+          distractors:
+            - "Speed up the deploy: do steps 1 to 6 in the doc exactly as written and send me each result."
+            - "Can someone look at the slow deploy at some point? It would be good if it were quicker."
+            - "I have started on the deploy speed-up; could you finish it in the same style and ask when unsure?"
+          why: "It names an outcome with a measure and date, offers help for real trade-offs and sets a check-in. The others give steps, give no owner, or hand over half-done work in your style."
+          source: hogan-delegation
+  - id: disagree-commit
+    name: Disagree and commit
+    layer: understory
+    branch: people-and-decisions
+    tier: 1
+    needs: [saying-no, design-docs]
+    harvest: judged
+    minutes: 35
+    sources: [amazon-2016]
+    summary: "Read the High-Velocity Decision Making section of Amazon's 2016 shareholder letter. Notes: what disagree-and-commit asks of both sides, how it relates to reversible decisions and deciding with incomplete information, and the trap of 'committing' while quietly undermining."
+    rubric:
+      - "States the move: say you disagree and why, then back the decision fully"
+      - "Distinguishes sincere commitment from silent compliance or sabotage"
+      - "Says when it applies: a decision has been made, time matters, and the choice can be reversed or learned from"
+      - "Describes the decision-maker's side: listen, decide, and note the disagreement"
+    prompts:
+      - "Describe a time you disagreed with a decision and committed, or did not. What did you say, and how did you act afterwards?"
+      - "Write the three sentences you would use to register disagreement and commit on a real current decision."
+    questions:
+      water:
+        - q: "Your tech lead picks queue A over your preferred B after a fair review. Disagree and commit means you…"
+          answer: "Record your concern once, then build with A as though it had been your own idea"
+          distractors:
+            - "Build A while collecting evidence of its flaws, ready for the first time it fails"
+            - "Escalate every time A causes friction until the decision is finally revisited"
+            - "Stay silent in the review and hope the outcome proves you were right all along"
+          why: "The mechanism needs both parts: a clear statement of disagreement, then full effort. Hidden dissent or a campaign to reverse the call fails the commitment half of the phrase."
+          source: amazon-2016
+        - q: "When is 'disagree and commit' the wrong tool?"
+          answer: "When someone raises new facts that change the premise the decision was based on"
+          distractors:
+            - "When the person disagreeing is more junior than the person who made the decision"
+            - "When the team has already spent a week on the work following the decision"
+            - "When the decision would take longer to explain than it took to reach in the first place"
+          why: "Bezos describes it for the point where no one can know the answer for sure and someone has to gamble. New facts that change the premise are a different situation: reopening is part of deciding well, and committing to a decision whose premise is gone helps nobody."
+          source: amazon-2016
+  - id: two-way-doors
+    name: Reversible and irreversible decisions
+    layer: understory
+    branch: people-and-decisions
+    tier: 2
+    needs: [disagree-commit]
+    wild: true
+    harvest: judged
+    minutes: 25
+    sources: [amazon-2016]
+    summary: "Read the High-Velocity Decision Making section of Amazon's 2016 letter again. Notes: reversible 'two-way door' decisions deserve a light-weight process, deciding with roughly 70 percent of the information you wish you had, and matching the weight of the process to how reversible the decision is."
+    rubric:
+      - "Distinguishes decisions that are cheap to reverse from those that are not, with an example of each"
+      - "Matches the amount of review and the number of approvers to reversibility"
+      - "Explains the cost of slowness on reversible choices"
+      - "Says how to find out quickly that a reversible decision was wrong"
+    prompts:
+      - "List five decisions your team made last quarter, sort them by reversibility, and say which got too much or too little process."
+    questions:
+      water:
+        - q: "A team proposes a two-week review to choose a log-formatting library. Using reversible-versus-irreversible thinking, you…"
+          answer: "Decide quickly with a light process, since swapping the library later is cheap"
+          distractors:
+            - "Extend the review to be safe, because every dependency choice turns out to be long-lived"
+            - "Escalate to the architecture group so that the whole company stays consistent on it"
+            - "Wait until every team has tried every candidate and can report back on how it went"
+          why: "When a decision is easy to undo, being wrong costs little and being slow costs a lot. Save heavy process for choices that are hard to take back."
+          source: amazon-2016
+        - q: "Which decision most deserves slow, wide review?"
+          answer: "Choosing the sharding key for a datastore that will hold customer data for years"
+          distractors:
+            - "Adopting a new test runner for a single small service that has its own repository"
+            - "Naming the feature flag that guards a change to an internal dashboard page"
+            - "Deciding the order in which two independent tickets are tackled this sprint"
+          why: "A sharding key shapes data layout, and changing it later means moving all the data. The others can be reversed in hours with no lasting effect on customers."
+          source: amazon-2016
+  - id: tradeoff-narrative
+    name: Trade-off narratives
+    layer: herb
+    branch: people-and-decisions
+    tier: 2
+    needs: [adr, star-stories]
+    harvest: artifact
+    minutes: 50
+    sources: [design-docs-google, star-method, nygard-adr]
+    summary: "Choose a real technical decision and prepare to tell it in five minutes: context, options considered, criteria, the choice and why, what it cost, and what you would change. Read 'Alternatives considered' in Design Docs at Google and Nygard's consequences section for structure, and MIT CAPD's STAR guide for ending on a result and a takeaway."
+    rubric:
+      - "Names at least two options that were really considered, including one you rejected"
+      - "States the criteria used and which mattered most"
+      - "Explains why the chosen option won and what was knowingly given up"
+      - "Says what happened afterwards and what you would do differently"
+      - "Makes clear your own role and reasoning, not just the committee's"
+    prompts:
+      - "Write the trade-off narrative, about 400 words, for a decision you made or influenced: options, criteria, choice, cost and hindsight."
+      - "Tell the story of a decision that turned out wrong. How did you reason then, and what did you learn?"
+    questions:
+      water:
+        - q: "In an interview you describe choosing Kafka over a database-backed queue. Which addition strengthens the story most?"
+          answer: "The options you rejected, the criteria that decided it, and what the team gave up"
+          distractors:
+            - "More detail about Kafka's internals, to show how deeply you understood the product"
+            - "A statement that the choice was a unanimous team consensus after a full discussion"
+            - "A comparison with companies that run Kafka at much larger scale than your own"
+          why: "A trade-off story is evidence of judgement, and judgement shows in what you weighed and what you accepted losing. Technology detail and consensus do not show how you decide."
+          source: design-docs-google
+        - q: "Asked 'what would you do differently?', the strongest answer is…"
+          answer: "A specific cost that appeared later, the signal that could have caught it, and the change you would make"
+          distractors:
+            - "That nothing would change, because the decision met every one of its goals"
+            - "A general point that more time for research is always valuable on a decision"
+            - "A criticism of the colleague who argued for the other option in the discussion"
+          why: "Honest hindsight shows you learn from outcomes. A specific cost and a concrete change are credible; claims of perfection, platitudes and blame are not."
+          source: star-method
+  - id: influence
+    name: Influence without authority
+    layer: understory
+    branch: people-and-decisions
+    tier: 2
+    needs: [disagree-commit, stakeholder-updates]
+    harvest: judged
+    minutes: 45
+    sources: [staffeng-strategy, staffeng-exec]
+    summary: "Read 'Present to executives' on staffeng.com (aligning with stakeholders before the meeting, writing a structured document, never presenting a problem without an answer) and the 'Gather and review together, write alone' advice in Writing engineering strategy. Notes: mapping who decides, who is affected and who can block; talking to people before the meeting; writing the proposal down with owners and a date."
+    rubric:
+      - "Maps who decides, who is affected and who can block, for a real proposal"
+      - "Talks to key people before the group meeting rather than surprising them"
+      - "Frames the proposal in terms of the other team's goals, with evidence"
+      - "Describes follow-through and what to do if the answer is no"
+    prompts:
+      - "Describe a change you drove across teams you did not manage. Who were the stakeholders, how did you win them, and what did it cost you?"
+      - "Pick a change you want now. Write your influence plan: map, pre-conversations, the written proposal and a fallback."
+    questions:
+      water:
+        - q: "You want three teams to adopt your logging standard, and none report to you. The most reliable first step is…"
+          answer: "Talk to each team's lead about their problems and shape the standard around what they need"
+          distractors:
+            - "Present the finished standard at the architecture meeting and ask the room for a vote"
+            - "Ask your director to mandate adoption so that the teams comply as quickly as possible"
+            - "Ship a library implementing the standard and wait for teams to discover it for themselves over time"
+          why: "Without authority, adoption depends on the other teams seeing their own benefit. Listening first turns their needs into your design, and it avoids surprising people in public."
+          source: staffeng-strategy
+        - q: "You have explained a proposal at a meeting, and everyone nodded, but nothing happened afterwards. The likeliest gap is…"
+          answer: "No written proposal with owners and a date, so agreement in the room never became anyone's task"
+          distractors:
+            - "Too many people attended, so the proposal needed a smaller group to be credible"
+            - "The proposal should have been presented by someone more senior than the author"
+            - "People were not persuaded; a second meeting with the same slides will change that"
+          why: "Nodding is agreement to the idea, not commitment to act. A written proposal with named owners and a date gives people something to do and something to be held to."
+          source: staffeng-exec
+  - id: structured-interviewing
+    name: Structured interviewing
+    layer: shrub
+    branch: people-and-decisions
+    tier: 2
+    needs: [star-stories, feedback-sbi]
+    harvest: artifact
+    minutes: 45
+    sources: [rework-interviewing]
+    summary: "Read Google re:Work's guide to structured interviewing: Define hiring attributes, Draft your interview questions, Understand behavioral vs. hypothetical questions, and Use a rubric. Notes: define the attributes the role needs, ask every candidate the same questions, mix behavioural and hypothetical questions, take detailed notes, score with an anchored rubric, and train and calibrate interviewers."
+    rubric:
+      - "Lists the attributes the role needs and ties each question to one of them"
+      - "Uses the same questions and follow-ups for every candidate"
+      - "Has an anchored rubric with example answers for each score level"
+      - "Takes detailed notes of each answer so that scores rest on evidence, not impressions"
+      - "Describes how interviewers are trained and calibrated"
+    prompts:
+      - "Write a one-hour interview plan and scorecard for a senior backend hire: attributes, four questions with follow-ups, and anchored descriptions for each score level."
+    questions:
+      water:
+        - q: "Two interviewers score the same candidate 4 and 2 on 'handles production incidents'. The most likely structural cause is…"
+          answer: "No anchored rubric, so each applied a private standard of what a good answer looks like"
+          distractors:
+            - "Too few interviewers; a larger panel would average the disagreement away"
+            - "The question was behavioural, and hypothetical questions would have given consistent scores"
+            - "The candidate performed differently in each round, which is quite normal for people"
+          why: "Anchored examples for each score level give interviewers a shared yardstick. Without them, the same answer is graded against whatever each person imagines, and the numbers carry little information."
+          source: rework-interviewing
+        - q: "Which pair of questions uses the guide's question types for incident handling?"
+          answer: "Tell me about an incident you led; then, how would you handle a database failing mid-deploy?"
+          distractors:
+            - "Tell me about yourself; then, where do you see yourself in five years' time?"
+            - "Walk me through a hard bug; then I will follow whatever seems interesting in the moment of the conversation."
+            - "What is your biggest weakness; then, what would your last manager say about you?"
+          why: "The first is a behavioural question about past action, and the second is a hypothetical about a new situation. Both can be asked of every candidate and scored against the rubric."
+          source: rework-interviewing
+  - id: writing-for-decisions
+    name: Writing for decision-makers
+    layer: vine
+    branch: people-and-decisions
+    tier: 2
+    needs: [design-docs, stakeholder-updates]
+    harvest: judged
+    minutes: 40
+    sources: [staffeng-exec, design-docs-google]
+    summary: "Read 'Present to executives' on staffeng.com (summarizing idea first, the SCQA opening paragraph, aligning with readers before the meeting) and the context-and-scope and length advice in Design Docs at Google. Then rewrite one of your own documents. Notes: lead with the decision and your recommendation, make deadlines explicit, link detail instead of inlining it, and cut what the reader does not need in order to decide."
+    rubric:
+      - "Opens with the decision requested, the recommendation and the date an answer is needed"
+      - "Gives the minimum context to decide, with detail linked or in an appendix"
+      - "Uses plain words and defines terms the reader may not know"
+      - "Ends with next steps and owners"
+    prompts:
+      - "Take a long email or document you wrote and rewrite its first paragraph so a busy decision-maker can act on it. Show before and after, and say what you cut."
+    questions:
+      water:
+        - q: "A VP has two minutes for your proposal for a three-month migration. What should the top of the document hold?"
+          answer: "The decision you need, your recommendation, the cost and the date you need an answer by"
+          distractors:
+            - "A background section explaining the history of the current system and how it evolved"
+            - "A summary of the research methods used to compare each of the alternatives"
+            - "A thank-you to each of the teams who contributed to the analysis over recent weeks"
+          why: "A decision-maker reads the top to learn what is being asked of them. History and method support the case, but they belong below, for the reader who wants to check."
+          source: staffeng-exec
+        - q: "Your doc is full of internal acronyms and links to old threads. A reader from another org skims it and misses the ask. The most important fix is…"
+          answer: "Open with the situation, the question and your recommended answer, and link the thread history"
+          distractors:
+            - "Add a glossary of the internal acronyms at the end so that the body stays uncluttered"
+            - "Remove the rationale behind the ask so that the document becomes short enough to read"
+            - "Send it to a wider audience, since someone is bound to understand it"
+          why: "A reader outside your context may stop after the first paragraph, so that paragraph has to carry the situation, the question and your answer. Linked history stays available for anyone who wants to check, but a glossary at the end does nothing for someone who never reaches it."
+          source: staffeng-exec
+  - id: tech-debt-case
+    name: Making the tech-debt case
+    layer: understory
+    branch: people-and-decisions
+    tier: 3
+    needs: [tradeoff-narrative, estimating]
+    harvest: artifact
+    minutes: 45
+    sources: [larson-saying-no, larson-migrations]
+    summary: "Read the Velocity part of Will Larson's Saying no (turning toil and technical debt into data, including the sampling-profiler trick) and Migrations, the sole scalable fix to tech debt (why debt work is hard to schedule, and the derisk, enable, finish playbook). Notes: describing debt as a cost the business feels (incident hours, delivery delay, risk), proposing bounded work with a payoff date, and sequencing it among feature work."
+    rubric:
+      - "Describes the debt as a recurring cost in time, incidents or risk, with numbers"
+      - "Proposes bounded work with a finish line and a measure of success"
+      - "Compares the cost of doing the work with the cost of leaving it over a period"
+      - "Says what stops or slows while the work happens"
+      - "Is aimed at the decision-maker's goals, not engineering taste"
+    prompts:
+      - "Write a one-page case for paying down a real piece of debt in your codebase: cost today, proposal, payoff, and what you would drop to fit it in."
+    questions:
+      water:
+        - q: "Your pitch says, 'The billing module is a mess, so we should rewrite it.' The change most likely to win approval is…"
+          answer: "Replace it with hours lost and incidents caused each quarter, plus a bounded plan with a payoff date"
+          distractors:
+            - "Add a code-quality score and compare it with other modules across the company"
+            - "Describe the cleaner target architecture in detail so leadership sees the improvement"
+            - "Wait for a quiet quarter and do it as unplanned background work with no announcement"
+          why: "Decision-makers weigh costs and benefits in their own terms. Turning 'mess' into hours and incidents, and bounding the work, makes the trade-off against features concrete."
+          source: larson-saying-no
+        - q: "A tech-debt proposal reads, 'Three months, no feature delivery.' The weakness is…"
+          answer: "It is unbounded and all-or-nothing; a smaller slice with measurable payoff is easier to approve and to stop"
+          distractors:
+            - "Three months is too short to repay any significant debt, so the ask should be larger"
+            - "Debt work should never need a business case, only an engineering decision"
+            - "It should have been presented after the next big feature shipped, not before it"
+          why: "Large blocks with no early benefit are hard to approve and hard to stop if they go badly. A first slice with a measurable payoff builds trust for the next one."
+          source: larson-migrations
+  - id: leading-migration
+    name: Leading a migration
+    layer: canopy
+    branch: people-and-decisions
+    tier: 3
+    needs: [estimating, stakeholder-updates, tradeoff-narrative]
+    harvest: artifact
+    minutes: 60
+    sources: [larson-migrations]
+    summary: "Read Will Larson's Migrations, the sole scalable fix to tech debt: derisk with the hardest teams, enable with tooling and documentation, then finish (stop the bleeding, push status to teams and management, finish the long tail yourself, and deprecate the legacy system). Notes: why migrations stall near the end, helping the hardest adopters, tracking progress publicly, and setting the date the old system is switched off."
+    rubric:
+      - "Defines the end state, an owner for finishing it, and the date the old system is switched off"
+      - "Breaks the work into steps that each deliver value or can be stopped safely"
+      - "Tracks adopters publicly and helps the hardest ones instead of mandating and leaving"
+      - "Plans for tooling that is incremental and reversible, so a team can go back to the old behaviour"
+      - "Communicates on a cadence with the teams affected"
+    prompts:
+      - "Write the plan for migrating something real (a service, a library, a datastore) at your company: end state, phases, adopters, comms, rollback and shut-off date."
+    questions:
+      water:
+        - q: "A migration to a new service is 90% complete. The last ten consumers have no incentive to move. The leader should…"
+          answer: "Help the remaining teams move, set a shut-off date for the old path, and report progress openly"
+          distractors:
+            - "Declare the migration complete and keep the old service running indefinitely instead"
+            - "Order the teams to move by next sprint and leave the work of moving to them"
+            - "Stop at 90%, since the last teams cost more to move than they are worth"
+          why: "Without a shut-off the old path lives on and you pay for two systems forever. Public progress and hands-on help for the hardest adopters make finishing a shared goal."
+          source: larson-migrations
+        - q: "Which first step reduces risk most when migrating the consumers of a datastore that payments depend on?"
+          answer: "Work side by side with the one or two hardest consuming teams, on their awkward cases first"
+          distractors:
+            - "Start with the easiest consuming teams so the migration builds early momentum and goodwill"
+            - "Cut every team over at midnight on the quietest day of the year to limit the exposure"
+            - "Raise a tracking ticket for each team and let them migrate on their own schedule"
+          why: "The hardest cases expose design flaws while change is still cheap, and an easy start gives false confidence. Tickets alone push the whole cost onto every consumer instead of reducing it with shared tooling and help."
+          source: larson-migrations
+  - id: technical-strategy
+    name: Writing a technical strategy
+    layer: canopy
+    branch: people-and-decisions
+    tier: 4
+    needs: [leading-migration, influence]
+    harvest: artifact
+    minutes: 75
+    sources: [staffeng-strategy]
+    summary: "Read Will Larson's Writing engineering strategy on staffeng.com (when and why to write one, write design docs first, then synthesize a diagnosis and guiding policies, be specific and opinionated, show your work). Notes: a diagnosis of the current state, a few guiding principles that rule options out, concrete actions that follow, and how to write it so engineers can decide without asking you."
+    rubric:
+      - "States the problem (a diagnosis) with evidence about the present state"
+      - "Gives a few guiding principles that actually rule some options out"
+      - "Lists concrete actions that follow from them, with owners"
+      - "Tests the strategy by naming a real decision someone can now make without asking the author"
+    prompts:
+      - "Write a one-page technical strategy for a real area (observability, data platform, service boundaries): diagnosis, guiding policies, actions, and one decision it makes easier."
+    questions:
+      water:
+        - q: "A written strategy says, 'We value reliability, scalability and velocity.' What is wrong with it?"
+          answer: "It rules nothing out, so it cannot settle a real disagreement between two good options"
+          distractors:
+            - "It is too short, since a strategy must run ten pages to be taken seriously"
+            - "It lists too few values, as teams need a dozen principles to cover every case"
+            - "It should name specific vendors so that engineers know which products to buy"
+          why: "A strategy earns its keep by choosing: it says what you will do and what you will not. Values everyone already shares cannot break a tie."
+          source: staffeng-strategy
+        - q: "After publishing a strategy, how do you best tell whether it works?"
+          answer: "Engineers resolve a real design disagreement using it, without coming to you"
+          distractors:
+            - "The document collects many views and positive comments in its first week"
+            - "Leadership signs it off and adds it to the engineering handbook for reference"
+            - "No team raises any objection during the review period that you set"
+          why: "The purpose is to let people decide well in your absence. Attention, sign-off and silence are all possible with a document that nobody uses."
+          source: staffeng-strategy
