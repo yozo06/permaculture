@@ -31,9 +31,10 @@ const errorsOf = (dir: string): string[] => loadPacks(dir).flatMap((r) => r.erro
 
 describe('the repo packs', () => {
   it('all load, with no errors', () => {
-    expect(packFiles()).toHaveLength(5)
+    const files = packFiles()
+    expect(files).toEqual(expect.arrayContaining(['haskell-backend.yaml', 'infra.yaml', 'kannada.yaml', 'system-design.yaml', 'workshop.yaml']))
     expect(errorsOf(defaultPacksDir)).toEqual([])
-    expect(collectPacks()).toHaveLength(5)
+    expect(collectPacks()).toHaveLength(files.length)
   })
 
   it('give the Workshop an energy cap', () => {
@@ -88,8 +89,9 @@ describe('a broken pack', () => {
 })
 
 describe('adding a seed to a YAML file', () => {
-  const NEW_SEED = `  - id: dns-ttl
-    name: DNS TTLs
+  // An id real content will never use, so the test keeps working as the packs grow.
+  const NEW_SEED = `  - id: added-in-a-test
+    name: A seed added in a test
     layer: ground-cover
     branch: network-and-platform
     tier: 0
@@ -106,16 +108,16 @@ describe('adding a seed to a YAML file', () => {
 
   it('shows up in the seed bag and the learning tree with no code change', () => {
     const dir = tempCopy()
-    // Seeds come before finds in the file, so the new seed goes in just ahead of `finds:`.
-    edit(dir, 'infra.yaml', (t) => t.replace('\nfinds:\n', '\n' + NEW_SEED.trimEnd() + '\nfinds:\n'))
+    // The new seed goes first in the pack's `seeds:` list, wherever that list sits in the file.
+    edit(dir, 'infra.yaml', (t) => t.replace('\nseeds:\n', '\nseeds:\n' + NEW_SEED))
     const catalog = buildCatalog(collectPacks(dir))
     const imported = fold([{ type: 'snapshot-imported', snapshot: sampleFarm }], catalog)
     const state = fieldsToOpen(imported, catalog).reduce((s, e) => apply(s, e, catalog), imported)
 
     const bag = bagView(state, catalog).find((s) => s.pack === 'infra')
-    expect(bag?.seeds.find((s) => s.id === 'dns-ttl')).toMatchObject({ name: 'DNS TTLs', status: 'ready', harvest: 'recall' })
+    expect(bag?.seeds.find((s) => s.id === 'added-in-a-test')).toMatchObject({ name: 'A seed added in a test', status: 'ready', harvest: 'recall' })
 
     const tree = treeView('infra', state, catalog)
-    expect(tree?.nodes.find((n) => n.id === 'dns-ttl')).toMatchObject({ status: 'ready' })
+    expect(tree?.nodes.find((n) => n.id === 'added-in-a-test')).toMatchObject({ status: 'ready' })
   })
 })

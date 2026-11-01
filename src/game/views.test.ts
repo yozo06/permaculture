@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { collectPacks } from '../../scripts/packs-lib.mjs'
 import { buildCatalog } from '../engine/catalog'
-import type { PackDef } from '../engine/types'
+import type { PackDef, SeedDef } from '../engine/types'
 import { apply, fieldsToOpen, fold } from '../engine/fold'
 import type { FarmState } from '../engine/types'
 import sampleFarm from './sample-farm.json'
@@ -86,7 +86,20 @@ describe('treeView', () => {
   })
 
   it('matches the Phase 0 layout for two branches', () => {
-    const v = treeView('haskell-backend', farm(), catalog)
+    // The live Haskell pack keeps growing, so the geometry is pinned on the shape of its Phase 0 tree.
+    const seed = (id: string, branch: string, tier: number, needs: string[] = []): SeedDef => ({ id, name: id, layer: 'root', branch, tier, needs, harvest: 'recall' })
+    const phase0: PackDef = {
+      pack: 'haskell-backend', version: 0, title: 'Backend · Haskell',
+      branches: [{ id: 'runtime-and-performance', title: 'Runtime & performance' }, { id: 'types-and-effects', title: 'Types & effects' }],
+      seeds: [
+        seed('laziness', 'types-and-effects', 0), seed('gc', 'runtime-and-performance', 1), seed('leaks', 'runtime-and-performance', 1),
+        seed('stm', 'types-and-effects', 1), seed('bracket', 'types-and-effects', 1), seed('rts', 'runtime-and-performance', 2, ['gc']),
+        seed('lockfree', 'types-and-effects', 2, ['stm']), seed('gadts', 'types-and-effects', 2, ['laziness']),
+        seed('effects', 'types-and-effects', 3, ['gadts', 'bracket']),
+      ],
+    }
+    const old = buildCatalog([phase0])
+    const v = treeView('haskell-backend', farm(old), old)
     const stm = v?.nodes.find((n) => n.id === 'stm')
     const bracket = v?.nodes.find((n) => n.id === 'bracket')
     expect(v?.height).toBe(46 + 4 * 72)

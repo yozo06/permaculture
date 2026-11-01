@@ -6,7 +6,9 @@ const catalog = buildCatalog(collectPacks())
 
 describe('catalog', () => {
   it('lists the packs in file order and finds seeds by global id', () => {
-    expect(catalog.packs.map((p) => p.pack)).toEqual(['haskell-backend', 'infra', 'kannada', 'system-design', 'workshop'])
+    const ids = catalog.packs.map((p) => p.pack)
+    expect(ids).toEqual([...ids].sort())
+    expect(ids).toEqual(expect.arrayContaining(['haskell-backend', 'infra', 'kannada', 'system-design', 'workshop']))
     expect(catalog.seed('raft')?.pack).toBe('system-design')
     expect(catalog.seed('nope')).toBeUndefined()
   })
