@@ -61,7 +61,7 @@ describe('dispatch', () => {
   it('gives the reason and logs nothing when the event is refused', () => {
     const store = make(memory())
     const before = store.events().length
-    expect(store.dispatch({ type: 'watered', seed: 'stm', ok: true })).toMatch(/not planted/)
+    expect(store.dispatch({ type: 'watered', seed: 'stm', ok: true, work: 'recall' })).toMatch(/not planted/)
     expect(store.events()).toHaveLength(before)
   })
 

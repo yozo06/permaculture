@@ -1,7 +1,7 @@
 import fc from 'fast-check'
 import { describe, expect, it } from 'vitest'
 import sampleFarm from '../game/sample-farm.json'
-import { smallCatalog as cat, smallFarm, started } from './fixtures'
+import { NOTES, smallCatalog as cat, smallFarm, started } from './fixtures'
 import { fold } from './fold'
 import { farmFileName, farmFileText, parseFarmFile } from './log'
 import type { FarmEvent, LoggedEvent } from './types'
@@ -12,9 +12,9 @@ const events = stamp([
   started,
   { type: 'field-opened', pack: 'garden', slot: 0 },
   { type: 'field-opened', pack: 'shed', slot: 1 },
-  { type: 'planted', seed: 'corn', x: 5, y: 5 },
+  { type: 'planted', seed: 'corn', x: 5, y: 5, notes: NOTES },
   { type: 'slept' },
-  { type: 'watered', seed: 'corn', ok: true },
+  { type: 'watered', seed: 'corn', ok: true, work: 'recall' },
 ])
 
 describe('the export file', () => {

@@ -28,9 +28,9 @@ The game must be useful with ugly tiles. Art is an unlock, never a prerequisite.
 
 ## 3. The loop
 
-**Plant** a seed (10 energy, 10 coins; later: the seed's declared minutes). The yield of planting is a page of notes in your own words and three recall cards you write yourself.
+**Plant** a seed (10 energy, 10 coins; later: the seed's declared minutes). The yield of planting is a page of notes in your own words, kept on the crop.
 
-**Water** a thirsty crop by answering. Right: it grows one stage and moves one zone out. Wrong: it wilts, drops a stage, goes in the compost.
+**Water** a thirsty crop by answering a card, or at stage 4 by explaining it in your own words. Right: it grows one stage and moves one zone out. Wrong: it wilts, drops a stage, goes in the compost.
 
 **Harvest** a stage-5 crop with a harder question or a judged write-up. Premium: coins, and the crop becomes a perennial. Seconds: composted.
 
@@ -55,8 +55,10 @@ Two days past thirsty without water, a crop wilts overnight unless the barrel ha
 |---|---|
 | Energy per day | 90 |
 | Plant | 10 energy, 10 coins |
+| Notes to plant | at least 40 characters |
 | New seeds per day | 2 |
 | Water | 6 energy |
+| Explanation | at least 80 characters; passes with more than half the rubric lines |
 | Harvest | 15 energy; premium pays 30 coins |
 | Jump the fence | 10 energy |
 | Forage | 5 energy; pays 3 coins |
@@ -66,13 +68,16 @@ Two days past thirsty without water, a crop wilts overnight unless the barrel ha
 
 ### The depth ladder
 
-Stages change the kind of work, not just the interval:
+Stages change the kind of work, not just the interval. Stage numbers here count from 0; the game and the thirst table count from 1.
 
-0. **Sprout**: read the source, write notes (observe).
-1. **Recall**: cards.
-2. **Explain**: in your own words, judged against a rubric.
-3. **Apply**: a problem, a design, a debugging session.
-4. **Harvest**: an open question with no hint, or teach it to someone.
+- **0 · Sprout**: read the source and write notes in your own words. Planting needs the notes; they stay on the crop. The sprout's first watering is a recall card.
+- **1–2 · Recall**: multiple-choice cards. Multiple choice is for recall only.
+- **3 · Explain**: write it in your own words, then rate it against the seed's rubric. More than half the lines is a pass. Self-rating is the fallback until judged harvests arrive.
+- **4 · Harvest**: a harder question, a write-up that meets every rubric line, or proof of an artifact.
+
+A seed with no cards explains at every stage. A perennial check-in is a card too, from the harder harvest cards when the seed has them.
+
+Phase 2 adds **Apply** (a problem, a design, a debugging session) and judged grading with the player's own key.
 
 Trees spawn saplings: harvesting Raft drops log compaction, membership change and read-index as new seeds. Depth is a tree that keeps seeding its own understory.
 

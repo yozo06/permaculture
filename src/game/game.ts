@@ -7,13 +7,15 @@ import {
   neighbourFields, terrain as landTerrain, tileKey, wildKind, worldSize, type Terrain,
 } from '../engine/land'
 import { farmFileName, farmFileText, parseFarmFile } from '../engine/log'
-import { RULES, cropOf, ripe as isRipe, thirsty as isThirsty, zone } from '../engine/rules'
+import { explainChecklist, explainPasses, harvestWork, pickPrompt, recallBank, waterWork, writePasses } from '../engine/ladder'
+import { RULES, cropOf, revivable as isRevivable, ripe as isRipe, thirsty as isThirsty, zone } from '../engine/rules'
 import type { Crop, FarmEvent, FarmState, Mcq, Night } from '../engine/types'
 import { almanacHtml } from './almanac'
 import sampleFarm from './sample-farm.json'
 import { createStore, defaultId, type StorageLike } from './store'
 import { esc, shuffle } from './util'
-import { bagView, needsText, packColor, splitName, treeView, type TreeView } from './views'
+import { chipHtml, countText, cropSheetHtml, footHtml, noteHtml, NO_NOTES, plantSheetHtml, tickList, writingBox } from './sheets'
+import { bagView, cropView, needsText, packColor, sourceLinks, splitName, treeView, type TreeView } from './views'
 
 /* ---------- types ---------- */
 type Mode = 'water' | 'harvest' | 'testout'
@@ -330,16 +332,28 @@ const sheet = $('sheet')
 function open(html: string): void {
   sheet.innerHTML = html
   veil.hidden = false
-  const b = sheet.querySelector<HTMLButtonElement>('button.pri') ?? sheet.querySelector<HTMLButtonElement>('button')
-  if (b) b.focus()
+  // A sheet that asks for writing starts in the box; the others start on their main button.
+  const target = sheet.querySelector<HTMLElement>('textarea[data-min]') ?? sheet.querySelector<HTMLButtonElement>('button.pri') ?? sheet.querySelector<HTMLButtonElement>('button')
+  if (target) target.focus()
 }
 function close(): void { veil.hidden = true }
 /** The sheet's primary button, if there is one. */
 const primary = (): HTMLButtonElement | null => sheet.querySelector<HTMLButtonElement>('button.pri')
 veil.addEventListener('click', (e) => { if (e.target === veil) close() })
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !veil.hidden) close() })
-const foot = (label?: string, extra?: string): string => '<div class="foot">' + (extra || '<span></span>') + '<button type="button" class="pri" data-act="close">' + (label || 'Close') + '</button></div>'
-const chip = (packId: string): string => '<div><span class="chip" style="--c:' + colorOf(packId) + '">' + esc(packTitle(packId)) + '</span></div>'
+const foot = footHtml
+const chip = (packId: string): string => chipHtml(packTitle(packId), colorOf(packId))
+/** Keep the count under a writing box, and the button it gates, in step with what has been typed. */
+sheet.addEventListener('input', (e) => {
+  const box = e.target
+  if (!(box instanceof HTMLTextAreaElement) || !box.dataset.min) return
+  const n = box.value.trim().length
+  const min = Number(box.dataset.min)
+  const count = document.getElementById(box.id + 'Count')
+  if (count) { count.textContent = countText(n, min); count.classList.toggle('ok', n >= min) }
+  const gate = box.dataset.gate ? document.getElementById(box.dataset.gate) : null
+  if (gate instanceof HTMLButtonElement) gate.disabled = n < min
+})
 
 /* ---------- input: drag to pan, tap to act ---------- */
 let down: { x: number; y: number; cx: number; cy: number; k: number } | null = null
@@ -411,13 +425,34 @@ function walkTo(x: number, y: number): void { const f = store.ui.farmer; f.tx = 
 $('bHome').addEventListener('click', () => { store.ui.cam = camHome(); store.saveUi() })
 
 /* ---------- actions ---------- */
+/** An event the farm would accept if the player did the work well enough. Used to refuse early, before they write anything. */
+function probe(seed: Seed, mode: Mode): FarmEvent {
+  const filler = (n: number): string => 'x'.repeat(n)
+  const crop = cropOf(S, seed.id)
+  if (mode === 'testout') return { type: 'unlocked', seed: seed.id, ok: true }
+  if (mode === 'water') {
+    return crop && waterWork(crop, seed) === 'recall'
+      ? { type: 'watered', seed: seed.id, ok: true, work: 'recall' }
+      : { type: 'watered', seed: seed.id, ok: true, work: 'explain', text: filler(RULES.explainMin), ticked: 1, of: 1 }
+  }
+  const work = harvestWork(seed)
+  return work.kind === 'recall' ? { type: 'harvested', seed: seed.id, ok: true } : { type: 'harvested', seed: seed.id, ok: true, text: filler(work.minChars), ticked: 1, of: 1 }
+}
+
 function onCrop(c: Crop): void {
   const seed = catalog.seed(c.seed)
   if (!seed) return
-  if (c.wilted || thirsty(c)) { if (refused({ type: 'watered', seed: seed.id, ok: true })) return; return startWork(seed, 'water') }
-  if (ripe(c)) { if (refused({ type: 'harvested', seed: seed.id, ok: true })) return; return startWork(seed, 'harvest') }
-  if (c.perennial) return toast(seed.name + ' is rooted (perennial). Next check-in on day ' + c.due + '.')
-  toast(seed.name + ' · stage ' + (c.stage + 1) + '/5 · ' + zone(c) + ' · thirsty again on day ' + c.due + '.')
+  if (thirsty(c) || isRevivable(c, S.day)) { if (refused(probe(seed, 'water'))) return; return startWork(seed, 'water') }
+  if (ripe(c)) { if (refused(probe(seed, 'harvest'))) return; return startWork(seed, 'harvest') }
+  openCrop(seed.id)
+}
+
+/** Nothing to do for this crop: show where it stands, the notes written at planting and the journal. */
+function openCrop(seedId: string): void {
+  const crop = cropOf(S, seedId)
+  const v = crop ? cropView(crop, S, catalog) : null
+  if (!v) return toast('That is not planted.')
+  open(cropSheetHtml(chip(v.pack), v))
 }
 
 function onTile(x: number, y: number): void {
@@ -430,11 +465,8 @@ function onTile(x: number, y: number): void {
     if (!sel) return toast('Empty soil. Pick a seed from the barn (or Seed bag) first.')
     const seed = catalog.seed(sel)
     if (!seed) { store.ui.seedSel = null; return }
-    if (!act({ type: 'planted', seed: seed.id, x, y })) return
-    store.ui.seedSel = null
-    hint('Planted <b>' + esc(seed.name) + '</b>. It will be thirsty tomorrow. Tap it then and answer to make it grow.')
-    toast('Planted ' + seed.name + '.')
-    return
+    if (refused({ type: 'planted', seed: seed.id, x, y, notes: 'x'.repeat(RULES.notesMin) })) return
+    return openPlant(seed, x, y)
   }
   if (tr === 'path' || isBuildingTile(x, y)) return
   const near = neighbourFields(x, y, S.fields, S.cleared)
@@ -460,12 +492,42 @@ function onTile(x: number, y: number): void {
 
 const COST: Record<Mode, number> = { water: RULES.water.energy, harvest: RULES.harvest.energy, testout: RULES.testOut.energy }
 
-/** What a piece of work looks like on screen: a multiple-choice card, or (for seeds with none) a plain sheet. */
+/** What the player did for a piece of work, as the farm records it. */
+type Detail =
+  | { work: 'recall' }
+  | { work: 'explain' | 'write'; text: string; ticked: number; of: number }
+
+/* Planting: read, then write your own notes. */
+let PLANT: { seed: Seed; x: number; y: number } | null = null
+function openPlant(seed: Seed, x: number, y: number): void {
+  PLANT = { seed, x, y }
+  open(plantSheetHtml({
+    chip: chip(seed.pack), name: seed.name, layer: LAYER_NAMES[seed.layer], harvest: seed.harvest, summary: seed.summary, minutes: seed.minutes,
+    sources: sourceLinks(seed, catalog), notesMin: RULES.notesMin, textMax: RULES.textMax, energy: RULES.plant.energy, coins: RULES.plant.coins,
+  }))
+}
+function plant(): void {
+  const p = PLANT
+  if (!p) return
+  const notes = byIdAs('notes', HTMLTextAreaElement).value
+  if (!act({ type: 'planted', seed: p.seed.id, x: p.x, y: p.y, notes })) return
+  PLANT = null
+  store.ui.seedSel = null
+  close()
+  hint('Planted <b>' + esc(p.seed.name) + '</b>. It will be thirsty tomorrow. Tap it then and answer to make it grow. Tap it any time it is idle to read your notes.')
+  toast('Planted ' + p.seed.name + '.')
+}
+
+/** What a piece of work looks like on screen: a card for recall, a writing sheet for explaining and write-ups. */
 function startWork(seed: Seed, mode: Mode): void {
-  const cards = mode === 'water' || seed.harvest !== 'recall' ? seed.questions.water : (seed.questions.harvest.length ? seed.questions.harvest : seed.questions.water)
-  if (mode === 'water' ? cards.length : seed.harvest === 'recall' && cards.length) return ask(seed, mode, cards)
-  if (mode === 'water') return openLog(seed)
-  openProof(seed, mode)
+  if (mode === 'water') {
+    const c = cropOf(S, seed.id)
+    if (!c) return
+    return waterWork(c, seed) === 'recall' ? ask(seed, mode, recallBank(c, seed)) : openExplain(seed)
+  }
+  const work = harvestWork(seed)
+  if (work.kind === 'recall') return ask(seed, mode, work.bank)
+  openWrite(seed, mode)
 }
 
 interface Asking { seed: Seed; mode: Mode; opts: { txt: string; ok: boolean }[]; Q: Mcq }
@@ -484,31 +546,80 @@ function workSub(seed: Seed, mode: Mode): string {
   return esc(LAYER_NAMES[seed.layer]) + ' layer · ' + (c ? zone(c) : '') + ' · ' + COST[mode] + ' energy' + (mode === 'harvest' ? ' · premium grade makes it perennial' : '')
 }
 
-/** Watering a seed that has no cards (the Workshop's): log a day of work. */
-let LOG: Seed | null = null
-function openLog(seed: Seed): void {
-  const c = cropOf(S, seed.id)
-  if (!c) return
-  LOG = seed
-  open(chip(seed.pack) + '<h2>Log a day of work</h2><p class="sub">' + esc(seed.name) + ' · ' + esc(LAYER_NAMES[seed.layer]) + ' layer · ' + zone(c) + ' · ' + RULES.water.energy + ' energy</p><p>Did you move <b>' + esc(seed.name) + '</b> forward today?</p><label for="work" class="sub">What you did (optional, only for you: the game does not keep it yet)</label><textarea id="work"></textarea>' +
-    '<div class="foot"><button type="button" data-act="close">Not today</button><button type="button" class="pri" data-act="logDone">I moved it forward</button></div>')
+/* Explain: write it down first, with the notes hidden, then rate it against the rubric. */
+let EXPLAIN: { seed: Seed; text: string } | null = null
+function openExplain(seed: Seed, text = ''): void {
+  EXPLAIN = { seed, text }
+  open(chip(seed.pack) + '<h2>' + workTitle(seed, 'water') + ' · ' + esc(seed.name) + '</h2><p class="sub">' + workSub(seed, 'water') + '</p>' +
+    '<p>Explain <b>' + esc(seed.name) + '</b> in your own words. Write first; your notes are hidden until you submit.</p>' +
+    writingBox({ id: 'explain', label: 'Your explanation', min: RULES.explainMin, max: RULES.textMax, gate: 'rateGo', value: text, rows: 7 }) +
+    '<div class="foot"><button type="button" data-act="close">Not now</button><button type="button" class="pri" id="rateGo" data-act="rate"' + (text.trim().length >= RULES.explainMin ? '' : ' disabled') + '>Rate it</button></div>')
+}
+function rate(): void {
+  const e = EXPLAIN
+  if (!e) return
+  const text = byIdAs('explain', HTMLTextAreaElement).value.trim()
+  if (text.length < RULES.explainMin) return
+  EXPLAIN = { seed: e.seed, text }
+  open(chip(e.seed.pack) + '<h2>Rate it · ' + esc(e.seed.name) + '</h2><h3>What you wrote</h3>' + noteHtml(text) +
+    '<p class="sub">Be honest: you are the only judge. More than half the lines is a pass.</p>' +
+    tickList('Your explanation…', explainChecklist(e.seed)) +
+    '<div class="foot"><button type="button" data-act="editExplain">Edit</button><button type="button" class="pri" data-act="submitExplain">Submit</button></div>')
+}
+/** How many of the rubric lines on screen are ticked, and how many there are. */
+function ticks(): { ticked: number; of: number } {
+  const boxes = [...sheet.querySelectorAll<HTMLInputElement>('input[data-line]')]
+  return { ticked: boxes.filter((b) => b.checked).length, of: boxes.length }
+}
+function submitExplain(): void {
+  const e = EXPLAIN
+  if (!e) return
+  const { ticked, of } = ticks()
+  const msg = settle(e.seed, 'water', explainPasses(ticked, of), { work: 'explain', text: e.text, ticked, of })
+  if (msg === null) return close()
+  EXPLAIN = null
+  const notes = cropOf(S, e.seed.id)?.notes ?? ''
+  open(chip(e.seed.pack) + '<h2>' + (explainPasses(ticked, of) ? 'Passed' : 'Not yet') + ' · ' + esc(e.seed.name) + '</h2><div class="res">' + msg + '<br><span class="sub">You rated ' + ticked + ' of ' + of + ' lines. It is kept in the crop\'s journal.</span></div>' +
+    '<h3>Your planting notes</h3>' + (notes ? noteHtml(notes) : '<p class="sub">' + NO_NOTES + '</p>') +
+    '<p class="sub">Compare: did your explanation say what your notes say, and more?</p>' + foot('Back to the farm'))
 }
 
-/** Harvesting or jumping the fence for a seed whose proof is not a multiple-choice card: show what it must meet. */
-let PROOF: { seed: Seed; mode: Mode } | null = null
-function openProof(seed: Seed, mode: Mode): void {
-  PROOF = { seed, mode }
-  const c = cropOf(S, seed.id)
-  const prompt = seed.prompts.length ? seed.prompts[Math.floor(hash(c?.x ?? 0, c?.y ?? 0, S.day) * seed.prompts.length) % seed.prompts.length] : undefined
-  const rubric = seed.rubric.length ? '<p class="sub">A good answer:</p><ul>' + seed.rubric.map((r) => '<li>' + esc(r) + '</li>').join('') + '</ul>' : ''
-  open(chip(seed.pack) + '<h2>' + workTitle(seed, mode) + ' · ' + esc(seed.name) + '</h2><p class="sub">' + workSub(seed, mode) + '</p><p class="q">' + esc(prompt ?? 'Show that you can do this: ' + seed.name + '.') + '</p>' + rubric +
-    '<div class="foot"><button type="button" data-act="close">Not yet</button><button type="button" class="pri" data-act="proofDone">Done: it meets this</button></div>')
+/* Harvest, and jumping the fence, for seeds whose proof is writing: a prompt, an answer, and every line of the checklist. */
+let WRITE: { seed: Seed; mode: Mode } | null = null
+function openWrite(seed: Seed, mode: Mode): void {
+  const work = harvestWork(seed)
+  if (work.kind !== 'write') return
+  WRITE = { seed, mode }
+  const prompt = pickPrompt(seed, S.day) ?? 'Show that you can do this: ' + seed.name + '.'
+  const go = mode === 'harvest' ? 'Harvest · ' + RULES.harvest.energy + ' energy' : 'Jump the fence · ' + RULES.testOut.energy + ' energy'
+  open(chip(seed.pack) + '<h2>' + workTitle(seed, mode) + ' · ' + esc(seed.name) + '</h2><p class="sub">' + workSub(seed, mode) + '</p><p class="q">' + esc(prompt) + '</p>' +
+    writingBox({ id: 'write', label: work.proof ? 'Link or description' : 'Your answer', min: work.minChars, max: RULES.textMax, gate: 'writeGo', rows: work.proof ? 3 : 7 }) +
+    tickList('Tick each line your answer meets', work.checklist) +
+    '<p class="sub">Premium only if every line is ticked.' + (mode === 'testout' ? ' A jump is not kept in any crop\'s journal.' : '') + '</p>' +
+    '<div class="foot"><button type="button" data-act="close">Not yet</button><button type="button" class="pri" id="writeGo" data-act="submitWrite" disabled>' + go + '</button></div>')
+}
+function submitWrite(): void {
+  const w = WRITE
+  if (!w) return
+  const text = byIdAs('write', HTMLTextAreaElement).value.trim()
+  const { ticked, of } = ticks()
+  const ok = writePasses(ticked, of)
+  const msg = settle(w.seed, w.mode, ok, { work: 'write', text, ticked, of })
+  if (msg === null) return close()
+  WRITE = null
+  open(chip(w.seed.pack) + '<h2>' + workTitle(w.seed, w.mode) + ' · ' + esc(w.seed.name) + '</h2><div class="res">' + msg + '<br><span class="sub">You ticked ' + ticked + ' of ' + of + ' lines.' + (w.mode === 'harvest' ? ' Your write-up is kept in the crop\'s journal.' : '') + '</span></div>' + foot('Back to the farm'))
+}
+
+/** The event for a finished piece of work. */
+function workEvent(seed: Seed, mode: Mode, ok: boolean, d: Detail): FarmEvent {
+  if (mode === 'testout') return { type: 'unlocked', seed: seed.id, ok }
+  if (mode === 'water') return d.work === 'explain' ? { type: 'watered', seed: seed.id, ok, work: 'explain', text: d.text, ticked: d.ticked, of: d.of } : { type: 'watered', seed: seed.id, ok, work: 'recall' }
+  return d.work === 'write' ? { type: 'harvested', seed: seed.id, ok, text: d.text, ticked: d.ticked, of: d.of } : { type: 'harvested', seed: seed.id, ok }
 }
 
 /** Send the outcome of a piece of work to the farm and describe it. Null if the farm refused it (the reason is already on screen). */
-function settle(seed: Seed, mode: Mode, ok: boolean): string | null {
-  const type = mode === 'harvest' ? 'harvested' : mode === 'testout' ? 'unlocked' : 'watered'
-  if (!act({ type, seed: seed.id, ok })) return null
+function settle(seed: Seed, mode: Mode, ok: boolean, detail: Detail): string | null {
+  if (!act(workEvent(seed, mode, ok, detail))) return null
   const name = esc(seed.name)
   const c = cropOf(S, seed.id)
   if (mode === 'testout') {
@@ -534,7 +645,7 @@ function answer(i: number): void {
   const chosen = opts[i]
   if (!chosen) return
   QC = null
-  const msg = settle(seed, mode, chosen.ok)
+  const msg = settle(seed, mode, chosen.ok, { work: 'recall' })
   if (msg === null) return close()
   const optsEl = $('opts')
   ;[...optsEl.children].forEach((el, j) => {
@@ -552,12 +663,6 @@ function answer(i: number): void {
   if (f.firstElementChild) r.after(f.firstElementChild)
   primary()?.focus()
 }
-/** The sheets without cards finish here: the player says it was done. */
-function finishPlain(seed: Seed, mode: Mode): void {
-  const msg = settle(seed, mode, true)
-  if (msg === null) return close()
-  open(chip(seed.pack) + '<h2>' + workTitle(seed, mode) + ' · ' + esc(seed.name) + '</h2><div class="res">' + msg + '</div>' + foot('Back to the farm'))
-}
 
 function expand(arg: string): void {
   const [k, pack] = arg.split('|')
@@ -569,7 +674,7 @@ function expand(arg: string): void {
 }
 
 function openBag(): void {
-  let html = '<h2>Seed bag</h2><p class="sub">Each seed is a topic. Plant it in its own field, water it by answering, harvest it to make it perennial. ' + RULES.plant.energy + ' energy + ' + RULES.plant.coins + ' coins to plant, and ' + RULES.newSeedsPerDay + ' new seeds a day.</p>'
+  let html = '<h2>Seed bag</h2><p class="sub">Each seed is a topic. Plant it in its own field with notes in your own words, water it by answering or explaining, harvest it to make it perennial. ' + RULES.plant.energy + ' energy + ' + RULES.plant.coins + ' coins to plant, and ' + RULES.newSeedsPerDay + ' new seeds a day.</p>'
   for (const sec of bagView(S, catalog, store.ui.seedSel)) {
     const labels = [
       sec.perennial ? 'perennial' : '',
@@ -579,7 +684,7 @@ function openBag(): void {
     html += '<div class="fh"><i style="background:' + sec.color + '"></i>' + esc(sec.title) + '</div>' + (labels.length ? '<div class="sub">' + labels.join(' · ') + '</div>' : '') + '<div>'
     for (const sd of sec.seeds) {
       const tag = '<span class="tag">' + esc(sd.harvest) + '</span>'
-      if (sd.status !== 'ready') html += '<div class="row slim"><div class="n">' + esc(sd.name) + '<small>' + esc(sd.layer) + ' · in the ground</small></div><span class="sub">' + tag + ' ' + sd.status + '</span></div>'
+      if (sd.status !== 'ready') html += '<div class="row slim"><div class="n">' + esc(sd.name) + '<small>' + esc(sd.layer) + ' · in the ground ' + tag + ' ' + sd.status + '</small></div><button type="button" data-act="cropSheet" data-arg="' + esc(sd.id) + '">Notes</button></div>'
       else html += '<div class="row"><div class="n">' + esc(sd.name) + '<small>' + esc(sd.layer) + ' ' + tag + (sd.focus ? ' · focus' : '') + '</small></div><button type="button" data-act="seed" data-arg="' + sd.id + '"' + (sd.selected ? ' class="pri"' : '') + '>' + (sd.selected ? 'Selected' : 'Select') + '</button></div>'
     }
     if (sec.lockedCount) html += '<div class="row locked slim"><div class="n">' + sec.lockedCount + ' locked<small>see the learning tree</small></div></div>'
@@ -636,7 +741,7 @@ function openReset(): void {
   open('<h2>Start a new farm?</h2><p>This replaces the farm in this browser. Export it first if you want to keep it.</p><p class="sub"><b>Start fresh</b>: day 1, ' + RULES.start.coins + ' coins, nothing planted. <b>Sample farm</b>: the prototype farm on day 12, with crops already growing.</p><div class="branches"><button type="button" data-act="newFarm" data-arg="fresh">Start fresh</button><button type="button" data-act="newFarm" data-arg="sample">Sample farm</button></div>' + foot('Cancel'))
 }
 function openWelcome(): void {
-  open('<h2>Welcome to Permaculture</h2><p>A farm where the crops are the things you are learning. Plant a seed from the barn, water it by answering a question, and it grows. Miss a day and it wilts.</p><p class="sub">Your farm starts empty, with a field for each pack. You can plant ' + RULES.newSeedsPerDay + ' new seeds a day. Everything is saved in this browser.</p><div class="branches"><button type="button" data-act="newFarm" data-arg="sample">Try the sample farm</button></div>' + foot('Start planting'))
+  open('<h2>Welcome to Permaculture</h2><p>A farm where the crops are the things you are learning. Plant a seed from the barn with notes in your own words, water it by answering and explaining, and it grows. Miss a day and it wilts.</p><p class="sub">Your farm starts empty, with a field for each pack. You can plant ' + RULES.newSeedsPerDay + ' new seeds a day. Everything is saved in this browser.</p><div class="branches"><button type="button" data-act="newFarm" data-arg="sample">Try the sample farm</button></div>' + foot('Start planting'))
 }
 function openWell(): void { open('<h2>Rain barrel</h2><p>' + S.barrel + ' of ' + RULES.barrel.max + ' days stored.</p><p class="sub">Catch and store energy. End a day with ' + RULES.barrel.fillAt + '+ energy left and the barrel fills by one. When a crop is about to wilt, the barrel spends a day to keep it alive. It never grows a crop; only you do.</p>' + foot()) }
 function openCompost(): void {
@@ -759,8 +864,12 @@ sheet.addEventListener('click', (e) => {
   const arg = b.dataset.arg ?? ''
   if (what === 'close') close()
   else if (what === 'opt') answer(Number(arg))
-  else if (what === 'logDone') { const seed = LOG; LOG = null; if (seed && cropOf(S, seed.id)) finishPlain(seed, 'water') }
-  else if (what === 'proofDone') { const w = PROOF; PROOF = null; if (w && (w.mode === 'testout' || cropOf(S, w.seed.id))) finishPlain(w.seed, w.mode) }
+  else if (what === 'plantGo') plant()
+  else if (what === 'rate') rate()
+  else if (what === 'editExplain') { const e = EXPLAIN; if (e) openExplain(e.seed, e.text) }
+  else if (what === 'submitExplain') submitExplain()
+  else if (what === 'submitWrite') submitWrite()
+  else if (what === 'cropSheet') openCrop(arg)
   else if (what === 'seed') {
     const seed = catalog.seed(arg)
     if (!seed) return

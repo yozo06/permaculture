@@ -6,15 +6,16 @@ import { collectPacks } from '../../scripts/packs-lib.mjs'
 import { buildCatalog, type Catalog } from './catalog'
 import { findCandidates, pickFind } from './finds'
 import { apply, check, fieldsToOpen, fold, initialState } from './fold'
-import { smallCatalog, started } from './fixtures'
+import { EXPLANATION, NOTES, harvestEvent, smallCatalog, started, waterEvent } from './fixtures'
+import { explainChecklist, explainPasses, harvestWork, waterWork, writePasses } from './ladder'
 import { FIELD_SIZE, fieldOf, fieldOrigin, terrain, tileKey, wildKind, worldSize } from './land'
 import { RULES, available, cropOf, ripe, revivable, thirsty, visible } from './rules'
 import type { FarmEvent, FarmState, LoggedEvent } from './types'
 
 type Intent =
-  | { k: 'plant'; a: number; b: number }
-  | { k: 'water'; a: number; ok: boolean }
-  | { k: 'harvest'; a: number; ok: boolean }
+  | { k: 'plant'; a: number; b: number; len: number }
+  | { k: 'water'; a: number; ok: boolean; len: number; tick: number; flip: boolean }
+  | { k: 'harvest'; a: number; ok: boolean; len: number; tick: number }
   | { k: 'sleep' }
   | { k: 'fence'; a: number; b: number }
   | { k: 'forage'; a: number; b: number }
@@ -26,14 +27,16 @@ type Intent =
 const idx = fc.nat({ max: 1000 })
 /** Mostly right answers, so crops get to grow up. */
 const usuallyOk = fc.oneof({ weight: 4, arbitrary: fc.constant(true) }, { weight: 1, arbitrary: fc.constant(false) })
+/** Mostly enough writing, sometimes too little, so refusals get exercised too. */
+const writing = fc.oneof({ weight: 6, arbitrary: fc.integer({ min: 90, max: 200 }) }, { weight: 1, arbitrary: fc.nat({ max: 120 }) })
 const rawEvents = fc.oneof(
   fc.anything(),
   fc.record({ type: fc.constantFrom('planted', 'watered', 'harvested', 'fenced', 'foraged', 'domesticated', 'unlocked', 'focus-set', 'field-opened', 'farm-started'), seed: fc.string(), pack: fc.string(), find: fc.string(), x: fc.integer({ min: -3, max: 30 }), y: fc.integer({ min: -3, max: 30 }), slot: fc.integer({ min: -2, max: 12 }), ok: fc.boolean(), branch: fc.option(fc.string()) }),
 )
 const intents: fc.Arbitrary<Intent> = fc.oneof(
-  { weight: 5, arbitrary: fc.record({ k: fc.constant('plant' as const), a: idx, b: idx }) },
-  { weight: 9, arbitrary: fc.record({ k: fc.constant('water' as const), a: idx, ok: usuallyOk }) },
-  { weight: 4, arbitrary: fc.record({ k: fc.constant('harvest' as const), a: idx, ok: usuallyOk }) },
+  { weight: 5, arbitrary: fc.record({ k: fc.constant('plant' as const), a: idx, b: idx, len: writing }) },
+  { weight: 9, arbitrary: fc.record({ k: fc.constant('water' as const), a: idx, ok: usuallyOk, len: writing, tick: idx, flip: fc.boolean() }) },
+  { weight: 4, arbitrary: fc.record({ k: fc.constant('harvest' as const), a: idx, ok: usuallyOk, len: writing, tick: idx }) },
   { weight: 5, arbitrary: fc.constant({ k: 'sleep' as const }) },
   { weight: 2, arbitrary: fc.record({ k: fc.constant('fence' as const), a: idx, b: idx }) },
   { weight: 2, arbitrary: fc.record({ k: fc.constant('forage' as const), a: idx, b: idx }) },
@@ -78,15 +81,28 @@ function toEvent(s: FarmState, catalog: Catalog, intent: Intent): unknown {
     case 'plant': {
       const seed = pick(seeds.filter((x) => Object.hasOwn(s.fields, x.pack) && available(x, s) && !cropOf(s, x.id)), intent.a)
       const tile = seed && pick(fieldTiles(s, seed.pack).filter((t) => !s.crops.some((c) => c.x === t.x && c.y === t.y)), intent.b)
-      return seed && tile ? { type: 'planted', seed: seed.id, x: tile.x, y: tile.y } : null
+      return seed && tile ? { type: 'planted', seed: seed.id, x: tile.x, y: tile.y, notes: 'n'.repeat(intent.len) } : null
     }
     case 'water': {
       const crop = pick(s.crops.filter((c) => thirsty(c, s.day) || revivable(c, s.day)), intent.a)
-      return crop ? { type: 'watered', seed: crop.seed, ok: intent.ok } : null
+      const seed = crop && catalog.seed(crop.seed)
+      if (!crop || !seed) return null
+      // The log records the work as it happened, so now and then the player does the other kind.
+      const recall = (waterWork(crop, seed) === 'recall') !== intent.flip
+      if (recall) return { type: 'watered', seed: crop.seed, ok: intent.ok, work: 'recall' }
+      const of = explainChecklist(seed).length
+      const ticked = intent.tick % (of + 1)
+      return { type: 'watered', seed: crop.seed, ok: explainPasses(ticked, of), work: 'explain', text: 'w'.repeat(intent.len), ticked, of }
     }
     case 'harvest': {
       const crop = pick(s.crops.filter((c) => ripe(c, s.day) || c.perennial), intent.a)
-      return crop ? { type: 'harvested', seed: crop.seed, ok: intent.ok } : null
+      const seed = crop && catalog.seed(crop.seed)
+      if (!crop || !seed) return null
+      const work = harvestWork(seed)
+      if (work.kind === 'recall') return { type: 'harvested', seed: crop.seed, ok: intent.ok }
+      const of = work.checklist.length
+      const ticked = intent.tick % (of + 1)
+      return { type: 'harvested', seed: crop.seed, ok: writePasses(ticked, of), text: 'h'.repeat(intent.len), ticked, of }
     }
     case 'fence': {
       const pack = pick(packs, intent.a)
@@ -175,6 +191,23 @@ function verify(s: FarmState, before: FarmState, e: FarmEvent, catalog: Catalog)
   // 5. no overnight wilting while the barrel has a day
   if (e.type === 'slept' && s.night && s.night.wilted.length > 0) expect(s.barrel).toBe(0)
   if (e.type === 'slept') expect(s.day).toBe(before.day + 1)
+  // 8. notes are kept as planted, the journal only grows, and only by the writing the event carried
+  const writing = (e.type === 'watered' && e.work === 'explain') || (e.type === 'harvested' && e.text !== undefined) ? 1 : 0
+  const entries = (farm: FarmState): number => farm.crops.reduce((n, c) => n + c.journal.length, 0)
+  expect(entries(s) - entries(before)).toBe(writing)
+  for (const c of s.crops) {
+    const was = cropOf(before, c.seed)
+    if (was) {
+      expect(c.notes).toBe(was.notes)
+      expect(c.journal.slice(0, was.journal.length)).toEqual(was.journal)
+    } else {
+      expect(c.notes.length).toBeGreaterThanOrEqual(RULES.notesMin)
+    }
+    for (const j of c.journal) {
+      expect(j.day).toBeLessThanOrEqual(s.day)
+      expect(j.text.length).toBeGreaterThanOrEqual(j.kind === 'explain' ? RULES.explainMin : RULES.proofMin)
+    }
+  }
   // 6. a perennial can never be harvested
   for (const c of s.crops.filter((x) => x.perennial)) {
     for (const ok of [true, false]) {
@@ -230,10 +263,10 @@ describe('a diligent player', () => {
     for (const e of fieldsToOpen(s, catalog)) s = apply(s, e, catalog)
     for (let day = 0; day < days; day++) {
       const doing: unknown[] = []
-      for (const c of s.crops) doing.push({ type: 'harvested', seed: c.seed, ok: true }, { type: 'watered', seed: c.seed, ok: true })
+      for (const c of s.crops) doing.push(harvestEvent(catalog, c.seed), waterEvent(catalog, s, c.seed))
       for (const seed of catalog.packs.flatMap((p) => catalog.seedsOf(p.pack))) {
         const tile = fieldTiles(s, seed.pack).find((t) => !s.crops.some((c) => c.x === t.x && c.y === t.y))
-        if (tile) doing.push({ type: 'planted', seed: seed.id, x: tile.x, y: tile.y })
+        if (tile) doing.push({ type: 'planted', seed: seed.id, x: tile.x, y: tile.y, notes: NOTES })
       }
       for (const e of doing) s = apply(s, e, catalog)
       s = apply(s, { type: 'slept' }, catalog)

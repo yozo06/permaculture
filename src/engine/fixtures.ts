@@ -1,7 +1,8 @@
 // A small farm for tests: two packs, one capped at 30%, a recall seed, an artifact seed and a wild seed with its find.
 import { buildCatalog } from './catalog'
 import { apply, initialState } from './fold'
-import { RULES } from './rules'
+import { explainChecklist, explainPasses, harvestWork, waterWork, writePasses } from './ladder'
+import { RULES, cropOf } from './rules'
 import type { FarmEvent, FarmState, PackDef } from './types'
 
 const mcq = (q: string) => ({ q, answer: 'right', distractors: ['wrong', 'also wrong'], why: 'because' })
@@ -30,6 +31,10 @@ export const smallPacks: PackDef[] = [
   },
 ]
 
+/** Notes and an explanation long enough to plant and to water with. */
+export const NOTES = 'Corn is tall and the beans climb it, and squash covers the ground below.'
+export const EXPLANATION = 'Corn gives the beans a pole to climb, the beans feed the soil with nitrogen, and the squash shades the ground so the water stays in. Together they need less than apart.'
+
 export const smallCatalog = buildCatalog(smallPacks)
 
 /** Apply events in order; throws if one is refused, so a test that sets up a farm fails loudly. */
@@ -45,3 +50,25 @@ export const started: Extract<FarmEvent, { type: 'farm-started' }> = { type: 'fa
 /** A started farm with the small catalog's two fields open. */
 export const smallFarm = (): FarmState =>
   run(smallCatalog, [started, { type: 'field-opened', pack: 'garden', slot: 0 }, { type: 'field-opened', pack: 'shed', slot: 1 }])
+
+/** The event that waters a crop the way the ladder asks: a recall answer, or an explanation rated against the rubric. */
+export function waterEvent(catalog: ReturnType<typeof buildCatalog>, s: FarmState, seedId: string, ok = true): FarmEvent | null {
+  const crop = cropOf(s, seedId)
+  const seed = catalog.seed(seedId)
+  if (!crop || !seed) return null
+  if (waterWork(crop, seed) === 'recall') return { type: 'watered', seed: seedId, ok, work: 'recall' }
+  const of = explainChecklist(seed).length
+  const ticked = ok ? of : 0
+  return { type: 'watered', seed: seedId, ok: explainPasses(ticked, of), work: 'explain', text: EXPLANATION, ticked, of }
+}
+
+/** The event that harvests a crop the way the ladder asks: a recall answer, or a write-up that meets every line (or none). */
+export function harvestEvent(catalog: ReturnType<typeof buildCatalog>, seedId: string, ok = true): FarmEvent | null {
+  const seed = catalog.seed(seedId)
+  if (!seed) return null
+  const work = harvestWork(seed)
+  if (work.kind === 'recall') return { type: 'harvested', seed: seedId, ok }
+  const of = work.checklist.length
+  const ticked = ok ? of : 0
+  return { type: 'harvested', seed: seedId, ok: writePasses(ticked, of), text: EXPLANATION, ticked, of }
+}

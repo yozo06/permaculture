@@ -1,7 +1,8 @@
 // What the seed bag and the learning tree draw, worked out from the packs and the farm. Pure: no DOM.
 import { HARVEST_NAMES, LAYER_NAMES, type Catalog, type Seed } from '../engine/catalog'
-import { available, cropOf, rooted, visible } from '../engine/rules'
-import type { FarmState, PackDef } from '../engine/types'
+import { harvestWork, rungName, waterWork, type WaterKind } from '../engine/ladder'
+import { RULES, available, cropOf, revivable, ripe, rooted, thirsty, visible, zone } from '../engine/rules'
+import type { Crop, FarmState, PackDef } from '../engine/types'
 
 export const DEFAULT_COLOR = '#6DB24F'
 export const packColor = (p: PackDef): string => p.color ?? DEFAULT_COLOR
@@ -203,5 +204,77 @@ export function treeView(packId: string, state: FarmState, catalog: Catalog): Tr
     pack: packId, title: pack.title, color: packColor(pack), width: TREE_WIDTH, height: y, columnWidth,
     branches: pack.branches.map((b, i) => ({ id: b.id, title: b.title, focus: state.focus[packId] === b.id, x: (i + 0.5) * columnWidth })),
     nodes, edges, guilds, locked,
+  }
+}
+
+/* ---------- the crop sheet ---------- */
+
+export interface SourceLink {
+  title: string
+  /** Only ever an http(s) address; anything else is dropped. */
+  url: string | null
+}
+
+/** A seed's sources as titles with a safe link, if it has one. */
+export function sourceLinks(seed: Seed, catalog: Catalog): SourceLink[] {
+  const declared = catalog.pack(seed.pack)?.sources ?? []
+  return seed.sources.flatMap((id) => {
+    const src = declared.find((s) => s.id === id)
+    return src ? [{ title: src.title, url: src.url !== undefined && /^https?:\/\//i.test(src.url) ? src.url : null }] : []
+  })
+}
+
+export interface JournalLine {
+  day: number
+  /** "Explained" or "Harvest write-up". */
+  label: string
+  text: string
+  ok: boolean
+}
+
+export interface CropView {
+  seed: string
+  name: string
+  pack: string
+  layer: string
+  /** "Stage 3 of 5 · Z2 · Recall". */
+  stageLine: string
+  /** What is true of the crop today, in a sentence. */
+  statusLine: string
+  /** What tapping it will ask for, or null when it has nothing to do. */
+  nextWork: string | null
+  /** Empty for a crop planted before notes existed. */
+  notes: string
+  /** Newest first. */
+  journal: JournalLine[]
+  sources: SourceLink[]
+}
+
+const WATER_WORK: Record<WaterKind, string> = { recall: 'a recall card', explain: 'an explanation in your own words' }
+
+/** What the crop sheet shows for a crop on a given day. */
+export function cropView(crop: Crop, state: Pick<FarmState, 'day'>, catalog: Catalog): CropView | null {
+  const seed = catalog.seed(crop.seed)
+  if (!seed) return null
+  const day = state.day
+  const stageLine = 'Stage ' + (crop.stage + 1) + ' of ' + (RULES.maxStage + 1) + ' · ' + zone(crop) + ' · ' + rungName(crop)
+  let statusLine: string
+  let nextWork: string | null = null
+  if (thirsty(crop, day) || revivable(crop, day)) {
+    statusLine = crop.wilted ? 'Wilted, and ready to revive.' : crop.perennial ? 'Due for a check-in.' : 'Thirsty now.'
+    nextWork = 'Water: ' + WATER_WORK[waterWork(crop, seed)] + '.'
+  } else if (ripe(crop, day)) {
+    statusLine = 'Ready to harvest.'
+    const work = harvestWork(seed)
+    nextWork = 'Harvest: ' + (work.kind === 'recall' ? 'a harder question' : work.proof ? 'proof that it exists' : 'a write-up that meets every line') + '.'
+  } else if (crop.wilted) {
+    statusLine = 'Wilted. It can be revived on day ' + crop.due + '.'
+  } else {
+    statusLine = crop.perennial ? 'Rooted. Next check-in on day ' + crop.due + '.' : 'Growing. Thirsty again on day ' + crop.due + '.'
+  }
+  return {
+    seed: seed.id, name: seed.name, pack: seed.pack, layer: LAYER_NAMES[seed.layer], stageLine, statusLine, nextWork,
+    notes: crop.notes, journal: crop.journal.map((j) => ({ day: j.day, label: j.kind === 'explain' ? 'Explained' : 'Harvest write-up', text: j.text, ok: j.ok })).reverse(),
+    sources: sourceLinks(seed, catalog),
   }
 }

@@ -19,7 +19,7 @@ function copy(s: FarmState): FarmState {
     ...s,
     fields: { ...s.fields },
     cleared: { ...s.cleared },
-    crops: s.crops.map((c) => ({ ...c })),
+    crops: s.crops.map((c) => ({ ...c, journal: c.journal.map((j) => ({ ...j })) })),
     compost: s.compost.slice(),
     unlocked: s.unlocked.slice(),
     volunteers: s.volunteers.slice(),
@@ -50,9 +50,20 @@ export function parseEvent(raw: unknown): FarmEvent | null {
     case 'field-opened':
       return text(raw.pack) && whole(raw.slot) && raw.slot >= 0 && raw.slot <= 99 ? { type, pack: raw.pack, slot: raw.slot } : null
     case 'planted':
-      return text(raw.seed) && whole(raw.x) && whole(raw.y) ? { type, seed: raw.seed, x: raw.x, y: raw.y } : null
-    case 'watered':
-    case 'harvested':
+      return text(raw.seed) && whole(raw.x) && whole(raw.y) && text(raw.notes) ? { type, seed: raw.seed, x: raw.x, y: raw.y, notes: raw.notes } : null
+    case 'watered': {
+      if (!text(raw.seed) || typeof raw.ok !== 'boolean') return null
+      if (raw.work === 'recall') return { type, seed: raw.seed, ok: raw.ok, work: 'recall' }
+      if (raw.work !== 'explain' || !text(raw.text) || !whole(raw.ticked) || !whole(raw.of)) return null
+      return { type, seed: raw.seed, ok: raw.ok, work: 'explain', text: raw.text, ticked: raw.ticked, of: raw.of }
+    }
+    case 'harvested': {
+      if (!text(raw.seed) || typeof raw.ok !== 'boolean') return null
+      // A write-up carries all three of text, ticked and of; a recall harvest carries none.
+      if (raw.text === undefined && raw.ticked === undefined && raw.of === undefined) return { type, seed: raw.seed, ok: raw.ok }
+      if (!text(raw.text) || !whole(raw.ticked) || !whole(raw.of)) return null
+      return { type, seed: raw.seed, ok: raw.ok, text: raw.text, ticked: raw.ticked, of: raw.of }
+    }
     case 'unlocked':
       return text(raw.seed) && typeof raw.ok === 'boolean' ? { type, seed: raw.seed, ok: raw.ok } : null
     case 'slept':
@@ -85,6 +96,17 @@ function capWhy(s: FarmState, pack: string, cost: number, catalog: Catalog): str
   return 'The ' + (catalog.pack(pack)?.title ?? pack) + ' uses at most ' + catalog.capOf(pack, s.energyMax) + ' energy a day.'
 }
 
+/** Why a piece of writing cannot be accepted, or null. */
+function whyText(written: string, min: number, what: string): string | null {
+  const n = written.trim().length
+  if (n < min) return 'Write at least ' + min + ' characters ' + what + '. You have ' + n + '.'
+  return n > RULES.textMax ? 'Keep it under ' + RULES.textMax + ' characters.' : null
+}
+
+/** Why a self-rating is not a count of lines, or null. */
+const whyRating = (ticked: number, of: number): string | null =>
+  of >= 1 && ticked >= 0 && ticked <= of ? null : 'The rating does not add up.'
+
 function whyPlanted(s: FarmState, e: Extract<FarmEvent, { type: 'planted' }>, catalog: Catalog): string | null {
   const seed = catalog.seed(e.seed)
   if (!seed) return 'That seed is not in any pack.'
@@ -94,6 +116,8 @@ function whyPlanted(s: FarmState, e: Extract<FarmEvent, { type: 'planted' }>, ca
   if (cropOf(s, seed.id)) return seed.name + ' is already planted.'
   if (fieldOf(e.x, e.y, s.fields, s.cleared) !== seed.pack) return seed.name + ' belongs in the ' + title + ' field.'
   if (s.crops.some((c) => c.x === e.x && c.y === e.y)) return 'Something is already growing there.'
+  const thin = whyText(e.notes, RULES.notesMin, 'of notes in your own words to plant')
+  if (thin) return thin
   if (s.energy < RULES.plant.energy || s.coins < RULES.plant.coins) {
     return 'Planting needs ' + RULES.plant.energy + ' energy and ' + RULES.plant.coins + ' coins.'
   }
@@ -108,6 +132,10 @@ function whyWatered(s: FarmState, e: Extract<FarmEvent, { type: 'watered' }>, ca
   if (!thirsty(crop, s.day) && !revivable(crop, s.day)) {
     return crop.wilted ? seed.name + ' has wilted. Revive it on day ' + crop.due + '.' : seed.name + ' is not thirsty. It is due on day ' + crop.due + '.'
   }
+  if (e.work === 'explain') {
+    const bad = whyText(e.text ?? '', RULES.explainMin, 'to explain it') ?? whyRating(e.ticked ?? 0, e.of ?? 0)
+    if (bad) return bad
+  }
   if (s.energy < RULES.water.energy) return 'Out of energy. Sleep to start a new day.'
   return capWhy(s, seed.pack, RULES.water.energy, catalog)
 }
@@ -118,6 +146,11 @@ function whyHarvested(s: FarmState, e: Extract<FarmEvent, { type: 'harvested' }>
   if (!seed || !crop) return 'That is not planted.'
   if (crop.perennial) return seed.name + ' is rooted already. It only needs a check-in.'
   if (!ripe(crop, s.day)) return seed.name + ' is not ready to harvest.'
+  if (e.text !== undefined) {
+    const proof = seed.harvest === 'artifact'
+    const bad = whyText(e.text, proof ? RULES.proofMin : RULES.writeMin, proof ? 'to say what you made' : 'in your write-up') ?? whyRating(e.ticked ?? 0, e.of ?? 0)
+    if (bad) return bad
+  }
   if (s.energy < RULES.harvest.energy) return 'Harvest takes ' + RULES.harvest.energy + ' energy. Sleep first.'
   return capWhy(s, seed.pack, RULES.harvest.energy, catalog)
 }
@@ -239,7 +272,9 @@ function sleep(s: FarmState): void {
   s.night = { saved, wilted, barrelFilled }
 }
 
-function water(s: FarmState, c: Crop, ok: boolean): void {
+function water(s: FarmState, c: Crop, e: Extract<FarmEvent, { type: 'watered' }>): void {
+  const { ok } = e
+  if (e.work === 'explain') c.journal.push({ day: s.day, kind: 'explain', text: (e.text ?? '').trim(), ok })
   if (ok) {
     c.wilted = false
     if (!c.perennial) c.stage = Math.min(RULES.maxStage, c.stage + 1)
@@ -253,7 +288,9 @@ function water(s: FarmState, c: Crop, ok: boolean): void {
   }
 }
 
-function harvest(s: FarmState, c: Crop, ok: boolean): void {
+function harvest(s: FarmState, c: Crop, e: Extract<FarmEvent, { type: 'harvested' }>): void {
+  const { ok } = e
+  if (e.text !== undefined) c.journal.push({ day: s.day, kind: 'harvest', text: e.text.trim(), ok })
   if (ok) {
     c.perennial = true
     c.stage = RULES.maxStage
@@ -283,17 +320,17 @@ function step(s: FarmState, e: FarmEvent, catalog: Catalog): FarmState {
       spend(n, pack, RULES.plant.energy)
       n.coins -= RULES.plant.coins
       n.today.planted += 1
-      n.crops.push({ seed: e.seed, x: e.x, y: e.y, stage: 0, due: n.day + 1, wilted: false, perennial: false })
+      n.crops.push({ seed: e.seed, x: e.x, y: e.y, stage: 0, due: n.day + 1, wilted: false, perennial: false, notes: e.notes.trim(), journal: [] })
       return n
     case 'watered':
       if (!crop || !pack) return s
       spend(n, pack, RULES.water.energy)
-      water(n, crop, e.ok)
+      water(n, crop, e)
       return n
     case 'harvested':
       if (!crop || !pack) return s
       spend(n, pack, RULES.harvest.energy)
-      harvest(n, crop, e.ok)
+      harvest(n, crop, e)
       return n
     case 'slept':
       sleep(n)

@@ -41,6 +41,8 @@ button:focus-visible{outline:2px solid var(--green);outline-offset:2px}
 button.pri{background:var(--green);border-color:#4C8A36;color:#10200C}
 button.pri:hover{background:#7CC25E}
 button:disabled{opacity:.6;cursor:default}
+button.pri:disabled{background:var(--panel-2);border-color:var(--line-2);color:var(--muted)}
+button.pri:disabled:hover{background:var(--panel-2)}
 .veil{position:fixed;inset:0;background:rgba(10,8,5,.6);display:flex;align-items:center;justify-content:center;padding:16px;z-index:20}
 .veil[hidden]{display:none}
 .sheet{width:100%;max-width:480px;max-height:90vh;overflow:auto;background:var(--panel);border:2px solid var(--line-2);border-radius:10px;padding:18px 20px;display:flex;flex-direction:column;gap:14px}
@@ -81,3 +83,15 @@ button:disabled{opacity:.6;cursor:default}
 .row.slim{padding:4px 0;font-size:13px}
 .row.slim .n{flex-direction:row;align-items:baseline;gap:8px;flex-wrap:wrap}
 .row.slim .n small{font-size:11px}
+
+.sheet textarea.write{font-family:var(--font-body);font-size:14px;line-height:1.5;min-height:120px}
+.count{margin-top:-8px}
+.count.ok{color:var(--green)}
+.note{white-space:pre-wrap;overflow-wrap:anywhere;background:var(--panel-2);border:1px solid var(--line-2);border-radius:8px;padding:10px 12px;font-size:14px;line-height:1.5}
+.entry{display:flex;flex-direction:column;gap:6px}
+.ticks{border:0;margin:0;padding:0;min-width:0;display:flex;flex-direction:column;gap:8px}
+.ticks legend{font-family:var(--font-display);font-size:16px;color:var(--green);padding:0;margin-bottom:8px}
+.tick{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px solid var(--line-2);border-radius:8px;background:var(--panel-2);font-size:14px;line-height:1.4;cursor:pointer}
+.tick input{width:20px;height:20px;margin:0;flex:none;accent-color:var(--green)}
+.sheet a{color:var(--green)}
+.sources{font-size:13px}

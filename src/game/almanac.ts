@@ -1,6 +1,7 @@
 // The Almanac is written from RULES (and the packs' caps), so the numbers on the page cannot drift from the game.
 // docs/design.md says the same things; src/engine/design-doc.test.ts checks its tables against RULES.
 import type { Catalog } from '../engine/catalog'
+import { LADDER } from '../engine/ladder'
 import { RULES } from '../engine/rules'
 import { esc } from './util'
 
@@ -30,11 +31,15 @@ export function almanacHtml(catalog: Catalog, energyMax: number): string {
   const last = RULES.maxStage
   return (
     '<h2>Almanac</h2><p class="sub">The rules of this farm, as they stand today. Everything here is in the game right now.</p>' +
-    '<h3>The loop</h3>' +
+    '<h3>The depth ladder</h3>' +
+    '<p class="sub">Stages change the kind of work, not just the wait. Multiple choice is for recall only.</p>' +
     list([
-      '<b>Seeds are topics.</b> Plant one in its field: ' + RULES.plant.energy + ' energy, ' + RULES.plant.coins + ' coins. It sprouts at stage 1 of 5. You can plant ' + RULES.newSeedsPerDay + ' new seeds a day, so the farm stays small enough to tend.',
-      '<b>Water = answer.</b> A thirsty crop shows a droplet. Tap it and answer one question (' + RULES.water.energy + ' energy). Right: it grows a stage. Wrong: it wilts, drops a stage, and goes in the compost heap.',
-      '<b>Harvest = prove it.</b> A stage-' + stageNo(last) + ' crop sparkles. Answer a harder question (' + RULES.harvest.energy + ' energy). Premium: +' + RULES.harvest.coins + ' coins and the crop becomes a <b>perennial tree</b>, rooted for good. Seconds: composted, and it drops back to stage ' + last + ' of 5.',
+      '<b>Sprout.</b> Plant a seed in its field: ' + RULES.plant.energy + ' energy, ' + RULES.plant.coins + ' coins. Read the source and write notes in your own words, at least ' + RULES.notesMin + ' characters. The notes stay on the crop. You can plant ' + RULES.newSeedsPerDay + ' new seeds a day, so the farm stays small enough to tend.',
+      '<b>Recall</b> (stages ' + stageNo(0) + ' to ' + stageNo(LADDER.recallLast) + ' of ' + (last + 1) + '). A thirsty crop shows a droplet. Tap it and answer a multiple-choice card (' + RULES.water.energy + ' energy). Right: it grows a stage. Wrong: it wilts, drops a stage, and goes in the compost heap.',
+      '<b>Explain</b> (stage ' + stageNo(LADDER.explain) + ' of ' + (last + 1) + '). Write the topic in your own words, at least ' + RULES.explainMin + ' characters (' + RULES.water.energy + ' energy). Your notes stay hidden until you submit. Then rate yourself against the seed\'s rubric: more than half the lines is a pass and the crop grows. Otherwise it wilts like a wrong answer. Self-rating is the fallback until judged harvests arrive.',
+      '<b>Harvest</b> (stage ' + stageNo(last) + ' of ' + (last + 1) + '). A sparkling crop is ready (' + RULES.harvest.energy + ' energy): a harder question, a write-up that meets every rubric line, or proof of an artifact (a link or a description). Premium: +' + RULES.harvest.coins + ' coins and the crop becomes a <b>perennial tree</b>, rooted for good. Seconds: composted, and it drops back to stage ' + stageNo(last - 1) + ' of ' + (last + 1) + '.',
+      'A seed with no cards (the Workshop\'s) explains at every stage. A perennial check-in is a card too, and the harder harvest cards are used when a seed has them.',
+      'Tap an idle crop, or press Notes in the seed bag, to read your notes and the journal of your explanations and write-ups.',
     ]) +
     '<h3>Thirst and zones</h3>' +
     list([
@@ -56,7 +61,7 @@ export function almanacHtml(catalog: Catalog, energyMax: number): string {
     list([
       'Every pack is a field. They sit on a grid around the barn, and the world grows to fit them. Drag to pan; everything beyond the homestead is wilderness.',
       'Tap land next to a field to fence it in: ' + RULES.fence.open + ' coins for open ground, ' + RULES.fence.forest + ' to clear forest. Fields grow one tile at a time, any shape.',
-      "Some seeds are not questions. The Workshop's are days of work on the game itself: you log the day, and you harvest when it ships.",
+      "Some seeds are not questions. The Workshop's are days of work on the game itself: you explain what moved forward, and you harvest when it ships, with a link as proof.",
     ]) +
     '<h3>Wilderness (Zone 5)</h3>' +
     list([
@@ -76,7 +81,7 @@ export function almanacHtml(catalog: Catalog, energyMax: number): string {
       'Everything you do is saved as an event in this browser, and your farm is what you get by replaying them. Export gives you that log; import replays it.',
       'Farms from the first prototype (v2) still import: the game turns them into the first event of a new log.',
     ]) +
-    '<h3>Not here yet</h3><p class="sub">Guild bonuses, layers as terraces, real weather from Coorg, the rival farm, the Sunday walk, the market, judged write-ups and timed solves, your own notes on each crop, loading your own pack in the browser, the village.</p>' +
+    '<h3>Not here yet</h3><p class="sub">The Apply rung (a problem, a design, a debugging session), timed solves and AI judging (Phase 2), guild bonuses, layers as terraces, real weather from Coorg, the rival farm, the Sunday walk, the market, loading your own pack in the browser, the village.</p>' +
     '<div class="foot"><span></span><button type="button" class="pri" data-act="close">Close</button></div>'
   )
 }

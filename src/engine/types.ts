@@ -72,6 +72,15 @@ export interface PackDef {
 
 /* ---------- the farm ---------- */
 
+/** What the player wrote when they explained a crop or wrote up its harvest. Newest last. */
+export interface JournalEntry {
+  day: number
+  kind: 'explain' | 'harvest'
+  text: string
+  /** Whether the self-rating passed. */
+  ok: boolean
+}
+
 export interface Crop {
   seed: string
   x: number
@@ -82,6 +91,9 @@ export interface Crop {
   due: number
   wilted: boolean
   perennial: boolean
+  /** The player's own notes from planting. Empty for a crop planted before notes existed. */
+  notes: string
+  journal: JournalEntry[]
 }
 
 /** What the morning report needs from the last Sleep. Seed ids. */
@@ -118,9 +130,11 @@ export interface FarmState {
 export type FarmEvent =
   | { type: 'farm-started'; day: number; energy: number; coins: number; barrel: number }
   | { type: 'field-opened'; pack: string; slot: number }
-  | { type: 'planted'; seed: string; x: number; y: number }
-  | { type: 'watered'; seed: string; ok: boolean }
-  | { type: 'harvested'; seed: string; ok: boolean }
+  | { type: 'planted'; seed: string; x: number; y: number; notes: string }
+  /** `work` is what the player did, recorded as it happened. An explain also carries the text and the self-rating. */
+  | { type: 'watered'; seed: string; ok: boolean; work: 'recall' | 'explain'; text?: string; ticked?: number; of?: number }
+  /** A write-up harvest carries the text and the self-rating; a recall harvest carries neither. */
+  | { type: 'harvested'; seed: string; ok: boolean; text?: string; ticked?: number; of?: number }
   | { type: 'slept' }
   | { type: 'fenced'; x: number; y: number; pack: string }
   | { type: 'foraged'; x: number; y: number; find: string }

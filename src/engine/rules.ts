@@ -19,6 +19,19 @@ export const RULES = {
   zones: ['Z1', 'Z2', 'Z2', 'Z3', 'Z3'],
   perennialZone: 'Z4',
   maxStage: 4,
+  /** Characters (after trimming) of notes needed to plant, and of an explanation to water. */
+  notesMin: 40,
+  explainMin: 80,
+  /** Characters needed for a harvest write-up, and for the link or description of an artifact. */
+  writeMin: 80,
+  proofMin: 8,
+  /** The most any one piece of writing may hold, so a log cannot grow without bound. */
+  textMax: 5000,
+  defaultRubric: [
+    "Says what it is in plain words, not the source's",
+    'Says why it matters: the problem it solves or the mistake it prevents',
+    'Gives a concrete example, or a case where it does not apply',
+  ],
 } as const
 
 /** Days between waterings. */

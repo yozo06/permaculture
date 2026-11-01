@@ -5,7 +5,7 @@ import type { PackDef } from '../engine/types'
 import { apply, fieldsToOpen, fold } from '../engine/fold'
 import type { FarmState } from '../engine/types'
 import sampleFarm from './sample-farm.json'
-import { bagView, splitName, treeView } from './views'
+import { bagView, cropView, sourceLinks, splitName, treeView } from './views'
 
 const catalog = buildCatalog(collectPacks())
 
@@ -159,5 +159,60 @@ describe('splitName', () => {
   it('keeps short names whole and splits long ones near the middle', () => {
     expect(splitName('Raft')).toEqual(['Raft'])
     expect(splitName('Idempotency & outbox')).toEqual(['Idempotency', '& outbox'])
+  })
+})
+
+describe('cropView', () => {
+  const s = farm()
+  const view = (seed: string, patch: Partial<FarmState['crops'][number]> = {}, day = s.day) => {
+    const crop = s.crops.find((c) => c.seed === seed)
+    if (!crop) throw new Error('no crop ' + seed)
+    return cropView({ ...crop, ...patch }, { day }, catalog)
+  }
+
+  it('says where a crop that is not thirsty stands, with nothing to do', () => {
+    const v = view('con', { due: 20 })
+    expect(v).toMatchObject({ name: 'Consistent hashing', stageLine: 'Stage 1 of 5 · Z1 · Sprout', nextWork: null })
+    expect(v?.statusLine).toMatch(/^Growing\. Thirsty again on day \d+\.$/)
+  })
+
+  it('knows a stage-4 crop explains when thirsty, and a Workshop crop explains at any stage', () => {
+    const bp = view('bp')
+    expect(bp).toMatchObject({ stageLine: 'Stage 4 of 5 · Z3 · Explain', statusLine: 'Thirsty now.' })
+    expect(bp?.nextWork).toMatch(/explanation in your own words/)
+  })
+
+  it('shows a notes-less sample crop as having no notes and no journal', () => {
+    expect(view('bp')).toMatchObject({ notes: '', journal: [] })
+  })
+
+  it('shows notes, and the journal newest first', () => {
+    const v = view('con', { notes: 'my notes', journal: [{ day: 3, kind: 'explain', text: 'first', ok: false }, { day: 5, kind: 'harvest', text: 'second', ok: true }] })
+    expect(v?.notes).toBe('my notes')
+    expect(v?.journal).toEqual([{ day: 5, label: 'Harvest write-up', text: 'second', ok: true }, { day: 3, label: 'Explained', text: 'first', ok: false }])
+  })
+
+  it('describes a perennial, a ripe crop and a wilted crop that cannot be revived yet', () => {
+    expect(view('bracket')).toMatchObject({ stageLine: 'Stage 5 of 5 · Z4 · Perennial' })
+    expect(view('bracket')?.statusLine).toMatch(/^Rooted\. Next check-in on day/)
+    expect(view('leaks')).toMatchObject({ statusLine: 'Ready to harvest.', stageLine: 'Stage 5 of 5 · Z3 · Harvest' })
+    expect(view('leaks')?.nextWork).toBe('Harvest: a harder question.')
+    expect(view('con', { due: 20, stage: 2 })?.statusLine).toBe('Growing. Thirsty again on day 20.')
+    const wilted = view('gc', { wilted: true, due: 30 })
+    expect(wilted?.statusLine).toBe('Wilted. It can be revived on day 30.')
+    expect(wilted?.nextWork).toBeNull()
+  })
+
+  it('links a source only when it has an http(s) address', () => {
+    const seed = catalog.seed('con')
+    if (!seed) throw new Error('no seed')
+    const bad: PackDef = { pack: 'p', version: 0, title: 'P', branches: [{ id: 'b', title: 'B' }], sources: [{ id: 'a', title: 'A', url: 'javascript:alert(1)' }, { id: 'b', title: 'B', url: 'https://example.org/b' }, { id: 'c', title: 'C' }], seeds: [{ id: 'x', name: 'X', layer: 'herb', branch: 'b', tier: 0, harvest: 'artifact', prompts: ['p'], sources: ['a', 'b', 'c', 'missing'] }] }
+    const x = buildCatalog([bad]).seed('x')
+    if (!x) throw new Error('no seed x')
+    expect(sourceLinks(x, buildCatalog([bad]))).toEqual([{ title: 'A', url: null }, { title: 'B', url: 'https://example.org/b' }, { title: 'C', url: null }])
+  })
+
+  it('is null for a seed no pack has', () => {
+    expect(cropView({ seed: 'gone', x: 0, y: 0, stage: 0, due: 1, wilted: false, perennial: false, notes: '', journal: [] }, { day: 1 }, catalog)).toBeNull()
   })
 })

@@ -52,9 +52,9 @@ seeds:
     harvest: recall          # recall | solve | judged | artifact
     minutes: 30              # about how long planting takes: reading the source and writing notes
     sources: [raft]
-    summary: Read sections 5.1–5.4. Yield: the election and commit rules in your own words, plus three cards.
+    summary: Read sections 5.1–5.4. Yield: the election and commit rules in your own words.
     questions:
-      water:                 # asked at watering (stages 1–4)
+      water:                 # asked when a crop is watered at stages 1–3 of 5, and at perennial check-ins
         - q: In Raft, a log entry is committed when…
           answer: It is replicated on a majority and the leader has applied an entry from its current term
           distractors:
@@ -63,15 +63,24 @@ seeds:
             - The client receives an acknowledgement
           why: Majority replication plus a current-term entry prevents a stale leader committing an old entry.
           source: raft
-      harvest:               # asked at harvest; harder. Falls back to `water` if absent.
+      harvest:               # asked at harvest and at perennial check-ins; harder. Falls back to `water` if absent.
         - q: ...
-    # for judged / artifact harvests instead of (or as well as) questions:
+    # the rubric drives the explain rung for every seed, and judged harvests; add prompts for judged / artifact / solve harvests:
     rubric:
       - Names two or more options and why this one
       - States where state lives and what consistency it really has
     prompts:
       - Design a distributed rate limiter for a payments API at 50k rps across three regions.
 ```
+
+## The depth ladder and the pack
+
+A crop climbs a ladder of different work (see `design.md`): notes when planted, multiple-choice cards at stages 1–3, an explanation in the player's own words at stage 4, and a harvest at stage 5.
+
+- `rubric` drives the explain rung for every seed. The player rates their explanation against these lines and passes with more than half. A seed with no `rubric` uses a default one (what it is, why it matters, an example or a case where it does not apply), so a rubric is worth writing for any seed whose answer is more specific than that.
+- Judged harvests need every rubric line. Artifact harvests use a fixed checklist (it exists outside the game; it does what the prompt asks) and show one of the seed's `prompts`.
+- `questions.water` is for recall only. A seed with no cards (an artifact seed) explains at every stage instead.
+- `minutes` and `summary` are shown when the player plants, next to the box for their notes.
 
 ## Energy caps
 
@@ -91,7 +100,7 @@ Seed ids and find ids are unique across all packs. Farms refer to seeds by id an
 - Every id in `needs` is a seed in the same pack; no cycles; a seed's `tier` is above all of its prerequisites.
 - Every `sources` reference on a seed is a declared source.
 - `recall` seeds have at least one `questions.water` entry.
-- `judged` seeds have a `rubric` and `prompts`; `artifact` and `solve` seeds have `prompts`.
+- `judged` seeds have a `rubric` and `prompts`; `artifact` and `solve` seeds have `prompts`. (`rubric` also drives the explain rung of any seed; a default is used when it is missing.)
 - No distractor equals the answer, and no two distractors are the same.
 - Seed ids and find ids are unique across all packs.
 - A find's `near` ids and `seed` are seeds in its pack, and its `seed` is wild.

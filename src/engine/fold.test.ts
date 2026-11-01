@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import sampleFarm from '../game/sample-farm.json'
 import { apply, check, fieldsToOpen, fold, initialState, parseEvent } from './fold'
-import { run, smallCatalog as cat, smallFarm, started } from './fixtures'
+import { EXPLANATION, NOTES, run, smallCatalog as cat, smallFarm, started } from './fixtures'
 import { terrain, wildKind, worldSize } from './land'
 import { RULES, available, ripe, thirsty } from './rules'
 import type { Crop, FarmEvent, FarmState } from './types'
 
-const plant = (seed: string, x: number, y: number): FarmEvent => ({ type: 'planted', seed, x, y })
+const plant = (seed: string, x: number, y: number, notes: string = NOTES): FarmEvent => ({ type: 'planted', seed, x, y, notes })
 const sleep: FarmEvent = { type: 'slept' }
 const crop = (s: FarmState, seed: string): Crop => {
   const c = s.crops.find((x) => x.seed === seed)
@@ -74,7 +74,22 @@ describe('planted', () => {
   it('costs energy and coins, counts against the day and starts a seedling due tomorrow', () => {
     const s = run(cat, [plant('corn', 5, 5)], smallFarm())
     expect(s).toMatchObject({ energy: 80, coins: 130, today: { planted: 1, spent: { garden: 10 } } })
-    expect(crop(s, 'corn')).toEqual({ seed: 'corn', x: 5, y: 5, stage: 0, due: 2, wilted: false, perennial: false })
+    expect(crop(s, 'corn')).toEqual({ seed: 'corn', x: 5, y: 5, stage: 0, due: 2, wilted: false, perennial: false, notes: NOTES, journal: [] })
+  })
+
+  it('keeps the notes on the crop, trimmed', () => {
+    const s = run(cat, [plant('corn', 5, 5, '  ' + NOTES + '\n')], smallFarm())
+    expect(crop(s, 'corn').notes).toBe(NOTES)
+  })
+
+  it('refuses notes that are too short, counting without the spaces around them, and notes that are far too long', () => {
+    const s = smallFarm()
+    expect(refusal(s, plant('corn', 5, 5, ''))).toMatch(/at least 40 characters of notes/)
+    expect(refusal(s, plant('corn', 5, 5, 'x'.repeat(39)))).toMatch(/You have 39/)
+    expect(refusal(s, plant('corn', 5, 5, ' '.repeat(10) + 'x'.repeat(30) + ' '.repeat(10)))).toMatch(/You have 30/)
+    expect(check(s, plant('corn', 5, 5, 'x'.repeat(40)), cat)).toBeNull()
+    expect(refusal(s, plant('corn', 5, 5, 'x'.repeat(RULES.textMax + 1)))).toMatch(/under 5000/)
+    expect(refusal(s, { type: 'planted', seed: 'corn', x: 5, y: 5 })).toMatch(/not something/)
   })
 
   it('refuses a seed that is unknown, locked, already planted, or in the wrong field', () => {
@@ -115,7 +130,7 @@ describe('planted', () => {
   })
 
   it('lets a seed be planted once everything it needs is rooted, or once it is unlocked', () => {
-    const rooted = (seed: string, x: number, y: number): Crop => ({ seed, x, y, stage: 4, due: 20, wilted: false, perennial: true })
+    const rooted = (seed: string, x: number, y: number): Crop => ({ seed, x, y, stage: 4, due: 20, wilted: false, perennial: true, notes: '', journal: [] })
     const s: FarmState = { ...smallFarm(), crops: [rooted('corn', 5, 5), rooted('beans', 6, 5)] }
     expect(check(s, plant('squash', 7, 5), cat)).toBeNull()
     expect(check({ ...smallFarm(), unlocked: ['squash'] }, plant('squash', 7, 5), cat)).toBeNull()
@@ -124,55 +139,91 @@ describe('planted', () => {
 
 describe('watered', () => {
   it('grows a thirsty crop one stage and sets the next thirst', () => {
-    const s = run(cat, [{ type: 'watered', seed: 'corn', ok: true }], thirstyCorn())
+    const s = run(cat, [{ type: 'watered', seed: 'corn', ok: true, work: 'recall' }], thirstyCorn())
     expect(crop(s, 'corn')).toMatchObject({ stage: 1, due: 2 + 2, wilted: false })
     expect(s.energy).toBe(90 - 6)
     expect(s.today.spent).toEqual({ garden: 6 })
   })
 
   it('wilts a crop on a wrong answer, drops a stage, adds it to the compost and sets it due tomorrow', () => {
-    const s = run(cat, [{ type: 'watered', seed: 'corn', ok: true }], thirstyCorn())
-    const w = run(cat, [sleep, sleep, { type: 'watered', seed: 'corn', ok: false }], s)
+    const s = run(cat, [{ type: 'watered', seed: 'corn', ok: true, work: 'recall' }], thirstyCorn())
+    const w = run(cat, [sleep, sleep, { type: 'watered', seed: 'corn', ok: false, work: 'recall' }], s)
     expect(crop(w, 'corn')).toMatchObject({ stage: 0, wilted: true, due: w.day + 1 })
     expect(w.compost).toEqual(['corn'])
   })
 
   it('revives a wilted crop once its day has come, and takes it out of the compost', () => {
-    const s = run(cat, [{ type: 'watered', seed: 'corn', ok: false }, sleep, { type: 'watered', seed: 'corn', ok: true }], thirstyCorn())
+    const s = run(cat, [{ type: 'watered', seed: 'corn', ok: false, work: 'recall' }, sleep, { type: 'watered', seed: 'corn', ok: true, work: 'recall' }], thirstyCorn())
     expect(crop(s, 'corn').wilted).toBe(false)
     expect(s.compost).toEqual([])
   })
 
   it('refuses a crop that is not thirsty, not planted, or a wilted one before its day', () => {
     const s = run(cat, [plant('corn', 5, 5)], smallFarm())
-    expect(refusal(s, { type: 'watered', seed: 'corn', ok: true })).toMatch(/not thirsty/)
-    expect(refusal(s, { type: 'watered', seed: 'beans', ok: true })).toMatch(/not planted/)
-    const w = run(cat, [{ type: 'watered', seed: 'corn', ok: false }], thirstyCorn())
-    expect(refusal(w, { type: 'watered', seed: 'corn', ok: true })).toMatch(/has wilted. Revive it on day 3/)
+    expect(refusal(s, { type: 'watered', seed: 'corn', ok: true, work: 'recall' })).toMatch(/not thirsty/)
+    expect(refusal(s, { type: 'watered', seed: 'beans', ok: true, work: 'recall' })).toMatch(/not planted/)
+    const w = run(cat, [{ type: 'watered', seed: 'corn', ok: false, work: 'recall' }], thirstyCorn())
+    expect(refusal(w, { type: 'watered', seed: 'corn', ok: true, work: 'recall' })).toMatch(/has wilted. Revive it on day 3/)
   })
 
   it('refuses without energy, and past a field cap', () => {
-    expect(refusal({ ...thirstyCorn(), energy: 5 }, { type: 'watered', seed: 'corn', ok: true })).toMatch(/Out of energy/)
-    const capped = { ...thirstyCorn(), crops: [{ seed: 'saw', x: 12, y: 5, stage: 0, due: 1, wilted: false, perennial: false }], today: { planted: 0, spent: { shed: 24 } } }
-    expect(refusal(capped, { type: 'watered', seed: 'saw', ok: true })).toMatch(/at most 27/)
+    expect(refusal({ ...thirstyCorn(), energy: 5 }, { type: 'watered', seed: 'corn', ok: true, work: 'recall' })).toMatch(/Out of energy/)
+    const capped = { ...thirstyCorn(), crops: [{ seed: 'saw', x: 12, y: 5, stage: 0, due: 1, wilted: false, perennial: false, notes: '', journal: [] }], today: { planted: 0, spent: { shed: 24 } } }
+    expect(refusal(capped, { type: 'watered', seed: 'saw', ok: true, work: 'recall' })).toMatch(/at most 27/)
   })
 
   it('checks a perennial in without changing its stage, and wilts it until tomorrow on a wrong check-in', () => {
     const s = withCrop(thirstyCorn(), { perennial: true, stage: 4, due: 2 })
-    const ok = run(cat, [{ type: 'watered', seed: 'corn', ok: true }], s)
+    const ok = run(cat, [{ type: 'watered', seed: 'corn', ok: true, work: 'recall' }], s)
     expect(crop(ok, 'corn')).toMatchObject({ stage: 4, perennial: true, due: 12, wilted: false })
-    const bad = run(cat, [{ type: 'watered', seed: 'corn', ok: false }], s)
+    const bad = run(cat, [{ type: 'watered', seed: 'corn', ok: false, work: 'recall' }], s)
     expect(crop(bad, 'corn')).toMatchObject({ stage: 4, perennial: true, wilted: true, due: 3 })
   })
 
+  const explain = (ok: boolean, text = EXPLANATION, ticked = 2, of = 3): FarmEvent => ({ type: 'watered', seed: 'corn', ok, work: 'explain', text, ticked, of })
+
+  it('writes an explanation into the journal with the day and how it was rated, whether or not it passed', () => {
+    const s = run(cat, [explain(true)], thirstyCorn())
+    expect(crop(s, 'corn')).toMatchObject({ stage: 1, journal: [{ day: 2, kind: 'explain', text: EXPLANATION, ok: true }] })
+    const w = run(cat, [explain(false, '  ' + EXPLANATION + '  ', 1, 3)], thirstyCorn())
+    expect(crop(w, 'corn')).toMatchObject({ stage: 0, wilted: true, journal: [{ day: 2, kind: 'explain', text: EXPLANATION, ok: false }] })
+    const again = run(cat, [sleep, explain(true)], w)
+    expect(crop(again, 'corn').journal.map((j) => j.ok)).toEqual([false, true])
+  })
+
+  it('does not journal a recall answer, and records the work it is told rather than working it out', () => {
+    expect(crop(run(cat, [{ type: 'watered', seed: 'corn', ok: true, work: 'recall' }], thirstyCorn()), 'corn').journal).toEqual([])
+    // Stage 0 would normally be recall; an explanation there is still taken as given.
+    expect(crop(run(cat, [explain(true)], thirstyCorn()), 'corn').journal).toHaveLength(1)
+  })
+
+  it('refuses an explanation that is too short, or a rating that does not add up', () => {
+    const s = thirstyCorn()
+    expect(refusal(s, explain(true, 'short'))).toMatch(/at least 80 characters to explain it. You have 5/)
+    expect(refusal(s, explain(true, 'x'.repeat(79)))).toMatch(/You have 79/)
+    expect(check(s, explain(true, 'x'.repeat(80)), cat)).toBeNull()
+    expect(refusal(s, explain(true, EXPLANATION, 4, 3))).toMatch(/does not add up/)
+    expect(refusal(s, explain(true, EXPLANATION, -1, 3))).toMatch(/does not add up/)
+    expect(refusal(s, explain(true, EXPLANATION, 0, 0))).toMatch(/does not add up/)
+    expect(refusal(s, explain(true, 'x'.repeat(RULES.textMax + 1)))).toMatch(/under 5000/)
+  })
+
+  it('refuses a watering that does not say what work was done', () => {
+    const s = thirstyCorn()
+    refusal(s, { type: 'watered', seed: 'corn', ok: true })
+    refusal(s, { type: 'watered', seed: 'corn', ok: true, work: 'cram' })
+    refusal(s, { type: 'watered', seed: 'corn', ok: true, work: 'explain' })
+    refusal(s, { type: 'watered', seed: 'corn', ok: true, work: 'explain', text: EXPLANATION, ticked: 1.5, of: 3 })
+  })
+
   it('is never thirsty on the same day after watering', () => {
-    const s = run(cat, [{ type: 'watered', seed: 'corn', ok: true }], thirstyCorn())
+    const s = run(cat, [{ type: 'watered', seed: 'corn', ok: true, work: 'recall' }], thirstyCorn())
     expect(thirsty(crop(s, 'corn'), s.day)).toBe(false)
   })
 })
 
 describe('harvested', () => {
-  const ripeCorn = (): FarmState => ({ ...thirstyCorn(), crops: [{ seed: 'corn', x: 5, y: 5, stage: 4, due: 9, wilted: false, perennial: false }], day: 5 })
+  const ripeCorn = (): FarmState => ({ ...thirstyCorn(), crops: [{ seed: 'corn', x: 5, y: 5, stage: 4, due: 9, wilted: false, perennial: false, notes: '', journal: [] }], day: 5 })
 
   it('pays out and roots a crop on a premium harvest', () => {
     const s = run(cat, [{ type: 'harvested', seed: 'corn', ok: true }], ripeCorn())
@@ -187,6 +238,30 @@ describe('harvested', () => {
     expect(crop(s, 'corn')).toMatchObject({ perennial: false, stage: 3, due: 6 })
     expect(s.compost).toEqual(['corn'])
     expect(s.coins).toBe(ripeCorn().coins)
+  })
+
+  const writeUp = (ok: boolean, text = EXPLANATION, ticked = 2, of = 2): FarmEvent => ({ type: 'harvested', seed: 'corn', ok, text, ticked, of })
+
+  it('writes a write-up into the journal, and the crop becomes a perennial or drops back with the write-up kept', () => {
+    const s = run(cat, [writeUp(true)], ripeCorn())
+    expect(crop(s, 'corn')).toMatchObject({ perennial: true, journal: [{ day: 5, kind: 'harvest', text: EXPLANATION, ok: true }] })
+    const w = run(cat, [writeUp(false, EXPLANATION, 1)], ripeCorn())
+    expect(crop(w, 'corn')).toMatchObject({ perennial: false, stage: 3, journal: [{ day: 5, kind: 'harvest', ok: false }] })
+  })
+
+  it('journals nothing for a harvest without a write-up', () => {
+    expect(crop(run(cat, [{ type: 'harvested', seed: 'corn', ok: true }], ripeCorn()), 'corn').journal).toEqual([])
+  })
+
+  it('needs a write-up of 80 characters, or 8 for the link or description of an artifact', () => {
+    expect(refusal(ripeCorn(), writeUp(true, 'short'))).toMatch(/at least 80 characters in your write-up/)
+    expect(refusal(ripeCorn(), writeUp(true, EXPLANATION, 3, 2))).toMatch(/does not add up/)
+    const saw = { ...ripeCorn(), crops: [{ seed: 'saw', x: 12, y: 5, stage: 4, due: 9, wilted: false, perennial: false, notes: '', journal: [] }] }
+    const link: FarmEvent = { type: 'harvested', seed: 'saw', ok: true, text: 'https://x.org', ticked: 2, of: 2 }
+    expect(check(saw, link, cat)).toBeNull()
+    expect(refusal(saw, { ...link, text: 'a link' })).toMatch(/at least 8 characters to say what you made/)
+    // Text without its rating is not a write-up at all.
+    refusal(ripeCorn(), { type: 'harvested', seed: 'corn', ok: true, text: EXPLANATION })
   })
 
   it('refuses a crop that is not ripe: young, thirsty, wilted or not planted', () => {
@@ -255,7 +330,7 @@ describe('slept', () => {
 
   it('never wilts perennials from neglect', () => {
     const p = withCrop(smallFarm(), {})
-    const s = sleepDays({ ...p, crops: [{ seed: 'corn', x: 5, y: 5, stage: 4, due: 3, wilted: false, perennial: true }] }, 30)
+    const s = sleepDays({ ...p, crops: [{ seed: 'corn', x: 5, y: 5, stage: 4, due: 3, wilted: false, perennial: true, notes: '', journal: [] }] }, 30)
     expect(crop(s, 'corn').wilted).toBe(false)
   })
 
@@ -323,7 +398,7 @@ describe('domesticated', () => {
   it('turns a wild seed into a volunteer once a find leads to it, which makes it plantable', () => {
     const s = run(cat, [{ type: 'domesticated', seed: 'bees' }], found())
     expect(s.volunteers).toEqual(['bees'])
-    const rooted: Crop = { seed: 'corn', x: 5, y: 5, stage: 4, due: 20, wilted: false, perennial: true }
+    const rooted: Crop = { seed: 'corn', x: 5, y: 5, stage: 4, due: 20, wilted: false, perennial: true, notes: '', journal: [] }
     expect(available(cat.seed('bees')!, { ...s, crops: [rooted] })).toBe(true)
   })
 
@@ -403,14 +478,14 @@ describe('apply', () => {
   it('never changes the state it was given', () => {
     const before = thirstyCorn()
     const frozen = JSON.stringify(before)
-    for (const e of [{ type: 'watered', seed: 'corn', ok: true }, { type: 'watered', seed: 'corn', ok: false }, sleep, plant('beans', 6, 5), { type: 'fenced', x: 8, y: 5, pack: 'garden' }, { type: 'focus-set', pack: 'garden', branch: 'roots' }] as FarmEvent[]) {
+    for (const e of [{ type: 'watered', seed: 'corn', ok: true, work: 'recall' }, { type: 'watered', seed: 'corn', ok: false, work: 'recall' }, sleep, plant('beans', 6, 5), { type: 'fenced', x: 8, y: 5, pack: 'garden' }, { type: 'focus-set', pack: 'garden', branch: 'roots' }] as FarmEvent[]) {
       apply(before, e, cat)
       expect(JSON.stringify(before)).toBe(frozen)
     }
   })
 
   it('fold ignores events that are not allowed and the id and time of the rest', () => {
-    const log = [{ ...started, id: '1', at: 'a' }, { type: 'field-opened', pack: 'garden', slot: 0, id: '2', at: 'b' }, { type: 'planted', seed: 'squash', x: 5, y: 5, id: '3', at: 'c' }, { type: 'planted', seed: 'corn', x: 5, y: 5, id: '4', at: 'd' }]
+    const log = [{ ...started, id: '1', at: 'a' }, { type: 'field-opened', pack: 'garden', slot: 0, id: '2', at: 'b' }, { type: 'planted', seed: 'squash', x: 5, y: 5, notes: NOTES, id: '3', at: 'c' }, { type: 'planted', seed: 'corn', x: 5, y: 5, notes: NOTES, id: '4', at: 'd' }]
     const s = fold(log, cat)
     expect(s.crops.map((c) => c.seed)).toEqual(['corn'])
   })
