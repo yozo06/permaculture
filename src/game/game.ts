@@ -339,8 +339,15 @@ function open(html: string): void {
 function close(): void { veil.hidden = true }
 /** The sheet's primary button, if there is one. */
 const primary = (): HTMLButtonElement | null => sheet.querySelector<HTMLButtonElement>('button.pri')
-veil.addEventListener('click', (e) => { if (e.target === veil) close() })
-document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !veil.hidden) close() })
+/** True while an open writing box holds text that has not been submitted. */
+const hasDraft = (): boolean => [...sheet.querySelectorAll<HTMLTextAreaElement>('textarea[data-min]')].some((t) => t.value.trim().length > 0)
+/** Dismiss by tapping away or Escape, but never while the player is mid-writing. The sheet's own buttons always close. */
+function softClose(): void { if (!hasDraft()) close() }
+// Close on a backdrop tap only when the press also began on the backdrop, so releasing a text selection outside the box does not close.
+let downOnVeil = false
+veil.addEventListener('pointerdown', (e) => { downOnVeil = e.target === veil })
+veil.addEventListener('click', (e) => { if (e.target === veil && downOnVeil) softClose() })
+document.addEventListener('keydown', (e) => { if (e.isComposing) return; if (e.key === 'Escape' && !veil.hidden) softClose() })
 const foot = footHtml
 const chip = (packId: string): string => chipHtml(packTitle(packId), colorOf(packId))
 /** Keep the count under a writing box, and the button it gates, in step with what has been typed. */
