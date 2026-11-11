@@ -85,6 +85,8 @@ button.pri:disabled:hover{background:var(--panel-2)}
 .row.slim .n small{font-size:11px}
 
 .sheet textarea.write{font-family:var(--font-body);font-size:14px;line-height:1.5;min-height:120px}
+/* On touch devices a field under 16px makes Safari zoom the page on focus; bump just there. */
+@media (pointer:coarse){.sheet textarea{font-size:16px}}
 .count{margin-top:-8px}
 .count.ok{color:var(--green)}
 .note{white-space:pre-wrap;overflow-wrap:anywhere;background:var(--panel-2);border:1px solid var(--line-2);border-radius:8px;padding:10px 12px;font-size:14px;line-height:1.5}
