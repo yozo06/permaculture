@@ -14,7 +14,7 @@ import type { Crop, FarmEvent, FarmState, LoggedEvent, Mcq, Night } from '../eng
 import { almanacHtml } from './almanac'
 import sampleFarm from './sample-farm.json'
 import { readLink } from './links'
-import { BOOK_KEY, ageText, bookText, readBook, receive, remove, tooOld, type Book } from './neighbours'
+import { BOOK_KEY, ageText, bookText, readBook, receive, remove, tooOld, type Arrival, type Book } from './neighbours'
 import { createStore, defaultId, LOG_KEY, type StorageLike } from './store'
 import { esc, shuffle } from './util'
 import {
@@ -98,6 +98,19 @@ function readStored(key: string): string | null {
 }
 function saveBook(): void {
   try { storage?.setItem(BOOK_KEY, bookText(book)) } catch { /* the list is a convenience; the farm is what matters */ }
+}
+/**
+ * The book as storage holds it now. Another tab may have added a neighbour since this one loaded (a farm link often
+ * opens in a new tab), so the book is read again before it is shown or changed, never written back from memory alone.
+ */
+function latestBook(): Book {
+  const stored = readStored(BOOK_KEY)
+  if (stored !== null) book = readBook(stored, catalog, Date.now())
+  return book
+}
+function changeBook(change: (b: Book) => Book): void {
+  book = change(latestBook())
+  saveBook()
 }
 /** Where people post farm links to find neighbours. */
 const VILLAGE_GREEN = 'https://github.com/yozo06/permaculture/discussions'
@@ -942,6 +955,7 @@ function openNeighbourCrop(crop: Crop): void {
 
 function openNeighbours(): void {
   const now = Date.now()
+  latestBook()
   open(neighboursSheetHtml({ name: S.name, shared: book.shared ? ageText(book.shared, now) : null, rows: neighbourRows(book, now), green: VILLAGE_GREEN }))
 }
 function visitNeighbour(code: string): void {
@@ -980,8 +994,7 @@ function openShare(show?: readonly string[]): void {
 }
 /** Remember when a link was last made, for the Neighbours sheet. */
 function markShared(): void {
-  book = { ...book, shared: new Date().toISOString() }
-  saveBook()
+  changeBook((b) => ({ ...b, shared: new Date().toISOString() }))
 }
 function copyFrom(id: string, then?: () => void): void {
   const t = byIdAs(id, HTMLTextAreaElement)
@@ -1023,12 +1036,11 @@ function handleLink(text: string): void {
   if (p.code === ownCode()) return toast(arrivalText('own', p.name))
   if (tooOld(p.at, now)) return toast(arrivalText('too-old', p.name))
   const first = needsSetup()
-  if (!first && book.neighbours.some((n) => n.picture.code === p.code)) {
+  if (!first && latestBook().neighbours.some((n) => n.picture.code === p.code)) {
     // A neighbour you have: the later picture is kept, and an older link changes nothing.
-    const r = receive(book, p, ownCode(), now)
-    book = r.book
-    saveBook()
-    return toast(arrivalText(r.result, p.name))
+    let result: Arrival = 'not-newer'
+    changeBook((b) => { const r = receive(b, p, ownCode(), now); result = r.result; return r.book })
+    return toast(arrivalText(result, p.name))
   }
   const laid = layOut(p, catalog)
   leaveVisit(true)
@@ -1042,10 +1054,9 @@ function keepArrival(): string | null {
   const a = ARRIVAL
   if (!a) return null
   ARRIVAL = null
-  const r = receive(book, a.picture, ownCode(), Date.now())
-  book = r.book
-  saveBook()
-  return arrivalText(r.result, a.picture.name)
+  let result: Arrival = 'not-newer'
+  changeBook((b) => { const r = receive(b, a.picture, ownCode(), Date.now()); result = r.result; return r.book })
+  return arrivalText(result, a.picture.name)
 }
 /** From a friend's farm to a farm of your own: the friend becomes your first neighbour, and their fields are ticked for you. */
 function startFromVisit(): void {
@@ -1203,7 +1214,7 @@ sheet.addEventListener('click', (e) => {
   else if (what === 'pasteLink') openPaste()
   else if (what === 'openPasted') { const text = byIdAs('pasteBox', HTMLTextAreaElement).value; veil.hidden = true; handleLink(text) }
   else if (what === 'visit') visitNeighbour(arg)
-  else if (what === 'removeNeighbour') { book = remove(book, arg); saveBook(); openNeighbours() }
+  else if (what === 'removeNeighbour') { changeBook((b) => remove(b, arg)); openNeighbours() }
   else if (what === 'addNeighbour') { const said = keepArrival(); if (said) toast(said); openNeighbours() }
   else if (what === 'justLook') { const a = ARRIVAL; if (a) { enterVisit(a.state, a.picture.name, visitLabel(a.picture), visitDetail(a.picture), packsOf(a.picture)); close() } }
   else if (what === 'startFromVisit') startFromVisit()
