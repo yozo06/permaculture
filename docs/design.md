@@ -2,7 +2,7 @@
 
 A farm game where the crops are the things you are learning. Forgetting is wilting. Mastery is a tree.
 
-This document is the source of truth for the rules. The in-game Almanac must agree with it; when they differ, fix one.
+This document is the source of truth for the rules. The in-game Almanac must agree with it; when they differ, fix one. Rules marked *(planned)* are not in the game yet; the Almanac lists them under "Not here yet".
 
 ## 1. Why a farm
 
@@ -14,25 +14,25 @@ The game must be useful with ugly tiles. Art is an unlock, never a prerequisite.
 
 | Principle | In the game |
 |---|---|
-| **Zones** (tend what is near, often) | Z1 daily · Z2 every few days · Z3 weekly · Z4 seasonal · Z5 wilderness. Spaced repetition is crops migrating outward as reviews succeed; forgetting is drifting back inward. |
-| **Annuals vs perennials** | Facts and vocab are annuals: cheap, need replanting. A harvested crop becomes a **perennial tree**: rooted, checked once every ten days. "Skilled enough" means mostly perennials. |
-| **Layers** (forest garden) | Every field has seven: canopy (architecture), understory (patterns), shrub (data structures / storage), herb (idioms, techniques), ground cover (fundamentals), root (internals, runtime), vine (cross-cutting: concurrency, observability, security, SRE). A field cannot run two layers ahead of a hollow one. |
-| **Guilds** (companion planting) | Named sets of seeds that go together. A complete guild gives a yield bonus; a wilting member drags the rest. |
+| **Zones** (tend what is near, often) | Z1 daily · Z2 every two or three days · Z3 every four or five · Z4 every ten (perennials) · Z5 wilderness. Spaced repetition is crops migrating outward as reviews succeed; forgetting is drifting back inward. |
+| **Annuals vs perennials** | Facts and vocab are annuals, cheap to plant. A harvested crop becomes a **perennial tree**: rooted, checked once every ten days. "Skilled enough" means mostly perennials. *(planned)* over time an annual needs replanting. |
+| **Layers** (forest garden) | Every full catalogue has seven: canopy (architecture), understory (patterns), shrub (data structures / storage), herb (idioms, techniques), ground cover (fundamentals), root (internals, runtime), vine (cross-cutting: concurrency, observability, security, SRE). *(planned)* a field cannot run two layers ahead of a hollow one. |
+| **Guilds** (companion planting) | Named sets of seeds that go together. *(planned)* a complete guild gives a yield bonus; a wilting member drags the rest. |
 | **Catch and store energy** | A daily energy budget shared by all fields. Unused energy fills the **rain barrel**; a stored day is spent automatically to stop a crop from wilting. A pack can cap its share (the Workshop uses at most 30%). No streaks. |
-| **Produce no waste** | Wrong answers go to the **compost heap** and come back as reviews. A failed harvest drops the crop back a stage and generates the next seeds. |
+| **Produce no waste** | Wrong answers go to the **compost heap** and come back as reviews. A failed harvest drops the crop back a stage; *(planned)* it also generates the next seeds. |
 | **Small and slow** | Hard cap on new seeds per day (two). |
-| **Obtain a yield** | Every planting and every harvest leaves an artifact: notes, a solve, a write-up, a decision. No yield, no credit. |
+| **Obtain a yield** | Every planting leaves notes in your own words, and a judged or artifact harvest leaves a write-up or proof. No yield, no credit. |
 | **Observe and interact** | The Sunday walk: the game shows the map and asks three questions. No tasks. Zone 5 is for foraging **wild finds**, facts next to what is growing, which add nothing to readiness and can be **domesticated** into volunteer seeds. |
-| **Use edges** | Seeds on the boundary of two fields (farm economics, Kannada tech vocabulary) yield double. |
+| **Use edges** | *(planned)* Seeds on the boundary of two fields (farm economics, Kannada tech vocabulary) yield double. |
 | **The problem is the solution** | A failed mock is not a loss; it is the next season's planting list. |
 
 ## 3. The loop
 
 **Plant** a seed (10 energy, 10 coins; later: the seed's declared minutes). The yield of planting is a page of notes in your own words, kept on the crop.
 
-**Water** a thirsty crop by answering a card, or at stage 4 by explaining it in your own words. Right: it grows one stage and moves one zone out. Wrong: it wilts, drops a stage, goes in the compost.
+**Water** a thirsty crop by answering a card, or at stage 4 by explaining it in your own words. Right: it grows one stage and goes longer before it is thirsty again. Wrong: it wilts, drops a stage, goes in the compost.
 
-**Harvest** a stage-5 crop with a harder question or a judged write-up. Premium: coins, and the crop becomes a perennial. Seconds: composted.
+**Harvest** a stage-5 crop with a harder question or a judged write-up. If it has gone thirsty, water it first. Premium: coins, and the crop becomes a perennial. Seconds: composted.
 
 **Sleep** ends the day. Energy refills, thirst advances, the barrel saves what it can, the morning report lists what needs tending.
 
@@ -79,7 +79,7 @@ A seed with no cards explains at every stage. A perennial check-in is a card too
 
 Phase 2 adds **Apply** (a problem, a design, a debugging session) and judged grading with the player's own key.
 
-Trees spawn saplings: harvesting Raft drops log compaction, membership change and read-index as new seeds. Depth is a tree that keeps seeding its own understory.
+*(planned)* Trees spawn saplings: harvesting Raft drops log compaction, membership change and read-index as new seeds. Depth is a tree that keeps seeding its own understory.
 
 ### Harvest types
 
@@ -87,11 +87,11 @@ Declared per seed in the pack. **recall** (auto-graded cards) · **solve** (time
 
 ## 4. The learning tree
 
-Every seed in a pack, locked or not, is on the tree. Two branches per field. A seed unlocks when the seeds it **needs** are rooted (harvested to perennial), never by points. The player picks a focus branch; the seed bag puts it first and the other branch stays open. **Jump the fence**: any locked seed can be tested out of with a harvest-grade question. A tree that makes a senior engineer replant basics is a tree nobody uses.
+Every seed in a pack, locked or not, is on the tree. One to four branches per field (the shipped packs have two). A seed unlocks when the seeds it **needs** are rooted (harvested to perennial), never by points. The player picks a focus branch; the seed bag puts it first and the other branches stay open. **Jump the fence**: any locked seed can be tested out of with a harvest-grade question. A tree that makes a senior engineer replant basics is a tree nobody uses.
 
 ## 5. Readiness, not deadlines
 
-A field's readiness is the share of its catalogue that is perennial and in Z3 or beyond, with all seven layers present. The player sets the bar (default 80). The market opens when every field is at its bar; "buyers" are named bars, nothing more. The **rival** is last-month-you. There are no leaderboards: the only person you can cheat is yourself.
+*(planned)* A field's readiness is the share of its catalogue that is perennial and in Z3 or beyond, with all seven layers present. The player sets the bar (default 80). The market opens when every field is at its bar; "buyers" are named bars, nothing more. The **rival** is last-month-you. There are no leaderboards: the only person you can cheat is yourself.
 
 A pack can be **perennial** (a language, a habit): no readiness, it just lives on the farm.
 
@@ -118,8 +118,8 @@ Pack #0 is the **Workshop**: the game's own backlog as seeds, capped at 30% of d
 
 Each phase ends with something a friend can play.
 
-0. Repo, licence, prototype on Pages, save export/import, this document, the pack format, CI validation. *(first commit)*
-1. Engine split, pack loader, full catalogues, depth ladder.
+0. Repo, licence, prototype on Pages, save export/import, this document, the pack format, CI validation. *(done)*
+1. Engine split, pack loader, full catalogues, depth ladder. *(done)*
 2. BYOK AI: judged harvests, pack forge, wild finds.
 3. Village-lite: snapshots, visits, then the server.
 4. Art: sprite sheets, PixiJS, terraces, weather.
