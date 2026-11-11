@@ -22,6 +22,7 @@ type Intent =
   | { k: 'domesticate'; a: number }
   | { k: 'unlock'; a: number; ok: boolean }
   | { k: 'focus'; a: number; b: number }
+  | { k: 'name'; len: number }
   | { k: 'raw'; event: unknown }
 
 const idx = fc.nat({ max: 1000 })
@@ -31,7 +32,7 @@ const usuallyOk = fc.oneof({ weight: 4, arbitrary: fc.constant(true) }, { weight
 const writing = fc.oneof({ weight: 6, arbitrary: fc.integer({ min: 90, max: 200 }) }, { weight: 1, arbitrary: fc.nat({ max: 120 }) })
 const rawEvents = fc.oneof(
   fc.anything(),
-  fc.record({ type: fc.constantFrom('planted', 'watered', 'harvested', 'fenced', 'foraged', 'domesticated', 'unlocked', 'focus-set', 'field-opened', 'farm-started'), seed: fc.string(), pack: fc.string(), find: fc.string(), x: fc.integer({ min: -3, max: 30 }), y: fc.integer({ min: -3, max: 30 }), slot: fc.integer({ min: -2, max: 12 }), ok: fc.boolean(), branch: fc.option(fc.string()) }),
+  fc.record({ type: fc.constantFrom('planted', 'watered', 'harvested', 'fenced', 'foraged', 'domesticated', 'unlocked', 'focus-set', 'field-opened', 'farm-started', 'farm-named'), name: fc.string({ maxLength: 40 }), seed: fc.string(), pack: fc.string(), find: fc.string(), x: fc.integer({ min: -3, max: 30 }), y: fc.integer({ min: -3, max: 30 }), slot: fc.integer({ min: -2, max: 12 }), ok: fc.boolean(), branch: fc.option(fc.string()) }),
 )
 const intents: fc.Arbitrary<Intent> = fc.oneof(
   { weight: 5, arbitrary: fc.record({ k: fc.constant('plant' as const), a: idx, b: idx, len: writing }) },
@@ -43,6 +44,7 @@ const intents: fc.Arbitrary<Intent> = fc.oneof(
   { weight: 1, arbitrary: fc.record({ k: fc.constant('domesticate' as const), a: idx }) },
   { weight: 1, arbitrary: fc.record({ k: fc.constant('unlock' as const), a: idx, ok: usuallyOk }) },
   { weight: 1, arbitrary: fc.record({ k: fc.constant('focus' as const), a: idx, b: idx }) },
+  { weight: 1, arbitrary: fc.record({ k: fc.constant('name' as const), len: fc.nat({ max: 30 }) }) },
   { weight: 1, arbitrary: fc.record({ k: fc.constant('raw' as const), event: rawEvents }) },
 )
 
@@ -125,6 +127,8 @@ function toEvent(s: FarmState, catalog: Catalog, intent: Intent): unknown {
       const seed = pick(seeds.filter((x) => visible(x, s) && !available(x, s) && !cropOf(s, x.id)), intent.a)
       return seed ? { type: 'unlocked', seed: seed.id, ok: intent.ok } : null
     }
+    case 'name':
+      return { type: 'farm-named', name: ' ' + 'n'.repeat(intent.len) + ' ' }
     case 'focus': {
       const pack = catalog.pack(pick(packs, intent.a) ?? '')
       const branches = pack ? [null, ...pack.branches.map((b) => b.id)] : []
@@ -178,6 +182,9 @@ function verify(s: FarmState, before: FarmState, e: FarmEvent, catalog: Catalog)
   expect(s.coins).toBeGreaterThanOrEqual(0)
   expect(s.barrel).toBeGreaterThanOrEqual(0)
   expect(s.barrel).toBeLessThanOrEqual(RULES.barrel.max)
+  // 9. a name is trimmed and never longer than a name may be
+  expect(s.name).toBe(s.name.trim())
+  expect(s.name.length).toBeLessThanOrEqual(RULES.farmName.max)
   // 3. stage in 0..4; a perennial is at the top
   for (const c of s.crops) {
     expect(Number.isInteger(c.stage) && c.stage >= 0 && c.stage <= RULES.maxStage).toBe(true)

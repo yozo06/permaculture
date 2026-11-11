@@ -535,3 +535,27 @@ describe('the furthest a crop has grown', () => {
     expect(crop(s, 'corn')).toMatchObject({ stage: 3, best: 4 })
   })
 })
+
+describe('farm-named', () => {
+  const named = (name: unknown): unknown => ({ type: 'farm-named', name })
+
+  it('starts with no name, takes one, and can change it', () => {
+    expect(smallFarm().name).toBe('')
+    const s = run(cat, [named('  Asha\'s farm ') as FarmEvent], smallFarm())
+    expect(s.name).toBe("Asha's farm")
+    expect(run(cat, [named('Hill farm') as FarmEvent], s).name).toBe('Hill farm')
+  })
+
+  it('refuses a name that is empty, too long or not text, and a name for a farm that has not begun', () => {
+    expect(refusal(smallFarm(), named('   '))).toMatch(/1 to 24 characters/)
+    expect(refusal(smallFarm(), named('x'.repeat(25)))).toMatch(/1 to 24 characters/)
+    refusal(smallFarm(), named(7))
+    refusal(initialState(), named('Too early'))
+    expect(check(smallFarm(), named('x'.repeat(24)), cat)).toBeNull()
+  })
+
+  it('is gone when a new farm starts', () => {
+    const s = run(cat, [named('Asha') as FarmEvent, started], smallFarm())
+    expect(s.name).toBe('')
+  })
+})

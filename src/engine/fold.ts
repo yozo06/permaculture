@@ -9,7 +9,7 @@ import type { Crop, FarmEvent, FarmState } from './types'
 
 /** A farm with nothing in it: the state before `farm-started`. */
 export const initialState = (): FarmState => ({
-  day: 0, energy: 0, energyMax: 0, coins: 0, barrel: 0,
+  name: '', day: 0, energy: 0, energyMax: 0, coins: 0, barrel: 0,
   fields: {}, cleared: {}, crops: [], compost: [], unlocked: [], volunteers: [], foraged: [], focus: {},
   today: { planted: 0, spent: {} }, night: null,
 })
@@ -82,6 +82,8 @@ export function parseEvent(raw: unknown): FarmEvent | null {
       return text(raw.seed) ? { type, seed: raw.seed } : null
     case 'focus-set':
       return text(raw.pack) && (raw.branch === null || text(raw.branch)) ? { type, pack: raw.pack, branch: raw.branch } : null
+    case 'farm-named':
+      return text(raw.name) ? { type, name: raw.name } : null
     case 'snapshot-imported':
       return Object.hasOwn(raw, 'snapshot') ? { type, snapshot: raw.snapshot } : null
     default:
@@ -209,6 +211,12 @@ function whyFocus(s: FarmState, e: Extract<FarmEvent, { type: 'focus-set' }>, ca
   return null
 }
 
+/** Why this cannot be a farm's name, or null. Also used by the game before it asks the farm. */
+export function whyName(name: string): string | null {
+  const n = name.trim().length
+  return n >= 1 && n <= RULES.farmName.max ? null : 'A farm name is 1 to ' + RULES.farmName.max + ' characters.'
+}
+
 function why(s: FarmState, e: FarmEvent, catalog: Catalog): string | null {
   switch (e.type) {
     case 'farm-started':
@@ -235,6 +243,8 @@ function why(s: FarmState, e: FarmEvent, catalog: Catalog): string | null {
       return whyUnlocked(s, e, catalog)
     case 'focus-set':
       return whyFocus(s, e, catalog)
+    case 'farm-named':
+      return s.day < 1 ? 'There is no farm to name.' : whyName(e.name)
     case 'snapshot-imported':
       return fromV2(e.snapshot, catalog) ? null : 'That is not a farm this game can read.'
   }
@@ -368,6 +378,9 @@ function step(s: FarmState, e: FarmEvent, catalog: Catalog): FarmState {
     case 'focus-set':
       if (e.branch === null) delete n.focus[e.pack]
       else n.focus[e.pack] = e.branch
+      return n
+    case 'farm-named':
+      n.name = e.name.trim()
       return n
     case 'snapshot-imported':
       return fromV2(e.snapshot, catalog) ?? s

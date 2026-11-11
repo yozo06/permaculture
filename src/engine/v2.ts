@@ -158,6 +158,7 @@ export function fromV2(value: unknown, catalog: Catalog): FarmState | null {
   const known = (ids: unknown) => unique(strings(ids).filter((id) => catalog.seed(id)))
   const day = Math.max(1, Math.round(finite(value.day, 1)))
   return {
+    name: '',
     day,
     energy: Math.max(0, Math.min(energyMax, Math.round(finite(value.energy, energyMax)))),
     energyMax,

@@ -27,6 +27,10 @@ export const RULES = {
   proofMin: 8,
   /** The most any one piece of writing may hold, so a log cannot grow without bound. */
   textMax: 5000,
+  /** A farm's name, in characters after trimming. */
+  farmName: { max: 24 },
+  /** How many neighbours a game keeps, and how many days after a picture of a farm was made it is forgotten. */
+  neighbours: { max: 24, forgetDays: 60 },
   defaultRubric: [
     "Says what it is in plain words, not the source's",
     'Says why it matters: the problem it solves or the mistake it prevents',

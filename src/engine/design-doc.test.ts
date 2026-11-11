@@ -36,6 +36,9 @@ const numbersRows = [
   `| Rain barrel | +1 day when a day ends with ${RULES.barrel.fillAt} or more energy; holds ${RULES.barrel.max} |`,
   `| New farm | day ${RULES.start.day}, ${RULES.start.coins} coins, nothing in the barrel |`,
   `| Longest text | ${RULES.textMax} characters |`,
+  `| Farm name | 1 to ${RULES.farmName.max} characters |`,
+  `| Neighbours | at most ${RULES.neighbours.max} |`,
+  `| A neighbour's picture | forgotten by your game ${RULES.neighbours.forgetDays} days after it was made |`,
   '| Compost | everything in the heap is due again the next day |',
 ]
 

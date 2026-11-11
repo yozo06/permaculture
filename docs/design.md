@@ -67,6 +67,9 @@ Two days past thirsty without water, a crop wilts overnight unless the barrel ha
 | Rain barrel | +1 day when a day ends with 30 or more energy; holds 5 |
 | New farm | day 1, 140 coins, nothing in the barrel |
 | Longest text | 5000 characters |
+| Farm name | 1 to 24 characters |
+| Neighbours | at most 24 |
+| A neighbour's picture | forgotten by your game 60 days after it was made |
 | Compost | everything in the heap is due again the next day |
 
 ### The depth ladder
