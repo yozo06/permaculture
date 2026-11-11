@@ -25,9 +25,11 @@ src/       the game: TypeScript, built with Vite
   engine/  the rules: pure TypeScript, a farm is a fold over an event log
   game/    the canvas, the sheets, saving
 packs/     one YAML per goal · schema/ · validated in CI
-docs/      design.md (the rules) · pack-format.md
+docs/      design.md (the rules) · pack-format.md · code-tour.md
 scripts/   the pack validator (shared with the build) and its tests
 ```
+
+New to the code? `docs/code-tour.md` is a one-page walk through it: the three parts, how a tap becomes a saved farm, and where to make a change.
 
 ```sh
 npm install           # needs Node 22.12 or newer
