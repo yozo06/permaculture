@@ -17,7 +17,7 @@ Questions must be your own words. Cite sources; never paste their text. Packs ar
 
 ## Improve a pack
 
-Better distractors, better `why` lines, a missing layer, a guild that should exist: all welcome as small PRs. Keep one pack per PR.
+Better distractors, better `why` lines, a missing layer, a guild that should exist: all welcome as small PRs. Keep one pack per PR. Never rename or remove a seed id or tighten `needs` (see "Ids are forever" in `docs/pack-format.md`): saved farms refer to them. The five full catalogues (Haskell backend, system design, infra, DSA patterns, leadership) must keep 30 to 40 seeds, all seven layers, and on every seed a rubric of at least three lines, at least two recall cards and a source, every card citing a declared source. `npm test` checks this, so a half-finished seed fails the build.
 
 ## Code
 
@@ -25,7 +25,7 @@ Better distractors, better `why` lines, a missing layer, a guild that should exi
 - Keep the loop honest: a change should make plant → water → harvest truer, faster or clearer. Features that do not serve the loop wait.
 - No leaderboards, no streak shaming, no accounts before the village needs them.
 - The engine stays pure: `src/engine/` has no DOM, no clock and no randomness, and a farm is a fold over its event log. A new rule is a new event and a check in `src/engine/fold.ts`, with a property test. If a change makes that harder, it is probably wrong.
-- Rules and numbers live in `RULES` (`src/engine/rules.ts`). The Almanac is written from it, and a test checks the tables in `docs/design.md` against it, so change all three together.
+- Rules and numbers live in `RULES` (`src/engine/rules.ts`). The Almanac is built from it, and a test checks the two tables and the ladder in `docs/design.md` against it, so change all three together. A farm is replayed against the current rules, so changing a number in `RULES` changes every saved farm; say so in the PR.
 - Run `npm run validate`, `npm test` and `npm run build` before pushing. CI runs all three on every PR.
 
 ## Hosting and cost
