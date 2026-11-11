@@ -1,6 +1,6 @@
 # Neighbours — design
 
-**Status: approved on 2026-11-11.** Step 0 (safe saves) and step 1 (see) are being built now. Step 2 (rain) is built after a first week of beta, so it can be shaped by what testers did.
+**Status: approved on 2026-11-11.** Step 0 (safe saves) and step 1 (see) are built, in version 0.2.0. Step 2 (rain) is built after a first week of beta, so it can be shaped by what testers did.
 Before approval the design was read once by a builder and attacked once from four sides (privacy, hostile links, first run and saves, engine rules); what survived those checks is folded in.
 The rules of the game itself are in `design.md`; the wider plan is in `../ROADMAP.md`.
 

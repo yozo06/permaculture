@@ -33,7 +33,7 @@ These hold in every phase. A change that breaks one is the wrong change.
 |---|---|---|
 | 0 | A playable prototype, the design, the pack format, checks on every change | Done |
 | 1 | The rules as their own tested engine; packs loaded from files; seven packs and 200+ seeds; the depth ladder (notes → recall → explain → harvest) | Done — version 0.1.0 |
-| 2 | **Neighbours**: farms you can see and rain you can send, with no server | In progress |
+| 2 | **Neighbours**: farms you can see and rain you can send, with no server | Seeing is built (version 0.2.0); rain is next |
 | 3 | **Your own AI key** (optional): judged harvests, a pack forge, fresh wild finds | Next |
 | 4 | **Art**: sprite sheets, a faster renderer, terraces, weather | Later (small steps can land any time) |
 | 5 | **The village server**: pictures that can be withdrawn, rain that arrives by itself | When players need it |
@@ -44,8 +44,8 @@ These hold in every phase. A change that breaks one is the wrong change.
 
 The full design is [`docs/neighbours.md`](docs/neighbours.md).
 
-1. **Safe saves.** Before anyone else has a farm, make sure a later edit to a pack or a rule cannot quietly damage it: a lock on every id a saved farm depends on, a played farm that must always replay, a warning when a farm's history no longer fits, and no farm lost to one number.
-2. **See.** Name your farm. Make a **farm link** that carries a picture of your farm inside the link itself, for the fields you choose. A friend taps it, lands on your farm, looks around, and starts their own next door, picking the fields they want. A gate on the map opens your list of neighbours.
+1. **Safe saves** *(done)*. Before anyone else has a farm, make sure a later edit to a pack or a rule cannot quietly damage it: a lock on every id a saved farm depends on, a played farm that must always replay, a warning when a farm's history no longer fits, and no farm lost to one number.
+2. **See** *(done)*. Name your farm. Make a **farm link** that carries a picture of your farm inside the link itself, for the fields you choose. A friend taps it, lands on your farm, looks around, and starts their own next door, picking the fields they want. A gate on the map opens your list of neighbours.
 3. *A first week of beta with a handful of people.*
 4. **Do.** Visit a neighbour, answer one card about something they grow, and send them **rain**: a day in their rain barrel, and the crop remembers who came by. It never grows a crop for them.
 

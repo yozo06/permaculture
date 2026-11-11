@@ -12,11 +12,17 @@ Any goal is a **pack**: a YAML file of seeds with layers, prerequisites and ques
 
 ![The learning tree for System design: rooted seeds are solid, growing ones carry a bar, locked ones are dashed, and lines show what each seed needs](docs/img/learning-tree.jpg)
 
+## Play with neighbours
+
+Tap the gate on your farm, name it, and make a **farm link**. The link holds a picture of your farm inside itself, so nothing is uploaded and there are no accounts: send it in whatever chat you already use. A friend who opens it lands on your farm, looks around, and starts their own next door with the fields they choose. Open their link and they are on your list of neighbours.
+
+A link shows only the fields you tick, with each crop at the furthest it has grown. It never shows your notes, a wrong answer, the compost heap or a wilted crop. It is a photograph: it does not update, and a sent link cannot be taken back. Nobody is ranked. Looking for neighbours? Post your link in [Discussions](https://github.com/yozo06/permaculture/discussions). Next comes rain: answer a card about a neighbour's crop and send them a day in their rain barrel. The design is `docs/neighbours.md`.
+
 ## Status
 
 Phase 1 is done: the rules are an engine of their own (a farm is a fold over a log of what you did), the game is built from `packs/`, and a crop climbs a depth ladder — notes when you plant it, recall cards, explaining it in your own words, then a harder harvest. There are seven packs and 209 seeds: five full catalogues (Haskell backend, system design, infra, DSA patterns, leadership), everyday Kannada, and the Workshop, the game's own roadmap. The pixel art is still procedural, with a drag-to-pan world, a learning tree, wild finds and an almanac. Everything runs in your browser; your farm is saved there. Export it from the seed bag before clearing site data. Farms from the Phase 0 prototype still import.
 
-Next is Phase 2, **Neighbours**: farms you can see and rain you can send, with no server and no accounts (`docs/neighbours.md`). After it comes optional AI with your own key, then art.
+Phase 2, **Neighbours**, is half built (version 0.2.0): saved farms are guarded against later edits to the packs and rules, new farmers choose their fields, and farms can be shared and visited by link. Rain comes after a first week of beta. After that comes optional AI with your own key, then art.
 
 Why this exists, what it promises and the whole plan are in [`ROADMAP.md`](ROADMAP.md).
 
