@@ -15,7 +15,7 @@ import sampleFarm from './sample-farm.json'
 import { createStore, defaultId, type StorageLike } from './store'
 import { esc, shuffle } from './util'
 import { chipHtml, countText, cropSheetHtml, footHtml, noteHtml, NO_NOTES, plantSheetHtml, tickList, writingBox } from './sheets'
-import { bagView, cropView, needsText, packColor, sourceLinks, splitName, treeView, type TreeView } from './views'
+import { bagView, cropView, needsText, packColor, sourceLinks, splitName, tending, treeView, type TreeView } from './views'
 
 /* ---------- types ---------- */
 type Mode = 'water' | 'harvest' | 'testout'
@@ -834,9 +834,15 @@ function openAlmanac(): void { open(almanacHtml(catalog, S.energyMax)) }
 /* ---------- sleep ---------- */
 function morningReport(night: Night): string {
   const names = (ids: string[]): string => esc(ids.map(nameOf).join(', '))
-  const thirstyNow = S.crops.filter(thirsty).map((c) => c.seed)
+  const t = tending(S)
+  // Crops that wilted this very night get their own line below; don't list them twice.
+  const revive = t.revive.filter((id) => !night.wilted.includes(id))
+  const todo =
+    (t.thirsty.length ? '<p><b>Thirsty:</b> ' + names(t.thirsty) + '.</p>' : '') +
+    (revive.length ? '<p><b>To revive:</b> ' + names(revive) + '. Water one right and it comes back.</p>' : '') +
+    (t.ripe.length ? '<p><b>Ready to harvest:</b> ' + names(t.ripe) + '.</p>' : '')
   return '<h2>Day ' + S.day + '</h2><p>Energy restored to ' + S.energyMax + '.' + (night.barrelFilled ? ' Rain barrel +1 (you ended the day with energy to spare).' : '') + '</p>' +
-    (thirstyNow.length ? '<p><b>Thirsty:</b> ' + names(thirstyNow) + '.</p>' : '<p>Nothing is thirsty. Plant something, or forage.</p>') +
+    (todo || '<p>Nothing needs tending. Plant something, or forage.</p>') +
     (night.saved.length ? '<p><b>Rain barrel saved:</b> ' + names(night.saved) + '.</p>' : '') +
     (night.wilted.length ? '<p><b>Wilted overnight:</b> ' + names(night.wilted) + '. Revive them today.</p>' : '') +
     '<p class="sub">New wild finds have grown in the forest.</p>' + foot('Start the day')

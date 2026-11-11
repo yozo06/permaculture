@@ -19,6 +19,27 @@ export function seedStatus(seed: Seed, state: FarmState): SeedStatus {
 export const needsText = (seed: Seed, catalog: Catalog): string =>
   seed.needs.map((id) => catalog.seed(id)?.name ?? id).join(' + ')
 
+/* ---------- the morning's to-do ---------- */
+
+export interface Tending {
+  /** Seed ids of crops that need watering today. */
+  thirsty: string[]
+  /** Seed ids of wilted crops that can be revived today. */
+  revive: string[]
+  /** Seed ids of crops ready to harvest. */
+  ripe: string[]
+}
+
+/** What wants attention on the current day: crops to water, to revive, or to harvest. */
+export function tending(state: FarmState): Tending {
+  const day = state.day
+  return {
+    thirsty: state.crops.filter((c) => thirsty(c, day)).map((c) => c.seed),
+    revive: state.crops.filter((c) => revivable(c, day)).map((c) => c.seed),
+    ripe: state.crops.filter((c) => ripe(c, day)).map((c) => c.seed),
+  }
+}
+
 /* ---------- seed bag ---------- */
 
 export interface BagSeed {

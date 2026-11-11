@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import { collectPacks } from '../../scripts/packs-lib.mjs'
 import { buildCatalog } from '../engine/catalog'
-import type { PackDef, SeedDef } from '../engine/types'
+import type { Crop, PackDef, SeedDef } from '../engine/types'
 import { apply, fieldsToOpen, fold } from '../engine/fold'
+import { RULES } from '../engine/rules'
 import type { FarmState } from '../engine/types'
 import sampleFarm from './sample-farm.json'
-import { bagView, cropView, sourceLinks, splitName, treeView } from './views'
+import { bagView, cropView, sourceLinks, splitName, tending, treeView } from './views'
 
 const catalog = buildCatalog(collectPacks())
 
@@ -18,6 +19,22 @@ function farm(c = catalog): FarmState {
 describe('the sample farm', () => {
   it('upgrades, and opens one field per pack', () => {
     expect(Object.keys(farm().fields)).toHaveLength(catalog.packs.length)
+  })
+})
+
+describe('tending', () => {
+  const crop = (seed: string, patch: Partial<Crop>): Crop => ({ seed, x: 0, y: 0, stage: 1, due: 5, wilted: false, perennial: false, notes: '', journal: [], ...patch })
+  it('lists crops that are thirsty, waiting to be revived, or ripe, each by seed', () => {
+    const state: FarmState = {
+      ...fold([], catalog), day: 10,
+      crops: [
+        crop('thirst', { due: 10 }),
+        crop('dead', { due: 8, wilted: true }),
+        crop('harvest', { stage: RULES.maxStage, due: 20 }),
+        crop('idle', { due: 20 }),
+      ],
+    }
+    expect(tending(state)).toEqual({ thirsty: ['thirst'], revive: ['dead'], ripe: ['harvest'] })
   })
 })
 
