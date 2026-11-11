@@ -12,7 +12,7 @@ import { RULES, cropOf, revivable as isRevivable, ripe as isRipe, thirsty as isT
 import type { Crop, FarmEvent, FarmState, Mcq, Night } from '../engine/types'
 import { almanacHtml } from './almanac'
 import sampleFarm from './sample-farm.json'
-import { createStore, defaultId, type StorageLike } from './store'
+import { createStore, defaultId, LOG_KEY, type StorageLike } from './store'
 import { esc, shuffle } from './util'
 import { chipHtml, countText, cropSheetHtml, footHtml, noteHtml, NO_NOTES, plantSheetHtml, tickList, writingBox } from './sheets'
 import { bagView, cropView, needsText, packColor, sourceLinks, splitName, tending, treeView, type TreeView } from './views'
@@ -880,6 +880,7 @@ sheet.addEventListener('click', (e) => {
   const what = b.dataset.act
   const arg = b.dataset.arg ?? ''
   if (what === 'close') close()
+  else if (what === 'reload') location.reload()
   else if (what === 'opt') answer(Number(arg))
   else if (what === 'plantGo') plant()
   else if (what === 'rate') rate()
@@ -918,6 +919,21 @@ sheet.addEventListener('click', (e) => {
     const seed = catalog.seed(arg)
     if (!seed || refused({ type: 'unlocked', seed: seed.id, ok: true })) return
     startWork(seed, 'testout')
+  }
+})
+// The same farm open in another tab writes the shared log; warn once rather than let the two silently overwrite each other.
+let staleFarm = false
+window.addEventListener('storage', (e) => {
+  if (e.key !== LOG_KEY || e.newValue === null || staleFarm) return
+  staleFarm = true
+  if (veil.hidden) {
+    open('<h2>This farm changed in another tab</h2><p>You have the same farm open elsewhere and it has moved on. Reload to catch up, or keep going here and risk overwriting the other tab.</p>' +
+      foot('Reload', '<button type="button" data-act="close">Keep editing</button>'))
+    const b = primary()
+    if (b) b.dataset.act = 'reload'
+  } else {
+    // A sheet is open and may hold a draft; don't replace it. A visible toast is enough.
+    toast('This farm changed in another tab. Reload to catch up.')
   }
 })
 byId('bBag').addEventListener('click', openBag)
