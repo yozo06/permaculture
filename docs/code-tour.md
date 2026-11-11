@@ -29,6 +29,7 @@ The player's farm is not saved as a picture of the farm. It is saved as the list
 - `land.ts` is the geometry: where fields sit, what kind of ground a tile is.
 - `finds.ts` picks the wild find a tile gives on a day.
 - `log.ts` is the export file. `v2.ts` reads saves from the Phase 0 prototype.
+- `picture.ts` is what one farmer shows another: making a picture of a farm, reading one that could be anything, and laying it out as a farm the canvas can draw. It also works out a farm's code.
 
 Because the farm is replayed with the packs and rules of today, changing a seed's id or a number in `RULES` changes every saved farm. That is why ids are permanent, and why a change to `RULES` should say so in its pull request.
 
@@ -49,6 +50,7 @@ When the page loads, the store reads the log and folds it. If the log cannot be 
 - `game/views.ts`: what to show, worked out from the farm and the packs with no DOM: the seed bag, the learning tree's layout, a crop's sheet, the morning's to-do. Tested.
 - `game/sheets.ts`: HTML for the sheets, as strings in and strings out. Tested, including with hostile text.
 - `game/almanac.ts`: the rules page, written from `RULES` so its numbers cannot drift.
+- `game/links.ts`, `game/neighbours.ts`, `game/visit.ts`: farm links (the picture rides in the address after the `#`), the list of neighbours kept in the browser beside the farm, and what the neighbours sheets show. All three are pure and tested; `game.ts` only wires them up. While you visit a neighbour, `game.ts` draws their farm through `D()` and routes every tap away from your own. `docs/neighbours.md` is the design.
 - `game/util.ts`: `esc`, which every piece of player or pack text passes through, and `shuffle`.
 
 ## Tests
@@ -72,6 +74,7 @@ When the page loads, the store reads the log and folds it. If the log cannot be 
 | add something to the farm's state | `FarmState` in `types.ts`, then `initialState` and `copy` in `fold.ts`, and `fromV2` in `v2.ts`. |
 | change what a sheet says | `game/sheets.ts` if it is built there, else `game/game.ts`. Put text from a player or a pack through `esc`. |
 | show something worked out from the farm | a pure function in `game/views.ts`, with a test. |
+| change what a farm link holds | `engine/picture.ts`. Format 1 links must stay readable for good, so add a format rather than change one, and read `docs/neighbours.md` §6 first. |
 
 ## Checks
 

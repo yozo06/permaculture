@@ -3,23 +3,30 @@ import { buildCatalog, LAYER_NAMES, type Seed } from '../engine/catalog'
 import { findCandidates, pickFind } from '../engine/finds'
 import { check, fieldsToOpen, refusedCount } from '../engine/fold'
 import {
-  BARN, COMPOST, SIGN, WELL, fenceCost, fieldOf as landFieldOf, hash, homestead, inHomestead, isBuildingTile,
+  BARN, COMPOST, GATE, SIGN, WELL, fenceCost, fieldOf as landFieldOf, hash, homestead, inHomestead, isBuildingTile,
   neighbourFields, terrain as landTerrain, tileKey, wildKind, worldSize, type Terrain,
 } from '../engine/land'
 import { farmFileName, farmFileText, parseFarmFile } from '../engine/log'
+import { farmCode, layOut, momentOf, readPicture, type Picture } from '../engine/picture'
 import { explainChecklist, explainPasses, harvestWork, pickPrompt, recallBank, waterWork, writePasses } from '../engine/ladder'
 import { RULES, cropOf, revivable as isRevivable, ripe as isRipe, thirsty as isThirsty, zone } from '../engine/rules'
 import type { Crop, FarmEvent, FarmState, LoggedEvent, Mcq, Night } from '../engine/types'
 import { almanacHtml } from './almanac'
 import sampleFarm from './sample-farm.json'
+import { readLink } from './links'
+import { BOOK_KEY, ageText, bookText, readBook, receive, remove, tooOld, type Book } from './neighbours'
 import { createStore, defaultId, LOG_KEY, type StorageLike } from './store'
 import { esc, shuffle } from './util'
-import { chipHtml, countText, cropSheetHtml, footHtml, noteHtml, NO_NOTES, pickerHtml, plantSheetHtml, tickList, writingBox } from './sheets'
+import {
+  arrivalSheetHtml, chipHtml, countText, cropSheetHtml, footHtml, nameSheetHtml, neighbourCropSheetHtml, neighboursSheetHtml, noteHtml, NO_NOTES,
+  pickerHtml, plantSheetHtml, shareSheetHtml, tickList, writingBox,
+} from './sheets'
+import { arrivalText, neighbourCropView, neighbourRows, shareView, type ShareView } from './visit'
 import { bagView, cropView, driftText, needsText, packColor, pickerView, sourceLinks, splitName, tending, treeView, type TreeView } from './views'
 
 /* ---------- types ---------- */
 type Mode = 'water' | 'harvest' | 'testout'
-type StaticKind = 'forest' | 'barn' | 'well' | 'compost' | 'sign'
+type StaticKind = 'forest' | 'barn' | 'well' | 'compost' | 'sign' | 'gate'
 
 interface Drawable {
   s: number
@@ -35,6 +42,7 @@ type Pick =
   | { kind: 'well' }
   | { kind: 'compost' }
   | { kind: 'sign' }
+  | { kind: 'gate' }
 
 /* ---------- page ---------- */
 const W = 480
@@ -75,16 +83,47 @@ const colorOf = (id: string): string => {
 function browserStorage(): StorageLike | null {
   try { return window.localStorage } catch { return null }
 }
-const store = createStore({ catalog, storage: browserStorage(), sample: sampleFarm, newId: defaultId, now: () => new Date().toISOString() })
+const storage = browserStorage()
+const store = createStore({ catalog, storage, sample: sampleFarm, newId: defaultId, now: () => new Date().toISOString() })
 /** The folded farm. Only `act` and `adopt` replace it. */
 let S: FarmState = store.state()
+
+/* ---------- neighbours ---------- */
+/** This farm's code, worked out from its first event: the same for the life of the farm, and new after a reset. */
+const ownCode = (): string => farmCode(store.events()[0]?.id ?? '')
+/** The neighbours this browser knows. Not part of the farm: kept under its own key, and kept through a reset. */
+let book: Book = readBook(readStored(BOOK_KEY), catalog, Date.now())
+function readStored(key: string): string | null {
+  try { return storage ? storage.getItem(key) : null } catch { return null }
+}
+function saveBook(): void {
+  try { storage?.setItem(BOOK_KEY, bookText(book)) } catch { /* the list is a convenience; the farm is what matters */ }
+}
+/** Where people post farm links to find neighbours. */
+const VILLAGE_GREEN = 'https://github.com/yozo06/permaculture/discussions'
+
+/** Looking at another farm, read-only. While this is set, nothing the player taps can reach their own farm. */
+interface Visit {
+  state: FarmState
+  /** What the banner says. */
+  label: string
+  /** Whose farm it is, for the crop sheets. */
+  who: string
+  cam: { x: number; y: number }
+  /** The fields the picture shows, to tick for someone who goes on to start a farm of their own. */
+  packs: string[]
+}
+let visiting: Visit | null = null
+/** The farm on screen: the neighbour's while visiting, else your own. Everything that draws or picks reads this. */
+const D = (): FarmState => (visiting ? visiting.state : S)
 
 /* ---------- camera ---------- */
 /** World size in tiles, set from the fields by `buildStatics`. 20 for up to four fields, 27 for up to nine. */
 let N = worldSize(S.fields)
 const camHome = (): { x: number; y: number } => ({ x: W / 2, y: H / 2 - 8 * N - 8 })
-/** The camera, centred on the homestead until the player moves it. */
+/** The camera, centred on the homestead until the player moves it. A visit has a camera of its own, so yours is as you left it. */
 function camera(): { x: number; y: number } {
+  if (visiting) return visiting.cam
   const ui = store.ui
   if (!ui.cam) ui.cam = camHome()
   return ui.cam
@@ -93,15 +132,17 @@ function camera(): { x: number; y: number } {
 /* ---------- rules the screen asks about ---------- */
 const thirsty = (c: Crop): boolean => isThirsty(c, S.day)
 const ripe = (c: Crop): boolean => isRipe(c, S.day)
-const fieldOf = (x: number, y: number): string | null => landFieldOf(x, y, S.fields, S.cleared)
-const terrain = (x: number, y: number): Terrain => landTerrain(x, y, S.fields, S.cleared)
-const inHome = (x: number, y: number): boolean => inHomestead(x, y, S.fields)
+const fieldOf = (x: number, y: number): string | null => landFieldOf(x, y, D().fields, D().cleared)
+const terrain = (x: number, y: number): Terrain => landTerrain(x, y, D().fields, D().cleared)
+const inHome = (x: number, y: number): boolean => inHomestead(x, y, D().fields)
 
 /** Land and fields change the shape of the world, so the ground has to be redrawn. */
 const LAND_EVENTS = new Set<FarmEvent['type']>(['fenced', 'field-opened', 'snapshot-imported', 'farm-started'])
 let warnedAboutSaving = false
 /** Send an event to the farm. If the rules refuse it, the reason is shown and this returns false. */
 function act(e: FarmEvent): boolean {
+  // A visit is read-only. Taps are routed away before they get here; this is the lock behind the door.
+  if (visiting) return false
   const why = store.dispatch(e)
   if (why !== null) { toast(why); return false }
   S = store.state()
@@ -161,6 +202,8 @@ function drawCrop(c: Crop, sx: number, sy: number, t: number): void {
   if(w){px(cx+3,cy-1,1,1,'#B3924A');px(cx-4,cy,1,1,'#B3924A');}
 }
 function drawMarker(c: Crop, sx: number, sy: number, t: number): void {
+  // Thirst, wilting and ripeness are the owner's business: a neighbour's farm shows none of them.
+  if (visiting) return
   const cx=sx;const bob=Math.round(Math.sin(t/260)*1.5);
   if(c.wilted){const y=sy-10+bob;px(cx,y,1,4,'#E0893A');px(cx,y+5,1,1,'#E0893A');return;}
   if(thirsty(c)){const y=sy-11+bob;px(cx,y-1,1,1,'#4FA3E8');px(cx-1,y,3,1,'#4FA3E8');px(cx-2,y+1,5,2,'#4FA3E8');px(cx-1,y+3,3,1,'#2F7FC4');px(cx-1,y+1,1,1,'#DFF2FF');return;}
@@ -195,7 +238,12 @@ function drawCompost(): void {const {sx,sy}=iso(COMPOST.x,COMPOST.y);const cx=sx
   px(cx-3,cy-3,1,1,'#8AD47A');px(cx+2,cy-4,1,1,'#F7D54A');px(cx,cy-5,1,1,'#B3924A');px(cx+4,cy-2,1,1,'#8AD47A');}
 function drawSign(): void {const {sx,sy}=iso(SIGN.x,SIGN.y);const cx=sx,cy=sy+12;
   px(cx-2,cy,4,1,'rgba(0,0,0,.2)');px(cx-1,cy-14,2,14,'#6B4A2B');px(cx-7,cy-15,14,6,'#A26A40');px(cx-7,cy-15,14,1,'#C98A52');px(cx-5,cy-13,10,1,'#3C2316');px(cx-5,cy-11,7,1,'#3C2316');}
-
+/** The gate spans the main path where it leaves the homestead to the west: two posts, a beam, a lantern. */
+function drawGate(): void {const {sx,sy}=iso(GATE.x,GATE.y);
+  const ax=sx,ay=sy+1,bx=sx-32,by=sy+17;
+  for(const [x,y] of [[ax,ay],[bx,by]] as Pt[]){px(x-1,y-20,3,21,'#6B4A2B');px(x-1,y-20,3,1,'#B8804A');px(x-2,y,5,1,'rgba(0,0,0,.2)');}
+  for(let t=0;t<16;t++){px(ax-2*t-1,ay-23+t,3,3,'#8E5A34');px(ax-2*t-1,ay-23+t,3,1,'#C98A52');}
+  px(sx-17,sy-9,3,4,'#3C2316');px(sx-16,sy-8,1,2,'#FFD95A');}
 
 /* ---------- world objects (rebuilt when land changes) ---------- */
 let statics: Drawable[] = []
@@ -206,8 +254,8 @@ const gctx = context2d(gcv)
 let groundOx = 0
 function buildStatics(): void {
   statics = []
-  N = worldSize(S.fields)
-  const home = homestead(S.fields)
+  N = worldSize(D().fields)
+  const home = homestead(D().fields)
   for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
     const tr = terrain(x, y)
     if (tr === 'wild') {
@@ -223,6 +271,7 @@ function buildStatics(): void {
   statics.push({ s: BARN.x + BARN.y + 1.5, d: drawBarn, kind: 'barn', hit: (ix, iy) => { const p = iso(BARN.x, BARN.y); return ix >= p.sx - 32 && ix <= p.sx + 32 && iy >= p.sy - 30 && iy <= p.sy + 32 } })
   statics.push({ s: WELL.x + WELL.y, d: drawWell, kind: 'well', hit: (ix, iy) => { const p = iso(WELL.x, WELL.y); return Math.abs(ix - p.sx) <= 8 && iy >= p.sy - 4 && iy <= p.sy + 14 } })
   statics.push({ s: COMPOST.x + COMPOST.y, d: drawCompost, kind: 'compost', hit: (ix, iy) => { const p = iso(COMPOST.x, COMPOST.y); return Math.abs(ix - p.sx) <= 8 && iy >= p.sy + 2 && iy <= p.sy + 14 } })
+  statics.push({ s: GATE.x + GATE.y + 1.5, d: drawGate, kind: 'gate', hit: (ix, iy) => { const p = iso(GATE.x, GATE.y); return Math.abs(ix - (p.sx - 16)) <= 20 && iy >= p.sy - 24 && iy <= p.sy + 20 } })
   statics.push({ s: SIGN.x + SIGN.y, d: drawSign, kind: 'sign', hit: (ix, iy) => { const p = iso(SIGN.x, SIGN.y); return Math.abs(ix - p.sx) <= 8 && iy >= p.sy - 4 && iy <= p.sy + 14 } })
   // fences: one segment per field edge that borders a different field or open land
   for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
@@ -300,8 +349,9 @@ function frame(t: number): void {
   const walking = dist > 0.02
   if (walking) { const sp = Math.min(0.07, dist); f.x += dx / dist * sp; f.y += dy / dist * sp }
   const list: Drawable[] = statics.slice()
-  for (const c of S.crops) list.push({ s: c.x + c.y, d: () => { const p = iso(c.x, c.y); drawCrop(c, p.sx, p.sy, t); drawMarker(c, p.sx, p.sy, t) } })
-  list.push({ s: f.x + f.y + 0.01, d: () => { const p = iso(f.x, f.y); drawFarmer(Math.round(p.sx), Math.round(p.sy + 13), walking, t) } })
+  for (const c of D().crops) list.push({ s: c.x + c.y, d: () => { const p = iso(c.x, c.y); drawCrop(c, p.sx, p.sy, t); drawMarker(c, p.sx, p.sy, t) } })
+  // Your farmer stays at home while you look at someone else's farm.
+  if (!visiting) list.push({ s: f.x + f.y + 0.01, d: () => { const p = iso(f.x, f.y); drawFarmer(Math.round(p.sx), Math.round(p.sy + 13), walking, t) } })
   list.sort((a, b) => a.s - b.s)
   for (const o of list) o.d(t)
   requestAnimationFrame(frame)
@@ -334,15 +384,19 @@ function open(html: string): void {
   sheet.innerHTML = html
   veil.hidden = false
   // A sheet that asks for writing starts in the box; the others start on their main button.
-  const target = sheet.querySelector<HTMLElement>('textarea[data-min]') ?? sheet.querySelector<HTMLButtonElement>('button.pri') ?? sheet.querySelector<HTMLButtonElement>('button')
-  if (target) target.focus()
+  const target = sheet.querySelector<HTMLElement>('textarea[data-min], input[type=text]') ?? sheet.querySelector<HTMLButtonElement>('button.pri') ?? sheet.querySelector<HTMLButtonElement>('button')
+  // Focus moves into the sheet for the keyboard, but the sheet is read from its top.
+  if (target) target.focus({ preventScroll: true })
+  sheet.scrollTop = 0
 }
 /** A farm with no fields has not been set up: its farmer has yet to say what they want to grow. */
 const needsSetup = (): boolean => Object.keys(S.fields).length === 0
 function close(): void {
   veil.hidden = true
-  // Until the farm has a field there is nothing to do on it, so the welcome comes back.
-  if (needsSetup()) openWelcome()
+  // A farm link that arrived while the player was writing has waited for them to finish.
+  if (PENDING !== null) { const link = PENDING; PENDING = null; return handleLink(link) }
+  // Until the farm has a field there is nothing to do on it, so the welcome comes back (unless they are looking at a friend's farm first).
+  if (needsSetup() && !visiting) openWelcome(visitedPacks)
 }
 /** The sheet's primary button, if there is one. */
 const primary = (): HTMLButtonElement | null => sheet.querySelector<HTMLButtonElement>('button.pri')
@@ -384,7 +438,7 @@ function tileAt(ix: number, iy: number): { x: number; y: number } | null {
 }
 function pick(ix: number, iy: number): Pick | null {
   let best: { s: number; crop: Crop } | null = null
-  for (const c of S.crops) {
+  for (const c of D().crops) {
     const { sx, sy } = iso(c.x, c.y)
     if (Math.abs(ix - sx) <= 7 && iy >= sy - 16 && iy <= sy + 14 && (!best || c.x + c.y > best.s)) best = { s: c.x + c.y, crop: c }
   }
@@ -426,17 +480,24 @@ cv.addEventListener('pointerup', (e) => {
   const { ix, iy } = toInternal(e)
   const p = pick(ix, iy)
   if (!p) return
+  // On a neighbour's farm a tap can only look.
+  if (visiting) { if (p.kind === 'crop') openNeighbourCrop(p.crop); return }
   if (p.kind === 'crop') { walkTo(p.crop.x, p.crop.y); onCrop(p.crop) }
   else if (p.kind === 'barn') { walkTo(9, 6); openBag() }
   else if (p.kind === 'well') { walkTo(14, 9); openWell() }
   else if (p.kind === 'compost') { walkTo(14, 10); openCompost() }
   else if (p.kind === 'sign') { walkTo(9, 8); openAlmanac() }
+  else if (p.kind === 'gate') { walkTo(5, 9); openNeighbours() }
   else onTile(p.x, p.y)
 })
 cv.addEventListener('pointercancel', () => { down = null; dragging = false; cv.classList.remove('drag') })
 cv.addEventListener('pointerleave', () => { hover = null })
 function walkTo(x: number, y: number): void { const f = store.ui.farmer; f.tx = x; f.ty = y }
-$('bHome').addEventListener('click', () => { store.ui.cam = camHome(); store.saveUi() })
+$('bHome').addEventListener('click', () => {
+  if (visiting) { visiting.cam = camHome(); return }
+  store.ui.cam = camHome()
+  store.saveUi()
+})
 
 /* ---------- actions ---------- */
 /** An event the farm would accept if the player did the work well enough. Used to refuse early, before they write anything. */
@@ -787,9 +848,16 @@ function openWelcome(ticked: readonly string[] = []): void {
     '<div class="foot"><button type="button" data-act="newFarm" data-arg="sample">Try the sample farm</button><button type="button" class="pri" id="fieldsGo" data-act="openFields"' + (picker.some((p) => p.ticked) ? '' : ' disabled') + '>Start my farm</button></div>')
 }
 // The picker's button waits for at least one tick.
-sheet.addEventListener('change', () => {
+sheet.addEventListener('change', (e) => {
   const go = document.getElementById('fieldsGo')
   if (go instanceof HTMLButtonElement) go.disabled = !sheet.querySelector('input[data-pack]:checked')
+  // On the Share sheet, ticking a field remakes the link, so what is on screen is always what would be sent.
+  if (e.target instanceof HTMLInputElement && e.target.dataset.show !== undefined) {
+    openShare([...sheet.querySelectorAll<HTMLInputElement>('input[data-show]')].filter((b) => b.checked).map((b) => b.dataset.show ?? ''))
+  }
+})
+sheet.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.isComposing && e.target instanceof HTMLInputElement && e.target.id === 'farmName') { e.preventDefault(); saveName() }
 })
 function openWell(): void { open('<h2>Rain barrel</h2><p>' + S.barrel + ' of ' + RULES.barrel.max + ' days stored.</p><p class="sub">Catch and store energy. End a day with ' + RULES.barrel.fillAt + '+ energy left and the barrel fills by one. When a crop is about to wilt, the barrel spends a day to keep it alive. It never grows a crop; only you do.</p>' + foot()) }
 function openCompost(): void {
@@ -827,6 +895,175 @@ function domesticate(id: string): void {
   close()
   toast(seed.name + ' added to your seed bag as a volunteer.')
 }
+
+/* ---------- neighbours: the gate, sharing, arriving by link, visiting ---------- */
+/** A farm link that arrived while a writing box held a draft. It waits for that sheet to close. */
+let PENDING: string | null = null
+/** The fields of the farm last visited, ticked for someone who goes on to start a farm of their own. */
+let visitedPacks: string[] = []
+/** A picture that has just arrived, waiting for the player to say what to do with it. */
+let ARRIVAL: { picture: Picture; state: FarmState } | null = null
+/** The hint line as it was before a visit replaced it. */
+let homeHint = ''
+const BAR_BUTTONS = ['bBag', 'bTree', 'bSleep']
+const visitLabel = (p: Picture): string => p.name + "'s farm"
+const visitDetail = (p: Picture): string => 'day ' + p.day + ', picture ' + ageText(p.at, Date.now())
+const packsOf = (p: Picture): string[] => p.fields.map((f) => f.pack)
+
+/** Show another farm on the canvas, read-only, with a camera of its own. */
+function enterVisit(state: FarmState, who: string, label: string, detail: string, packs: string[]): void {
+  if (!visiting) homeHint = $('hint').innerHTML
+  visiting = { state, who, label, cam: { x: 0, y: 0 }, packs }
+  buildStatics()
+  visiting.cam = camHome()
+  hover = null
+  $('visitWho').textContent = label.charAt(0).toUpperCase() + label.slice(1)
+  $('bBack').textContent = needsSetup() ? 'Start my own farm' : 'Back to my farm'
+  $('visit').hidden = false
+  for (const id of BAR_BUTTONS) byIdAs(id, HTMLButtonElement).disabled = true
+  hint('You are looking at <b>' + esc(label) + '</b>' + (detail ? ' (' + esc(detail) + ')' : '') + '. Drag to look around, and tap a crop to see what it is. Nothing you do here changes either farm.')
+}
+/** Back to your own farm, with your camera where you left it. `quiet` is for when another sheet is about to open. */
+function leaveVisit(quiet = false): void {
+  if (!visiting) return
+  visitedPacks = visiting.packs
+  visiting = null
+  buildStatics()
+  clampCam()
+  $('visit').hidden = true
+  for (const id of BAR_BUTTONS) byIdAs(id, HTMLButtonElement).disabled = false
+  $('hint').innerHTML = homeHint
+  if (!quiet && needsSetup()) openWelcome(visitedPacks)
+}
+function openNeighbourCrop(crop: Crop): void {
+  const v = neighbourCropView(crop, S, catalog)
+  if (v && visiting) open(neighbourCropSheetHtml(chip(v.pack), v, visiting.who))
+}
+
+function openNeighbours(): void {
+  const now = Date.now()
+  open(neighboursSheetHtml({ name: S.name, shared: book.shared ? ageText(book.shared, now) : null, rows: neighbourRows(book, now), green: VILLAGE_GREEN }))
+}
+function visitNeighbour(code: string): void {
+  const n = book.neighbours.find((x) => x.picture.code === code)
+  if (!n || tooOld(n.picture.at, Date.now())) return toast('No recent picture. Ask for a new link.')
+  enterVisit(layOut(n.picture, catalog).state, n.picture.name, visitLabel(n.picture), visitDetail(n.picture), packsOf(n.picture))
+  close()
+}
+
+/* A farm needs a name before it can be shared. */
+let AFTER_NAME: 'share' | 'neighbours' = 'neighbours'
+function openName(then: 'share' | 'neighbours'): void {
+  AFTER_NAME = then
+  open(nameSheetHtml(S.name, RULES.farmName.max))
+}
+function saveName(): void {
+  if (!act({ type: 'farm-named', name: byIdAs('farmName', HTMLInputElement).value })) return
+  if (AFTER_NAME === 'share') openShare()
+  else openNeighbours()
+}
+
+/** The link on the Share sheet, as it will be opened: made, read back and laid out the way a neighbour's game does it. */
+let SHARE: ShareView | null = null
+function openShare(show?: readonly string[]): void {
+  if (!S.name) return openName('share')
+  const mine = catalog.packs.filter((p) => Object.hasOwn(S.fields, p.pack))
+  const ticked = show ?? mine.map((p) => p.pack)
+  const now = Date.now()
+  SHARE = shareView(S, ticked, { code: ownCode(), at: momentOf(now), game: __APP_VERSION__ }, catalog, now)
+  // The link opens wherever this game is running, so forks and local copies work too.
+  const url = SHARE ? location.origin + location.pathname + '#' + SHARE.hash : null
+  open(shareSheetHtml({
+    name: S.name, packs: mine.map((p) => ({ pack: p.pack, title: p.title, color: packColor(p), ticked: ticked.includes(p.pack) })),
+    view: SHARE, url, canShare: typeof navigator.share === 'function',
+  }))
+}
+/** Remember when a link was last made, for the Neighbours sheet. */
+function markShared(): void {
+  book = { ...book, shared: new Date().toISOString() }
+  saveBook()
+}
+function copyFrom(id: string, then?: () => void): void {
+  const t = byIdAs(id, HTMLTextAreaElement)
+  const done = (): void => { toast('Copied.'); then?.() }
+  const fail = (): void => { t.focus(); t.select(); toast('Select all and copy.') }
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t.value).then(done, fail)
+  else fail()
+}
+function shareNative(): void {
+  const url = byIdAs('shareLink', HTMLTextAreaElement).value
+  navigator.share({ title: S.name + "'s farm · Permaculture", url }).then(markShared, () => { /* the player closed the share sheet */ })
+}
+function previewShare(): void {
+  if (!SHARE) return
+  enterVisit(layOut(SHARE.picture, catalog).state, S.name, 'your farm as a neighbour will see it', '', [])
+  close()
+}
+function openPaste(): void {
+  open('<h2>Paste a link</h2><p class="sub">For a farm link that opened in a different browser or inside another app: copy it there and paste it here.</p><label for="pasteBox" class="sub">Farm link</label><textarea id="pasteBox" class="short" rows="3"></textarea>' +
+    '<div class="foot"><button type="button" data-act="neighbours">Back</button><button type="button" class="pri" data-act="openPasted">Open link</button></div>')
+}
+
+/**
+ * A link has arrived, in the address or pasted. A link is written by someone else: whatever cannot be read is refused
+ * with one plain sentence. It never replaces a sheet that holds a draft.
+ */
+function handleLink(text: string): void {
+  if (!veil.hidden && hasDraft()) {
+    PENDING = text
+    return toast('A farm link has arrived. It will open when you finish writing.')
+  }
+  const link = readLink(text)
+  if (!link) return toast('That link cannot be read.')
+  if ('newer' in link || link.kind !== 'farm') return toast('That link needs a newer version of the game.')
+  const now = Date.now()
+  const read = readPicture(link.payload, catalog, now)
+  if (!read) return toast('That link cannot be read.')
+  const p = read.picture
+  if (p.code === ownCode()) return toast(arrivalText('own', p.name))
+  if (tooOld(p.at, now)) return toast(arrivalText('too-old', p.name))
+  const first = needsSetup()
+  if (!first && book.neighbours.some((n) => n.picture.code === p.code)) {
+    // A neighbour you have: the later picture is kept, and an older link changes nothing.
+    const r = receive(book, p, ownCode(), now)
+    book = r.book
+    saveBook()
+    return toast(arrivalText(r.result, p.name))
+  }
+  const laid = layOut(p, catalog)
+  leaveVisit(true)
+  ARRIVAL = { picture: p, state: laid.state }
+  // Someone who has never played lands on the sender's farm: that is the front door to the game.
+  if (first) enterVisit(laid.state, p.name, visitLabel(p), visitDetail(p), packsOf(p))
+  open(arrivalSheetHtml({ name: p.name, day: p.day, age: ageText(p.at, now), fields: packsOf(p).map(packTitle), newer: read.newer, misfit: read.misfit + laid.misfit, firstTime: first }))
+}
+/** Keep the picture that has just arrived. Returns what to tell the player. */
+function keepArrival(): string | null {
+  const a = ARRIVAL
+  if (!a) return null
+  ARRIVAL = null
+  const r = receive(book, a.picture, ownCode(), Date.now())
+  book = r.book
+  saveBook()
+  return arrivalText(r.result, a.picture.name)
+}
+/** From a friend's farm to a farm of your own: the friend becomes your first neighbour, and their fields are ticked for you. */
+function startFromVisit(): void {
+  keepArrival()
+  veil.hidden = true
+  if (visiting) leaveVisit()
+  else if (needsSetup()) openWelcome(visitedPacks)
+}
+const hasLink = (): boolean => /^#(farm|gift)=/.test(location.hash)
+/** Take a link out of the address. It is cleared once taken, so a reload does not ask again. */
+function takeHash(): void {
+  if (!hasLink()) return
+  const text = location.hash
+  history.replaceState(null, '', location.pathname + location.search)
+  handleLink(text)
+}
+window.addEventListener('hashchange', takeHash)
+$('bBack').addEventListener('click', () => { if (needsSetup()) startFromVisit(); else leaveVisit() })
 
 /* ---------- learning tree ---------- */
 /** The tab the tree opens on: the one last looked at, else a field this farm has. */
@@ -955,13 +1192,22 @@ sheet.addEventListener('click', (e) => {
   else if (what === 'import') importFarm()
   else if (what === 'doImport') doImport()
   else if (what === 'importAnyway') { if (IMPORT) finishImport(store.importLog(IMPORT), refusedCount(IMPORT, catalog)) }
-  else if (what === 'copyExp') {
-    const t = byIdAs('exp', HTMLTextAreaElement)
-    const done = () => toast('Copied.')
-    const fail = () => { t.focus(); t.select(); toast('Select all and copy.') }
-    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t.value).then(done, fail)
-    else fail()
-  } else if (what === 'expand') expand(arg)
+  else if (what === 'copyExp') copyFrom('exp')
+  else if (what === 'neighbours') openNeighbours()
+  else if (what === 'rename') openName('neighbours')
+  else if (what === 'saveName') saveName()
+  else if (what === 'share') openShare()
+  else if (what === 'copyShare') copyFrom('shareLink', markShared)
+  else if (what === 'shareNative') shareNative()
+  else if (what === 'previewShare') previewShare()
+  else if (what === 'pasteLink') openPaste()
+  else if (what === 'openPasted') { const text = byIdAs('pasteBox', HTMLTextAreaElement).value; veil.hidden = true; handleLink(text) }
+  else if (what === 'visit') visitNeighbour(arg)
+  else if (what === 'removeNeighbour') { book = remove(book, arg); saveBook(); openNeighbours() }
+  else if (what === 'addNeighbour') { const said = keepArrival(); if (said) toast(said); openNeighbours() }
+  else if (what === 'justLook') { const a = ARRIVAL; if (a) { enterVisit(a.state, a.picture.name, visitLabel(a.picture), visitDetail(a.picture), packsOf(a.picture)); close() } }
+  else if (what === 'startFromVisit') startFromVisit()
+  else if (what === 'expand') expand(arg)
   else if (what === 'forage') forage(arg)
   else if (what === 'domesticate') domesticate(arg)
   else if (what === 'treeTab') { if (catalog.pack(arg)) { store.ui.treeTab = arg; store.saveUi(); openTree() } }
@@ -997,7 +1243,10 @@ byId('bAlm').addEventListener('click', openAlmanac)
 byId('bSleep').addEventListener('click', sleep)
 hud()
 if (store.loadProblem) toast(store.loadProblem)
-if (needsSetup()) openWelcome()
+// A farm link in the address comes first: for someone new it is the way in.
+takeHash()
+if (!veil.hidden || visiting) { /* the link has the screen */ }
+else if (needsSetup()) openWelcome()
 else if (store.refused > store.ui.driftSeen) {
   // Told once per count: the warning comes back only if more of the farm stops fitting.
   open('<h2>Your farm has changed</h2><p>' + esc(driftText(store.refused)) + '</p><p class="sub">This should never happen. Export your farm from the seed bag and report it, with the version at the bottom of the Almanac (' + esc(__APP_VERSION__) + ').</p>' + foot('Carry on'))

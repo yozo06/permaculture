@@ -75,14 +75,23 @@ export function almanacHtml(catalog: Catalog, energyMax: number, version: string
       'Pick a branch to focus; the seed bag puts it first. Or jump the fence: pass a harvest-grade question to unlock a seed early (' + RULES.testOut.energy + ' energy).',
       'Guilds are sets of seeds that belong together. The tree shows how many of each are rooted; there is no bonus yet.',
     ]) +
+    '<h3>Neighbours</h3>' +
+    list([
+      'Tap the <b>gate</b> where the main path leaves the homestead. Name your farm (1 to ' + RULES.farmName.max + ' characters) and make a <b>farm link</b>: a picture of your farm, held inside the link itself. Send it in any chat you already use. Nothing is uploaded.',
+      'You choose which fields each link shows. It shows every crop at the furthest it has grown. It never shows your notes, a wrong answer, the compost heap, a wilted crop, your coins, energy or rain barrel.',
+      'A link is a photograph. It shows the day it was made and never updates, and a sent link cannot be taken back. Send a new one to show progress.',
+      "Open a neighbour's link to add them (the game keeps at most " + RULES.neighbours.max + '). Visit to look around their farm, and tap a crop to see how the same seed stands on yours. Nothing you do there changes either farm.',
+      'The later of two pictures of a farm is the one kept. A picture is forgotten ' + RULES.neighbours.forgetDays + ' days after it was made; ask your neighbour for a new link.',
+      'Nobody is ranked. Your neighbours are listed in the order you met them.',
+    ]) +
     '<h3>Buildings</h3>' +
-    list(['<b>Barn</b>: seed bag. <b>Well</b>: rain barrel. <b>Compost heap</b>: what to review. <b>Signpost</b>: this almanac.']) +
+    list(['<b>Barn</b>: seed bag. <b>Well</b>: rain barrel. <b>Compost heap</b>: what to review. <b>Signpost</b>: this almanac. <b>Gate</b>: your neighbours.']) +
     '<h3>Your farm is an event log</h3>' +
     list([
       'Everything you do is saved as an event in this browser, and your farm is what you get by replaying them. Export gives you that log; import replays it.',
       'Farms from the first prototype (v2) still import: the game turns them into the first event of a new log.',
     ]) +
-    '<h3>Not here yet</h3><p class="sub">The Apply rung (a problem, a design, a debugging session), timed solves and AI judging, guild bonuses, layers as terraces, real weather from Coorg, the rival farm, the Sunday walk, the market, loading your own pack in the browser, the village.</p>' +
+    '<h3>Not here yet</h3><p class="sub">The Apply rung (a problem, a design, a debugging session), timed solves and AI judging, guild bonuses, layers as terraces, real weather from Coorg, the rival farm, the Sunday walk, the market, loading your own pack in the browser, rain for a neighbour (answer a card about one of their crops and send them a day in the barrel), the village server.</p>' +
     '<div class="foot"><span class="sub">Version ' + esc(version) + '</span><button type="button" class="pri" data-act="close">Close</button></div>'
   )
 }

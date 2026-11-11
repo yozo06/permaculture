@@ -13,6 +13,17 @@ describe('almanacHtml', () => {
     expect(html).toContain('The barrel fills before it is spent, so a crop never wilts overnight while the barrel holds a day')
   })
 
+  it('says what a farm link shows and never shows, with the numbers from RULES', () => {
+    const html = almanacHtml(catalog, RULES.energyMax, '0.0.0')
+    expect(html).toContain('<h3>Neighbours</h3>')
+    expect(html).toContain('1 to ' + RULES.farmName.max + ' characters')
+    expect(html).toContain('at most ' + RULES.neighbours.max)
+    expect(html).toContain('forgotten ' + RULES.neighbours.forgetDays + ' days after it was made')
+    expect(html).toContain('It never shows your notes, a wrong answer, the compost heap, a wilted crop')
+    expect(html).toContain('a sent link cannot be taken back')
+    expect(html).toContain('Nobody is ranked')
+  })
+
   it('says which version of the game it is, so a bug report can name it', () => {
     expect(almanacHtml(catalog, RULES.energyMax, '9.9.9 (abc1234)')).toContain('Version 9.9.9 (abc1234)')
   })

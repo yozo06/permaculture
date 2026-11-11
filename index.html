@@ -22,13 +22,14 @@
 
   <div class="stage">
     <canvas id="c" width="480" height="300" aria-label="Isometric farm. Drag to look around. Tap crops to water or harvest them."></canvas>
+    <div class="visit" id="visit" role="status" hidden><span id="visitWho"></span><button type="button" id="bBack">Back to my farm</button></div>
     <div class="corner"><button type="button" id="bHome">Centre</button></div>
     <div class="night" id="night"></div>
     <div class="toast" id="toast" role="status"></div>
   </div>
 
   <footer class="bar">
-    <div class="hint" id="hint"><b>Drag</b> to look around. Tap a crop with a <b>droplet</b> to water it, <b>sparkles</b> to harvest. Tap the forest to forage. Tap land beside a field to fence it in.</div>
+    <div class="hint" id="hint"><b>Drag</b> to look around. Tap a crop with a <b>droplet</b> to water it, <b>sparkles</b> to harvest. Tap the forest to forage. Tap land beside a field to fence it in. Tap the <b>gate</b> to meet your neighbours.</div>
     <div class="acts">
       <button type="button" id="bAlm">Almanac</button>
       <button type="button" id="bTree">Learning tree</button>
