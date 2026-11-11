@@ -851,11 +851,14 @@ function sleep(): void {
   const night = $('night')
   const bSleep = byIdAs('bSleep', HTMLButtonElement)
   night.style.opacity = '1'
+  // Cover the farm so a tap during the fade can't open a sheet under the morning report.
+  night.style.pointerEvents = 'auto'
   bSleep.disabled = true
   setTimeout(() => {
     const slept = act({ type: 'slept' })
     setTimeout(() => {
       night.style.opacity = '0'
+      night.style.pointerEvents = ''
       bSleep.disabled = false
       if (slept && S.night) open(morningReport(S.night))
     }, 700)
