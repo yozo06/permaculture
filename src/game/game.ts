@@ -839,6 +839,7 @@ function finishImport(problem: string | null, toldAbout = 0): void {
 
 /** Reset and the welcome both end here. A fresh farm goes on to the welcome, where its farmer picks their fields. */
 function startNewFarm(kind: 'fresh' | 'sample'): void {
+  visitedPacks = []
   store.newFarm(kind)
   adopt()
   close()
@@ -850,6 +851,7 @@ function openTickedFields(): void {
   const first = needsSetup()
   for (const e of fieldsToOpen(S, catalog, ticked)) if (!act(e)) return
   if (needsSetup()) return
+  visitedPacks = []
   store.ui.cam = camHome()
   close()
   if (first) hint('Open the <b>Seed bag</b>, pick a seed, then tap soil in its field to plant it with notes in your own words.')
@@ -947,7 +949,8 @@ function enterVisit(state: FarmState, who: string, label: string, detail: string
 /** Back to your own farm, with your camera where you left it. `quiet` is for when another sheet is about to open. */
 function leaveVisit(quiet = false): void {
   if (!visiting) return
-  visitedPacks = visiting.packs
+  // Only someone with no farm yet has their picker ticked from what they just saw.
+  visitedPacks = needsSetup() ? visiting.packs : []
   visiting = null
   buildStatics()
   clampCam()
