@@ -32,6 +32,8 @@ The player's farm is not saved as a picture of the farm. It is saved as the list
 
 Because the farm is replayed with the packs and rules of today, changing a seed's id or a number in `RULES` changes every saved farm. That is why ids are permanent, and why a change to `RULES` should say so in its pull request.
 
+Two tests stand guard over that. `scripts/lock.test.ts` compares the packs with `packs/lock.json` and fails on a change that would hurt a saved farm (an id gone, a seed that needs more); `npm run lock` records new ids. `src/engine/played-farm.test.ts` replays a farm that was played on purpose and committed as a log, and fails if today's rules refuse any of it or it ends somewhere else. When a farm in a browser does stop fitting, the store counts the skipped entries and the game says so.
+
 ## From a tap to a saved farm
 
 1. `game/game.ts` hears the tap, works out what was tapped (`pick`), and opens the right sheet: a card for a recall watering, a writing box for an explanation.
@@ -56,6 +58,7 @@ When the page loads, the store reads the log and folds it. If the log cannot be 
 - `src/engine/*.test.ts`: each event's allowed path and each refusal. `fold.property.test.ts` plays long random games (80 to 300 moves each) and checks after every move that replaying the log gives the same farm and that energy and coins never go negative. It also feeds the engine events of any shape and checks that nothing throws.
 - `src/engine/design-doc.test.ts`: the two tables in `docs/design.md` match `RULES` exactly.
 - `scripts/catalogues.test.ts`: what the catalogues promise, such as every seed id from the Phase 0 farm still existing.
+- `scripts/lock.test.ts` and `src/engine/played-farm.test.ts`: saved farms keep replaying (see above).
 - `scripts/packs-lib.test.ts`: the validator catches what it should.
 - `src/game/*.test.ts`: the views, the sheets, the store and the Almanac.
 

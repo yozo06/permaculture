@@ -125,6 +125,16 @@ seeds:
     summary: Foraging generates finds adjacent to what is growing. Domesticated finds become volunteer seeds.
     prompts: [Three fresh finds a day, related to Z1 crops.]
   # ---- Phase 3 ----
+  - id: safe-saves
+    name: Safe saves
+    layer: root
+    branch: engine
+    tier: 2
+    needs: [event-log]
+    harvest: artifact
+    minutes: 90
+    summary: Before anyone else has a farm, make sure an edit to a pack or a rule cannot quietly damage one. A lock on every id a saved farm depends on, a played farm that must always replay, and a warning when a farm's history no longer fits.
+    prompts: [Renaming a seed id turns the build red.]
   - id: snapshot
     name: Farm snapshot
     layer: ground-cover

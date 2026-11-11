@@ -210,6 +210,7 @@
     "judged-harvest": {"pack":"workshop","needs":["byok"],"harvest":"artifact","wild":false},
     "pack-forge": {"pack":"workshop","needs":["byok"],"harvest":"artifact","wild":false},
     "wild-finds": {"pack":"workshop","needs":["byok"],"harvest":"artifact","wild":false},
+    "safe-saves": {"pack":"workshop","needs":["event-log"],"harvest":"artifact","wild":false},
     "snapshot": {"pack":"workshop","needs":["repo"],"harvest":"artifact","wild":false},
     "visit": {"pack":"workshop","needs":["snapshot"],"harvest":"artifact","wild":false},
     "village-server": {"pack":"workshop","needs":["visit"],"harvest":"artifact","wild":false},
