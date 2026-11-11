@@ -11,7 +11,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "typecheck": "tsc -p tsconfig.json && tsc -p src/engine/tsconfig.json && tsc -p tsconfig.node.json",
-    "validate": "node scripts/validate-packs.mjs"
+    "validate": "node scripts/validate-packs.mjs",
+    "lock": "vitest run scripts/lock.test.ts -u"
   },
   "keywords": [],
   "author": "",

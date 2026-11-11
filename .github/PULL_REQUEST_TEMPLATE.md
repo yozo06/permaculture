@@ -9,6 +9,7 @@
 **If it touches a pack**
 
 - [ ] No released seed, find, pack or branch id is renamed or removed, and no `needs` is tightened
+- [ ] `npm run lock` was run after adding ids, and `packs/lock.json` is in this pull request
 - For a new pack: who it is for, and what "rooted" means for it:
 
 **If it changes a rule or a number**

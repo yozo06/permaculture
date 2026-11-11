@@ -94,6 +94,8 @@ A find is a short fact the player forages in the wilderness. It is picked by wha
 
 Seed ids, find ids and pack ids are unique across all packs, and branch ids within a pack. Farms refer to all of them and are replayed against the current packs, so never rename or remove a released one. Never tighten a released seed's `needs`, never make it `wild`, and never lower a pack's `energy_cap`: on replay the game skips any event that is no longer allowed, and the farm quietly changes.
 
+`packs/lock.json` holds these promises, one line per id, and `npm test` fails when a change would break one: an id that is gone or has moved, a seed that needs more or became wild, an artifact seed that now asks for a write-up, a find that leads somewhere else, a cap that was lowered or added. Adding seeds and loosening rules is always fine: run `npm run lock` and commit the file with your change. It will not write over a breaking change.
+
 ## Rules the validator enforces
 
 - Every `branch` on a seed is a declared branch id.

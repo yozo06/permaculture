@@ -10,14 +10,14 @@ Open the live game (link in the README), play for a week, and tell us what felt 
 
 1. Read `docs/pack-format.md`.
 2. Copy an existing pack in `packs/` and change everything.
-3. Run `npm install` then `npm run validate`. Fix what it reports.
+3. Run `npm install` then `npm run validate`. Fix what it reports. Then run `npm run lock`, which records your new ids in `packs/lock.json`, and commit that file too.
 4. Open a pull request. Say in one line who the pack is for and what "rooted" means for it.
 
 Questions must be your own words. Cite sources; never paste their text. Packs are CC-BY-SA 4.0.
 
 ## Improve a pack
 
-Better distractors, better `why` lines, a missing layer, a guild that should exist: all welcome as small PRs. Keep one pack per PR. Never rename or remove a seed id or tighten `needs` (see "Ids are forever" in `docs/pack-format.md`): saved farms refer to them. The five full catalogues (Haskell backend, system design, infra, DSA patterns, leadership) must keep 30 to 40 seeds, all seven layers, and on every seed a rubric of at least three lines, at least two recall cards and a source, every card citing a declared source. `npm test` checks this, so a half-finished seed fails the build.
+Better distractors, better `why` lines, a missing layer, a guild that should exist: all welcome as small PRs. Keep one pack per PR. Never rename or remove a seed id or tighten `needs` (see "Ids are forever" in `docs/pack-format.md`): saved farms refer to them, and `npm test` fails if you do. After adding a seed, run `npm run lock`. The five full catalogues (Haskell backend, system design, infra, DSA patterns, leadership) must keep 30 to 40 seeds, all seven layers, and on every seed a rubric of at least three lines, at least two recall cards and a source, every card citing a declared source. `npm test` checks this, so a half-finished seed fails the build.
 
 ## Code
 
