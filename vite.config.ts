@@ -1,5 +1,7 @@
 import { defineConfig } from 'vitest/config'
 import type { Plugin } from 'vite'
+import { execFileSync } from 'node:child_process'
+import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import { collectPacks, defaultPacksDir } from './scripts/packs-lib.mjs'
 
@@ -27,9 +29,25 @@ function packs(): Plugin {
   }
 }
 
+/**
+ * What the build calls itself, shown in the Almanac: the version in package.json and, when git can say,
+ * the commit being built, as "0.1.0 (a031b7a)". A build outside a git checkout is just the version.
+ */
+function appVersion(): string {
+  const root = path.dirname(defaultPacksDir)
+  const { version } = JSON.parse(readFileSync(path.join(root, 'package.json'), 'utf8')) as { version: string }
+  try {
+    const commit = execFileSync('git', ['rev-parse', '--short', 'HEAD'], { cwd: root, stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim()
+    return commit ? version + ' (' + commit + ')' : version
+  } catch {
+    return version
+  }
+}
+
 export default defineConfig({
   base: '/permaculture/',
   plugins: [packs()],
+  define: { __APP_VERSION__: JSON.stringify(appVersion()) },
   build: { outDir: 'dist', emptyOutDir: true },
   test: { include: ['src/**/*.test.ts', 'scripts/**/*.test.ts'], environment: 'node' },
 })

@@ -23,7 +23,8 @@ function zoneLines(): string[] {
   })
 }
 
-export function almanacHtml(catalog: Catalog, energyMax: number): string {
+/** `version` is what the build calls itself ("0.1.0 (a031b7a)"); it sits in the footer so a bug report can name it. */
+export function almanacHtml(catalog: Catalog, energyMax: number, version: string): string {
   const capped = catalog.packs.filter((p) => p.energy_cap !== undefined)
   const capNotes = capped
     .map((p) => 'The <b>' + esc(p.title) + '</b> field is capped: all its work together may use at most ' + p.energy_cap + "% of a day's energy (" + catalog.capOf(p.pack, energyMax) + ' of ' + energyMax + '), so it never becomes the only crop.')
@@ -82,6 +83,6 @@ export function almanacHtml(catalog: Catalog, energyMax: number): string {
       'Farms from the first prototype (v2) still import: the game turns them into the first event of a new log.',
     ]) +
     '<h3>Not here yet</h3><p class="sub">The Apply rung (a problem, a design, a debugging session), timed solves and AI judging (Phase 2), guild bonuses, layers as terraces, real weather from Coorg, the rival farm, the Sunday walk, the market, loading your own pack in the browser, the village.</p>' +
-    '<div class="foot"><span></span><button type="button" class="pri" data-act="close">Close</button></div>'
+    '<div class="foot"><span class="sub">Version ' + esc(version) + '</span><button type="button" class="pri" data-act="close">Close</button></div>'
   )
 }

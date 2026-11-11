@@ -837,7 +837,7 @@ function openTree(): void {
 }
 
 /* ---------- almanac ---------- */
-function openAlmanac(): void { open(almanacHtml(catalog, S.energyMax)) }
+function openAlmanac(): void { open(almanacHtml(catalog, S.energyMax, __APP_VERSION__)) }
 
 /* ---------- sleep ---------- */
 function morningReport(night: Night): string {
