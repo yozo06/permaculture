@@ -10,6 +10,7 @@ import { collectPacks } from '../../scripts/packs-lib.mjs'
 import { buildCatalog } from './catalog'
 import { apply, fold, initialState, refusedCount } from './fold'
 import { parseFarmFile } from './log'
+import edge from './edge-farm.json'
 import played from './played-farm.json'
 import type { FarmState } from './types'
 
@@ -50,5 +51,48 @@ describe('the played farm', () => {
       if (e.type === 'slept' && s.night) { saved += s.night.saved.length; wilted += s.night.wilted.length }
     }
     expect({ saved, wilted }).toEqual({ saved: 12, wilted: 9 })
+  })
+})
+
+// A second, small farm that stands exactly on each limit the played farm clears by a wide margin: a name of 24
+// characters, notes of exactly 40 and of exactly 5000, an explanation of exactly 80, a write-up of exactly 80, a proof
+// of exactly 8, a night that ends on exactly 30 energy and one that ends on 29, and a jump over the fence taken with
+// exactly the 10 energy it costs. Real farms sit on these limits too. Tighten any of them and this farm loses something.
+describe('the edge farm', () => {
+  const file = parseFarmFile(JSON.stringify(edge))
+  const events = file.kind === 'log' ? file.events : []
+  const lengths = (pick: (e: (typeof events)[number]) => string | undefined): number[] =>
+    [...new Set(events.flatMap((e) => { const t = pick(e); return t === undefined ? [] : [t.trim().length] }))].sort((a, b) => a - b)
+
+  it('really stands on the limits, so nobody mends it by padding', () => {
+    expect(events).toHaveLength(49)
+    expect(lengths((e) => (e.type === 'farm-named' ? e.name : undefined))).toEqual([24])
+    expect(lengths((e) => (e.type === 'planted' ? e.notes : undefined))).toEqual([40, 5000])
+    expect(lengths((e) => (e.type === 'watered' ? e.text : undefined))).toEqual([80])
+    expect(lengths((e) => (e.type === 'harvested' ? e.text : undefined))).toEqual([8, 80])
+  })
+
+  it('replays with nothing refused', () => {
+    expect(refusedCount(events, catalog)).toBe(0)
+  })
+
+  it('fills the barrel on a night that ends with 30 energy, not on one that ends with 29, and jumps the fence on its last 10', () => {
+    let s: FarmState = initialState()
+    const nights: { energy: number; barrel: number }[] = []
+    let beforeJump = -1
+    for (const e of events) {
+      const energy = s.energy
+      s = apply(s, e, catalog)
+      if (e.type === 'slept') nights.push({ energy, barrel: s.barrel })
+      if (e.type === 'unlocked' && e.ok) beforeJump = energy
+    }
+    expect(nights.slice(0, 3)).toEqual([{ energy: 30, barrel: 1 }, { energy: 29, barrel: 1 }, { energy: 0, barrel: 0 }])
+    expect(beforeJump).toBe(10)
+  })
+
+  it('ends where it ended when it was played', () => {
+    const s = fold(events, catalog)
+    expect(s).toMatchObject({ name: 'Edge farm at every limit', day: 14, coins: 183, energy: 90, barrel: 5, unlocked: ['market'], foraged: ['pandi-curry'], compost: [] })
+    expect(s.crops.map((c) => [c.seed, c.perennial, c.journal.length])).toEqual([['repo', true, 5], ['incident-roles', true, 2]])
   })
 })

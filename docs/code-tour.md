@@ -33,7 +33,7 @@ The player's farm is not saved as a picture of the farm. It is saved as the list
 
 Because the farm is replayed with the packs and rules of today, changing a seed's id or a number in `RULES` changes every saved farm. That is why ids are permanent, and why a change to `RULES` should say so in its pull request.
 
-Two tests stand guard over that. `scripts/lock.test.ts` compares the packs with `packs/lock.json` and fails on a change that would hurt a saved farm (an id gone, a seed whose needs changed); `npm run lock` records new ids. `src/engine/played-farm.test.ts` replays a farm that was played on purpose and committed as a log, and fails if today's rules refuse any of it or it ends somewhere else. When a farm in a browser does stop fitting, the store counts the skipped entries and the game says so.
+Two tests stand guard over that. `scripts/lock.test.ts` compares the packs with `packs/lock.json` and fails on a change that would hurt a saved farm (an id gone, a seed whose needs changed); `npm run lock` records new ids. `src/engine/played-farm.test.ts` replays two farms that were played on purpose and committed as logs, and fails if today's rules refuse any of either or one ends somewhere else: a forty-day farm with every kind of event, and a small one that stands exactly on each limit (notes of exactly 40 characters, a night ending on exactly 30 energy). When a farm in a browser does stop fitting, the store counts the skipped entries and the game says so.
 
 ## From a tap to a saved farm
 
