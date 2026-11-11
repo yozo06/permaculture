@@ -6,6 +6,8 @@
 //         6 7 8 11
 // A base field is 3x3. The world grows by one shell (7 tiles) when a new ring of slots is opened.
 
+import { RULES } from './rules'
+
 export const PITCH = 7
 export const FIELD_SIZE = 3
 const ORIGIN = 5
@@ -112,7 +114,7 @@ export function neighbourFields(x: number, y: number, fields: Fields, cleared: C
 }
 
 /** Coins to fence a tile in: forest costs more than open ground. */
-export const fenceCost = (t: Terrain): number => (t === 'wild' ? 40 : 25)
+export const fenceCost = (t: Terrain): number => (t === 'wild' ? RULES.fence.forest : RULES.fence.open)
 
 /** The lowest slot no field uses. */
 export function nextFreeSlot(fields: Fields): number {

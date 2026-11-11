@@ -1,5 +1,6 @@
 import fc from 'fast-check'
 import { describe, expect, it } from 'vitest'
+import { RULES } from './rules'
 import {
   BARN, COMPOST, GATE, SIGN, WELL, fenceCost, fieldOf, fieldOrigin, hash, homestead, isBuildingTile, neighbourFields,
   nextFreeSlot, shells, slotCell, terrain, tileKey, worldSize, type Fields,
@@ -126,7 +127,9 @@ describe('fenced tiles', () => {
     expect(neighbourFields(0, 0, FOUR, {})).toEqual([])
   })
 
-  it('cost more in forest', () => {
+  it('cost what RULES says, and more in forest', () => {
+    expect(fenceCost('wild')).toBe(RULES.fence.forest)
+    expect(fenceCost('grass')).toBe(RULES.fence.open)
     expect(fenceCost('wild')).toBe(40)
     expect(fenceCost('grass')).toBe(25)
   })
