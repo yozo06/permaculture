@@ -44,7 +44,8 @@ export function parseEvent(raw: unknown): FarmEvent | null {
     case 'farm-started': {
       const { day, energy, coins, barrel } = raw
       if (!whole(day) || !whole(energy) || !whole(coins) || !whole(barrel)) return null
-      if (day < 1 || energy < 0 || coins < 0 || barrel < 0 || barrel > RULES.barrel.max) return null
+      // Too much energy or barrel is clamped when applied, never refused: a farm's first event must survive a lowered maximum.
+      if (day < 1 || energy < 0 || coins < 0 || barrel < 0) return null
       return { type, day, energy, coins, barrel }
     }
     case 'field-opened':
@@ -321,7 +322,7 @@ function step(s: FarmState, e: FarmEvent, catalog: Catalog): FarmState {
   const pack = 'seed' in e ? catalog.seed(e.seed)?.pack : undefined
   switch (e.type) {
     case 'farm-started':
-      return { ...initialState(), day: e.day, energy: Math.min(e.energy, RULES.energyMax), energyMax: RULES.energyMax, coins: e.coins, barrel: e.barrel }
+      return { ...initialState(), day: e.day, energy: Math.min(e.energy, RULES.energyMax), energyMax: RULES.energyMax, coins: e.coins, barrel: Math.min(e.barrel, RULES.barrel.max) }
     case 'field-opened':
       n.fields[e.pack] = e.slot
       return n

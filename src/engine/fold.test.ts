@@ -45,9 +45,15 @@ describe('farm-started', () => {
   })
 
   it('refuses numbers that cannot be a farm, without throwing', () => {
-    for (const bad of [{ ...started, day: 0 }, { ...started, coins: -1 }, { ...started, barrel: 6 }, { ...started, energy: 1.5 }, { ...started, day: '1' }]) {
+    for (const bad of [{ ...started, day: 0 }, { ...started, coins: -1 }, { ...started, barrel: -1 }, { ...started, energy: 1.5 }, { ...started, day: '1' }]) {
       refusal(initialState(), bad)
     }
+  })
+
+  it('clamps a barrel above the most it holds, so lowering that number can never empty a farm', () => {
+    const s = run(cat, [{ ...started, barrel: RULES.barrel.max + 3 }, { type: 'slept' }])
+    expect(s.day).toBe(2)
+    expect(s.barrel).toBe(RULES.barrel.max)
   })
 })
 
