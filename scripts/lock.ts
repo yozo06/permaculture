@@ -27,9 +27,22 @@ export function lockText(lock: Lock): string {
   return '{\n' + (['packs', 'seeds', 'finds'] as const).map((k) => '  ' + JSON.stringify(k) + ': {\n' + section(lock[k]) + '\n  }').join(',\n') + '\n}\n'
 }
 
+/** Read the committed lock. Throws if the text is not one: a damaged lock must be mended by hand, not replaced. */
+export function readLock(text: string): Lock {
+  const fail = (): never => { throw new Error('packs/lock.json cannot be read as a lock. Mend it by hand (a merge conflict?); do not delete it.') }
+  let raw: unknown
+  try { raw = JSON.parse(text) } catch { return fail() }
+  const table = (v: unknown): boolean => typeof v === 'object' && v !== null && !Array.isArray(v)
+  if (!table(raw)) return fail()
+  const lock = raw as Record<string, unknown>
+  return table(lock.packs) && table(lock.seeds) && table(lock.finds) ? (raw as Lock) : fail()
+}
+
 /**
  * Changes between two locks that would make a saved farm replay differently. Empty when there are none.
- * Growing and loosening are free: new ids, fewer needs, a seed that stops being wild, a cap raised or lifted.
+ * Growing is free: new ids, a find that gains a seed, a write-up that becomes a proof, a cap raised or lifted.
+ * What a seed needs and whether it is wild may not change in either direction: a farm that jumped the fence to a
+ * seed, or domesticated it, has an event in its log that is refused once the seed no longer needed that.
  */
 export function lockProblems(old: Lock, now: Lock): string[] {
   const problems: string[] = []
@@ -46,7 +59,9 @@ export function lockProblems(old: Lock, now: Lock): string[] {
     if (!is) { problems.push('seed "' + id + '" is gone: farms that grow it would lose the crop'); continue }
     if (is.pack !== was.pack) problems.push('seed "' + id + '" moved from ' + was.pack + ' to ' + is.pack + ': its crops stand in the old field')
     for (const need of is.needs) if (!was.needs.includes(need)) problems.push('seed "' + id + '" now needs "' + need + '": a farm that planted it without would lose the crop')
+    for (const need of was.needs) if (!is.needs.includes(need)) problems.push('seed "' + id + '" no longer needs "' + need + '": a farm that jumped the fence to it would have that jump refused, and its energy that day would replay differently')
     if (is.wild && !was.wild) problems.push('seed "' + id + '" became wild: farms that planted it never foraged for it')
+    if (was.wild && !is.wild) problems.push('seed "' + id + '" is no longer wild: a farm that domesticated it has an event that would be refused')
     if (was.harvest === 'artifact' && is.harvest !== 'artifact') {
       problems.push('seed "' + id + '" went from artifact to ' + is.harvest + ': a short proof already harvested would be too short for a write-up')
     }

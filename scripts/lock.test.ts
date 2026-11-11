@@ -4,10 +4,10 @@
 // hurt a saved farm, and when the lock is simply out of date. `npm run lock` brings it up to date, and refuses to
 // while a breaking change stands.
 import path from 'node:path'
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import type { PackDef } from '../src/engine/types'
-import { lockOf, lockProblems, lockText, type Lock } from './lock'
+import { lockOf, lockProblems, lockText, readLock, type Lock } from './lock'
 import { collectPacks, defaultPacksDir } from './packs-lib.mjs'
 
 const LOCK_FILE = path.join(defaultPacksDir, 'lock.json')
@@ -43,13 +43,11 @@ describe('lockProblems', () => {
     expect(lockProblems(locked, lockOf(base))).toEqual([])
   })
 
-  it('lets a pack grow and loosen: new seeds, finds and branches, fewer needs, a higher or lifted cap', () => {
+  it('lets a pack grow: new seeds, finds, branches and packs, a find that gains a seed, a write-up that becomes a proof, a cap raised', () => {
     const now = changed((p) => {
       p[0]?.seeds.push({ id: 'peas', name: 'Peas', layer: 'vine', branch: 'new', tier: 0, harvest: 'recall' })
       p[0]?.branches.push({ id: 'new', title: 'New' })
       p[0]?.finds?.push({ id: 'ant-find', near: ['corn'], text: 'Ants.' })
-      delete seedOf(p, 'squash').needs
-      seedOf(p, 'bees').wild = false
       seedOf(p, 'saw').harvest = 'artifact'
       const worms = p[0]?.finds?.[1]
       if (worms) worms.seed = 'bees'
@@ -63,7 +61,10 @@ describe('lockProblems', () => {
     ['a seed that is removed or renamed', (p) => { seedOf(p, 'corn').id = 'maize' }, /seed "corn" is gone/],
     ['a seed that moves to another pack', (p) => { p[1]?.seeds.push(...(p[0]?.seeds.splice(0, 1) ?? [])) }, /seed "corn" moved from garden to shed/],
     ['a seed that needs more', (p) => { seedOf(p, 'squash').needs = ['corn', 'bees'] }, /seed "squash" now needs "bees"/],
+    // Loosening is not free either: a farm that jumped the fence to squash would have that jump refused as "not locked".
+    ['a seed that needs less', (p) => { delete seedOf(p, 'squash').needs }, /seed "squash" no longer needs "corn"/],
     ['a seed that becomes wild', (p) => { seedOf(p, 'corn').wild = true }, /seed "corn" became wild/],
+    ['a seed that stops being wild', (p) => { seedOf(p, 'bees').wild = false }, /seed "bees" is no longer wild/],
     ['an artifact seed that asks for a longer write-up', (p) => { seedOf(p, 'squash').harvest = 'judged' }, /seed "squash" went from artifact to judged/],
     ['a find that is removed', (p) => { p[0]?.finds?.splice(1, 1) }, /find "worm-find" is gone/],
     ['a find that leads somewhere else', (p) => { const f = p[0]?.finds?.[0]; if (f) delete f.seed }, /find "bee-find" no longer leads to "bees"/],
@@ -77,11 +78,22 @@ describe('lockProblems', () => {
   })
 })
 
+describe('readLock', () => {
+  it('reads back what lockText wrote', () => {
+    expect(readLock(lockText(locked))).toEqual(locked)
+  })
+
+  it('throws on a file that is not a lock, so a damaged one is never taken for a first run', () => {
+    for (const bad of ['', '<<<<<<< HEAD\n{}', '[]', '{"packs":{}}', '{"packs":{},"seeds":[],"finds":{}}']) expect(() => readLock(bad), bad).toThrow(/packs\/lock\.json/)
+  })
+})
+
 describe('the packs in this repo', () => {
   it('have not changed in a way that would hurt a saved farm, and packs/lock.json is up to date', async () => {
     const now = lockOf(collectPacks())
-    let committed: Lock | null = null
-    try { committed = JSON.parse(readFileSync(LOCK_FILE, 'utf8')) as Lock } catch { /* the first run writes it */ }
+    // Only a missing file is a first run. One that is there but cannot be read (a merge conflict, say) must be mended
+    // by hand: this throws, so `npm run lock` cannot quietly write a fresh lock over whatever the old one guarded.
+    const committed = existsSync(LOCK_FILE) ? readLock(readFileSync(LOCK_FILE, 'utf8')) : null
     // Checked first on purpose: while a breaking change stands, `npm run lock` stops here and writes nothing.
     // If farms really cannot be hurt, edit packs/lock.json by hand in the same pull request and say why.
     if (committed) expect(lockProblems(committed, now)).toEqual([])

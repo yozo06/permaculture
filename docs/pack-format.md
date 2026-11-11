@@ -92,9 +92,9 @@ A find is a short fact the player forages in the wilderness. It is picked by wha
 
 ## Ids are forever
 
-Seed ids, find ids and pack ids are unique across all packs, and branch ids within a pack. Farms refer to all of them and are replayed against the current packs, so never rename or remove a released one. Never tighten a released seed's `needs`, never make it `wild`, and never lower a pack's `energy_cap`: on replay the game skips any event that is no longer allowed, and the farm quietly changes.
+Seed ids, find ids and pack ids are unique across all packs, and branch ids within a pack. Farms refer to all of them and are replayed against the current packs, so never rename or remove a released one. Never change a released seed's `needs` or whether it is `wild`, in either direction, and never lower a pack's `energy_cap`: on replay the game skips any event that is no longer allowed, and the farm quietly changes.
 
-`packs/lock.json` holds these promises, one line per id, and `npm test` fails when a change would break one: an id that is gone or has moved, a seed that needs more or became wild, an artifact seed that now asks for a write-up, a find that leads somewhere else, a cap that was lowered or added. Adding seeds and loosening rules is always fine: run `npm run lock` and commit the file with your change. It will not write over a breaking change.
+`packs/lock.json` holds these promises, one line per id, and `npm test` fails when a change would break one: an id that is gone or has moved, a seed whose `needs` or `wild` changed, an artifact seed that now asks for a write-up, a find that leads somewhere else, a cap that was lowered or added. Even needing *less* counts: a farm that jumped the fence to that seed holds a jump the game would now refuse. Adding seeds, finds, branches and packs is always fine: run `npm run lock` and commit the file with your change. It will not write over a breaking change, and it will not replace a lock file it cannot read.
 
 ## Rules the validator enforces
 
