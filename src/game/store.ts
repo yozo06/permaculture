@@ -1,6 +1,7 @@
 // Where the farm lives: the event log, the folded state, and the bits of screen state that are not part of a farm.
 // Every read from storage is untrusted; bad data becomes a fresh farm and a message, never a crash.
 import type { Catalog } from '../engine/catalog'
+import { isRecord } from '../engine/util'
 import { apply, check, fieldsToOpen, fold } from '../engine/fold'
 import { farmFileText, parseFarmFile } from '../engine/log'
 import { RULES } from '../engine/rules'
@@ -71,7 +72,6 @@ export function defaultId(): string {
   return Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10)
 }
 
-const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v)
 const num = (v: unknown, fallback: number): number => (typeof v === 'number' && Number.isFinite(v) ? v : fallback)
 
 function readUi(raw: string | null): UiState {

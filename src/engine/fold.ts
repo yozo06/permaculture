@@ -1,6 +1,7 @@
 // The farm as an event log. `check` says whether an event is allowed, `apply` makes it happen, `fold` replays a log.
 // Everything here is pure: state in, state out, nothing mutated, nothing random, no clock.
 import type { Catalog } from './catalog'
+import { isRecord } from './util'
 import { fieldOf, fenceCost, isBuildingTile, neighbourFields, nextFreeSlot, terrain, tileKey, wildKind, worldSize } from './land'
 import { RULES, available, capLeft, cropOf, interval, revivable, ripe, thirsty, visible } from './rules'
 import { fromV2 } from './v2'
@@ -32,7 +33,6 @@ function copy(s: FarmState): FarmState {
 
 /* ---------- reading an event that may be anything ---------- */
 
-const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v)
 const whole = (v: unknown): v is number => typeof v === 'number' && Number.isInteger(v)
 const text = (v: unknown): v is string => typeof v === 'string'
 

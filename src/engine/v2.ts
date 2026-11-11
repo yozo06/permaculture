@@ -1,6 +1,7 @@
 // The prototype's save format ("v2") and the conversion that makes any v2 farm fit the current packs.
 // A save file is untrusted: keep what is usable, drop the rest, never throw.
 import type { Catalog } from './catalog'
+import { isRecord } from './util'
 import { fieldOf, tileKey, type Cleared, type Fields } from './land'
 import { RULES, interval } from './rules'
 import type { Crop, FarmState } from './types'
@@ -58,7 +59,6 @@ const LEGACY_FINDS: Record<string, string> = Object.fromEntries(
   ),
 )
 
-const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v)
 const finite = (v: unknown, fallback: number): number => (typeof v === 'number' && Number.isFinite(v) ? v : fallback)
 const strings = (v: unknown): string[] => (Array.isArray(v) ? v.filter((s): s is string => typeof s === 'string') : [])
 const unique = <T>(items: T[]): T[] => [...new Set(items)]

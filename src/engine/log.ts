@@ -1,5 +1,6 @@
 // The file a farm is exported to, and reading one back. A file from outside is untrusted: never throw.
 import type { LoggedEvent } from './types'
+import { isRecord } from './util'
 import { looksLikeV2 } from './v2'
 
 export const FILE_FORMAT = 'permaculture'
@@ -21,8 +22,6 @@ export const farmFileText = (events: readonly LoggedEvent[]): string =>
   JSON.stringify({ format: FILE_FORMAT, v: FILE_VERSION, events } satisfies FarmFile)
 
 export const farmFileName = (day: number): string => 'permaculture-farm-day' + day + '.json'
-
-const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v)
 
 /** An entry is kept if it can be told apart from junk: a type, an id and a time. Whether the fold accepts it is another matter. */
 const isLogged = (v: unknown): v is LoggedEvent =>
