@@ -1089,10 +1089,10 @@ window.addEventListener('hashchange', takeHash)
 $('bBack').addEventListener('click', () => { if (needsSetup()) startFromVisit(); else leaveVisit() })
 
 /* ---------- learning tree ---------- */
-/** The tab the tree opens on: the one last looked at, else a field this farm has. */
+/** The tab the tree opens on: the field last looked at, else any field this farm has. Never a pack it does not grow. */
 const treePack = (): string => {
   const saved = store.ui.treeTab
-  if (saved && catalog.pack(saved)) return saved
+  if (saved && catalog.pack(saved) && Object.hasOwn(S.fields, saved)) return saved
   return (catalog.packs.find((p) => Object.hasOwn(S.fields, p.pack)) ?? catalog.packs[0])?.pack ?? ''
 }
 const SVG_FONT = 'font-family="DM Sans,system-ui"'
@@ -1121,8 +1121,8 @@ function treeSvg(v: TreeView): string {
   }
   return s + '</svg>'
 }
-function openTree(): void {
-  const v = treeView(treePack(), S, catalog)
+function openTree(packId: string = treePack()): void {
+  const v = treeView(packId, S, catalog)
   if (!v) return
   let html = '<h2>Learning tree</h2><p class="sub">Everything you could grow, including what you cannot reach yet. A seed unlocks when the seeds it needs are <b>rooted</b> (harvested to perennial). Pick a branch to focus; the seed bag puts it first.</p>'
   html += '<div class="tabs">' + catalog.packs.map((p) => '<button type="button" data-act="treeTab" data-arg="' + esc(p.pack) + '"' + (p.pack === v.pack ? ' class="on"' : '') + '><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:' + packColor(p) + ';margin-right:6px;vertical-align:-1px"></span>' + esc(p.title) + '</button>').join('') + '</div>'
@@ -1209,7 +1209,7 @@ sheet.addEventListener('click', (e) => {
   else if (what === 'openFields') openTickedFields()
   else if (what === 'openField') {
     const e = fieldsToOpen(S, catalog, [arg])[0]
-    if (e && act(e)) { toast('The ' + packTitle(arg) + ' field is open.'); openTree() }
+    if (e && act(e)) { toast('The ' + packTitle(arg) + ' field is open.'); store.ui.treeTab = arg; store.saveUi(); openTree(arg) }
   }
   else if (what === 'export') exportFarm()
   else if (what === 'import') importFarm()
@@ -1233,7 +1233,12 @@ sheet.addEventListener('click', (e) => {
   else if (what === 'expand') expand(arg)
   else if (what === 'forage') forage(arg)
   else if (what === 'domesticate') domesticate(arg)
-  else if (what === 'treeTab') { if (catalog.pack(arg)) { store.ui.treeTab = arg; store.saveUi(); openTree() } }
+  else if (what === 'treeTab') {
+    if (!catalog.pack(arg)) return
+    // Looking at a pack you do not grow is not remembered: next time the tree opens on a field of yours.
+    if (Object.hasOwn(S.fields, arg)) { store.ui.treeTab = arg; store.saveUi() }
+    openTree(arg)
+  }
   else if (what === 'focus') {
     const [packId, branchId] = arg.split('|')
     const pack = packId ? catalog.pack(packId) : undefined
@@ -1261,7 +1266,7 @@ window.addEventListener('storage', (e) => {
   }
 })
 byId('bBag').addEventListener('click', openBag)
-byId('bTree').addEventListener('click', openTree)
+byId('bTree').addEventListener('click', () => openTree())
 byId('bAlm').addEventListener('click', openAlmanac)
 byId('bSleep').addEventListener('click', sleep)
 hud()
