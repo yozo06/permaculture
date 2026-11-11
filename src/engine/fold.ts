@@ -289,6 +289,7 @@ function water(s: FarmState, c: Crop, e: Extract<FarmEvent, { type: 'watered' }>
   if (ok) {
     c.wilted = false
     if (!c.perennial) c.stage = Math.min(RULES.maxStage, c.stage + 1)
+    c.best = Math.max(c.best, c.stage)
     c.due = s.day + interval(c)
     uncompost(s, c.seed)
   } else {
@@ -305,6 +306,7 @@ function harvest(s: FarmState, c: Crop, e: Extract<FarmEvent, { type: 'harvested
   if (ok) {
     c.perennial = true
     c.stage = RULES.maxStage
+    c.best = RULES.maxStage
     c.due = s.day + RULES.perennialInterval
     s.coins += RULES.harvest.coins
     uncompost(s, c.seed)
@@ -331,7 +333,7 @@ function step(s: FarmState, e: FarmEvent, catalog: Catalog): FarmState {
       spend(n, pack, RULES.plant.energy)
       n.coins -= RULES.plant.coins
       n.today.planted += 1
-      n.crops.push({ seed: e.seed, x: e.x, y: e.y, stage: 0, due: n.day + 1, wilted: false, perennial: false, notes: e.notes.trim(), journal: [] })
+      n.crops.push({ seed: e.seed, x: e.x, y: e.y, stage: 0, best: 0, due: n.day + 1, wilted: false, perennial: false, notes: e.notes.trim(), journal: [] })
       return n
     case 'watered':
       if (!crop || !pack) return s

@@ -87,6 +87,8 @@ export interface Crop {
   y: number
   /** 0 to 4; shown as stage + 1 of 5. Perennials stay at 4. */
   stage: number
+  /** The furthest it has ever grown, 0 to 4. Never falls. It is what a neighbour is shown, so a wrong answer cannot be seen from outside. */
+  best: number
   /** The day it is thirsty (or, if wilted, can be revived) from. */
   due: number
   wilted: boolean

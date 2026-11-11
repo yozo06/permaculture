@@ -23,7 +23,7 @@ describe('the sample farm', () => {
 })
 
 describe('tending', () => {
-  const crop = (seed: string, patch: Partial<Crop>): Crop => ({ seed, x: 0, y: 0, stage: 1, due: 5, wilted: false, perennial: false, notes: '', journal: [], ...patch })
+  const crop = (seed: string, patch: Partial<Crop>): Crop => ({ seed, x: 0, y: 0, stage: 1, best: 1, due: 5, wilted: false, perennial: false, notes: '', journal: [], ...patch })
   it('lists crops that are thirsty, waiting to be revived, or ripe, each by seed', () => {
     const state: FarmState = {
       ...fold([], catalog), day: 10,
@@ -243,7 +243,7 @@ describe('cropView', () => {
   })
 
   it('is null for a seed no pack has', () => {
-    expect(cropView({ seed: 'gone', x: 0, y: 0, stage: 0, due: 1, wilted: false, perennial: false, notes: '', journal: [] }, { day: 1 }, catalog)).toBeNull()
+    expect(cropView({ seed: 'gone', x: 0, y: 0, stage: 0, best: 0, due: 1, wilted: false, perennial: false, notes: '', journal: [] }, { day: 1 }, catalog)).toBeNull()
   })
 })
 

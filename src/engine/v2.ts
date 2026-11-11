@@ -139,7 +139,7 @@ function readCrops(raw: unknown[], day: number, catalog: Catalog, fields: Fields
     const wilted = item.wilted === true
     const due = Math.round(finite(item.lw, 0)) + interval({ perennial, stage })
     // Phase 0 let a wilted crop be revived at once; keep that.
-    crops.push({ seed: seed.id, x, y, stage, due: wilted ? Math.min(due, day) : due, wilted, perennial, notes: '', journal: [] })
+    crops.push({ seed: seed.id, x, y, stage, best: stage, due: wilted ? Math.min(due, day) : due, wilted, perennial, notes: '', journal: [] })
   }
   return crops
 }

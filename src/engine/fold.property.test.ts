@@ -182,6 +182,10 @@ function verify(s: FarmState, before: FarmState, e: FarmEvent, catalog: Catalog)
   for (const c of s.crops) {
     expect(Number.isInteger(c.stage) && c.stage >= 0 && c.stage <= RULES.maxStage).toBe(true)
     if (c.perennial) expect(c.stage).toBe(RULES.maxStage)
+    // the furthest it has grown is never behind where it stands, and never falls
+    expect(c.best).toBeGreaterThanOrEqual(c.stage)
+    expect(c.best).toBeLessThanOrEqual(RULES.maxStage)
+    expect(c.best).toBeGreaterThanOrEqual(cropOf(before, c.seed)?.best ?? 0)
   }
   // 4. never thirsty right after watering
   if (e.type === 'watered') {
