@@ -407,14 +407,20 @@ const needsSetup = (): boolean => Object.keys(S.fields).length === 0
 function close(): void {
   veil.hidden = true
   // A farm link that arrived while the player was writing has waited for them to finish.
-  if (PENDING !== null) { const link = PENDING; PENDING = null; return handleLink(link) }
+  const waiting = PENDING.shift()
+  if (waiting !== undefined) return handleLink(waiting)
   // Until the farm has a field there is nothing to do on it, so the welcome comes back (unless they are looking at a friend's farm first).
   if (needsSetup() && !visiting) openWelcome(visitedPacks)
 }
 /** The sheet's primary button, if there is one. */
 const primary = (): HTMLButtonElement | null => sheet.querySelector<HTMLButtonElement>('button.pri')
-/** True while an open writing box holds text that has not been submitted. */
-const hasDraft = (): boolean => [...sheet.querySelectorAll<HTMLTextAreaElement>('textarea[data-min]')].some((t) => t.value.trim().length > 0)
+/**
+ * True while the open sheet holds writing that has not been submitted: text in a writing box, or an explanation that
+ * has been written and is being rated (its text is no longer in a box, but it is just as easy to lose).
+ */
+const hasDraft = (): boolean =>
+  [...sheet.querySelectorAll<HTMLTextAreaElement>('textarea[data-min]')].some((t) => t.value.trim().length > 0) ||
+  sheet.querySelector('[data-act="submitExplain"]') !== null
 /** Dismiss by tapping away or Escape, but never while the player is mid-writing. The sheet's own buttons always close. */
 function softClose(): void { if (!hasDraft()) close() }
 // Close on a backdrop tap only when the press also began on the backdrop, so releasing a text selection outside the box does not close.
@@ -910,8 +916,8 @@ function domesticate(id: string): void {
 }
 
 /* ---------- neighbours: the gate, sharing, arriving by link, visiting ---------- */
-/** A farm link that arrived while a writing box held a draft. It waits for that sheet to close. */
-let PENDING: string | null = null
+/** Farm links that arrived while the player was writing. They wait, in order, and open one at a time as sheets close. */
+const PENDING: string[] = []
 /** The fields of the farm last visited, ticked for someone who goes on to start a farm of their own. */
 let visitedPacks: string[] = []
 /** A picture that has just arrived, waiting for the player to say what to do with it. */
@@ -1023,7 +1029,8 @@ function openPaste(): void {
  */
 function handleLink(text: string): void {
   if (!veil.hidden && hasDraft()) {
-    PENDING = text
+    // A handful is plenty; past that, someone is pasting links at us.
+    if (PENDING.length < 5) PENDING.push(text)
     return toast('A farm link has arrived. It will open when you finish writing.')
   }
   const link = readLink(text)
