@@ -115,7 +115,9 @@ function toEvent(s: FarmState, catalog: Catalog, intent: Intent): unknown {
     }
     case 'forage': {
       const tile = pick(worldTiles(s, (x, y) => terrain(x, y, s.fields, s.cleared) === 'wild' && ['tree', 'bush'].includes(wildKind(x, y))), intent.a)
-      const find = tile && pickFind(findCandidates(s, catalog), tile.x, tile.y, s.day + intent.b)
+      // Mostly what the forest offers; now and then any find at all, so a find from a pack with no field gets tried.
+      const any = catalog.packs.flatMap((p) => catalog.findsOf(p.pack))
+      const find = tile && (intent.b % 4 === 0 ? pick(any, intent.a) : pickFind(findCandidates(s, catalog), tile.x, tile.y, s.day + intent.b))
       return tile && find ? { type: 'foraged', x: tile.x, y: tile.y, find: find.id } : null
     }
     case 'domesticate': {
@@ -139,11 +141,16 @@ function toEvent(s: FarmState, catalog: Catalog, intent: Intent): unknown {
 
 const logged = (events: FarmEvent[]): LoggedEvent[] => events.map((e, i) => ({ ...e, id: 'e' + i, at: '2026-01-01T00:00:00Z' }))
 
-/** Play the intents, checking the rules after every step. Returns the events that were accepted. */
-function play(catalog: Catalog, list: Intent[]): { state: FarmState; accepted: FarmEvent[]; all: unknown[] } {
+/**
+ * Play the intents, checking the rules after every step. Returns the events that were accepted.
+ * `mask` chooses which packs the farm has a field for (always at least one), the way a farmer chooses.
+ */
+function play(catalog: Catalog, list: Intent[], mask: boolean[] = [true]): { state: FarmState; accepted: FarmEvent[]; all: unknown[] } {
   const start: FarmEvent[] = [started]
   let s = apply(initialState(), started, catalog)
-  for (const e of fieldsToOpen(s, catalog)) {
+  const chosen = catalog.packs.filter((_, i) => mask[i % mask.length]).map((p) => p.pack)
+  const only = chosen.length ? chosen : catalog.packs.slice(0, 1).map((p) => p.pack)
+  for (const e of fieldsToOpen(s, catalog, only)) {
     start.push(e)
     s = apply(s, e, catalog)
   }
@@ -182,9 +189,14 @@ function verify(s: FarmState, before: FarmState, e: FarmEvent, catalog: Catalog)
   expect(s.coins).toBeGreaterThanOrEqual(0)
   expect(s.barrel).toBeGreaterThanOrEqual(0)
   expect(s.barrel).toBeLessThanOrEqual(RULES.barrel.max)
-  // 9. a name is trimmed and never longer than a name may be
+  // 9. a name is the one that was sent, trimmed, and never longer than a name may be
   expect(s.name).toBe(s.name.trim())
   expect(s.name.length).toBeLessThanOrEqual(RULES.farmName.max)
+  if (e.type === 'farm-named') expect(s.name).toBe(e.name.trim())
+  else expect(s.name).toBe(before.name)
+  // 10. nothing is planted, found, domesticated or jumped to in a pack the farm has no field for
+  if (e.type === 'planted' || e.type === 'unlocked' || e.type === 'domesticated') expect(Object.hasOwn(s.fields, catalog.seed(e.seed)?.pack ?? '')).toBe(true)
+  if (e.type === 'foraged') expect(Object.hasOwn(s.fields, catalog.find(e.find)?.pack ?? '')).toBe(true)
   // 3. stage in 0..4; a perennial is at the top
   for (const c of s.crops) {
     expect(Number.isInteger(c.stage) && c.stage >= 0 && c.stage <= RULES.maxStage).toBe(true)
@@ -240,8 +252,8 @@ function properties(name: string, catalog: Catalog, runs: number): void {
   describe(name, () => {
     it('keeps the rules after every event, and replays to the same farm', () => {
       fc.assert(
-        fc.property(fc.array(intents, { minLength: 80, maxLength: 300 }), (list) => {
-          const { state, accepted, all } = play(catalog, list)
+        fc.property(fc.array(intents, { minLength: 80, maxLength: 300 }), fc.array(fc.boolean(), { minLength: 1, maxLength: 8 }), (list, mask) => {
+          const { state, accepted, all } = play(catalog, list, mask)
           // 1. replay is deterministic, from the events or from their JSON, with refused events left in or out
           expect(fold(accepted, catalog)).toEqual(state)
           expect(fold(accepted, catalog)).toEqual(state)
@@ -257,6 +269,9 @@ function properties(name: string, catalog: Catalog, runs: number): void {
         fc.property(fc.array(rawEvents, { maxLength: 30 }), (events) => {
           const s = fold([started, ...events], catalog)
           expect(s.energy).toBeGreaterThanOrEqual(0)
+          // With no farm begun, nothing takes hold: not even a name.
+          const bare = fold(events, catalog)
+          if (bare.day < 1) expect(bare).toEqual(initialState())
         }),
         { numRuns: runs },
       )
