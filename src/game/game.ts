@@ -1178,7 +1178,8 @@ function sleep(): void {
     setTimeout(() => {
       night.style.opacity = '0'
       night.style.pointerEvents = ''
-      bSleep.disabled = false
+      // A visit that began during the night keeps Sleep out of reach.
+      bSleep.disabled = visiting !== null
       if (slept && S.night) open(morningReport(S.night))
     }, 700)
   }, 750)
