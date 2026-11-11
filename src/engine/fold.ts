@@ -115,11 +115,16 @@ function whyText(written: string, min: number, what: string): string | null {
 const whyRating = (ticked: number, of: number): string | null =>
   of >= 1 && ticked >= 0 && ticked <= of ? null : 'The rating does not add up.'
 
+/** Why nothing can be done in this pack's field yet, or null if it is open. */
+const whyClosed = (s: FarmState, pack: string, catalog: Catalog): string | null =>
+  Object.hasOwn(s.fields, pack) ? null : 'The ' + (catalog.pack(pack)?.title ?? pack) + ' field is not open yet.'
+
 function whyPlanted(s: FarmState, e: Extract<FarmEvent, { type: 'planted' }>, catalog: Catalog): string | null {
   const seed = catalog.seed(e.seed)
   if (!seed) return 'That seed is not in any pack.'
   const title = catalog.pack(seed.pack)?.title ?? seed.pack
-  if (!Object.hasOwn(s.fields, seed.pack)) return 'The ' + title + ' field is not open yet.'
+  const closed = whyClosed(s, seed.pack, catalog)
+  if (closed) return closed
   if (!available(seed, s)) return seed.name + ' is still locked.'
   if (cropOf(s, seed.id)) return seed.name + ' is already planted.'
   if (fieldOf(e.x, e.y, s.fields, s.cleared) !== seed.pack) return seed.name + ' belongs in the ' + title + ' field.'
@@ -177,7 +182,9 @@ function whyForaged(s: FarmState, e: Extract<FarmEvent, { type: 'foraged' }>, ca
   if (!inWorld(s, e.x, e.y) || terrain(e.x, e.y, s.fields, s.cleared) !== 'wild') return 'Forage in the wilderness.'
   const kind = wildKind(e.x, e.y)
   if (kind !== 'tree' && kind !== 'bush') return 'Forage in the trees.'
-  if (!catalog.find(e.find)) return 'There is nothing to find there.'
+  const find = catalog.find(e.find)
+  // A farm only finds what grows next to its own fields.
+  if (!find || !Object.hasOwn(s.fields, find.pack)) return 'There is nothing to find there.'
   if (s.foraged.includes(e.find)) return 'You have found that already.'
   if (s.energy < RULES.forage.energy) return 'Out of energy. Sleep first.'
   return null
@@ -186,6 +193,8 @@ function whyForaged(s: FarmState, e: Extract<FarmEvent, { type: 'foraged' }>, ca
 function whyDomesticated(s: FarmState, e: Extract<FarmEvent, { type: 'domesticated' }>, catalog: Catalog): string | null {
   const seed = catalog.seed(e.seed)
   if (!seed || !seed.wild) return 'Only wild seeds can be domesticated.'
+  const closed = whyClosed(s, seed.pack, catalog)
+  if (closed) return closed
   if (s.volunteers.includes(seed.id)) return seed.name + ' is already in your seed bag.'
   if (!s.foraged.some((id) => catalog.find(id)?.seed === seed.id)) return 'Forage a find that leads to ' + seed.name + ' first.'
   return null
@@ -194,6 +203,8 @@ function whyDomesticated(s: FarmState, e: Extract<FarmEvent, { type: 'domesticat
 function whyUnlocked(s: FarmState, e: Extract<FarmEvent, { type: 'unlocked' }>, catalog: Catalog): string | null {
   const seed = catalog.seed(e.seed)
   if (!seed || !visible(seed, s)) return 'That seed is not in your tree yet.'
+  const closed = whyClosed(s, seed.pack, catalog)
+  if (closed) return closed
   if (available(seed, s) || cropOf(s, seed.id)) return seed.name + ' is not locked.'
   if (e.text !== undefined) {
     const proof = seed.harvest === 'artifact'

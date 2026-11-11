@@ -559,3 +559,20 @@ describe('farm-named', () => {
     expect(s.name).toBe('')
   })
 })
+
+describe('a farm that grows only some packs', () => {
+  /** The shed is open; the garden, with its finds and its wild seed, is not. */
+  const shedOnly = (): FarmState => run(cat, [started, { type: 'field-opened', pack: 'shed', slot: 0 }])
+
+  it('finds nothing from a pack it has no field for', () => {
+    const { x, y } = wildTile(shedOnly(), ['tree', 'bush'])
+    expect(refusal(shedOnly(), { type: 'foraged', x, y, find: 'bee-find' })).toMatch(/nothing to find/)
+  })
+
+  it('cannot domesticate a wild seed, or jump the fence to a locked one, in a field that is not open', () => {
+    const found = { ...shedOnly(), foraged: ['bee-find'] }
+    expect(refusal(found, { type: 'domesticated', seed: 'bees' })).toMatch(/Garden field is not open/)
+    expect(refusal(shedOnly(), { type: 'unlocked', seed: 'squash', ok: true })).toMatch(/Garden field is not open/)
+    expect(check(shedOnly(), { type: 'unlocked', seed: 'lathe', ok: true }, cat)).toBeNull()
+  })
+})

@@ -5,11 +5,13 @@ import { hash } from './land'
 export interface Foraging {
   crops: readonly { seed: string; perennial: boolean }[]
   foraged: readonly string[]
+  /** pack id -> slot: the fields this farm has open */
+  fields: Readonly<Record<string, number>>
 }
 
-/** Finds near a growing crop; else near any planted crop; else any find. Never one already foraged. */
+/** Finds near a growing crop; else near any planted crop; else any find. Never one already foraged, and only from packs this farm grows. */
 export function findCandidates(s: Foraging, catalog: Catalog): Find[] {
-  const all = catalog.packs.flatMap((p) => catalog.findsOf(p.pack)).filter((f) => !s.foraged.includes(f.id))
+  const all = catalog.packs.filter((p) => Object.hasOwn(s.fields, p.pack)).flatMap((p) => catalog.findsOf(p.pack)).filter((f) => !s.foraged.includes(f.id))
   const growing = new Set(s.crops.filter((c) => !c.perennial).map((c) => c.seed))
   const planted = new Set(s.crops.map((c) => c.seed))
   const near = (ids: Set<string>) => all.filter((f) => f.near.some((id) => ids.has(id)))
