@@ -1,5 +1,6 @@
 // HTML for the sheets of the depth ladder: plant with notes, explain, write up, and the crop sheet.
 // Pure strings in, strings out, so they can be tested without a browser. Everything that came from a player or a pack is escaped.
+import type { NeighbourCropView, NeighbourRow, ShareView } from './visit'
 import type { CropView, PickerPack, SourceLink } from './views'
 import { esc } from './util'
 
@@ -98,5 +99,111 @@ export function pickerHtml(packs: readonly PickerPack[]): string {
     packs.filter((p) => !p.open).map((p) =>
       '<label class="tick"><input type="checkbox" data-pack="' + esc(p.pack) + '"' + (p.ticked ? ' checked' : '') + '> <span><b style="color:' + esc(p.color) + '">' + esc(p.title) + '</b> · ' + p.seeds + ' seeds<br><span class="sub">' + esc(p.description) + '</span></span></label>').join('') +
     '</fieldset>'
+  )
+}
+
+/* ---------- neighbours ---------- */
+// A name here was typed by someone else and arrived in a link. It is escaped everywhere, like all player and pack text.
+
+const count = (n: number, one: string, many = one + 's'): string => n + ' ' + (n === 1 ? one : many)
+
+/** Asking for the farm's name: needed before a farm can be shared. */
+export function nameSheetHtml(current: string, max: number): string {
+  return (
+    '<h2>Name your farm</h2><p class="sub">Your neighbours see this name. 1 to ' + max + ' characters. You can change it later.</p>' +
+    '<label for="farmName" class="sub">Farm name</label><input type="text" id="farmName" class="write" maxlength="' + max + '" value="' + esc(current) + '" autocomplete="off">' +
+    '<div class="foot"><button type="button" data-act="close">Not now</button><button type="button" class="pri" data-act="saveName">Save name</button></div>'
+  )
+}
+
+/** The sheet behind the gate. Neighbours come in the order they were added: no sorting, nothing to compare. */
+export function neighboursSheetHtml(v: { name: string; shared: string | null; rows: readonly NeighbourRow[]; green: string }): string {
+  const rows = v.rows.map((r) =>
+    '<div class="row"><div class="n">' + esc(r.name) + '<small>' + (r.stale ? 'No recent picture. Ask for a new link.' : 'day ' + r.day + ' · picture ' + esc(r.age)) + '</small></div><span class="pair">' +
+    (r.stale ? '' : '<button type="button" data-act="visit" data-arg="' + esc(r.code) + '">Visit</button>') +
+    '<button type="button" class="link" data-act="removeNeighbour" data-arg="' + esc(r.code) + '">Remove</button></span></div>').join('')
+  return (
+    '<h2>Neighbours</h2><p class="sub">Farms you can see, and farmers who can see yours. Nobody is ranked.</p>' +
+    '<div class="row"><div class="n">' + (v.name ? esc(v.name) : 'Your farm has no name yet') + '<small>Your farm · ' + (v.shared ? 'your last link was ' + esc(v.shared) : 'no link made yet') + '</small></div><button type="button" data-act="rename">' + (v.name ? 'Rename' : 'Name it') + '</button></div>' +
+    '<div class="branches"><button type="button" data-act="share">Share my farm</button><button type="button" data-act="pasteLink">Paste a link</button></div>' +
+    '<p class="sub">A link is a photograph: one already sent stays as it is until your neighbour opens a newer one.</p>' +
+    '<h3>Your neighbours</h3>' +
+    (rows ? '<div>' + rows + '</div>' : '<p class="sub">No neighbours yet. Send your farm link to a friend, and open theirs when they send one back.</p>') +
+    '<p class="sub">Looking for neighbours? People post their farm links on the <a href="' + esc(v.green) + '" target="_blank" rel="noopener noreferrer">village green</a>.</p>' +
+    footHtml()
+  )
+}
+
+/** A crop on a neighbour's farm: what it is, how far it has grown, and how the same seed stands on your own farm. */
+export function neighbourCropSheetHtml(chip: string, v: NeighbourCropView, owner: string): string {
+  return (
+    chip + '<h2>' + esc(v.name) + '</h2>' +
+    '<p class="sub">' + esc(v.layer) + ' layer · ' + esc(v.stageLine) + '</p>' +
+    '<p>Growing on ' + esc(owner) + "'s farm.</p>" +
+    '<h3>On your farm</h3><p>' + esc(v.yours) + '</p>' +
+    footHtml('Back')
+  )
+}
+
+export interface ArrivalSheet {
+  name: string
+  day: number
+  age: string
+  /** Titles of the fields the picture shows. */
+  fields: readonly string[]
+  /** Crops left out because this game does not know them, and because they did not fit. Different causes, different words. */
+  newer: number
+  misfit: number
+  /** The person opening the link has never set up a farm. */
+  firstTime: boolean
+}
+
+/** What a farm link opens on. */
+export function arrivalSheetHtml(v: ArrivalSheet): string {
+  const about = '<p class="sub">Day ' + v.day + ' · picture ' + esc(v.age) + (v.fields.length ? ' · ' + v.fields.map(esc).join(', ') : '') + '</p>' +
+    (v.newer ? '<p class="sub">' + count(v.newer, 'crop needs', 'crops need') + ' a newer version of the game, and ' + (v.newer === 1 ? 'is' : 'are') + ' not shown.</p>' : '') +
+    (v.misfit ? '<p class="sub">' + count(v.misfit, 'crop') + ' did not fit on the map, and ' + (v.misfit === 1 ? 'is' : 'are') + ' not shown.</p>' : '')
+  if (v.firstTime) {
+    return (
+      '<h2>You are looking at ' + esc(v.name) + "'s farm</h2>" +
+      '<p>This is Permaculture: a farm where the crops are the things you are learning. Every crop here is something ' + esc(v.name) + ' is learning, and every tree is something they can now explain and prove.</p>' + about +
+      '<p class="sub">Look around: drag to pan, tap a crop to see what it is. Then start a farm of your own next door.</p>' +
+      '<div class="foot"><button type="button" data-act="close">Look around</button><button type="button" class="pri" data-act="startFromVisit">Start my own farm</button></div>'
+    )
+  }
+  return (
+    '<h2>' + esc(v.name) + "'s farm</h2><p>A neighbour has sent you a picture of their farm.</p>" + about +
+    '<div class="foot"><button type="button" data-act="justLook">Just look</button><button type="button" class="pri" data-act="addNeighbour">Add to my neighbours</button></div>'
+  )
+}
+
+export interface ShareSheet {
+  name: string
+  /** The farm's open fields, and which are ticked to be shown. */
+  packs: readonly { pack: string; title: string; color: string; ticked: boolean }[]
+  /** Null when no field is ticked. */
+  view: Pick<ShareView, 'fields' | 'crops' | 'trees' | 'lostCrops' | 'lostLand'> | null
+  url: string | null
+  /** The device has its own share sheet. */
+  canShare: boolean
+}
+
+/** Making a farm link: which fields, exactly what the link holds, and what a link is. */
+export function shareSheetHtml(v: ShareSheet): string {
+  const ticks = '<fieldset class="ticks"><legend>Fields to show</legend>' +
+    v.packs.map((p) => '<label class="tick"><input type="checkbox" data-show="' + esc(p.pack) + '"' + (p.ticked ? ' checked' : '') + '> <span><b style="color:' + esc(p.color) + '">' + esc(p.title) + '</b></span></label>').join('') + '</fieldset>'
+  const head = '<h2>Share my farm</h2><p>A farm link holds a picture of <b>' + esc(v.name) + '</b> as it is today. Send it in any chat you already use. Nothing is uploaded: the picture is inside the link itself.</p>' + ticks
+  if (!v.view || v.url === null) return head + '<p>Tick at least one field to make a link.</p>' + footHtml()
+  const lost = v.view.lostCrops + v.view.lostLand > 0
+    ? ' With fields hidden, the ones you show are drawn side by side from the first plot, and ' + count(v.view.lostCrops, 'crop') + ' and ' + count(v.view.lostLand, 'fenced tile') + ' will not fit there.'
+    : ''
+  return (
+    head +
+    '<div class="res"><b>This link shows</b> your farm\'s name and day, ' + count(v.view.fields, 'field') + ', ' + count(v.view.crops, 'crop') + ' and ' + count(v.view.trees, 'tree') + ', each at the furthest it has grown.' + lost + '</div>' +
+    '<p class="sub">It never shows your notes, explanations or write-ups, a wrong answer, the compost heap, a wilted crop, your coins, energy or rain barrel, or a field you left unticked.</p>' +
+    '<p class="sub">A link is a photograph. It shows today and never updates, so send a new one to show progress. A sent link cannot be taken back, and one posted in public stays public. Every link from this farm carries the same farm code, so someone holding two of your links can tell they are one farm, and an older link may show a field a newer one hides.</p>' +
+    '<label for="shareLink" class="sub">Your farm link</label><textarea id="shareLink" class="short" readonly rows="3">' + esc(v.url) + '</textarea>' +
+    '<div class="branches"><button type="button" data-act="previewShare">See it as a neighbour will</button>' + (v.canShare ? '<button type="button" data-act="shareNative">Share…</button>' : '') + '</div>' +
+    '<div class="foot"><button type="button" data-act="close">Close</button><button type="button" class="pri" data-act="copyShare">Copy link</button></div>'
   )
 }

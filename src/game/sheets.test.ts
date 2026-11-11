@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { RULES } from '../engine/rules'
-import { cropSheetHtml, countText, footHtml, NO_NOTES, plantSheetHtml, tickList, writingBox, pickerHtml } from './sheets'
+import { cropSheetHtml, countText, footHtml, NO_NOTES, plantSheetHtml, tickList, writingBox, pickerHtml, arrivalSheetHtml, neighbourCropSheetHtml, neighboursSheetHtml, shareSheetHtml } from './sheets'
 import type { CropView } from './views'
 
 const view = (patch: Partial<CropView> = {}): CropView => ({
@@ -118,5 +118,75 @@ describe('pickerHtml', () => {
 
   it('leaves out packs the farm already has', () => {
     expect(pickerHtml([{ ...pack, open: true }])).not.toContain('data-pack')
+  })
+})
+
+describe('the neighbours sheets, with a hostile name', () => {
+  const EVIL = '<img src=x onerror=a()>'
+  const SAFE = '&lt;img src=x onerror=a()&gt;'
+  const row = { code: '0000000000001', name: EVIL, day: 34, age: '3 days old', stale: false }
+
+  it('escape it in the list, and offer a visit only while the picture is fresh', () => {
+    const html = neighboursSheetHtml({ name: EVIL, shared: 'made today', rows: [row, { ...row, code: '0000000000002', stale: true }], green: 'https://example.org/green' })
+    expect(html).not.toContain(EVIL)
+    expect(html.split(SAFE).length - 1).toBe(3)
+    expect(html).toContain('data-act="visit" data-arg="0000000000001"')
+    expect(html).not.toContain('data-act="visit" data-arg="0000000000002"')
+    expect(html).toContain('No recent picture. Ask for a new link.')
+    expect(html).toContain('data-act="removeNeighbour" data-arg="0000000000002"')
+  })
+
+  it('say so when there are no neighbours and the farm has no name', () => {
+    const html = neighboursSheetHtml({ name: '', shared: null, rows: [], green: 'https://example.org/green' })
+    expect(html).toContain('No neighbours yet')
+    expect(html).toContain('has no name yet')
+  })
+
+  it('escape it on a crop sheet and on the sheet a link opens', () => {
+    const crop = neighbourCropSheetHtml('', { seed: 's', name: 'Raft', pack: 'p', packTitle: 'P', layer: 'Canopy', stageLine: 'A rooted tree', yours: 'You grow this too.' }, EVIL)
+    const arrival = arrivalSheetHtml({ name: EVIL, day: 34, age: 'made today', fields: ['<b>F</b>'], newer: 3, misfit: 1, firstTime: false })
+    for (const html of [crop, arrival]) { expect(html).not.toContain(EVIL); expect(html).toContain(SAFE) }
+    expect(arrival).toContain('&lt;b&gt;F&lt;/b&gt;')
+    expect(arrival).toContain('3 crops need a newer version of the game')
+    expect(arrival).toContain('1 crop did not fit')
+    expect(arrival).toContain('data-act="addNeighbour"')
+  })
+
+  it('greet someone who has never played with what they are looking at and a way to start', () => {
+    const html = arrivalSheetHtml({ name: 'Asha', day: 34, age: 'made today', fields: ['Kannada'], newer: 0, misfit: 0, firstTime: true })
+    expect(html).toContain('You are looking at Asha')
+    expect(html).toContain('data-act="startFromVisit"')
+    expect(html).not.toContain('need a newer version')
+  })
+})
+
+describe('shareSheetHtml', () => {
+  const packs = [{ pack: 'a<', title: 'A & B', color: '#fff', ticked: true }, { pack: 'c', title: 'C', color: '#000', ticked: false }]
+  const view = { fields: 1, crops: 4, trees: 2, lostCrops: 0, lostLand: 0 }
+
+  it('says what the link holds, what it never holds, and that it cannot be taken back', () => {
+    const html = shareSheetHtml({ name: '<Asha>', packs, view, url: 'https://example.org/#farm=1.abc', canShare: false })
+    expect(html).toContain('&lt;Asha&gt;')
+    expect(html).toContain('data-show="a&lt;" checked')
+    expect(html).toContain('A &amp; B')
+    expect(html).toMatch(/1 field, 4 crops and 2 trees/)
+    expect(html).toMatch(/never shows your notes/)
+    expect(html).toMatch(/cannot be taken back/)
+    expect(html).toMatch(/same farm code/)
+    expect(html).toContain('https://example.org/#farm=1.abc')
+    expect(html).not.toContain('data-act="shareNative"')
+    expect(html).not.toMatch(/will not fit/)
+  })
+
+  it('says how much will not fit when hidden fields make the others close ranks', () => {
+    const html = shareSheetHtml({ name: 'Asha', packs, view: { ...view, lostCrops: 2, lostLand: 1 }, url: 'u', canShare: true })
+    expect(html).toMatch(/2 crops and 1 fenced tile will not fit/)
+    expect(html).toContain('data-act="shareNative"')
+  })
+
+  it('asks for a field when none is ticked', () => {
+    const html = shareSheetHtml({ name: 'Asha', packs, view: null, url: null, canShare: true })
+    expect(html).toMatch(/Tick at least one field/)
+    expect(html).not.toContain('shareLink')
   })
 })
