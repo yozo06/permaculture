@@ -30,7 +30,7 @@ Better distractors, better `why` lines, a missing layer, a guild that should exi
 
 ## Hosting and cost
 
-The game is static and free to host. AI features (Phase 2) use each player's own API key, stored only in their browser. Nobody pays for anyone else's farm. Do not add a dependency on a paid service without a Discussion first.
+The game is static and free to host. AI features (a later phase) use each player's own API key, stored only in their browser. Nobody pays for anyone else's farm. Do not add a dependency on a paid service without a Discussion first.
 
 ## Licence
 

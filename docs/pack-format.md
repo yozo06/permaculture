@@ -119,7 +119,7 @@ Seed ids, find ids and pack ids are unique across all packs, and branch ids with
 
 ## Making a pack for a new goal
 
-By hand, from this file. Or with the **pack forge** (Phase 2): paste a syllabus or three job descriptions into the prompt template with your own key, get a draft that passes the validator, prune it, open a PR.
+By hand, from this file. Or with the **pack forge** (the AI phase): paste a syllabus or three job descriptions into the prompt template with your own key, get a draft that passes the validator, prune it, open a PR.
 
 ## Licence
 

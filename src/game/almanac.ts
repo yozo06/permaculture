@@ -82,7 +82,7 @@ export function almanacHtml(catalog: Catalog, energyMax: number, version: string
       'Everything you do is saved as an event in this browser, and your farm is what you get by replaying them. Export gives you that log; import replays it.',
       'Farms from the first prototype (v2) still import: the game turns them into the first event of a new log.',
     ]) +
-    '<h3>Not here yet</h3><p class="sub">The Apply rung (a problem, a design, a debugging session), timed solves and AI judging (Phase 2), guild bonuses, layers as terraces, real weather from Coorg, the rival farm, the Sunday walk, the market, loading your own pack in the browser, the village.</p>' +
+    '<h3>Not here yet</h3><p class="sub">The Apply rung (a problem, a design, a debugging session), timed solves and AI judging, guild bonuses, layers as terraces, real weather from Coorg, the rival farm, the Sunday walk, the market, loading your own pack in the browser, the village.</p>' +
     '<div class="foot"><span class="sub">Version ' + esc(version) + '</span><button type="button" class="pri" data-act="close">Close</button></div>'
   )
 }

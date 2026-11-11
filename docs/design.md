@@ -80,7 +80,7 @@ Stages change the kind of work, not just the interval. Stage numbers here count 
 
 A seed with no cards explains at every stage. A perennial check-in is a card too, from the harder harvest cards when the seed has them.
 
-Phase 2 adds **Apply** (a problem, a design, a debugging session) and judged grading with the player's own key.
+The AI phase adds **Apply** (a problem, a design, a debugging session) and judged grading with the player's own key.
 
 *(planned)* Trees spawn saplings: harvesting Raft drops log compaction, membership change and read-index as new seeds. Depth is a tree that keeps seeding its own understory.
 
@@ -100,7 +100,7 @@ A pack can be **perennial** (a language, a habit): no readiness, it just lives o
 
 ## 6. Land
 
-The homestead has one field per pack, laid out on a grid around the barn; the world grows to fit them (20×20 for four fields, 27×27 for up to nine). Everything beyond the fence is wilderness. Land next to a field can be fenced in with coins (open ground is cheaper than forest). Fields grow one tile at a time in any shape. Later: the seven layers drawn as terraces up a hillside, and chunked worlds per big goal.
+The homestead has a field for each pack the farmer chose, laid out on a grid around the barn; the world grows to fit them (20×20 for four fields, 27×27 for up to nine). A new farmer picks their fields at the start and can open more later from the learning tree. Everything beyond the fence is wilderness. Land next to a field can be fenced in with coins (open ground is cheaper than forest). Fields grow one tile at a time in any shape. Later: the seven layers drawn as terraces up a hillside, and chunked worlds per big goal.
 
 ## 7. Packs
 
@@ -111,11 +111,12 @@ Pack #0 is the **Workshop**: the game's own backlog as seeds, capped at 30% of d
 ## 8. Architecture
 
 - **Local-first.** A farm is an append-only event log in the player's browser. Farm state is a pure fold over the log. Export is the log. Multi-device merge is a later, easy step because events have ids and the fold is deterministic.
-- **Static hosting.** The game is files on GitHub Pages. No server until the village.
+- **Static hosting.** The game is files on GitHub Pages. No server until the village needs one.
 - **Engine / game / packs.** `src/engine/`: pure rules with property tests. `src/game/`: renderer and UI. `packs/`: data, validated in CI.
 - **AI is optional and bring-your-own-key.** Authoring (catalogues, questions, the pack forge) is offline work committed as data. Runtime AI (judged harvests, wild finds, gap audits) uses the player's own key, stored only in their browser, with calls made browser-to-provider. A local model works. The no-AI game is complete.
-- **Village (Phase 3).** A player may publish a read-only snapshot: the map and the trees, never the compost heap or failed answers. Opt-in, revocable. Visiting means watering one crop by answering a question from the neighbour's pack; the gift lands in their log. Farms have codes; identity comes later if ever. Grades are not comparable across models or players.
-- **Haskell backend** is the village server, when there is a village. Not before.
+- **Neighbours (Phase 2).** A player may share a **farm link**: a picture of the farm carried inside the link itself, with no server. It holds the map and the trees of the fields the player chose, never notes, the compost heap, failed answers or a wilted crop. A sent link cannot be taken back and never updates by itself; a neighbour's game forgets a picture after 60 days. *(planned)* Visiting means answering one card about a neighbour's crop and sending them **rain**: a day in their barrel and a visit the crop remembers. Farms have codes; identity comes later if ever. Nobody is ranked. The full design is `neighbours.md`.
+- **Village (later).** A server that holds the same pictures and delivers the same rain, where a published picture can be withdrawn. Grades are not comparable across models or players.
+- **Haskell backend** is the village server, when there are players who need one. Not before.
 
 ## 9. Phases
 
@@ -123,9 +124,12 @@ Each phase ends with something a friend can play.
 
 0. Repo, licence, prototype on Pages, save export/import, this document, the pack format, CI validation. *(done)*
 1. Engine split, pack loader, full catalogues, depth ladder. *(done)*
-2. BYOK AI: judged harvests, pack forge, wild finds.
-3. Village-lite: snapshots, visits, then the server.
+2. Neighbours: safe saves, farm links, visiting, choosing your fields; then rain. See `neighbours.md`.
+3. BYOK AI: judged harvests, pack forge, wild finds.
 4. Art: sprite sheets, PixiJS, terraces, weather.
+5. The village server, when there are players who need it.
+
+The plan in full, with what is done and how to help, is `../ROADMAP.md`.
 
 ## 10. What we will say no to
 
