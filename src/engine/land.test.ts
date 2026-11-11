@@ -1,7 +1,7 @@
 import fc from 'fast-check'
 import { describe, expect, it } from 'vitest'
 import {
-  BARN, COMPOST, SIGN, WELL, fenceCost, fieldOf, fieldOrigin, hash, homestead, isBuildingTile, neighbourFields,
+  BARN, COMPOST, GATE, SIGN, WELL, fenceCost, fieldOf, fieldOrigin, hash, homestead, isBuildingTile, neighbourFields,
   nextFreeSlot, shells, slotCell, terrain, tileKey, worldSize, type Fields,
 } from './land'
 
@@ -81,7 +81,12 @@ describe('terrain', () => {
     expect([BARN, WELL, COMPOST, SIGN]).toEqual([{ x: 9, y: 4 }, { x: 15, y: 9 }, { x: 15, y: 10 }, { x: 8, y: 8 }])
     const blocked: string[] = []
     for (let y = 0; y < 20; y++) for (let x = 0; x < 20; x++) if (isBuildingTile(x, y)) blocked.push(tileKey(x, y))
-    expect(blocked.sort()).toEqual(['10,4', '10,5', '15,10', '15,9', '8,8', '9,4', '9,5'].sort())
+    expect(blocked.sort()).toEqual(['10,4', '10,5', '15,10', '15,9', '4,9', '8,8', '9,4', '9,5'].sort())
+  })
+
+  it('stands the gate on the main path at the west edge, where nothing could ever be fenced or planted', () => {
+    expect(GATE).toEqual({ x: 4, y: 9 })
+    for (const fields of [{}, FOUR, FIVE]) expect(terrain(GATE.x, GATE.y, fields, {})).toBe('path')
   })
 
   it('repeats the paths every seven tiles in a bigger homestead', () => {
