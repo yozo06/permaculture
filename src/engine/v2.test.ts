@@ -97,6 +97,10 @@ describe('fromV2 on anything else', () => {
     for (const v of [null, 3, 'farm', [], {}, { v: 2 }, { v: 2, crops: [] }, { v: 3, crops: [], farmer: {} }]) expect(fromV2(v, catalog)).toBeNull()
   })
 
+  it('refuses a v2-shaped save with no day, which would otherwise become an empty farm', () => {
+    expect(fromV2({ v: 2, crops: [], farmer: {} }, catalog)).toBeNull()
+  })
+
   it('never throws on odd contents, and always gives a farm that makes sense', () => {
     const junk = fc.oneof(fc.constant(null), fc.integer(), fc.string(), fc.array(fc.anything()), fc.dictionary(fc.string(), fc.anything()))
     fc.assert(

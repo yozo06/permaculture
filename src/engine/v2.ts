@@ -63,9 +63,10 @@ const finite = (v: unknown, fallback: number): number => (typeof v === 'number' 
 const strings = (v: unknown): string[] => (Array.isArray(v) ? v.filter((s): s is string => typeof s === 'string') : [])
 const unique = <T>(items: T[]): T[] => [...new Set(items)]
 
-/** True for a parsed v2 farm (not yet checked inside). */
+/** True for a parsed v2 farm (not yet checked inside). A real prototype save always wrote a day; requiring
+ *  one keeps an empty or malformed object from converting into a blank farm that silently replaces a real one. */
 export const looksLikeV2 = (v: unknown): v is Record<string, unknown> =>
-  isRecord(v) && v.v === 2 && Array.isArray(v.crops) && isRecord(v.farmer)
+  isRecord(v) && v.v === 2 && typeof v.day === 'number' && Number.isFinite(v.day) && Array.isArray(v.crops) && isRecord(v.farmer)
 
 function readFields(raw: unknown, catalog: Catalog): Record<string, number> {
   const fields: Record<string, number> = {}

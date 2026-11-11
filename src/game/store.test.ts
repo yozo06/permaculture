@@ -151,4 +151,13 @@ describe('new farms and imports', () => {
     expect(store.importSnapshot({ v: 2 })).toMatch(/format v2/)
     expect(store.state().day).toBe(12)
   })
+
+  it('refuses an empty v2 save and keeps the current farm', () => {
+    const store = make(memory())
+    expect(store.importSnapshot(sample)).toBeNull()
+    expect(store.state().day).toBe(12)
+    expect(store.importSnapshot({ v: 2, crops: [], farmer: {} })).toMatch(/format v2/)
+    expect(store.state().day).toBe(12)
+    expect(store.state().crops).toHaveLength(sample.crops.length)
+  })
 })
