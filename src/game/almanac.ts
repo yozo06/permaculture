@@ -60,7 +60,7 @@ export function almanacHtml(catalog: Catalog, energyMax: number, version: string
     list(['A wrong answer or a failed harvest puts the crop in the heap. Everything in the heap is due again the next day. Water it right and it leaves the heap.']) +
     '<h3>Fields and land</h3>' +
     list([
-      'Every pack is a field. They sit on a grid around the barn, and the world grows to fit them. Drag to pan; everything beyond the homestead is wilderness.',
+      'Each pack you chose is a field. They sit on a grid around the barn, and the world grows to fit them. Open another from its tab in the learning tree; it is free. Drag to pan; everything beyond the homestead is wilderness.',
       'Tap land next to a field to fence it in: ' + RULES.fence.open + ' coins for open ground, ' + RULES.fence.forest + ' to clear forest. Fields grow one tile at a time, any shape.',
       "Some seeds are not questions. The Workshop's are days of work on the game itself: you explain what moved forward, and you harvest when it ships, with a link as proof.",
     ]) +

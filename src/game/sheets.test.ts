@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { RULES } from '../engine/rules'
-import { cropSheetHtml, countText, footHtml, NO_NOTES, plantSheetHtml, tickList, writingBox } from './sheets'
+import { cropSheetHtml, countText, footHtml, NO_NOTES, plantSheetHtml, tickList, writingBox, pickerHtml } from './sheets'
 import type { CropView } from './views'
 
 const view = (patch: Partial<CropView> = {}): CropView => ({
@@ -100,5 +100,23 @@ describe('cropSheetHtml', () => {
 
   it('says what is waiting, when something is', () => {
     expect(cropSheetHtml('', view({ statusLine: 'Thirsty now.', nextWork: 'Water: a recall card.' }))).toContain('Thirsty now. Water: a recall card.')
+  })
+})
+
+describe('pickerHtml', () => {
+  const pack = { pack: 'p<1>', title: '<b>Bold</b>', color: '#fff', description: 'About <i>it</i>', seeds: 3, open: false, ticked: true }
+
+  it('offers each pack the farm does not have as a ticked or unticked box, escaped', () => {
+    const html = pickerHtml([pack, { ...pack, pack: 'q', ticked: false }])
+    expect(html).toContain('data-pack="p&lt;1&gt;" checked')
+    expect(html).toContain('data-pack="q">')
+    expect(html).toContain('&lt;b&gt;Bold&lt;/b&gt;')
+    expect(html).toContain('About &lt;i&gt;it&lt;/i&gt;')
+    expect(html).toContain('3 seeds')
+    expect(html).not.toContain('<b>Bold')
+  })
+
+  it('leaves out packs the farm already has', () => {
+    expect(pickerHtml([{ ...pack, open: true }])).not.toContain('data-pack')
   })
 })

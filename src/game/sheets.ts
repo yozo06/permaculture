@@ -1,6 +1,6 @@
 // HTML for the sheets of the depth ladder: plant with notes, explain, write up, and the crop sheet.
 // Pure strings in, strings out, so they can be tested without a browser. Everything that came from a player or a pack is escaped.
-import type { CropView, SourceLink } from './views'
+import type { CropView, PickerPack, SourceLink } from './views'
 import { esc } from './util'
 
 export const chipHtml = (title: string, color: string): string => '<div><span class="chip" style="--c:' + esc(color) + '">' + esc(title) + '</span></div>'
@@ -88,5 +88,15 @@ export function cropSheetHtml(chip: string, v: CropView): string {
       : '<p class="sub">Nothing yet. Explanations and write-ups are kept here.</p>') +
     sourcesHtml(v.sources) +
     footHtml()
+  )
+}
+
+/** One box per pack the farm does not have yet. The sheet's change handler keeps the button it gates in step. */
+export function pickerHtml(packs: readonly PickerPack[]): string {
+  return (
+    '<fieldset class="ticks"><legend>What do you want to grow?</legend>' +
+    packs.filter((p) => !p.open).map((p) =>
+      '<label class="tick"><input type="checkbox" data-pack="' + esc(p.pack) + '"' + (p.ticked ? ' checked' : '') + '> <span><b style="color:' + esc(p.color) + '">' + esc(p.title) + '</b> · ' + p.seeds + ' seeds<br><span class="sub">' + esc(p.description) + '</span></span></label>').join('') +
+    '</fieldset>'
   )
 }

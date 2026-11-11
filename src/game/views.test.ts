@@ -6,7 +6,7 @@ import { apply, fieldsToOpen, fold } from '../engine/fold'
 import { RULES } from '../engine/rules'
 import type { FarmState } from '../engine/types'
 import sampleFarm from './sample-farm.json'
-import { bagView, cropView, sourceLinks, splitName, tending, treeView, driftText } from './views'
+import { bagView, cropView, sourceLinks, splitName, tending, treeView, driftText, pickerView } from './views'
 
 const catalog = buildCatalog(collectPacks())
 
@@ -251,5 +251,17 @@ describe('driftText', () => {
   it('says how many entries no longer fit, in the singular and the plural', () => {
     expect(driftText(1)).toMatch(/^1 thing in this farm's history no longer fits/)
     expect(driftText(4)).toMatch(/^4 things in this farm's history no longer fit /)
+  })
+})
+
+describe('pickerView', () => {
+  it('lists every pack with what it is, whether the farm has it, and what is ticked', () => {
+    const v = pickerView(catalog, { fields: { kannada: 0 } }, ['infra'])
+    expect(v.map((p) => p.pack)).toEqual(catalog.packs.map((p) => p.pack))
+    const kannada = v.find((p) => p.pack === 'kannada')
+    expect(kannada).toMatchObject({ title: 'Kannada', open: true, ticked: false })
+    expect(kannada?.description).toMatch(/Everyday Kannada/)
+    expect(kannada?.seeds).toBe(catalog.seedsOf('kannada').length)
+    expect(v.find((p) => p.pack === 'infra')).toMatchObject({ open: false, ticked: true })
   })
 })

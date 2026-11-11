@@ -425,12 +425,15 @@ export function refusedCount(events: readonly unknown[], catalog: Catalog): numb
   return refused
 }
 
-/** `field-opened` events for every pack that has no field yet, in pack order, each in the next free slot. */
-export function fieldsToOpen(s: Pick<FarmState, 'fields'>, catalog: Catalog): FarmEvent[] {
+/**
+ * `field-opened` events for packs that have no field yet, in pack order, each in the next free slot.
+ * With `only`, just the packs listed there: the ones a farmer chose.
+ */
+export function fieldsToOpen(s: Pick<FarmState, 'fields'>, catalog: Catalog, only?: readonly string[]): FarmEvent[] {
   const fields = { ...s.fields }
   const events: FarmEvent[] = []
   for (const p of catalog.packs) {
-    if (Object.hasOwn(fields, p.pack)) continue
+    if (Object.hasOwn(fields, p.pack) || (only && !only.includes(p.pack))) continue
     const slot = nextFreeSlot(fields)
     fields[p.pack] = slot
     events.push({ type: 'field-opened', pack: p.pack, slot })

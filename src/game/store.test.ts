@@ -16,14 +16,23 @@ let n = 0
 const make = (storage: StorageLike | null) => createStore({ catalog, storage, sample, newId: () => 'id' + n++, now: () => '2026-11-01T00:00:00Z' })
 
 describe('the first visit', () => {
-  it('starts a fresh farm with a field for every pack, and saves it', () => {
+  it('starts a fresh farm with no fields, because the farmer chooses them, and saves it', () => {
     const disk = memory()
     const store = make(disk)
     expect(store.firstVisit).toBe(true)
     expect(store.loadProblem).toBeNull()
     expect(store.state()).toMatchObject({ day: 1, energy: 90, coins: 140, barrel: 0, crops: [] })
-    expect(Object.keys(store.state().fields)).toEqual(catalog.packs.map((p) => p.pack))
+    expect(store.state().fields).toEqual({})
     expect(parseFarmFile(disk.data[LOG_KEY] ?? '')).toMatchObject({ kind: 'log' })
+  })
+
+  it('never opens a field by itself on a later load', () => {
+    const disk = memory()
+    const first = make(disk)
+    first.dispatch({ type: 'field-opened', pack: 'kannada', slot: 0 })
+    const second = make(disk)
+    expect(second.state().fields).toEqual({ kannada: 0 })
+    expect(second.events()).toHaveLength(first.events().length)
   })
 
   it('is not a first visit the second time, and replays to the same farm', () => {
@@ -60,6 +69,7 @@ describe('dispatch', () => {
   it('logs an allowed event with an id and a time, and saves it', () => {
     const disk = memory()
     const store = make(disk)
+    store.dispatch({ type: 'field-opened', pack: 'infra', slot: 0 })
     const before = store.events().length
     expect(store.dispatch({ type: 'focus-set', pack: 'infra', branch: 'network-and-platform' })).toBeNull()
     const last = store.events()[before]
@@ -94,7 +104,8 @@ describe('Phase 0 saves', () => {
     expect(store.events()[0]?.type).toBe('snapshot-imported')
     expect(store.state()).toMatchObject({ day: 12, barrel: 2 })
     expect(store.state().crops).toHaveLength(sample.crops.length)
-    expect(Object.keys(store.state().fields)).toHaveLength(catalog.packs.length)
+    // The four fields it was made with. The packs added since are offered in the learning tree, not forced.
+    expect(Object.keys(store.state().fields)).toEqual(['haskell-backend', 'system-design', 'infra', 'kannada'])
     expect(disk.data[LEGACY_KEY]).toBe(old)
     expect(disk.data[LOG_KEY]).toBeDefined()
   })
@@ -139,9 +150,9 @@ describe('new farms and imports', () => {
     store.dispatch({ type: 'slept' })
     store.newFarm('sample')
     expect(store.state()).toMatchObject({ day: 12, barrel: 2 })
-    expect(Object.keys(store.state().fields)).toHaveLength(catalog.packs.length)
+    expect(Object.keys(store.state().fields)).toHaveLength(4)
     store.newFarm('fresh')
-    expect(store.state()).toMatchObject({ day: 1, crops: [] })
+    expect(store.state()).toMatchObject({ day: 1, crops: [], fields: {} })
   })
 
   it('imports a v3 log, and refuses one that does not start a farm', () => {

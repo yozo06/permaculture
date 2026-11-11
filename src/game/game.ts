@@ -1,7 +1,7 @@
 import packDefs from 'virtual:packs'
 import { buildCatalog, LAYER_NAMES, type Seed } from '../engine/catalog'
 import { findCandidates, pickFind } from '../engine/finds'
-import { check, refusedCount } from '../engine/fold'
+import { check, fieldsToOpen, refusedCount } from '../engine/fold'
 import {
   BARN, COMPOST, SIGN, WELL, fenceCost, fieldOf as landFieldOf, hash, homestead, inHomestead, isBuildingTile,
   neighbourFields, terrain as landTerrain, tileKey, wildKind, worldSize, type Terrain,
@@ -14,8 +14,8 @@ import { almanacHtml } from './almanac'
 import sampleFarm from './sample-farm.json'
 import { createStore, defaultId, LOG_KEY, type StorageLike } from './store'
 import { esc, shuffle } from './util'
-import { chipHtml, countText, cropSheetHtml, footHtml, noteHtml, NO_NOTES, plantSheetHtml, tickList, writingBox } from './sheets'
-import { bagView, cropView, driftText, needsText, packColor, sourceLinks, splitName, tending, treeView, type TreeView } from './views'
+import { chipHtml, countText, cropSheetHtml, footHtml, noteHtml, NO_NOTES, pickerHtml, plantSheetHtml, tickList, writingBox } from './sheets'
+import { bagView, cropView, driftText, needsText, packColor, pickerView, sourceLinks, splitName, tending, treeView, type TreeView } from './views'
 
 /* ---------- types ---------- */
 type Mode = 'water' | 'harvest' | 'testout'
@@ -337,7 +337,13 @@ function open(html: string): void {
   const target = sheet.querySelector<HTMLElement>('textarea[data-min]') ?? sheet.querySelector<HTMLButtonElement>('button.pri') ?? sheet.querySelector<HTMLButtonElement>('button')
   if (target) target.focus()
 }
-function close(): void { veil.hidden = true }
+/** A farm with no fields has not been set up: its farmer has yet to say what they want to grow. */
+const needsSetup = (): boolean => Object.keys(S.fields).length === 0
+function close(): void {
+  veil.hidden = true
+  // Until the farm has a field there is nothing to do on it, so the welcome comes back.
+  if (needsSetup()) openWelcome()
+}
 /** The sheet's primary button, if there is one. */
 const primary = (): HTMLButtonElement | null => sheet.querySelector<HTMLButtonElement>('button.pri')
 /** True while an open writing box holds text that has not been submitted. */
@@ -751,19 +757,40 @@ function finishImport(problem: string | null, toldAbout = 0): void {
   toast('Farm imported. Day ' + S.day + '.')
 }
 
-/** Reset and the first-visit welcome both end here. */
+/** Reset and the welcome both end here. A fresh farm goes on to the welcome, where its farmer picks their fields. */
 function startNewFarm(kind: 'fresh' | 'sample'): void {
   store.newFarm(kind)
   adopt()
   close()
-  toast(kind === 'sample' ? 'Sample farm loaded. Day ' + S.day + '.' : 'A new farm. Day ' + S.day + '.')
+  if (kind === 'sample') toast('Sample farm loaded. Day ' + S.day + '.')
+}
+/** Open a field for each pack ticked in the picker on screen. */
+function openTickedFields(): void {
+  const ticked = [...sheet.querySelectorAll<HTMLInputElement>('input[data-pack]')].filter((b) => b.checked).map((b) => b.dataset.pack ?? '')
+  const first = needsSetup()
+  for (const e of fieldsToOpen(S, catalog, ticked)) if (!act(e)) return
+  if (needsSetup()) return
+  store.ui.cam = camHome()
+  close()
+  if (first) hint('Open the <b>Seed bag</b>, pick a seed, then tap soil in its field to plant it with notes in your own words.')
+  toast(first ? 'Your farm is ready. Day ' + S.day + '.' : 'Field opened.')
 }
 function openReset(): void {
-  open('<h2>Start a new farm?</h2><p>This replaces the farm in this browser. Export it first if you want to keep it.</p><p class="sub"><b>Start fresh</b>: day 1, ' + RULES.start.coins + ' coins, nothing planted. <b>Sample farm</b>: the prototype farm on day 12, with crops already growing.</p><div class="branches"><button type="button" data-act="newFarm" data-arg="fresh">Start fresh</button><button type="button" data-act="newFarm" data-arg="sample">Sample farm</button></div>' + foot('Cancel'))
+  open('<h2>Start a new farm?</h2><p>This replaces the farm in this browser. Export it first if you want to keep it.</p><p class="sub"><b>Start fresh</b>: day 1, ' + RULES.start.coins + ' coins, and you choose what to grow. <b>Sample farm</b>: the prototype farm on day 12, with crops already growing.</p><div class="branches"><button type="button" data-act="newFarm" data-arg="fresh">Start fresh</button><button type="button" data-act="newFarm" data-arg="sample">Sample farm</button></div>' + foot('Cancel'))
 }
-function openWelcome(): void {
-  open('<h2>Welcome to Permaculture</h2><p>A farm where the crops are the things you are learning. Plant a seed from the barn with notes in your own words, water it by answering and explaining, and it grows. Leave a crop two days past thirsty and it wilts, unless the rain barrel has a day to spend.</p><p class="sub">Your farm starts empty, with a field for each pack. You can plant ' + RULES.newSeedsPerDay + ' new seeds a day. Everything is saved in this browser.</p><div class="branches"><button type="button" data-act="newFarm" data-arg="sample">Try the sample farm</button></div>' + foot('Start planting'))
+/** The first thing a new farm shows: what the game is, and which fields to start with. `ticked` are packs to tick for the farmer. */
+function openWelcome(ticked: readonly string[] = []): void {
+  const picker = pickerView(catalog, S, ticked)
+  open('<h2>Welcome to Permaculture</h2><p>A farm where the crops are the things you are learning. Plant a seed with notes in your own words, water it by answering and explaining, and it grows. Leave a crop two days past thirsty and it wilts, unless the rain barrel has a day to spend.</p>' +
+    pickerHtml(picker) +
+    '<p class="sub">Each one becomes a field on your farm. Pick at least one; you can open the others later from the learning tree. You can plant ' + RULES.newSeedsPerDay + ' new seeds a day, and everything is saved in this browser.</p>' +
+    '<div class="foot"><button type="button" data-act="newFarm" data-arg="sample">Try the sample farm</button><button type="button" class="pri" id="fieldsGo" data-act="openFields"' + (picker.some((p) => p.ticked) ? '' : ' disabled') + '>Start my farm</button></div>')
 }
+// The picker's button waits for at least one tick.
+sheet.addEventListener('change', () => {
+  const go = document.getElementById('fieldsGo')
+  if (go instanceof HTMLButtonElement) go.disabled = !sheet.querySelector('input[data-pack]:checked')
+})
 function openWell(): void { open('<h2>Rain barrel</h2><p>' + S.barrel + ' of ' + RULES.barrel.max + ' days stored.</p><p class="sub">Catch and store energy. End a day with ' + RULES.barrel.fillAt + '+ energy left and the barrel fills by one. When a crop is about to wilt, the barrel spends a day to keep it alive. It never grows a crop; only you do.</p>' + foot()) }
 function openCompost(): void {
   const items = S.compost.map((id) => catalog.seed(id)).filter((s): s is Seed => s !== undefined)
@@ -802,9 +829,11 @@ function domesticate(id: string): void {
 }
 
 /* ---------- learning tree ---------- */
+/** The tab the tree opens on: the one last looked at, else a field this farm has. */
 const treePack = (): string => {
   const saved = store.ui.treeTab
-  return saved && catalog.pack(saved) ? saved : (catalog.packs[0]?.pack ?? '')
+  if (saved && catalog.pack(saved)) return saved
+  return (catalog.packs.find((p) => Object.hasOwn(S.fields, p.pack)) ?? catalog.packs[0])?.pack ?? ''
 }
 const SVG_FONT = 'font-family="DM Sans,system-ui"'
 function treeSvg(v: TreeView): string {
@@ -837,6 +866,13 @@ function openTree(): void {
   if (!v) return
   let html = '<h2>Learning tree</h2><p class="sub">Everything you could grow, including what you cannot reach yet. A seed unlocks when the seeds it needs are <b>rooted</b> (harvested to perennial). Pick a branch to focus; the seed bag puts it first.</p>'
   html += '<div class="tabs">' + catalog.packs.map((p) => '<button type="button" data-act="treeTab" data-arg="' + esc(p.pack) + '"' + (p.pack === v.pack ? ' class="on"' : '') + '><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:' + packColor(p) + ';margin-right:6px;vertical-align:-1px"></span>' + esc(p.title) + '</button>').join('') + '</div>'
+  if (!Object.hasOwn(S.fields, v.pack)) {
+    // A pack this farm does not grow yet: say what it is and offer the field.
+    const about = pickerView(catalog, S, []).find((p) => p.pack === v.pack)
+    html += '<p>' + esc(about?.description ?? '') + '</p><p class="sub">' + (about?.seeds ?? 0) + ' seeds. You do not have this field. Opening it is free, and it takes the next plot of land on your farm.</p>' +
+      foot('Close', '<button type="button" data-act="openField" data-arg="' + esc(v.pack) + '">Open this field</button>')
+    return open(html)
+  }
   html += treeSvg(v)
   html += '<div class="branches">' + v.branches.map((b) => '<button type="button" data-act="focus" data-arg="' + esc(v.pack) + '|' + esc(b.id) + '"' + (b.focus ? ' class="pri"' : '') + '>' + (b.focus ? 'Focus: ' : 'Focus on ') + esc(b.title) + '</button>').join('') + '</div>'
   html += '<p class="sub">Solid box: rooted · outline: growing (bar = stage) · cream outline: ready to plant · dashed: locked · green dot: found in the wild.</p>'
@@ -910,6 +946,11 @@ sheet.addEventListener('click', (e) => {
     close()
   } else if (what === 'reset') openReset()
   else if (what === 'newFarm') startNewFarm(arg === 'sample' ? 'sample' : 'fresh')
+  else if (what === 'openFields') openTickedFields()
+  else if (what === 'openField') {
+    const e = fieldsToOpen(S, catalog, [arg])[0]
+    if (e && act(e)) { toast('The ' + packTitle(arg) + ' field is open.'); openTree() }
+  }
   else if (what === 'export') exportFarm()
   else if (what === 'import') importFarm()
   else if (what === 'doImport') doImport()
@@ -956,7 +997,7 @@ byId('bAlm').addEventListener('click', openAlmanac)
 byId('bSleep').addEventListener('click', sleep)
 hud()
 if (store.loadProblem) toast(store.loadProblem)
-else if (store.firstVisit) openWelcome()
+if (needsSetup()) openWelcome()
 else if (store.refused > store.ui.driftSeen) {
   // Told once per count: the warning comes back only if more of the farm stops fitting.
   open('<h2>Your farm has changed</h2><p>' + esc(driftText(store.refused)) + '</p><p class="sub">This should never happen. Export your farm from the seed bag and report it, with the version at the bottom of the Almanac (' + esc(__APP_VERSION__) + ').</p>' + foot('Carry on'))

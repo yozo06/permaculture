@@ -2,7 +2,7 @@
 // Every read from storage is untrusted; bad data becomes a fresh farm and a message, never a crash.
 import type { Catalog } from '../engine/catalog'
 import { isRecord } from '../engine/util'
-import { apply, check, fieldsToOpen, fold, refusedCount } from '../engine/fold'
+import { apply, check, fold, refusedCount } from '../engine/fold'
 import { farmFileText, parseFarmFile } from '../engine/log'
 import { RULES } from '../engine/rules'
 import type { FarmEvent, FarmState, LoggedEvent } from '../engine/types'
@@ -58,7 +58,7 @@ export interface Store {
   readonly refused: number
   /** Check an event, and if it is allowed, apply it and save. Returns the reason it was refused, or null. */
   dispatch(event: FarmEvent): string | null
-  /** Replace the log with a new farm. */
+  /** Replace the log with a new farm. A fresh one has no fields until its farmer picks them. */
   newFarm(kind: NewFarm): void
   /** Replace the log with an imported one. Returns what is wrong with it, or null. */
   importLog(events: readonly LoggedEvent[]): string | null
@@ -128,15 +128,9 @@ export function createStore(deps: StoreDeps): Store {
     log.push(logged(e))
   }
 
-  /** A field for every pack that has none: packs added since the farm began. */
-  function openMissingFields(): void {
-    for (const e of fieldsToOpen(state, catalog)) append(e)
-  }
-
   function begin(events: LoggedEvent[]): void {
     log = events
     state = fold(log, catalog)
-    openMissingFields()
     ui = freshUi()
     saveLog()
     saveUi()
@@ -183,13 +177,8 @@ export function createStore(deps: StoreDeps): Store {
   }
 
   state = fold([], catalog)
+  // The store never opens a field by itself: a farmer chooses their fields, and a pack added later is offered, not forced.
   const loaded = load()
-  // A saved log may predate a pack; give it a field, and keep the log honest about that.
-  if (!loaded.problem && !loaded.firstVisit) {
-    const before = log.length
-    openMissingFields()
-    if (log.length !== before) saveLog()
-  }
   ui = readUi(loaded.firstVisit || loaded.problem ? null : read(UI_KEY))
 
   return {

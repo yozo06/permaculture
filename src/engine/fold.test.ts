@@ -73,6 +73,11 @@ describe('field-opened', () => {
   it('fieldsToOpen gives each missing pack the next free slot', () => {
     expect(fieldsToOpen({ fields: { shed: 0 } }, cat)).toEqual([{ type: 'field-opened', pack: 'garden', slot: 1 }])
     expect(fieldsToOpen(smallFarm(), cat)).toEqual([])
+    // Only the packs asked for, when the farmer chose.
+    expect(fieldsToOpen({ fields: {} }, cat, ['shed'])).toEqual([{ type: 'field-opened', pack: 'shed', slot: 0 }])
+    expect(fieldsToOpen({ fields: {} }, cat, ['shed', 'garden', 'no-such-pack'])).toEqual([
+      { type: 'field-opened', pack: 'garden', slot: 0 }, { type: 'field-opened', pack: 'shed', slot: 1 },
+    ])
   })
 })
 

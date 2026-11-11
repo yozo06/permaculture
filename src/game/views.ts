@@ -47,6 +47,29 @@ export const driftText = (refused: number): string =>
   refused + (refused === 1 ? " thing in this farm's history no longer fits" : " things in this farm's history no longer fit") +
   " today's game and " + (refused === 1 ? 'was' : 'were') + ' skipped, so the farm may be missing something it had.'
 
+/* ---------- choosing what to grow ---------- */
+
+export interface PickerPack {
+  pack: string
+  title: string
+  color: string
+  description: string
+  /** How many seeds the pack holds, wild ones left out. */
+  seeds: number
+  /** The farm already has this field. */
+  open: boolean
+  ticked: boolean
+}
+
+/** Every pack, for the sheet where a farmer chooses their fields. */
+export function pickerView(catalog: Catalog, state: Pick<FarmState, 'fields'>, ticked: readonly string[]): PickerPack[] {
+  return catalog.packs.map((p) => ({
+    pack: p.pack, title: p.title, color: packColor(p), description: p.description ?? '',
+    seeds: catalog.seedsOf(p.pack).filter((s) => !s.wild).length,
+    open: Object.hasOwn(state.fields, p.pack), ticked: ticked.includes(p.pack),
+  }))
+}
+
 /* ---------- seed bag ---------- */
 
 export interface BagSeed {
