@@ -46,7 +46,9 @@ export const isFarmCode = (v: unknown): v is string => typeof v === 'string' && 
 function utf8(text: string): number[] {
   const bytes: number[] = []
   for (const ch of text) {
-    const c = ch.codePointAt(0) ?? 0
+    let c = ch.codePointAt(0) ?? 0
+    // Half of a surrogate pair on its own is not a character: UTF-8 writes the replacement character for it.
+    if (c >= 0xd800 && c <= 0xdfff) c = 0xfffd
     if (c < 0x80) bytes.push(c)
     else if (c < 0x800) bytes.push(0xc0 | (c >> 6), 0x80 | (c & 63))
     else if (c < 0x10000) bytes.push(0xe0 | (c >> 12), 0x80 | ((c >> 6) & 63), 0x80 | (c & 63))
@@ -116,7 +118,8 @@ export function readPicture(raw: unknown, catalog: Catalog, nowMs: number): Read
   if (!whole(raw.day) || raw.day < 1 || raw.day > 1_000_000) return null
   if (typeof raw.at !== 'string' || !MOMENT.test(raw.at)) return null
   const made = Date.parse(raw.at)
-  if (!Number.isFinite(made) || made > nowMs + DAY_MS) return null
+  // A real moment reads back as itself. Some browsers roll 31 February into March and others refuse it; neither gets the chance.
+  if (!Number.isFinite(made) || momentOf(made) !== raw.at || made > nowMs + DAY_MS) return null
   if (raw.fields.length > PICTURE_LIMITS.fields) return null
   const listed = (f: unknown): unknown[] => (isRecord(f) && Array.isArray(f.crops) ? f.crops : [])
   if (raw.fields.reduce<number>((n, f) => n + listed(f).length, 0) > PICTURE_LIMITS.crops) return null

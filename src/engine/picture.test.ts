@@ -37,6 +37,16 @@ describe('farmCode', () => {
     fc.assert(fc.property(fc.string(), (id) => { expect(farmCode(id)).toMatch(/^[0-9a-z]{13}$/) }))
   })
 
+  it('agrees with a standard UTF-8 encoder on every string, lone surrogates included', () => {
+    const reference = (id: string): string => {
+      let hash = 0xcbf29ce484222325n
+      for (const byte of new TextEncoder().encode(id)) hash = ((hash ^ BigInt(byte)) * 0x100000001b3n) & 0xffffffffffffffffn
+      return hash.toString(36).padStart(13, '0')
+    }
+    for (const id of ['abc', 'é', '€', '😀x', '\ud800', 'a\udc00', '\ud83d']) expect(farmCode(id), JSON.stringify(id)).toBe(reference(id))
+    fc.assert(fc.property(fc.string({ unit: 'binary' }), (id) => { expect(farmCode(id)).toBe(reference(id)) }))
+  })
+
   it('hashes the bytes of the whole id, so ids that begin alike differ', () => {
     expect(farmCode('mfx1a2b3-aaaaaaaa')).not.toBe(farmCode('mfx1a2b3-aaaaaaab'))
     expect(farmCode('é')).not.toBe(farmCode('e'))
@@ -120,6 +130,8 @@ describe('readPicture', () => {
     ['a day that is not a whole number from 1', (p) => { p.day = 0.5 }],
     ['a moment that is not a date', (p) => { p.at = 'yesterday' }],
     ['a moment more than a day in the future', (p) => { p.at = '2026-11-22T15:00:01Z' }],
+    ['a moment on a day that does not exist', (p) => { p.at = '2026-02-31T00:00:00Z' }],
+    ['a moment at an hour that does not exist', (p) => { p.at = '2026-11-11T24:00:00Z' }],
     ['fields that are not a list', (p) => { p.fields = 'all of them' }],
     ['more than 400 crops', (p) => { p.fields = [{ pack: 'garden', land: [], crops: Array.from({ length: 401 }, () => ['corn', 0, 0, 0, 0]) }] }],
   ])('cannot read %s', (_name, spoil) => {
