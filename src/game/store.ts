@@ -2,7 +2,7 @@
 // Every read from storage is untrusted; bad data becomes a fresh farm and a message, never a crash.
 import type { Catalog } from '../engine/catalog'
 import { isRecord } from '../engine/util'
-import { apply, check, fieldsToOpen, fold } from '../engine/fold'
+import { apply, check, fieldsToOpen, fold, refusedCount } from '../engine/fold'
 import { farmFileText, parseFarmFile } from '../engine/log'
 import { RULES } from '../engine/rules'
 import type { FarmEvent, FarmState, LoggedEvent } from '../engine/types'
@@ -27,10 +27,12 @@ export interface UiState {
   farmer: { x: number; y: number; tx: number; ty: number }
   seedSel: string | null
   treeTab: string | null
+  /** How many skipped entries the player has already been told about, so the warning is not repeated on every load. */
+  driftSeen: number
 }
 
 export const defaultFarmer = (): UiState['farmer'] => ({ x: 9, y: 8, tx: 9, ty: 8 })
-const freshUi = (): UiState => ({ cam: null, farmer: defaultFarmer(), seedSel: null, treeTab: null })
+const freshUi = (): UiState => ({ cam: null, farmer: defaultFarmer(), seedSel: null, treeTab: null, driftSeen: 0 })
 
 export type NewFarm = 'fresh' | 'sample'
 
@@ -52,6 +54,8 @@ export interface Store {
   readonly firstVisit: boolean
   /** Set when saved data could not be read and a fresh farm was started. */
   readonly loadProblem: string | null
+  /** Entries of the saved farm that today's packs and rules no longer accept. A healthy farm has none. */
+  readonly refused: number
   /** Check an event, and if it is allowed, apply it and save. Returns the reason it was refused, or null. */
   dispatch(event: FarmEvent): string | null
   /** Replace the log with a new farm. */
@@ -87,6 +91,7 @@ function readUi(raw: string | null): UiState {
     }
     if (typeof v.seedSel === 'string') ui.seedSel = v.seedSel
     if (typeof v.treeTab === 'string') ui.treeTab = v.treeTab
+    ui.driftSeen = Math.max(0, Math.round(num(v.driftSeen, 0)))
   } catch { /* a fresh screen state is fine */ }
   return ui
 }
@@ -145,7 +150,7 @@ export function createStore(deps: StoreDeps): Store {
     return [logged(e)]
   }
 
-  function load(): { firstVisit: boolean; problem: string | null } {
+  function load(): { firstVisit: boolean; problem: string | null; refused?: number } {
     const stored = read(LOG_KEY)
     if (stored !== null) {
       const parsed = parseFarmFile(stored)
@@ -154,7 +159,7 @@ export function createStore(deps: StoreDeps): Store {
         if (folded.day >= 1) {
           log = parsed.events
           state = folded
-          return { firstVisit: false, problem: null }
+          return { firstVisit: false, problem: null, refused: refusedCount(log, catalog) }
         }
       }
       write(BROKEN_KEY, stored)
@@ -193,6 +198,7 @@ export function createStore(deps: StoreDeps): Store {
     events: () => log,
     firstVisit: loaded.firstVisit,
     loadProblem: loaded.problem,
+    refused: loaded.refused ?? 0,
     dispatch(event) {
       const why = check(state, event, catalog)
       if (why !== null) return why

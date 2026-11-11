@@ -1,7 +1,7 @@
 import packDefs from 'virtual:packs'
 import { buildCatalog, LAYER_NAMES, type Seed } from '../engine/catalog'
 import { findCandidates, pickFind } from '../engine/finds'
-import { check } from '../engine/fold'
+import { check, refusedCount } from '../engine/fold'
 import {
   BARN, COMPOST, SIGN, WELL, fenceCost, fieldOf as landFieldOf, hash, homestead, inHomestead, isBuildingTile,
   neighbourFields, terrain as landTerrain, tileKey, wildKind, worldSize, type Terrain,
@@ -9,13 +9,13 @@ import {
 import { farmFileName, farmFileText, parseFarmFile } from '../engine/log'
 import { explainChecklist, explainPasses, harvestWork, pickPrompt, recallBank, waterWork, writePasses } from '../engine/ladder'
 import { RULES, cropOf, revivable as isRevivable, ripe as isRipe, thirsty as isThirsty, zone } from '../engine/rules'
-import type { Crop, FarmEvent, FarmState, Mcq, Night } from '../engine/types'
+import type { Crop, FarmEvent, FarmState, LoggedEvent, Mcq, Night } from '../engine/types'
 import { almanacHtml } from './almanac'
 import sampleFarm from './sample-farm.json'
 import { createStore, defaultId, LOG_KEY, type StorageLike } from './store'
 import { esc, shuffle } from './util'
 import { chipHtml, countText, cropSheetHtml, footHtml, noteHtml, NO_NOTES, plantSheetHtml, tickList, writingBox } from './sheets'
-import { bagView, cropView, needsText, packColor, sourceLinks, splitName, tending, treeView, type TreeView } from './views'
+import { bagView, cropView, driftText, needsText, packColor, sourceLinks, splitName, tending, treeView, type TreeView } from './views'
 
 /* ---------- types ---------- */
 type Mode = 'water' | 'harvest' | 'testout'
@@ -728,11 +728,24 @@ function importFarm(): void {
     f.text().then((t) => { byIdAs('imp', HTMLTextAreaElement).value = t }, () => toast('Could not read that file.'))
   })
 }
+/** A log the player chose to import that would lose entries, waiting for them to say "import anyway". */
+let IMPORT: LoggedEvent[] | null = null
 function doImport(): void {
   const parsed = parseFarmFile(byIdAs('imp', HTMLTextAreaElement).value)
   if (parsed.kind === 'error') return toast(parsed.message)
-  const problem = parsed.kind === 'log' ? store.importLog(parsed.events) : store.importSnapshot(parsed.snapshot)
+  if (parsed.kind === 'v2') return finishImport(store.importSnapshot(parsed.snapshot))
+  // Say what would be lost before the farm in this browser is replaced, not after.
+  const refused = refusedCount(parsed.events, catalog)
+  if (refused === 0) return finishImport(store.importLog(parsed.events))
+  IMPORT = parsed.events
+  open('<h2>This farm does not fully fit</h2><p>' + esc(driftText(refused)) + '</p><p class="sub">It was probably saved by a different version of the game (this one is ' + esc(__APP_VERSION__) + '). You can import it as it is, or keep the farm you have and report this.</p>' +
+    foot('Keep my farm', '<button type="button" data-act="importAnyway">Import anyway</button>'))
+}
+/** `toldAbout` is how many skipped entries the player has just agreed to, so the next load does not warn again. */
+function finishImport(problem: string | null, toldAbout = 0): void {
+  IMPORT = null
   if (problem) return toast(problem)
+  store.ui.driftSeen = toldAbout
   adopt()
   close()
   toast('Farm imported. Day ' + S.day + '.')
@@ -900,6 +913,7 @@ sheet.addEventListener('click', (e) => {
   else if (what === 'export') exportFarm()
   else if (what === 'import') importFarm()
   else if (what === 'doImport') doImport()
+  else if (what === 'importAnyway') { if (IMPORT) finishImport(store.importLog(IMPORT), refusedCount(IMPORT, catalog)) }
   else if (what === 'copyExp') {
     const t = byIdAs('exp', HTMLTextAreaElement)
     const done = () => toast('Copied.')
@@ -943,3 +957,9 @@ byId('bSleep').addEventListener('click', sleep)
 hud()
 if (store.loadProblem) toast(store.loadProblem)
 else if (store.firstVisit) openWelcome()
+else if (store.refused > store.ui.driftSeen) {
+  // Told once per count: the warning comes back only if more of the farm stops fitting.
+  open('<h2>Your farm has changed</h2><p>' + esc(driftText(store.refused)) + '</p><p class="sub">This should never happen. Export your farm from the seed bag and report it, with the version at the bottom of the Almanac (' + esc(__APP_VERSION__) + ').</p>' + foot('Carry on'))
+  store.ui.driftSeen = store.refused
+  store.saveUi()
+}

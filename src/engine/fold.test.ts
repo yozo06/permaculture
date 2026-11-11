@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import sampleFarm from '../game/sample-farm.json'
-import { apply, check, fieldsToOpen, fold, initialState, parseEvent } from './fold'
+import { apply, check, fieldsToOpen, fold, initialState, parseEvent, refusedCount } from './fold'
 import { EXPLANATION, NOTES, run, smallCatalog as cat, smallFarm, started } from './fixtures'
 import { terrain, wildKind, worldSize } from './land'
 import { RULES, available, ripe, thirsty } from './rules'
@@ -502,5 +502,19 @@ describe('apply', () => {
     const log = [{ ...started, id: '1', at: 'a' }, { type: 'field-opened', pack: 'garden', slot: 0, id: '2', at: 'b' }, { type: 'planted', seed: 'squash', x: 5, y: 5, notes: NOTES, id: '3', at: 'c' }, { type: 'planted', seed: 'corn', x: 5, y: 5, notes: NOTES, id: '4', at: 'd' }]
     const s = fold(log, cat)
     expect(s.crops.map((c) => c.seed)).toEqual(['corn'])
+  })
+})
+
+describe('refusedCount', () => {
+  const healthy: unknown[] = [started, { type: 'field-opened', pack: 'garden', slot: 0 }, plant('corn', 5, 5), sleep]
+
+  it('is zero for a log the rules accept from start to finish', () => {
+    expect(refusedCount(healthy, cat)).toBe(0)
+  })
+
+  it('counts every entry the fold skips: junk, a seed that has gone, and what depended on it', () => {
+    const drifted = [...healthy, { nonsense: true }, plant('rhubarb', 6, 5), { type: 'watered', seed: 'rhubarb', ok: true, work: 'recall' }]
+    expect(refusedCount(drifted, cat)).toBe(3)
+    expect(fold(drifted, cat)).toEqual(fold(healthy, cat))
   })
 })

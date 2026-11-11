@@ -6,7 +6,7 @@ import { apply, fieldsToOpen, fold } from '../engine/fold'
 import { RULES } from '../engine/rules'
 import type { FarmState } from '../engine/types'
 import sampleFarm from './sample-farm.json'
-import { bagView, cropView, sourceLinks, splitName, tending, treeView } from './views'
+import { bagView, cropView, sourceLinks, splitName, tending, treeView, driftText } from './views'
 
 const catalog = buildCatalog(collectPacks())
 
@@ -244,5 +244,12 @@ describe('cropView', () => {
 
   it('is null for a seed no pack has', () => {
     expect(cropView({ seed: 'gone', x: 0, y: 0, stage: 0, due: 1, wilted: false, perennial: false, notes: '', journal: [] }, { day: 1 }, catalog)).toBeNull()
+  })
+})
+
+describe('driftText', () => {
+  it('says how many entries no longer fit, in the singular and the plural', () => {
+    expect(driftText(1)).toMatch(/^1 thing in this farm's history no longer fits/)
+    expect(driftText(4)).toMatch(/^4 things in this farm's history no longer fit /)
   })
 })

@@ -40,6 +40,13 @@ export function tending(state: FarmState): Tending {
   }
 }
 
+/* ---------- a farm the game has moved under ---------- */
+
+/** What to say when a farm's log holds entries today's packs and rules refuse. */
+export const driftText = (refused: number): string =>
+  refused + (refused === 1 ? " thing in this farm's history no longer fits" : " things in this farm's history no longer fit") +
+  " today's game and " + (refused === 1 ? 'was' : 'were') + ' skipped, so the farm may be missing something it had.'
+
 /* ---------- seed bag ---------- */
 
 export interface BagSeed {

@@ -384,6 +384,21 @@ export function fold(events: readonly unknown[], catalog: Catalog): FarmState {
   return events.reduce<FarmState>((s, e) => apply(s, e, catalog), initialState())
 }
 
+/**
+ * How many entries of a log the fold skips. A farm the game saved itself has none: every entry was checked before it
+ * was kept. More than none means the packs or the rules have moved under the farm since it was played.
+ */
+export function refusedCount(events: readonly unknown[], catalog: Catalog): number {
+  let refused = 0
+  let s = initialState()
+  for (const e of events) {
+    const next = apply(s, e, catalog)
+    if (next === s) refused++
+    s = next
+  }
+  return refused
+}
+
 /** `field-opened` events for every pack that has no field yet, in pack order, each in the next free slot. */
 export function fieldsToOpen(s: Pick<FarmState, 'fields'>, catalog: Catalog): FarmEvent[] {
   const fields = { ...s.fields }

@@ -36,6 +36,18 @@ describe('the first visit', () => {
     expect(second.state().day).toBe(2)
   })
 
+  it('counts nothing refused in a healthy saved farm, and says how many entries no longer fit in a drifted one', () => {
+    const disk = memory()
+    const first = make(disk)
+    first.dispatch({ type: 'slept' })
+    expect(make(disk).refused).toBe(0)
+    const drifted = [...first.events(), { type: 'planted', seed: 'a-seed-that-was-renamed', x: 5, y: 5, notes: 'n'.repeat(60), id: 'x1', at: '2026-11-01T00:00:00Z' }]
+    disk.data[LOG_KEY] = farmFileText(drifted as never)
+    const second = make(disk)
+    expect(second.refused).toBe(1)
+    expect(second.state().day).toBe(2)
+  })
+
   it('works with no storage at all', () => {
     const store = make(null)
     expect(store.dispatch({ type: 'slept' })).toBeNull()
