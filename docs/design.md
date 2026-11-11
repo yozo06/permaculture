@@ -60,10 +60,13 @@ Two days past thirsty without water, a crop wilts overnight unless the barrel ha
 | Water | 6 energy |
 | Explanation | at least 80 characters; passes with more than half the rubric lines |
 | Harvest | 15 energy; premium pays 30 coins |
+| Harvest write-up | at least 80 characters; proof of an artifact, at least 8 |
 | Jump the fence | 10 energy |
 | Forage | 5 energy; pays 3 coins |
 | Fence a tile | 25 coins on open ground, 40 in forest |
 | Rain barrel | +1 day when a day ends with 30 or more energy; holds 5 |
+| New farm | day 1, 140 coins, nothing in the barrel |
+| Longest text | 5000 characters |
 | Compost | everything in the heap is due again the next day |
 
 ### The depth ladder
