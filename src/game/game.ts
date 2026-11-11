@@ -936,7 +936,9 @@ function enterVisit(state: FarmState, who: string, label: string, detail: string
   buildStatics()
   visiting.cam = camHome()
   hover = null
-  $('visitWho').textContent = label.charAt(0).toUpperCase() + label.slice(1)
+  // Whose farm, its day, and how old the picture is: always on screen while you are there.
+  $('visitName').textContent = label.charAt(0).toUpperCase() + label.slice(1)
+  $('visitDetail').textContent = detail
   $('bBack').textContent = needsSetup() ? 'Start my own farm' : 'Back to my farm'
   $('visit').hidden = false
   for (const id of BAR_BUTTONS) byIdAs(id, HTMLButtonElement).disabled = true

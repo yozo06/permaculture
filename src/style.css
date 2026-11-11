@@ -103,7 +103,10 @@ button.pri:disabled:hover{background:var(--panel-2)}
 /* Neighbours */
 .visit{position:absolute;left:8px;top:8px;right:84px;display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:8px;background:rgba(26,22,16,.9);border:1px solid var(--line-2);font-size:12px;line-height:1.3;color:var(--cream)}
 .visit[hidden]{display:none}
-.visit span{flex:1 1 0;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.visit span{flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:1px}
+.visit b,.visit small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.visit small{color:var(--muted);font-size:11px}
+.visit small:empty{display:none}
 .visit button{min-height:32px;padding:0 10px;font-size:12px;flex:none}
 .pair{display:flex;align-items:center;gap:6px;flex:none}
 .sheet input.write{width:100%;box-sizing:border-box;min-height:44px;background:var(--ink);color:var(--cream);border:1px solid var(--line-2);border-radius:8px;padding:10px;font-family:var(--font-body);font-size:16px}
