@@ -38,7 +38,7 @@ guilds:                      # optional companion sets
 finds:                       # optional wild finds, foraged in the forest next to what is growing
   - id: flexible-paxos
     near: [raft, con]        # seeds in this pack the find grows next to
-    text: Flexible Paxos (Howard, 2016): election and replication quorums only need to intersect.
+    text: "Flexible Paxos (Howard, 2016): election and replication quorums only need to intersect."
     seed: fpaxos             # optional: a wild seed in this pack that this find can be domesticated into
 
 seeds:
@@ -52,7 +52,7 @@ seeds:
     harvest: recall          # recall | solve | judged | artifact
     minutes: 30              # about how long planting takes: reading the source and writing notes
     sources: [raft]
-    summary: Read sections 5.1–5.4. Yield: the election and commit rules in your own words.
+    summary: "Read sections 5.1–5.4. Yield: the election and commit rules in your own words."
     questions:
       water:                 # asked when a crop is watered at stages 1–3 of 5, and at perennial check-ins
         - q: In Raft, a log entry is committed when…
@@ -63,7 +63,7 @@ seeds:
             - The client receives an acknowledgement
           why: Majority replication plus a current-term entry prevents a stale leader committing an old entry.
           source: raft
-      harvest:               # asked at harvest and at perennial check-ins; harder. Falls back to `water` if absent.
+      harvest:               # asked at the harvest of a recall seed, and at perennial check-ins; harder. Falls back to `water` if absent.
         - q: ...
     # the rubric drives the explain rung for every seed, and judged harvests; add prompts for judged / artifact / solve harvests:
     rubric:
@@ -92,7 +92,7 @@ A find is a short fact the player forages in the wilderness. It is picked by wha
 
 ## Ids are forever
 
-Seed ids and find ids are unique across all packs. Farms refer to seeds by id and are replayed against the current packs, so never rename or remove a released seed, and never tighten its `needs`.
+Seed ids, find ids and pack ids are unique across all packs, and branch ids within a pack. Farms refer to all of them and are replayed against the current packs, so never rename or remove a released one. Never tighten a released seed's `needs`, never make it `wild`, and never lower a pack's `energy_cap`: on replay the game skips any event that is no longer allowed, and the farm quietly changes.
 
 ## Rules the validator enforces
 
@@ -115,6 +115,7 @@ Seed ids and find ids are unique across all packs. Farms refer to seeds by id an
 - **Distractors are plausible.** The wrong options should be things people actually believe.
 - **Cite, never paste.** Questions are original. `source` points at where to read more.
 - **Prefer judged over recall** once a seed is past tier 1. Multiple choice is for recall only.
+- **Quote colons.** A value with a colon and a space in it (`Yield: ...`) needs double quotes, or YAML reads it as a mapping and the validator rejects the pack.
 
 ## Making a pack for a new goal
 
