@@ -139,8 +139,8 @@ export type FarmEvent =
   | { type: 'fenced'; x: number; y: number; pack: string }
   | { type: 'foraged'; x: number; y: number; find: string }
   | { type: 'domesticated'; seed: string }
-  /** A jump-the-fence attempt; `ok` means it passed. */
-  | { type: 'unlocked'; seed: string; ok: boolean }
+  /** A jump-the-fence attempt; `ok` means it passed. A write-up proof is kept on the event, like a harvest's. */
+  | { type: 'unlocked'; seed: string; ok: boolean; text?: string; ticked?: number; of?: number }
   | { type: 'focus-set'; pack: string; branch: string | null }
   /** A Phase 0 (v2) save, converted by `fromV2`. */
   | { type: 'snapshot-imported'; snapshot: unknown }

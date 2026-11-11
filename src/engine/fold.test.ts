@@ -433,6 +433,14 @@ describe('unlocked', () => {
     expect(refusal({ ...smallFarm(), today: { planted: 0, spent: { shed: 20 } } }, lathe(true))).toMatch(/at most 27/)
     expect(refusal(run(cat, [lathe(true)], smallFarm()), lathe(true))).toMatch(/not locked/)
   })
+
+  it('keeps the write-up from a jump, and validates it like a harvest', () => {
+    const proof = 'https://example.com/the-bowl-i-turned'
+    expect(parseEvent({ type: 'unlocked', seed: 'lathe', ok: true, text: proof, ticked: 2, of: 2 }))
+      .toMatchObject({ type: 'unlocked', seed: 'lathe', ok: true, text: proof, ticked: 2, of: 2 })
+    expect(parseEvent({ type: 'unlocked', seed: 'lathe', ok: true, text: proof })).toBeNull()
+    expect(refusal(smallFarm(), { type: 'unlocked', seed: 'lathe', ok: true, text: 'short', ticked: 1, of: 2 })).toMatch(/characters/)
+  })
 })
 
 describe('focus-set', () => {

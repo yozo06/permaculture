@@ -64,8 +64,13 @@ export function parseEvent(raw: unknown): FarmEvent | null {
       if (!text(raw.text) || !whole(raw.ticked) || !whole(raw.of)) return null
       return { type, seed: raw.seed, ok: raw.ok, text: raw.text, ticked: raw.ticked, of: raw.of }
     }
-    case 'unlocked':
-      return text(raw.seed) && typeof raw.ok === 'boolean' ? { type, seed: raw.seed, ok: raw.ok } : null
+    case 'unlocked': {
+      if (!text(raw.seed) || typeof raw.ok !== 'boolean') return null
+      // A write-up jump carries all three of text, ticked and of; a recall jump carries none.
+      if (raw.text === undefined && raw.ticked === undefined && raw.of === undefined) return { type, seed: raw.seed, ok: raw.ok }
+      if (!text(raw.text) || !whole(raw.ticked) || !whole(raw.of)) return null
+      return { type, seed: raw.seed, ok: raw.ok, text: raw.text, ticked: raw.ticked, of: raw.of }
+    }
     case 'slept':
       return { type }
     case 'fenced':
@@ -187,6 +192,11 @@ function whyUnlocked(s: FarmState, e: Extract<FarmEvent, { type: 'unlocked' }>, 
   const seed = catalog.seed(e.seed)
   if (!seed || !visible(seed, s)) return 'That seed is not in your tree yet.'
   if (available(seed, s) || cropOf(s, seed.id)) return seed.name + ' is not locked.'
+  if (e.text !== undefined) {
+    const proof = seed.harvest === 'artifact'
+    const bad = whyText(e.text, proof ? RULES.proofMin : RULES.writeMin, proof ? 'to say what you made' : 'in your write-up') ?? whyRating(e.ticked ?? 0, e.of ?? 0)
+    if (bad) return bad
+  }
   if (s.energy < RULES.testOut.energy) return 'Needs ' + RULES.testOut.energy + ' energy. Sleep first.'
   return capWhy(s, seed.pack, RULES.testOut.energy, catalog)
 }

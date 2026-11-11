@@ -595,7 +595,7 @@ function openWrite(seed: Seed, mode: Mode): void {
   open(chip(seed.pack) + '<h2>' + workTitle(seed, mode) + ' · ' + esc(seed.name) + '</h2><p class="sub">' + workSub(seed, mode) + '</p><p class="q">' + esc(prompt) + '</p>' +
     writingBox({ id: 'write', label: work.proof ? 'Link or description' : 'Your answer', min: work.minChars, max: RULES.textMax, gate: 'writeGo', rows: work.proof ? 3 : 7 }) +
     tickList('Tick each line your answer meets', work.checklist) +
-    '<p class="sub">Premium only if every line is ticked.' + (mode === 'testout' ? ' A jump is not kept in any crop\'s journal.' : '') + '</p>' +
+    '<p class="sub">Premium only if every line is ticked.' + (mode === 'testout' ? ' Your answer is saved to the farm log; a jump has no crop to keep a journal.' : '') + '</p>' +
     '<div class="foot"><button type="button" data-act="close">Not yet</button><button type="button" class="pri" id="writeGo" data-act="submitWrite" disabled>' + go + '</button></div>')
 }
 function submitWrite(): void {
@@ -612,7 +612,7 @@ function submitWrite(): void {
 
 /** The event for a finished piece of work. */
 function workEvent(seed: Seed, mode: Mode, ok: boolean, d: Detail): FarmEvent {
-  if (mode === 'testout') return { type: 'unlocked', seed: seed.id, ok }
+  if (mode === 'testout') return d.work === 'write' ? { type: 'unlocked', seed: seed.id, ok, text: d.text, ticked: d.ticked, of: d.of } : { type: 'unlocked', seed: seed.id, ok }
   if (mode === 'water') return d.work === 'explain' ? { type: 'watered', seed: seed.id, ok, work: 'explain', text: d.text, ticked: d.ticked, of: d.of } : { type: 'watered', seed: seed.id, ok, work: 'recall' }
   return d.work === 'write' ? { type: 'harvested', seed: seed.id, ok, text: d.text, ticked: d.ticked, of: d.of } : { type: 'harvested', seed: seed.id, ok }
 }
