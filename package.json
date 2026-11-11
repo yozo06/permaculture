@@ -1,6 +1,6 @@
 {
   "name": "permaculture",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "A farm game where the crops are the things you are learning.",
   "directories": {
     "doc": "docs"
