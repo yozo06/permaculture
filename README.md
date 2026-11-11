@@ -4,9 +4,13 @@ A farm game where the crops are the things you are learning. Forgetting is wilti
 
 **Play:** [yozo06.github.io/permaculture](https://yozo06.github.io/permaculture/). To play on your own machine, run `npm run dev` and open the address it prints; it ends in `/permaculture/`, like the live site.
 
+![The farm on day 12: fields around the barn, crops at different stages, the well and the compost heap](docs/img/farm.jpg)
+
 Topics are seeds. Plant one in its field with notes in your own words, water it by answering cards and then by explaining it, and it grows. Leave it thirsty for two days and it wilts, unless the rain barrel has a day to spend; a wrong answer wilts it at once. Harvest a stage-5 crop with a harder question, a write-up or proof, and it becomes a perennial tree: rooted, yours for good. The map is your retention, drawn as land.
 
 Any goal is a **pack**: a YAML file of seeds with layers, prerequisites and questions. The game is built from `packs/`: add a seed to a YAML file and it is in the game. The packs so far are a senior backend engineer's prep (Haskell, system design, infra, DSA patterns, leadership) and everyday Kannada. The game's own roadmap is a pack too.
+
+![The learning tree for System design: rooted seeds are solid, growing ones carry a bar, locked ones are dashed, and lines show what each seed needs](docs/img/learning-tree.jpg)
 
 ## Status
 
