@@ -475,7 +475,7 @@ function onTile(x: number, y: number): void {
     walkTo(x, y)
     const cost = fenceCost(tr)
     const others = near.slice(1).map((p) => '<button type="button" data-act="expand" data-arg="' + k + '|' + p + '">Add to ' + esc(packTitle(p)) + ' · ' + cost + ' coins</button>').join('')
-    open(chip(first) + '<h2>' + (tr === 'wild' ? 'Clear and fence' : 'Fence it in') + '</h2><p>' + (tr === 'wild' ? 'Fell the trees and ' : '') + 'Add this tile to the ' + esc(packTitle(first)) + ' field. Fields grow one tile at a time, in any shape.</p><p class="sub">Costs ' + cost + ' coins. You have ' + S.coins + '.</p>' +
+    open(chip(first) + '<h2>' + (tr === 'wild' ? 'Clear and fence' : 'Fence it in') + '</h2><p>' + (tr === 'wild' ? 'Clear the wild ground and add' : 'Add') + ' this tile to the ' + esc(packTitle(first)) + ' field. Fields grow one tile at a time, in any shape.</p><p class="sub">Costs ' + cost + ' coins. You have ' + S.coins + '.</p>' +
       (others ? '<div class="branches">' + others + '</div>' : '') +
       foot('Add to ' + packTitle(first) + ' · ' + cost + ' coins', '<button type="button" data-act="close">Not now</button>'))
     const b = primary()
