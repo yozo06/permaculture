@@ -316,6 +316,7 @@ function hud(): void {
   $('hEnergy').style.width = (100 * S.energy / S.energyMax) + '%'
   $('hCoins').textContent = String(S.coins)
   $('hBarrel').textContent = String(S.barrel)
+  $('hSave').hidden = !store.saveFailed()
   store.saveUi()
 }
 let toastT: number | undefined
