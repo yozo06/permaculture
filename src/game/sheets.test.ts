@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { RULES } from '../engine/rules'
-import { cropSheetHtml, countText, NO_NOTES, plantSheetHtml, tickList, writingBox } from './sheets'
+import { cropSheetHtml, countText, footHtml, NO_NOTES, plantSheetHtml, tickList, writingBox } from './sheets'
 import type { CropView } from './views'
 
 const view = (patch: Partial<CropView> = {}): CropView => ({
@@ -41,6 +41,14 @@ describe('tickList', () => {
     expect(html.match(/type="checkbox"/g)).toHaveLength(2)
     expect(html).toContain('<legend>Your explanation…</legend>')
     expect(html).toContain('Says &lt;what&gt; it is')
+  })
+})
+
+describe('footHtml', () => {
+  it('escapes its label, so a pack title or seed name cannot inject markup', () => {
+    const html = footHtml('Add to <img src=x onerror=alert(1)> field')
+    expect(html).not.toContain('<img')
+    expect(html).toContain('&lt;img')
   })
 })
 

@@ -6,7 +6,7 @@ import { esc } from './util'
 export const chipHtml = (title: string, color: string): string => '<div><span class="chip" style="--c:' + esc(color) + '">' + esc(title) + '</span></div>'
 
 export const footHtml = (label?: string, extra?: string): string =>
-  '<div class="foot">' + (extra || '<span></span>') + '<button type="button" class="pri" data-act="close">' + (label || 'Close') + '</button></div>'
+  '<div class="foot">' + (extra || '<span></span>') + '<button type="button" class="pri" data-act="close">' + (label ? esc(label) : 'Close') + '</button></div>'
 
 /** "12 of 40 characters" until there is enough, then just the count. */
 export const countText = (n: number, min: number): string => (n >= min ? n + ' characters' : n + ' of ' + min + ' characters')
