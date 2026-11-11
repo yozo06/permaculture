@@ -852,7 +852,9 @@ function openTickedFields(): void {
   for (const e of fieldsToOpen(S, catalog, ticked)) if (!act(e)) return
   if (needsSetup()) return
   visitedPacks = []
+  // The world may have grown with the fields; centre on it, and save that, or a reload shows the farm off-centre.
   store.ui.cam = camHome()
+  store.saveUi()
   close()
   if (first) hint('Open the <b>Seed bag</b>, pick a seed, then tap soil in its field to plant it with notes in your own words.')
   toast(first ? 'Your farm is ready. Day ' + S.day + '.' : 'Field opened.')
