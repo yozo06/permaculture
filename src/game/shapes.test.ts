@@ -91,6 +91,8 @@ describe('cropShape', () => {
     expect(cropShape('herb', -3, false)).toEqual(cropShape('herb', 0, false))
     expect(cropShape('herb', 2.7, false)).toEqual(cropShape('herb', 2, false))
     expect(cropShape('herb', Number.NaN, false)).toEqual(cropShape('herb', 0, false))
+    expect(cropShape('herb', Number.POSITIVE_INFINITY, false)).toEqual(cropShape('herb', 4, false))
+    expect(cropShape('herb', Number.NEGATIVE_INFINITY, false)).toEqual(cropShape('herb', 0, false))
   })
 })
 

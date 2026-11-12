@@ -140,7 +140,7 @@ const LOOKS: Record<Layer, Part[][]> = {
 
 /** The parts of a crop of this layer. A stage outside 0 to 4 is read as the nearest one; a tree looks the same whatever its stage. */
 export function cropShape(layer: Layer, stage: number, perennial: boolean): readonly Part[] {
-  const look = perennial ? 5 : Number.isFinite(stage) ? Math.min(4, Math.max(0, Math.floor(stage))) : 0
+  const look = perennial ? 5 : Number.isNaN(stage) ? 0 : Math.min(4, Math.max(0, Math.floor(stage)))
   return LOOKS[layer][look] ?? []
 }
 
