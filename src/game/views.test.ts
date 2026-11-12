@@ -7,7 +7,7 @@ import { apply, fieldsToOpen, fold } from '../engine/fold'
 import { RULES } from '../engine/rules'
 import type { FarmState } from '../engine/types'
 import sampleFarm from './sample-farm.json'
-import { bagView, cropView, readinessView, seedStatus, sourceLinks, splitName, tending, treeView, driftText, pickerView } from './views'
+import { afterJump, bagView, cropView, readinessView, seedStatus, sourceLinks, splitName, tending, treeView, driftText, pickerView } from './views'
 
 const catalog = buildCatalog(collectPacks())
 
@@ -307,9 +307,9 @@ describe('a seed that has to be earned', () => {
   it('says in the tree what earns it and how far along the farm is', () => {
     const s = open('garden', 'shed')
     expect(treeView('shed', s, c)?.earned).toEqual([
-      { id: 'kiln', name: 'Kiln', pack: 'shed', line: 'a seed rooted in another field', have: 0, want: 1, met: false, locked: false },
-      { id: 'forge', name: 'Forge', pack: 'shed', line: 'the Garden field at readiness 50', have: 0, want: 50, met: false, locked: false },
-      { id: 'anvil', name: 'Anvil', pack: 'shed', line: 'a seed rooted in another field', have: 0, want: 1, met: false, locked: true },
+      { id: 'kiln', name: 'Kiln', pack: 'shed', line: 'a seed rooted in another field', have: 0, want: 1, met: false, locked: false, held: null },
+      { id: 'forge', name: 'Forge', pack: 'shed', line: 'the Garden field at readiness 50', have: 0, want: 50, met: false, locked: false, held: null },
+      { id: 'anvil', name: 'Anvil', pack: 'shed', line: 'a seed rooted in another field', have: 0, want: 1, met: false, locked: true, held: null },
     ])
     const one = treeView('shed', withCrops(s, standing('corn')), c)?.earned
     expect(one?.map((x) => [x.id, x.have, x.met])).toEqual([['kiln', 1, true], ['forge', 33, false], ['anvil', 1, true]])
@@ -383,7 +383,8 @@ describe('a seed that layer balance holds back', () => {
   it('stays in the seed bag with the layer to plant in first, and cannot be picked up', () => {
     const garden = bagView(fresh(), lc).find((x) => x.pack === 'garden')
     expect(garden?.seeds.map((x) => [x.id, x.status, x.below])).toEqual([['corn', 'held', 'Root'], ['beans', 'ready', null], ['beet', 'ready', null], ['thyme', 'held', 'Root']])
-    expect(garden?.lockedCount).toBe(1)
+    // Locked: the squash and the maple by what they need, the elm because it is not earned.
+    expect(garden?.lockedCount).toBe(3)
   })
 
   it('is never the seed in hand, even if it was picked up before it was held', () => {
@@ -395,7 +396,30 @@ describe('a seed that layer balance holds back', () => {
     const tree = treeView('garden', fresh(), lc)
     expect(tree?.nodes.filter((n) => n.status === 'held').map((n) => n.id).sort()).toEqual(['corn', 'thyme'])
     expect(tree?.held).toEqual([{ id: 'corn', name: 'Corn', layer: 'Canopy', below: 'Root' }, { id: 'thyme', name: 'Thyme', layer: 'Herb', below: 'Root' }])
-    expect(tree?.locked.map((x) => x.id)).toEqual(['squash'])
+    expect(tree?.locked.map((x) => x.id)).toEqual(['squash', 'maple'])
     expect(treeView('shed', fresh(), lc)?.held).toEqual([])
+  })
+
+  it('warns before a jump that the seed will still wait for a lower layer, and says so after it', () => {
+    const s = fresh()
+    expect(treeView('garden', s, lc)?.locked).toEqual([
+      { id: 'squash', name: 'Squash', needs: 'Corn + Beans', earned: null, held: null },
+      { id: 'maple', name: 'Maple', needs: 'Thyme', earned: null, held: 'Root' },
+    ])
+    const jumped = { ...s, unlocked: ['maple', 'squash'] }
+    expect(afterJump(of('maple'), jumped, lc)).toBe('It waits for a lower layer: the Root layer of the Garden field is hollow, so plant there first.')
+    expect(afterJump(of('squash'), jumped, lc)).toBe('Plant it from the seed bag.')
+  })
+
+  it('says after a jump that a seed has still to be earned, before anything about layers', () => {
+    const s = { ...open('garden', 'shed'), unlocked: ['anvil'] }
+    expect(afterJump(seedOf('anvil'), s, c)).toBe('It has still to be earned: that takes a seed rooted in another field.')
+  })
+
+  it('never calls an earned seed ready to plant while a lower layer holds it', () => {
+    // The elm is earned by a tree in the shed. With the saw rooted it is earned, and it still waits for the root layer.
+    const s = withCrops(fresh(), standing('saw'))
+    expect(seedStatus(of('elm'), s, lc)).toBe('held')
+    expect(treeView('garden', s, lc)?.earned).toEqual([{ id: 'elm', name: 'Elm', pack: 'garden', line: 'a seed rooted in another field', have: 1, want: 1, met: true, locked: false, held: 'Root' }])
   })
 })

@@ -34,11 +34,14 @@ export const smallPacks: PackDef[] = [
 /**
  * The small farm with a root and a herb added to the garden, so its canopy (corn) has layers beneath it to wait for.
  * From the ground up the garden is then: beet (root), squash (ground cover, needs corn and beans), thyme (herb), corn (canopy).
+ * Two more canopy seeds wait for other reasons as well: the maple needs the thyme, and the elm is earned by a tree in the shed.
  */
 export const layeredCatalog = buildCatalog(smallPacks.map((p) => (p.pack !== 'garden' ? p : { ...p, seeds: [
   ...p.seeds,
   { id: 'beet', name: 'Beet', layer: 'root', branch: 'roots', tier: 0, harvest: 'recall', questions: { water: [mcq('Beet?')] } },
   { id: 'thyme', name: 'Thyme', layer: 'herb', branch: 'leaves', tier: 0, harvest: 'recall', questions: { water: [mcq('Thyme?')] } },
+  { id: 'maple', name: 'Maple', layer: 'canopy', branch: 'leaves', tier: 1, needs: ['thyme'], harvest: 'recall', questions: { water: [mcq('Maple?')] } },
+  { id: 'elm', name: 'Elm', layer: 'canopy', branch: 'roots', tier: 0, earned: { rooted: 1 }, harvest: 'recall', questions: { water: [mcq('Elm?')] } },
 ] })))
 
 /** Notes and an explanation long enough to plant and to water with. */

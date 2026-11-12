@@ -24,7 +24,7 @@ import {
   pickerHtml, plantSheetHtml, readinessSheetHtml, shareSheetHtml, tickList, writingBox,
 } from './sheets'
 import { arrivalText, neighbourCropView, neighbourRows, shareView, type ShareView } from './visit'
-import { bagView, cropView, driftText, needsText, packColor, pickerView, readinessView, sourceLinks, splitName, tending, treeView, type TreeView } from './views'
+import { afterJump, bagView, cropView, driftText, needsText, packColor, pickerView, readinessView, sourceLinks, splitName, tending, treeView, type TreeView } from './views'
 
 /* ---------- types ---------- */
 type Mode = 'water' | 'harvest' | 'testout'
@@ -802,7 +802,7 @@ function settle(seed: Seed, mode: Mode, ok: boolean, detail: Detail): string | n
     if (before !== undefined && c.stage > before) celebrate('grow', c, MOMENT_MS.splash / 2)
   }
   if (mode === 'testout') {
-    return ok ? '<b>Over the fence.</b> ' + name + ' is unlocked. Plant it from the seed bag.' : '<b>Not yet.</b> ' + name + ' stays locked. Root its prerequisites, or try again tomorrow.'
+    return ok ? '<b>Over the fence.</b> ' + name + ' is unlocked. ' + esc(afterJump(seed, S, catalog)) : '<b>Not yet.</b> ' + name + ' stays locked. Root its prerequisites, or try again tomorrow.'
   }
   if (!c) return ''
   if (mode === 'harvest') {

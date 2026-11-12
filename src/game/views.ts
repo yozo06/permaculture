@@ -21,6 +21,17 @@ export function seedStatus(seed: Seed, state: FarmState, catalog: Catalog): Seed
   return heldBy(seed, state, catalog) ? 'held' : 'ready'
 }
 
+/**
+ * What to say after a seed has been jumped to, once "it is unlocked" has been said: that it can be planted, or what
+ * the jump did not clear. `state` is the farm after the jump.
+ */
+export function afterJump(seed: Seed, state: FarmState, catalog: Catalog): string {
+  if (seed.earned && !isEarned(seed, state, catalog)) return 'It has still to be earned: that takes ' + earnedLine(seed.earned, catalog) + '.'
+  const below = heldBy(seed, state, catalog)
+  if (below) return 'It waits for a lower layer: the ' + LAYER_NAMES[below] + ' layer of the ' + (catalog.pack(seed.pack)?.title ?? seed.pack) + ' field is hollow, so plant there first.'
+  return 'Plant it from the seed bag.'
+}
+
 export const needsText = (seed: Seed, catalog: Catalog): string =>
   seed.needs.map((id) => catalog.seed(id)?.name ?? id).join(' + ')
 
@@ -149,6 +160,8 @@ export interface EarnedRow {
   met: boolean
   /** Something it needs is not rooted either, so earning it does not make it plantable by itself. */
   locked: boolean
+  /** The name of the hollow layer that holds it back under layer balance, if one does. */
+  held: string | null
 }
 
 /** Of these seeds, the ones that have to be earned and are not in the ground yet. */
@@ -156,7 +169,8 @@ function earnedRows(seeds: readonly Seed[], state: FarmState, catalog: Catalog):
   return seeds.flatMap((seed): EarnedRow[] => {
     const progress = earnedProgress(seed, state, catalog)
     if (!seed.earned || !progress || cropOf(state, seed.id)) return []
-    return [{ id: seed.id, name: seed.name, pack: seed.pack, line: earnedLine(seed.earned, catalog), ...progress, locked: !available(seed, state) }]
+    const below = heldBy(seed, state, catalog)
+    return [{ id: seed.id, name: seed.name, pack: seed.pack, line: earnedLine(seed.earned, catalog), ...progress, locked: !available(seed, state), held: below && LAYER_NAMES[below] }]
   })
 }
 
@@ -281,8 +295,12 @@ export interface TreeView {
   nodes: TreeNode[]
   edges: TreeEdge[]
   guilds: TreeGuild[]
-  /** Seeds you could jump the fence to: visible, not planted, and missing something they need. `earned` is what one must also be earned by, if it is not yet: the jump will not clear that. */
-  locked: { id: string; name: string; needs: string; earned: string | null }[]
+  /**
+   * Seeds you could jump the fence to: visible, not planted, and missing something they need. A jump clears only that:
+   * `earned` is what the seed must also be earned by, if it is not yet, and `held` is the name of the hollow layer it
+   * would still wait for.
+   */
+  locked: { id: string; name: string; needs: string; earned: string | null; held: string | null }[]
   /** Seeds of this field that have to be earned and are not in the ground yet. No jump clears these. */
   earned: EarnedRow[]
   /** The field's readiness in a line, or null for a field with no end. */
@@ -356,7 +374,10 @@ export function treeView(packId: string, state: FarmState, catalog: Catalog): Tr
   // A jump clears what a seed needs and nothing else, so a seed that only has to be earned is not offered one.
   const locked = seeds
     .filter((s) => !cropOf(state, s.id) && !available(s, state))
-    .map((s) => ({ id: s.id, name: s.name, needs: needsText(s, catalog), earned: s.earned && !isEarned(s, state, catalog) ? earnedLine(s.earned, catalog) : null }))
+    .map((s) => {
+      const below = heldBy(s, state, catalog)
+      return { id: s.id, name: s.name, needs: needsText(s, catalog), earned: s.earned && !isEarned(s, state, catalog) ? earnedLine(s.earned, catalog) : null, held: below && LAYER_NAMES[below] }
+    })
 
   return {
     pack: packId, title: pack.title, color: packColor(pack), width: TREE_WIDTH, height: y, columnWidth,

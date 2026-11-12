@@ -197,7 +197,7 @@ describe('readinessSheetHtml', () => {
     readiness: { percent: 61, bar: 80, atBar: false, hollow: ['Root'], layers: [{ layer: 'canopy', name: 'Canopy', rooted: 2, total: 5 }, { layer: 'root', name: 'Root', rooted: 0, total: 4 }] },
     ...patch,
   })
-  const earned = (patch: Partial<EarnedRow> = {}): EarnedRow => ({ id: 'sprites', name: 'Sprite sheets', pack: 'workshop', line: 'a seed rooted in another field', have: 0, want: 1, met: false, locked: false, ...patch })
+  const earned = (patch: Partial<EarnedRow> = {}): EarnedRow => ({ id: 'sprites', name: 'Sprite sheets', pack: 'workshop', line: 'a seed rooted in another field', have: 0, want: 1, met: false, locked: false, held: null, ...patch })
   const view = (patch: Partial<ReadinessView> = {}): ReadinessView => ({ rows: [row()], atBar: 0, withBar: 1, earned: [], ...patch })
   const html = (v: ReadinessView = view()): string => readinessSheetHtml(v, RULES.readiness)
 
@@ -262,6 +262,10 @@ describe('readinessSheetHtml', () => {
     const waiting = html(view({ earned: [earned({ have: 1, met: true, locked: true })] }))
     expect(waiting).toContain('earned, still locked by what it needs')
     expect(waiting).not.toContain('ready to plant')
+    // Earned, and nothing it needs is missing, but layer balance holds it: not ready either.
+    const held = html(view({ earned: [earned({ have: 1, met: true, held: 'Root' })] }))
+    expect(held).toContain('earned, waiting for the Root layer')
+    expect(held).not.toContain('ready to plant')
     expect(html()).not.toContain('Earned by learning')
   })
 

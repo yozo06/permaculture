@@ -101,7 +101,7 @@ export function almanacHtml(catalog: Catalog, energyMax: number, version: string
     '<h3>Learning tree</h3>' +
     list([
       'Every seed of every field, including locked ones, is on the tree. A seed unlocks when what it needs is rooted.',
-      'Pick a branch to focus; the seed bag puts it first. Or jump the fence: pass a harvest-grade question to unlock a seed early (' + RULES.testOut.energy + ' energy).',
+      'Pick a branch to focus; the seed bag puts it first. Or jump the fence: pass a harvest-grade question to unlock a seed early (' + RULES.testOut.energy + ' energy). A jump clears what a seed needs and nothing else: it does not earn a seed, and it does not put one ahead of a hollow layer.',
       'Guilds are sets of seeds that belong together. The tree shows how many of each are rooted; there is no bonus yet.',
     ]) +
     '<h3>Readiness</h3>' +
