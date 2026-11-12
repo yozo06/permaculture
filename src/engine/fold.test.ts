@@ -84,7 +84,16 @@ describe('bar-set', () => {
     const unopened = run(cat, [started, { type: 'field-opened', pack: 'shed', slot: 0 }])
     expect(refusal(unopened, bar('garden', 60))).toBe('The Garden field is not open yet.')
     refusal(smallFarm(), bar('nowhere', 60))
-    expect(refusal(smallFarm(), bar('shed', 60))).toBe('The Shed field has no end, so it has no bar.')
+    expect(check(smallFarm(), bar('shed', 60), cat)).toBe('The Shed field has no end, so it has no bar.')
+  })
+
+  it('keeps a bar a log already holds for a field that has since lost its end: only a farmer today is told no', () => {
+    // A pack can be marked as having no end after a farmer set a bar for it. Replay must not drop the event.
+    const s = smallFarm()
+    const e = bar('shed', 60)
+    expect(allowed(s, e, cat)).toBeNull()
+    expect(refusedCount([started, { type: 'field-opened', pack: 'garden', slot: 0 }, { type: 'field-opened', pack: 'shed', slot: 1 }, e], cat)).toBe(0)
+    expect(apply(s, e, cat).bars).toEqual({ shed: 60 })
   })
 
   it('keeps only what an event of this kind holds', () => {
@@ -686,7 +695,7 @@ describe('a seed that has to be earned', () => {
 
   it('asks nothing more of any other kind of event, or of a seed that asks for nothing', () => {
     const s = farm()
-    for (const e of [planting(s, 'saw'), sleep, { type: 'farm-named', name: 'Ours' }, { type: 'bar-set', pack: 'garden', bar: 50 }, { type: 'nonsense' }, null]) {
+    for (const e of [planting(s, 'saw'), sleep, { type: 'farm-named', name: 'Ours' }, { type: 'bar-set', pack: 'garden', bar: 50 }, { type: 'bar-set', pack: 'shed', bar: 0 }, { type: 'nonsense' }, null]) {
       expect(check(s, e, earnCat)).toBe(allowed(s, e, earnCat))
     }
   })

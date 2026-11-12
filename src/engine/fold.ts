@@ -2,8 +2,8 @@
 // Everything here is pure: state in, state out, nothing mutated, nothing random, no clock.
 //
 // Two questions are kept apart. `allowed` is what a log may hold, and replaying a farm asks only that. `check` is what
-// the game asks of something done today: everything `allowed` asks, and that a seed has been earned. A rule added to
-// the second can never change how a saved farm replays.
+// the game asks of something done today: everything `allowed` asks, and that a seed has been earned and a bar is for a
+// field with an end. A rule added to the second can never change how a saved farm replays, whatever a pack does later.
 import type { Catalog } from './catalog'
 import { isRecord } from './util'
 import { fieldOf, fenceCost, isBuildingTile, neighbourFields, nextFreeSlot, terrain, tileKey, wildKind, worldSize } from './land'
@@ -234,8 +234,6 @@ function whyFocus(s: FarmState, e: Extract<FarmEvent, { type: 'focus-set' }>, ca
 function whyBar(s: FarmState, e: Extract<FarmEvent, { type: 'bar-set' }>, catalog: Catalog): string | null {
   const closed = whyClosed(s, e.pack, catalog)
   if (closed) return closed
-  const pack = catalog.pack(e.pack)
-  if (!pack || pack.perennial === true) return 'The ' + (pack?.title ?? e.pack) + ' field has no end, so it has no bar.'
   const { min, max } = RULES.readiness
   return Number.isInteger(e.bar) && e.bar >= min && e.bar <= max ? null : 'A bar is a whole number from ' + min + ' to ' + max + '.'
 }
@@ -282,10 +280,16 @@ function why(s: FarmState, e: FarmEvent, catalog: Catalog): string | null {
 }
 
 /**
- * What the game asks of something done today, on top of what a log may hold: a seed that has to be earned is planted
- * only once it has been. Replay never asks this, so a farm that planted the seed before it had to be earned keeps it.
+ * What the game asks of something done today, on top of what a log may hold. Replay never asks any of it, so a pack
+ * can change these things under a saved farm and the farm loses nothing:
+ * - a seed that has to be earned is planted only once it has been (a farm that planted it earlier keeps the crop);
+ * - a bar is set only for a field with an end (a bar set before a pack was marked as having none stays in the log, unused).
  */
 function whyToday(s: FarmState, e: FarmEvent, catalog: Catalog): string | null {
+  if (e.type === 'bar-set') {
+    const pack = catalog.pack(e.pack)
+    return pack?.perennial === true ? 'The ' + pack.title + ' field has no end, so it has no bar.' : null
+  }
   if (e.type !== 'planted') return null
   const seed = catalog.seed(e.seed)
   return seed?.earned && !isEarned(seed, s, catalog) ? seed.name + ' is earned by ' + earnedLine(seed.earned, catalog) + '.' : null

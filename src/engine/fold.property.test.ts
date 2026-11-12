@@ -147,9 +147,10 @@ function toEvent(s: FarmState, catalog: Catalog, intent: Intent): unknown {
   }
 }
 
-/** True for the planting of a seed whose learning is not on the farm yet. */
-function unearned(s: FarmState, event: unknown, catalog: Catalog): boolean {
-  const e = event as { type?: unknown; seed?: unknown } | null
+/** True for what only a player today is refused: planting a seed that is not earned yet, and a bar for a field with no end. */
+function onlyToday(s: FarmState, event: unknown, catalog: Catalog): boolean {
+  const e = event as { type?: unknown; seed?: unknown; pack?: unknown } | null
+  if (e && e.type === 'bar-set' && typeof e.pack === 'string') return catalog.pack(e.pack)?.perennial === true
   const seed = e && e.type === 'planted' && typeof e.seed === 'string' ? catalog.seed(e.seed) : undefined
   return seed !== undefined && !isEarned(seed, s, catalog)
 }
@@ -182,15 +183,16 @@ function play(catalog: Catalog, list: Intent[], mask: boolean[] = [true]): { sta
     // Nothing touches the old state. Replay follows what a log may hold, and that alone.
     expect(JSON.stringify(before)).toBe(frozen)
     expect(after === before).toBe(fits !== null)
-    // 12. The game asks all of that of a player and one thing more: that a seed has been earned before it is planted.
+    // 12. The game asks all of that of a player and two things more: a seed is earned before it is planted, and a bar
+    // is for a field with an end.
     if (fits !== null) expect(why).not.toBeNull()
     if (why !== null) {
-      if (fits === null) expect(unearned(before, event, catalog)).toBe(true)
+      if (fits === null) expect(onlyToday(before, event, catalog)).toBe(true)
       // What the game refused a player is not in their log, even where a log could have held it.
       else all.push(event)
       continue
     }
-    expect(unearned(before, event, catalog)).toBe(false)
+    expect(onlyToday(before, event, catalog)).toBe(false)
     all.push(event)
     accepted.push(event as FarmEvent)
     s = after
@@ -215,7 +217,7 @@ function verify(s: FarmState, before: FarmState, e: FarmEvent, catalog: Catalog)
   expect(s.name.length).toBeLessThanOrEqual(RULES.farmName.max)
   if (e.type === 'farm-named') expect(s.name).toBe(e.name.trim())
   else expect(s.name).toBe(before.name)
-  // 11. a bar is only ever set by its own event, on an open field that has an end, to a number a farmer may set
+  // 11. a bar is only ever set by its own event, on an open field that has an end (a player is never let set another), to a number a farmer may set
   if (e.type === 'bar-set') expect(s.bars).toEqual({ ...before.bars, [e.pack]: e.bar })
   else expect(s.bars).toEqual(before.bars)
   for (const [pack, bar] of Object.entries(s.bars)) {

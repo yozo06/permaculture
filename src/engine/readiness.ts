@@ -25,7 +25,7 @@ export interface Readiness {
   layers: LayerCount[]
   /** Layers the catalogue has seeds in but the farm has no standing tree in. */
   hollow: Layer[]
-  /** What the field is held to: the farmer's bar, else the pack's, else the rules'. */
+  /** What the field is held to: the farmer's bar, else the pack's, else the rules'. (A bar kept for a pack that has since lost its end is never read: such a pack has no readiness.) */
   bar: number
   /** The number is at the bar and no layer is hollow. */
   atBar: boolean
