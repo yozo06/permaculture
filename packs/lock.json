@@ -212,6 +212,7 @@
     "wild-finds": {"pack":"workshop","needs":["byok"],"harvest":"artifact","wild":false},
     "readiness": {"pack":"workshop","needs":["catalogues"],"harvest":"artifact","wild":false},
     "earned-unlocks": {"pack":"workshop","needs":["readiness"],"harvest":"artifact","wild":false},
+    "layer-balance": {"pack":"workshop","needs":["readiness"],"harvest":"artifact","wild":false},
     "safe-saves": {"pack":"workshop","needs":["event-log"],"harvest":"artifact","wild":false},
     "snapshot": {"pack":"workshop","needs":["repo"],"harvest":"artifact","wild":false},
     "visit": {"pack":"workshop","needs":["snapshot"],"harvest":"artifact","wild":false},
