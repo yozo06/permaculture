@@ -1,7 +1,7 @@
 // What the seed bag and the learning tree draw, worked out from the packs and the farm. Pure: no DOM.
 import { HARVEST_NAMES, LAYER_NAMES, type Catalog, type Seed } from '../engine/catalog'
 import { harvestWork, rungName, waterWork, type WaterKind } from '../engine/ladder'
-import { earnedLine, earnedProgress, readiness } from '../engine/readiness'
+import { earnedLine, earnedProgress, isEarned, readiness } from '../engine/readiness'
 import { RULES, available, cropOf, revivable, ripe, rooted, thirsty, visible, zone } from '../engine/rules'
 import type { Crop, FarmState, Layer, PackDef } from '../engine/types'
 
@@ -10,11 +10,11 @@ export const packColor = (p: PackDef): string => p.color ?? DEFAULT_COLOR
 
 export type SeedStatus = 'ready' | 'growing' | 'rooted' | 'locked'
 
-/** Where a seed stands: rooted (a perennial), growing (in the ground), ready to plant, or locked. */
-export function seedStatus(seed: Seed, state: FarmState): SeedStatus {
+/** Where a seed stands: rooted (a perennial), growing (in the ground), ready to plant, or locked (by what it needs, or by what it is earned by). */
+export function seedStatus(seed: Seed, state: FarmState, catalog: Catalog): SeedStatus {
   const crop = cropOf(state, seed.id)
   if (crop) return crop.perennial ? 'rooted' : 'growing'
-  return available(seed, state) ? 'ready' : 'locked'
+  return available(seed, state) && isEarned(seed, state, catalog) ? 'ready' : 'locked'
 }
 
 export const needsText = (seed: Seed, catalog: Catalog): string =>
@@ -109,7 +109,7 @@ export function bagView(state: FarmState, catalog: Catalog, selected: string | n
     let lockedCount = 0
     for (const seed of catalog.seedsOf(pack.pack)) {
       if (!visible(seed, state)) continue
-      const status = seedStatus(seed, state)
+      const status = seedStatus(seed, state, catalog)
       if (status === 'locked') { lockedCount++; continue }
       seeds.push({
         id: seed.id, name: seed.name, layer: LAYER_NAMES[seed.layer], harvest: HARVEST_NAMES[seed.harvest], status,
@@ -260,8 +260,10 @@ export interface TreeView {
   nodes: TreeNode[]
   edges: TreeEdge[]
   guilds: TreeGuild[]
-  /** Seeds you could jump the fence to: visible, locked, not planted. */
+  /** Seeds you could jump the fence to: visible, not planted, and missing something they need. */
   locked: { id: string; name: string; needs: string }[]
+  /** Seeds of this field that have to be earned and are not in the ground yet. No jump clears these. */
+  earned: EarnedRow[]
   /** The field's readiness in a line, or null for a field with no end. */
   readiness: { percent: number; bar: number; atBar: boolean; hollow: string[] } | null
 }
@@ -295,7 +297,7 @@ export function treeView(packId: string, state: FarmState, catalog: Catalog): Tr
         const row = Math.floor(i / perRow)
         const inRow = Math.min(perRow, cell.length - row * perRow)
         const crop = cropOf(state, seed.id)
-        const status = seedStatus(seed, state)
+        const status = seedStatus(seed, state, catalog)
         const node: TreeNode = {
           id: seed.id, name: seed.name, lines: splitName(seed.name), status, wild: seed.wild,
           progress: status === 'growing' && crop ? (crop.stage + 1) / 5 : null,
@@ -322,20 +324,21 @@ export function treeView(packId: string, state: FarmState, catalog: Catalog): Tr
     const members = g.seeds.flatMap((id) => {
       const seed = catalog.seed(id)
       if (!seed) return []
-      return [{ id, name: visible(seed, state) ? seed.name : null, status: seedStatus(seed, state) }]
+      return [{ id, name: visible(seed, state) ? seed.name : null, status: seedStatus(seed, state, catalog) }]
     })
     return { id: g.id, title: g.title, members, rooted: members.filter((m) => m.status === 'rooted').length, total: members.length }
   })
 
   const ready = readiness(packId, state, catalog)
+  // A jump clears what a seed needs and nothing else, so a seed that only has to be earned is not offered one.
   const locked = seeds
-    .filter((s) => seedStatus(s, state) === 'locked')
+    .filter((s) => !cropOf(state, s.id) && !available(s, state))
     .map((s) => ({ id: s.id, name: s.name, needs: needsText(s, catalog) }))
 
   return {
     pack: packId, title: pack.title, color: packColor(pack), width: TREE_WIDTH, height: y, columnWidth,
     branches: pack.branches.map((b, i) => ({ id: b.id, title: b.title, focus: state.focus[packId] === b.id, x: (i + 0.5) * columnWidth })),
-    nodes, edges, guilds, locked,
+    nodes, edges, guilds, locked, earned: earnedRows(seeds, state, catalog),
     readiness: ready && { percent: ready.percent, bar: ready.bar, atBar: ready.atBar, hollow: ready.hollow.map((l) => LAYER_NAMES[l]) },
   }
 }

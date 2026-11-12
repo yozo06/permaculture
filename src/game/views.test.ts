@@ -7,7 +7,7 @@ import { apply, fieldsToOpen, fold } from '../engine/fold'
 import { RULES } from '../engine/rules'
 import type { FarmState } from '../engine/types'
 import sampleFarm from './sample-farm.json'
-import { bagView, cropView, readinessView, sourceLinks, splitName, tending, treeView, driftText, pickerView } from './views'
+import { bagView, cropView, readinessView, seedStatus, sourceLinks, splitName, tending, treeView, driftText, pickerView } from './views'
 
 const catalog = buildCatalog(collectPacks())
 
@@ -274,6 +274,48 @@ const c = earningCatalog
 const open = (...packs: string[]): FarmState => run(c, [started, ...packs.map((pack, slot) => ({ type: 'field-opened' as const, pack, slot }))])
 const standing = (seed: string, patch: Partial<Crop> = {}): Crop => ({ seed, x: 0, y: 0, stage: 4, best: 4, due: 99, wilted: false, perennial: true, notes: '', journal: [], ...patch })
 const withCrops = (s: FarmState, ...crops: Crop[]): FarmState => ({ ...s, crops: [...s.crops, ...crops] })
+const seedOf = (id: string) => { const seed = c.seed(id); if (!seed) throw new Error('no seed ' + id); return seed }
+
+describe('a seed that has to be earned', () => {
+  it('is locked until the learning is on the farm, then ready like any other', () => {
+    const s = open('garden', 'shed')
+    expect(seedStatus(seedOf('kiln'), s, c)).toBe('locked')
+    expect(seedStatus(seedOf('kiln'), withCrops(s, standing('corn')), c)).toBe('ready')
+    expect(seedStatus(seedOf('saw'), s, c)).toBe('ready')
+  })
+
+  it('stays out of the seed bag, counted with the locked ones, until it is earned', () => {
+    const s = open('garden', 'shed')
+    const shed = (state: FarmState) => bagView(state, c).find((x) => x.pack === 'shed')
+    expect(shed(s)?.seeds.map((x) => x.id)).toEqual(['saw', 'plane'])
+    expect(shed(s)?.lockedCount).toBe(4)
+    expect(shed(withCrops(s, standing('corn')))?.seeds.map((x) => x.id)).toEqual(['saw', 'plane', 'kiln'])
+  })
+
+  it('is offered no jump over the fence, because a jump would not clear it', () => {
+    const tree = treeView('shed', open('garden', 'shed'), c)
+    // The lathe and the anvil need the saw. The kiln and the forge need nothing: they only have to be earned.
+    expect(tree?.locked.map((x) => x.id)).toEqual(['lathe', 'anvil'])
+    expect(tree?.nodes.filter((n) => n.status === 'locked').map((n) => n.id).sort()).toEqual(['anvil', 'forge', 'kiln', 'lathe'])
+  })
+
+  it('says in the tree what earns it and how far along the farm is', () => {
+    const s = open('garden', 'shed')
+    expect(treeView('shed', s, c)?.earned).toEqual([
+      { id: 'kiln', name: 'Kiln', pack: 'shed', line: 'a seed rooted in another field', have: 0, want: 1, met: false },
+      { id: 'forge', name: 'Forge', pack: 'shed', line: 'the Garden field at 50', have: 0, want: 50, met: false },
+      { id: 'anvil', name: 'Anvil', pack: 'shed', line: 'a seed rooted in another field', have: 0, want: 1, met: false },
+    ])
+    const one = treeView('shed', withCrops(s, standing('corn')), c)?.earned
+    expect(one?.map((x) => [x.id, x.have, x.met])).toEqual([['kiln', 1, true], ['forge', 33, false], ['anvil', 1, true]])
+    expect(treeView('garden', s, c)?.earned).toEqual([])
+  })
+
+  it('leaves the list once it is in the ground', () => {
+    const s = withCrops(open('garden', 'shed'), standing('corn'), standing('kiln', { perennial: false, stage: 0 }))
+    expect(treeView('shed', s, c)?.earned.map((x) => x.id)).toEqual(['forge', 'anvil'])
+  })
+})
 
 describe('readinessView', () => {
   it('has a row for each field the farm has, in pack order, and a number only for a field with an end', () => {
