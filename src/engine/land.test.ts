@@ -2,7 +2,7 @@ import fc from 'fast-check'
 import { describe, expect, it } from 'vitest'
 import { RULES } from './rules'
 import {
-  BARN, COMPOST, GATE, SIGN, WELL, fenceCost, fieldOf, fieldOrigin, hash, homestead, isBuildingTile, neighbourFields,
+  BARN, COMPOST, FIELD_SIZE, GATE, SIGN, WELL, fenceCost, fieldOf, fieldOrigin, flagTile, hash, homestead, isBuildingTile, neighbourFields,
   nextFreeSlot, shells, slotCell, terrain, tileKey, worldSize, type Fields,
 } from './land'
 
@@ -132,5 +132,48 @@ describe('fenced tiles', () => {
     expect(fenceCost('grass')).toBe(RULES.fence.open)
     expect(fenceCost('wild')).toBe(40)
     expect(fenceCost('grass')).toBe(25)
+  })
+})
+
+describe('flagTile', () => {
+  // Where a tile's top corner falls on the screen, as the game draws it: 16 pixels across and 8 down for each step.
+  const corner = (t: { x: number; y: number }): { sx: number; sy: number } => ({ sx: (t.x - t.y) * 16, sy: (t.x + t.y) * 8 })
+  /** The pole of a flag: one column of pixels, 28 tall, rising from the corner. */
+  const poleMeets = (t: { x: number; y: number }, box: { x0: number; x1: number; y0: number; y1: number }): boolean => {
+    const { sx, sy } = corner(t)
+    return sx >= box.x0 && sx <= box.x1 && sy >= box.y0 && sy - 28 <= box.y1
+  }
+  // The barn and the gate as they are drawn: the barn two tiles each way under its roof, the gate a post on each side of the main path with a beam between.
+  const barn = { x0: corner(BARN).sx - 32, x1: corner(BARN).sx + 32, y0: corner(BARN).sy - 28, y1: corner(BARN).sy + 32 }
+  const gate = { x0: corner(GATE).sx - 33, x1: corner(GATE).sx + 1, y0: corner(GATE).sy - 23, y1: corner(GATE).sy + 18 }
+  const SLOTS = Array.from({ length: 36 }, (_, i) => i)
+
+  it('stands a flag at a corner of its own field', () => {
+    for (const slot of SLOTS) {
+      const { x0, y0 } = fieldOrigin(slot)
+      expect([{ x: x0, y: y0 }, { x: x0 + FIELD_SIZE, y: y0 }, { x: x0, y: y0 + FIELD_SIZE }], 'slot ' + slot).toContainEqual(flagTile(slot))
+    }
+  })
+
+  it('uses the north corner wherever nothing is in the way', () => {
+    for (const slot of [0, 3, 4, 5, 6, 7, 8]) {
+      const { x0, y0 } = fieldOrigin(slot)
+      expect(flagTile(slot), 'slot ' + slot).toEqual({ x: x0, y: y0 })
+    }
+  })
+
+  it('never stands a flag in the gate or against the barn', () => {
+    // The north corners of the second and third fields are exactly there.
+    expect(poleMeets({ x: fieldOrigin(1).x0, y: fieldOrigin(1).y0 }, barn)).toBe(true)
+    expect(poleMeets({ x: fieldOrigin(2).x0, y: fieldOrigin(2).y0 }, gate)).toBe(true)
+    for (const slot of SLOTS) {
+      expect(poleMeets(flagTile(slot), barn), 'slot ' + slot + ' and the barn').toBe(false)
+      expect(poleMeets(flagTile(slot), gate), 'slot ' + slot + ' and the gate').toBe(false)
+    }
+  })
+
+  it('gives every field a corner of its own', () => {
+    const seen = new Set(SLOTS.map((slot) => flagTile(slot).x + ',' + flagTile(slot).y))
+    expect(seen.size).toBe(SLOTS.length)
   })
 })

@@ -3,7 +3,7 @@ import { buildCatalog, LAYER_NAMES, type Seed } from '../engine/catalog'
 import { findCandidates, pickFind } from '../engine/finds'
 import { check, fieldsToOpen, refusedCount } from '../engine/fold'
 import {
-  BARN, COMPOST, GATE, SIGN, WELL, fenceCost, fieldOf as landFieldOf, fieldOrigin, hash, homestead, inHomestead, isBuildingTile,
+  BARN, COMPOST, GATE, SIGN, WELL, fenceCost, fieldOf as landFieldOf, flagTile, hash, homestead, inHomestead, isBuildingTile,
   neighbourFields, terrain as landTerrain, tileKey, wildKind, worldSize, type Terrain,
 } from '../engine/land'
 import { farmFileName, farmFileText, parseFarmFile } from '../engine/log'
@@ -267,7 +267,7 @@ function drawGate(): void {const {sx,sy}=iso(GATE.x,GATE.y);
   for(const [x,y] of [[ax,ay],[bx,by]] as Pt[]){px(x-1,y-20,3,21,'#6B4A2B');px(x-1,y-20,3,1,'#B8804A');px(x-2,y,5,1,'rgba(0,0,0,.2)');}
   for(let t=0;t<16;t++){px(ax-2*t-1,ay-23+t,3,3,'#8E5A34');px(ax-2*t-1,ay-23+t,3,1,'#C98A52');}
   px(sx-17,sy-9,3,4,'#3C2316');px(sx-16,sy-8,1,2,'#FFD95A');}
-/** A field's flag, in the field's colour, on a tall pole at its north corner: it shows over any crop, from across the map. */
+/** A field's flag, in the field's colour, on a tall pole at a corner of the field: it shows over any crop, from across the map. */
 const FLAG = { top: 27, w: 8, h: 5 }
 function drawFlag(sx: number, sy: number, color: string, t: number): void {
   px(sx,sy-FLAG.top,1,FLAG.top-5,'#6B4A2B');px(sx-1,sy-FLAG.top-1,3,1,'#B8804A');
@@ -304,11 +304,11 @@ function buildStatics(): void {
   statics.push({ s: GATE.x + GATE.y + 1.5, d: drawGate, kind: 'gate', hit: (ix, iy) => { const p = iso(GATE.x, GATE.y); return Math.abs(ix - (p.sx - 16)) <= 20 && iy >= p.sy - 24 && iy <= p.sy + 20 } })
   statics.push({ s: SIGN.x + SIGN.y, d: drawSign, kind: 'sign', hit: (ix, iy) => { const p = iso(SIGN.x, SIGN.y); return Math.abs(ix - p.sx) <= 8 && iy >= p.sy - 4 && iy <= p.sy + 14 } })
   for (const [pack, slot] of Object.entries(D().fields)) {
-    const { x0, y0 } = fieldOrigin(slot)
+    const at = flagTile(slot)
     statics.push({
-      s: x0 + y0 - 0.6, kind: 'flag', pack,
-      d: (t) => { const p = iso(x0, y0); drawFlag(p.sx, p.sy, colorOf(pack), t) },
-      hit: (ix, iy) => { const p = iso(x0, y0); return ix >= p.sx - 3 && ix <= p.sx + FLAG.w + 3 && iy >= p.sy - FLAG.top - 3 && iy <= p.sy - FLAG.top + FLAG.h + 4 },
+      s: at.x + at.y - 0.6, kind: 'flag', pack,
+      d: (t) => { const p = iso(at.x, at.y); drawFlag(p.sx, p.sy, colorOf(pack), t) },
+      hit: (ix, iy) => { const p = iso(at.x, at.y); return ix >= p.sx - 3 && ix <= p.sx + FLAG.w + 3 && iy >= p.sy - FLAG.top - 3 && iy <= p.sy - FLAG.top + FLAG.h + 4 },
     })
   }
   // fences: one segment per field edge that borders a different field or open land

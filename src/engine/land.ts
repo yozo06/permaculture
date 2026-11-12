@@ -49,6 +49,29 @@ export function fieldOrigin(slot: number): { x0: number; y0: number } {
   return { x0: ORIGIN + PITCH * col, y0: ORIGIN + PITCH * row }
 }
 
+/** A stretch of the screen that something tall stands in, in tile steps: `c` is x − y (across), `r` is x + y (down). */
+interface Span { c0: number; c1: number; r0: number; r1: number }
+const TALL: Span[] = [
+  // The barn: two tiles each way, under its roof.
+  { c0: BARN.x - BARN.y - 2, c1: BARN.x - BARN.y + 2, r0: BARN.x + BARN.y - 4, r1: BARN.x + BARN.y + 4 },
+  // The gate: a post on each side of the main path, and the beam between them.
+  { c0: GATE.x - GATE.y - 2, c1: GATE.x - GATE.y, r0: GATE.x + GATE.y - 3, r1: GATE.x + GATE.y + 3 },
+]
+/** How many steps up the screen a flag's pole rises from its corner. */
+const POLE = 4
+
+/**
+ * The tile whose top corner carries a field's flag: the field's north corner, or its east or west one where a pole
+ * at the north would stand in the gate or against the barn.
+ */
+export function flagTile(slot: number): { x: number; y: number } {
+  const { x0, y0 } = fieldOrigin(slot)
+  const north = { x: x0, y: y0 }
+  const clear = (t: { x: number; y: number }): boolean =>
+    !TALL.some((s) => t.x - t.y >= s.c0 && t.x - t.y <= s.c1 && t.x + t.y >= s.r0 && t.x + t.y - POLE <= s.r1)
+  return [north, { x: x0 + FIELD_SIZE, y: y0 }, { x: x0, y: y0 + FIELD_SIZE }].find(clear) ?? north
+}
+
 /** Number of shells needed for these fields; never fewer than two (the Phase 0 farm). */
 export function shells(fields: Fields): number {
   let n = 2
