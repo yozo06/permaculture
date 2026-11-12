@@ -75,7 +75,9 @@ describe('bar-set', () => {
   it('takes any whole number from 1 to 100 and nothing else', () => {
     const s = smallFarm()
     for (const ok of [1, 80, 100]) expect(check(s, bar('garden', ok), cat)).toBeNull()
-    for (const bad of [0, 101, -5, 79.5, '80', null, undefined, Number.NaN]) refusal(s, bar('garden', bad))
+    for (const bad of [0, 101, -5, 79.5, '80', null, undefined, Number.NaN, Infinity]) refusal(s, bar('garden', bad))
+    // A number that cannot be a bar is refused in words a farmer can use, the same as one out of range.
+    for (const bad of [0, 79.5, Number.NaN]) expect(refusal(s, bar('garden', bad))).toBe('A bar is a whole number from 1 to 100.')
   })
 
   it('refuses a field that is not open, a pack that does not exist, and a field with no end', () => {

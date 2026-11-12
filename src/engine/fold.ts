@@ -89,7 +89,8 @@ export function parseEvent(raw: unknown): FarmEvent | null {
     case 'focus-set':
       return text(raw.pack) && (raw.branch === null || text(raw.branch)) ? { type, pack: raw.pack, branch: raw.branch } : null
     case 'bar-set':
-      return text(raw.pack) && whole(raw.bar) ? { type, pack: raw.pack, bar: raw.bar } : null
+      // Any number has the right shape; whether it can be a bar is a rule, so a farmer who types 62.5 is told why not.
+      return text(raw.pack) && typeof raw.bar === 'number' ? { type, pack: raw.pack, bar: raw.bar } : null
     case 'farm-named':
       return text(raw.name) ? { type, name: raw.name } : null
     case 'snapshot-imported':
@@ -236,7 +237,7 @@ function whyBar(s: FarmState, e: Extract<FarmEvent, { type: 'bar-set' }>, catalo
   const pack = catalog.pack(e.pack)
   if (!pack || pack.perennial === true) return 'The ' + (pack?.title ?? e.pack) + ' field has no end, so it has no bar.'
   const { min, max } = RULES.readiness
-  return e.bar >= min && e.bar <= max ? null : 'A bar is a whole number from ' + min + ' to ' + max + '.'
+  return Number.isInteger(e.bar) && e.bar >= min && e.bar <= max ? null : 'A bar is a whole number from ' + min + ' to ' + max + '.'
 }
 
 /** Why this cannot be a farm's name, or null. Also used by the game before it asks the farm. */
