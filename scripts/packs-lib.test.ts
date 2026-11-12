@@ -88,6 +88,45 @@ describe('a broken pack', () => {
   })
 })
 
+describe('a seed that has to be earned', () => {
+  /** The errors after giving the Workshop's sprite sheets this `earned`. */
+  const withEarned = (earned: string): string => {
+    const dir = tempCopy()
+    edit(dir, 'workshop.yaml', (t) => t.replace(/\n  - id: sprites\n(    earned: .*\n)?/, '\n  - id: sprites\n    earned: ' + earned + '\n'))
+    return errorsOf(dir).join('\n')
+  }
+
+  it('may ask for seeds rooted in other fields, seeds rooted in one field, or the readiness of one field', () => {
+    for (const ok of ['{ rooted: 1 }', '{ pack: kannada, rooted: 4 }', '{ pack: infra, readiness: 60 }']) expect(withEarned(ok), ok).toBe('')
+  })
+
+  it('asks for one thing: seeds rooted or a readiness, and a readiness names its field', () => {
+    expect(withEarned('{ pack: infra, rooted: 2, readiness: 60 }')).toContain('seed sprites: earned asks for rooted or readiness, not both')
+    expect(withEarned('{ pack: infra }')).toContain('seed sprites: earned asks for nothing: give it rooted or readiness')
+    expect(withEarned('{ readiness: 60 }')).toContain('seed sprites: earned by readiness has to name the pack')
+  })
+
+  it('names a pack that exists, is not its own, and for readiness has an end', () => {
+    expect(withEarned('{ pack: nowhere, rooted: 1 }')).toContain('seed sprites: earned names an unknown pack "nowhere"')
+    expect(withEarned('{ pack: workshop, rooted: 1 }')).toContain('seed sprites: earned names its own pack')
+    expect(withEarned('{ pack: kannada, readiness: 60 }')).toContain('seed sprites: earned asks for the readiness of kannada, which has no end and so no readiness')
+  })
+
+  it('never asks for more than there is to root', () => {
+    expect(withEarned('{ pack: kannada, rooted: 9 }')).toContain('seed sprites: earned asks for 9 rooted seeds, and kannada has 8')
+    expect(withEarned('{ rooted: 100000 }')).toContain('/seeds/')
+    const every = collectPacks().filter((p) => p.pack !== 'workshop').reduce((n, p) => n + p.seeds.filter((x) => x.wild !== true).length, 0)
+    expect(withEarned('{ rooted: ' + every + ' }')).toBe('')
+    expect(withEarned('{ rooted: ' + (every + 1) + ' }')).toContain('seed sprites: earned asks for ' + (every + 1) + ' rooted seeds, and the other packs have ' + every)
+  })
+
+  it('takes whole numbers in range and no other keys', () => {
+    for (const bad of ['{ rooted: 0 }', '{ pack: infra, readiness: 0 }', '{ pack: infra, readiness: 101 }', '{ rooted: 1.5 }', '{ rooted: 1, by: friday }', 'soon']) {
+      expect(withEarned(bad), bad).toContain('/seeds/')
+    }
+  })
+})
+
 describe('adding a seed to a YAML file', () => {
   // An id real content will never use, so the test keeps working as the packs grow.
   const NEW_SEED = `  - id: added-in-a-test

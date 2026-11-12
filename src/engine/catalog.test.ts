@@ -32,6 +32,19 @@ describe('catalog', () => {
     expect(catalog.capOf('missing', 90)).toBe(Infinity)
   })
 
+  it('says what earns a seed in one shape, and null when nothing has to be earned', () => {
+    const seed = (id: string, earned?: { pack?: string; rooted?: number; readiness?: number }) =>
+      ({ id, name: id, layer: 'herb' as const, branch: 'b', tier: 0, harvest: 'artifact' as const, prompts: ['p'], ...(earned ? { earned } : {}) })
+    const c = buildCatalog([{ pack: 'p', version: 0, title: 'P', branches: [{ id: 'b', title: 'B' }], seeds: [
+      seed('free'), seed('any', { rooted: 2 }), seed('one', { pack: 'q', rooted: 3 }), seed('ready', { pack: 'q', readiness: 60 }), seed('empty', {}),
+    ] }])
+    expect(c.seed('free')?.earned).toBeNull()
+    expect(c.seed('any')?.earned).toEqual({ kind: 'rooted', pack: null, count: 2 })
+    expect(c.seed('one')?.earned).toEqual({ kind: 'rooted', pack: 'q', count: 3 })
+    expect(c.seed('ready')?.earned).toEqual({ kind: 'readiness', pack: 'q', percent: 60 })
+    expect(c.seed('empty')?.earned).toBeNull()
+  })
+
   it('names the layers', () => {
     expect(LAYER_NAMES['ground-cover']).toBe('Ground cover')
   })

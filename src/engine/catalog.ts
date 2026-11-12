@@ -20,11 +20,20 @@ export const HARVEST_NAMES: Record<HarvestType, string> = {
   artifact: 'artifact',
 }
 
+/** The learning a seed asks for before it can be planted. */
+export type Earned =
+  /** This many seeds rooted in `pack`, or in any field but the seed's own when `pack` is null. */
+  | { kind: 'rooted'; pack: string | null; count: number }
+  /** `pack`'s readiness at this number or over. */
+  | { kind: 'readiness'; pack: string; percent: number }
+
 /** A seed with its pack and every list filled in, so callers never check for undefined. */
-export interface Seed extends Omit<SeedDef, 'needs' | 'wild' | 'sources' | 'rubric' | 'questions' | 'prompts'> {
+export interface Seed extends Omit<SeedDef, 'needs' | 'wild' | 'earned' | 'sources' | 'rubric' | 'questions' | 'prompts'> {
   pack: string
   needs: string[]
   wild: boolean
+  /** Null when the seed asks for nothing. */
+  earned: Earned | null
   sources: string[]
   rubric: string[]
   questions: { water: Mcq[]; harvest: Mcq[] }
@@ -48,12 +57,20 @@ export interface Catalog {
   capOf(packId: string, energyMax: number): number
 }
 
+/** The validator has already refused a seed that asks for both, for neither, or for a readiness with no pack. */
+function earnedOf(e: SeedDef['earned']): Earned | null {
+  if (!e) return null
+  if (e.readiness !== undefined) return e.pack === undefined ? null : { kind: 'readiness', pack: e.pack, percent: e.readiness }
+  return e.rooted === undefined ? null : { kind: 'rooted', pack: e.pack ?? null, count: e.rooted }
+}
+
 function normalise(pack: string, s: SeedDef): Seed {
   return {
     ...s,
     pack,
     needs: s.needs ?? [],
     wild: s.wild === true,
+    earned: earnedOf(s.earned),
     sources: s.sources ?? [],
     rubric: s.rubric ?? [],
     questions: { water: s.questions?.water ?? [], harvest: s.questions?.harvest ?? [] },

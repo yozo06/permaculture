@@ -45,6 +45,8 @@ export interface SeedDef {
   tier: number
   needs?: string[]
   wild?: boolean
+  /** Learning that has to happen first: `rooted` seeds (in `pack`, or in any other field), or `pack`'s `readiness`. */
+  earned?: { pack?: string; rooted?: number; readiness?: number }
   harvest: HarvestType
   minutes?: number
   sources?: string[]

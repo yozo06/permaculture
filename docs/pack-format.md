@@ -49,6 +49,7 @@ seeds:
     tier: 1                  # depth in the tree; 0 is plantable from the start
     needs: [con]             # seed ids that must be rooted first (same pack)
     wild: false              # true: hidden until foraged and domesticated; needs a find that points at it
+    earned: { rooted: 1 }    # optional: learning that has to happen before it can be planted. See "Earned seeds"
     harvest: recall          # recall | solve | judged | artifact
     minutes: 30              # about how long planting takes: reading the source and writing notes
     sources: [raft]
@@ -108,6 +109,7 @@ Seed ids, find ids and pack ids are unique across all packs, and branch ids with
 - A find's `near` ids and `seed` are seeds in its pack, and its `seed` is wild.
 - Every wild seed has a find that points at it.
 - Every guild member is a seed in the same pack.
+- A seed's `earned` asks for one thing, `rooted` or `readiness`. A `readiness` names its pack. The pack exists, is not the seed's own, and for `readiness` has an end. It never asks for more seeds than there are to root.
 
 ## Writing good seeds
 

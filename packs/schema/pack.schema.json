@@ -54,6 +54,15 @@
           "tier": { "type": "integer", "minimum": 0, "maximum": 8, "description": "Depth in the learning tree. 0 = plantable from the start." },
           "needs": { "type": "array", "items": { "$ref": "#/$defs/slug" }, "description": "Seed ids that must be rooted first. Same pack only, for now." },
           "wild": { "type": "boolean", "description": "Hidden until foraged and domesticated. Needs a find that points at it." },
+          "earned": {
+            "type": "object", "additionalProperties": false,
+            "description": "Learning that has to happen before this seed can be planted: seeds rooted, or a field's readiness. One or the other.",
+            "properties": {
+              "pack": { "$ref": "#/$defs/slug", "description": "Another pack. Needed for `readiness`. For `rooted`, leave it out to count every other field." },
+              "rooted": { "type": "integer", "minimum": 1, "maximum": 1000, "description": "This many seeds rooted, in `pack` or in any other field." },
+              "readiness": { "type": "integer", "minimum": 1, "maximum": 100, "description": "`pack`'s readiness at this number or over." }
+            }
+          },
           "harvest": { "enum": ["recall", "solve", "judged", "artifact"] },
           "minutes": { "type": "integer", "minimum": 5, "maximum": 180, "description": "Time to plant: read the source, write notes." },
           "sources": { "type": "array", "items": { "$ref": "#/$defs/slug" } },
