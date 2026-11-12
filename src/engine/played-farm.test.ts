@@ -9,11 +9,13 @@
 import { describe, expect, it } from 'vitest'
 import { collectPacks } from '../../scripts/packs-lib.mjs'
 import { buildCatalog } from './catalog'
-import { apply, fold, initialState, refusedCount } from './fold'
+import { allowed, apply, check, fold, initialState, refusedCount } from './fold'
+import { fieldOrigin } from './land'
 import { parseFarmFile } from './log'
 import edge from './edge-farm.json'
 import played from './played-farm.json'
-import type { FarmState } from './types'
+import { RULES } from './rules'
+import type { FarmEvent, FarmState } from './types'
 
 const catalog = buildCatalog(collectPacks())
 const file = parseFarmFile(JSON.stringify(played))
@@ -95,5 +97,32 @@ describe('the edge farm', () => {
     const s = fold(events, catalog)
     expect(s).toMatchObject({ name: 'Edge farm at every limit', day: 14, coins: 183, energy: 90, barrel: 5, unlocked: ['market'], foraged: ['pandi-curry'], compost: [] })
     expect(s.crops.map((c) => [c.seed, c.perennial, c.journal.length])).toEqual([['repo', true, 5], ['incident-roles', true, 2]])
+  })
+})
+
+// Sprite sheets have to be earned now: a seed rooted in another field. A farm from before that rule may have them in
+// the ground with nothing rooted anywhere, as this one does (it jumped the fence to them on its first day). The rule is
+// asked of what a player does today and never of a log, so this farm keeps its crop. If it ever loses it, a rule about
+// earning has crept into replay.
+describe('a farm that planted Sprite sheets before they had to be earned', () => {
+  const { x0, y0 } = fieldOrigin(0)
+  const planting: FarmEvent = { type: 'planted', seed: 'sprites', x: x0, y: y0, notes: 'One sheet for every crop, tree and building, drawn the same way.' }
+  const before: FarmEvent[] = [
+    { type: 'farm-started', ...RULES.start, energy: RULES.energyMax },
+    { type: 'field-opened', pack: 'workshop', slot: 0 },
+    { type: 'unlocked', seed: 'sprites', ok: true, text: 'A link to the sheet.', ticked: 2, of: 2 },
+  ]
+
+  it('would not be allowed that planting today', () => {
+    const s = fold(before, catalog)
+    expect(s.unlocked).toEqual(['sprites'])
+    expect(check(s, planting, catalog)).toBe('Sprite sheets is earned by a seed rooted in another field.')
+    expect(allowed(s, planting, catalog)).toBeNull()
+  })
+
+  it('replays with nothing refused, and the crop where it was', () => {
+    const log = [...before, planting]
+    expect(refusedCount(log, catalog)).toBe(0)
+    expect(fold(log, catalog).crops.map((c) => c.seed)).toEqual(['sprites'])
   })
 })

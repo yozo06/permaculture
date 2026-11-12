@@ -57,3 +57,21 @@ describe.each(['haskell-backend', 'system-design', 'infra', 'dsa', 'leadership']
     }
   })
 })
+
+describe('the Workshop', () => {
+  it('holds three of its features back until the learning is on the farm', () => {
+    expect(catalog.seed('sprites')?.earned).toEqual({ kind: 'rooted', pack: null, count: 1 })
+    expect(catalog.seed('seed-trading')?.earned).toEqual({ kind: 'rooted', pack: 'kannada', count: 4 })
+    expect(catalog.seed('weather')?.earned).toEqual({ kind: 'readiness', pack: 'infra', percent: 60 })
+  })
+
+  it('asks nothing of the rest, and no other pack asks for anything', () => {
+    const asking = catalog.packs.flatMap((p) => catalog.seedsOf(p.pack)).filter((s) => s.earned).map((s) => s.pack + '/' + s.id)
+    expect(asking.sort()).toEqual(['workshop/seed-trading', 'workshop/sprites', 'workshop/weather'])
+  })
+
+  it('has a seed for readiness and one for earned unlocks', () => {
+    expect(catalog.seed('readiness')).toMatchObject({ pack: 'workshop', harvest: 'artifact' })
+    expect(catalog.seed('earned-unlocks')).toMatchObject({ pack: 'workshop', needs: ['readiness'] })
+  })
+})

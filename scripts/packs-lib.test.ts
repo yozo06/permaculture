@@ -89,10 +89,10 @@ describe('a broken pack', () => {
 })
 
 describe('a seed that has to be earned', () => {
-  /** The errors after giving the Workshop's sprite sheets this `earned`. */
+  /** The errors after giving the Workshop's first seed, which asks for nothing, this `earned`. */
   const withEarned = (earned: string): string => {
     const dir = tempCopy()
-    edit(dir, 'workshop.yaml', (t) => t.replace(/\n  - id: sprites\n(    earned: .*\n)?/, '\n  - id: sprites\n    earned: ' + earned + '\n'))
+    edit(dir, 'workshop.yaml', (t) => t.replace('\n  - id: repo\n', '\n  - id: repo\n    earned: ' + earned + '\n'))
     return errorsOf(dir).join('\n')
   }
 
@@ -101,23 +101,23 @@ describe('a seed that has to be earned', () => {
   })
 
   it('asks for one thing: seeds rooted or a readiness, and a readiness names its field', () => {
-    expect(withEarned('{ pack: infra, rooted: 2, readiness: 60 }')).toContain('seed sprites: earned asks for rooted or readiness, not both')
-    expect(withEarned('{ pack: infra }')).toContain('seed sprites: earned asks for nothing: give it rooted or readiness')
-    expect(withEarned('{ readiness: 60 }')).toContain('seed sprites: earned by readiness has to name the pack')
+    expect(withEarned('{ pack: infra, rooted: 2, readiness: 60 }')).toContain('seed repo: earned asks for rooted or readiness, not both')
+    expect(withEarned('{ pack: infra }')).toContain('seed repo: earned asks for nothing: give it rooted or readiness')
+    expect(withEarned('{ readiness: 60 }')).toContain('seed repo: earned by readiness has to name the pack')
   })
 
   it('names a pack that exists, is not its own, and for readiness has an end', () => {
-    expect(withEarned('{ pack: nowhere, rooted: 1 }')).toContain('seed sprites: earned names an unknown pack "nowhere"')
-    expect(withEarned('{ pack: workshop, rooted: 1 }')).toContain('seed sprites: earned names its own pack')
-    expect(withEarned('{ pack: kannada, readiness: 60 }')).toContain('seed sprites: earned asks for the readiness of kannada, which has no end and so no readiness')
+    expect(withEarned('{ pack: nowhere, rooted: 1 }')).toContain('seed repo: earned names an unknown pack "nowhere"')
+    expect(withEarned('{ pack: workshop, rooted: 1 }')).toContain('seed repo: earned names its own pack')
+    expect(withEarned('{ pack: kannada, readiness: 60 }')).toContain('seed repo: earned asks for the readiness of kannada, which has no end and so no readiness')
   })
 
   it('never asks for more than there is to root', () => {
-    expect(withEarned('{ pack: kannada, rooted: 9 }')).toContain('seed sprites: earned asks for 9 rooted seeds, and kannada has 8')
+    expect(withEarned('{ pack: kannada, rooted: 9 }')).toContain('seed repo: earned asks for 9 rooted seeds, and kannada has 8')
     expect(withEarned('{ rooted: 100000 }')).toContain('/seeds/')
     const every = collectPacks().filter((p) => p.pack !== 'workshop').reduce((n, p) => n + p.seeds.filter((x) => x.wild !== true).length, 0)
     expect(withEarned('{ rooted: ' + every + ' }')).toBe('')
-    expect(withEarned('{ rooted: ' + (every + 1) + ' }')).toContain('seed sprites: earned asks for ' + (every + 1) + ' rooted seeds, and the other packs have ' + every)
+    expect(withEarned('{ rooted: ' + (every + 1) + ' }')).toContain('seed repo: earned asks for ' + (every + 1) + ' rooted seeds, and the other packs have ' + every)
   })
 
   it('takes whole numbers in range and no other keys', () => {

@@ -124,6 +124,26 @@ seeds:
     minutes: 90
     summary: Foraging generates finds adjacent to what is growing. Domesticated finds become volunteer seeds.
     prompts: [Three fresh finds a day, related to Z1 crops.]
+  - id: readiness
+    name: Readiness
+    layer: canopy
+    branch: engine
+    tier: 3
+    needs: [catalogues]
+    harvest: artifact
+    minutes: 120
+    summary: Each field shows how much of it stands as trees, which of its layers are hollow, and the bar its farmer set. No dates. A field is ready when it is at its bar.
+    prompts: [A field with nothing rooted in one layer is not at its bar, whatever its number.]
+  - id: earned-unlocks
+    name: Earned unlocks
+    layer: vine
+    branch: engine
+    tier: 4
+    needs: [readiness]
+    harvest: artifact
+    minutes: 90
+    summary: A seed can ask for learning before it is planted, so the Workshop cannot outrun the studying. It is asked of what is done today and never of a saved farm.
+    prompts: [Sprite sheets cannot be planted on a farm with nothing rooted.]
   # ---- Phase 3 ----
   - id: safe-saves
     name: Safe saves
@@ -155,6 +175,17 @@ seeds:
     minutes: 120
     summary: Water one crop on a neighbour's farm by answering a question from their pack. A gift event lands in their log.
     prompts: [Two farms exchange a watering.]
+  - id: seed-trading
+    name: Share a pack
+    layer: herb
+    branch: world
+    tier: 2
+    needs: [snapshot]
+    earned: { pack: kannada, rooted: 4 }
+    harvest: artifact
+    minutes: 90
+    summary: Trade seeds with a neighbour. A pack travels in a link the way a farm does, and is checked like any pack before it is loaded.
+    prompts: [A neighbour opens a link and grows a pack you wrote.]
   - id: village-server
     name: Village server (Haskell)
     layer: root
@@ -182,6 +213,7 @@ seeds:
     branch: world
     tier: 1
     needs: [repo]
+    earned: { rooted: 1 }
     harvest: artifact
     minutes: 120
     summary: Replace procedural pixels with a consistent tileset (CC0 or generated and touched up). Growth animations, day and night.
@@ -212,6 +244,7 @@ seeds:
     branch: world
     tier: 2
     needs: [sprites]
+    earned: { pack: infra, readiness: 60 }
     harvest: artifact
     minutes: 60
     summary: Real weather from Chettimani drives the sky. Rain in Coorg is rain on the farm.

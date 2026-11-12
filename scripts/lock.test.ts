@@ -79,6 +79,14 @@ describe('lockProblems', () => {
 })
 
 describe('readLock', () => {
+  it('lets what a seed is earned by come, change and go: replay never asks it, so no saved farm can lose by it', () => {
+    const earning = changed((p) => { seedOf(p, 'saw').earned = { rooted: 1 } })
+    expect(lockProblems(locked, earning)).toEqual([])
+    expect(lockProblems(earning, changed((p) => { seedOf(p, 'saw').earned = { pack: 'garden', readiness: 60 } }))).toEqual([])
+    expect(lockProblems(earning, locked)).toEqual([])
+    expect(lockText(earning)).toBe(lockText(locked))
+  })
+
   it('reads back what lockText wrote', () => {
     expect(readLock(lockText(locked))).toEqual(locked)
   })
