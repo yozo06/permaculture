@@ -10,7 +10,7 @@ import type { Crop, FarmEvent, FarmState } from './types'
 /** A farm with nothing in it: the state before `farm-started`. */
 export const initialState = (): FarmState => ({
   name: '', day: 0, energy: 0, energyMax: 0, coins: 0, barrel: 0,
-  fields: {}, cleared: {}, crops: [], compost: [], unlocked: [], volunteers: [], foraged: [], focus: {},
+  fields: {}, cleared: {}, crops: [], compost: [], unlocked: [], volunteers: [], foraged: [], focus: {}, bars: {},
   today: { planted: 0, spent: {} }, night: null,
 })
 
@@ -26,6 +26,7 @@ function copy(s: FarmState): FarmState {
     volunteers: s.volunteers.slice(),
     foraged: s.foraged.slice(),
     focus: { ...s.focus },
+    bars: { ...s.bars },
     today: { planted: s.today.planted, spent: { ...s.today.spent } },
     night: s.night ? { saved: s.night.saved.slice(), wilted: s.night.wilted.slice(), barrelFilled: s.night.barrelFilled } : null,
   }
@@ -82,6 +83,8 @@ export function parseEvent(raw: unknown): FarmEvent | null {
       return text(raw.seed) ? { type, seed: raw.seed } : null
     case 'focus-set':
       return text(raw.pack) && (raw.branch === null || text(raw.branch)) ? { type, pack: raw.pack, branch: raw.branch } : null
+    case 'bar-set':
+      return text(raw.pack) && whole(raw.bar) ? { type, pack: raw.pack, bar: raw.bar } : null
     case 'farm-named':
       return text(raw.name) ? { type, name: raw.name } : null
     case 'snapshot-imported':
@@ -222,6 +225,15 @@ function whyFocus(s: FarmState, e: Extract<FarmEvent, { type: 'focus-set' }>, ca
   return null
 }
 
+function whyBar(s: FarmState, e: Extract<FarmEvent, { type: 'bar-set' }>, catalog: Catalog): string | null {
+  const closed = whyClosed(s, e.pack, catalog)
+  if (closed) return closed
+  const pack = catalog.pack(e.pack)
+  if (!pack || pack.perennial === true) return 'The ' + (pack?.title ?? e.pack) + ' field has no end, so it has no bar.'
+  const { min, max } = RULES.readiness
+  return e.bar >= min && e.bar <= max ? null : 'A bar is a whole number from ' + min + ' to ' + max + '.'
+}
+
 /** Why this cannot be a farm's name, or null. Also used by the game before it asks the farm. */
 export function whyName(name: string): string | null {
   const n = name.trim().length
@@ -254,6 +266,8 @@ function why(s: FarmState, e: FarmEvent, catalog: Catalog): string | null {
       return whyUnlocked(s, e, catalog)
     case 'focus-set':
       return whyFocus(s, e, catalog)
+    case 'bar-set':
+      return whyBar(s, e, catalog)
     case 'farm-named':
       return s.day < 1 ? 'There is no farm to name.' : whyName(e.name)
     case 'snapshot-imported':
@@ -389,6 +403,9 @@ function step(s: FarmState, e: FarmEvent, catalog: Catalog): FarmState {
     case 'focus-set':
       if (e.branch === null) delete n.focus[e.pack]
       else n.focus[e.pack] = e.branch
+      return n
+    case 'bar-set':
+      n.bars[e.pack] = e.bar
       return n
     case 'farm-named':
       n.name = e.name.trim()

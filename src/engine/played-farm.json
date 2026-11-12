@@ -358,5 +358,6 @@
 {"type":"planted","seed":"two-pointers","x":6,"y":7,"notes":"Replay fixture, notes for Two pointers: written on purpose so that this farm has real writing to replay.","id":"played-0357","at":"2026-12-10T08:00:57.000Z"},
 {"type":"fenced","x":5,"y":1,"pack":"dsa","id":"played-0358","at":"2026-12-10T08:00:58.000Z"},
 {"type":"slept","id":"played-0359","at":"2026-12-11T08:00:59.000Z"},
-{"type":"farm-named","name":"Played farm","id":"played-0360","at":"2026-12-11T08:00:00.000Z"}
+{"type":"farm-named","name":"Played farm","id":"played-0360","at":"2026-12-11T08:00:00.000Z"},
+{"type":"bar-set","pack":"infra","bar":60,"id":"played-0361","at":"2026-12-11T08:01:00.000Z"}
 ]}

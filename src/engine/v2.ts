@@ -172,6 +172,7 @@ export function fromV2(value: unknown, catalog: Catalog): FarmState | null {
     volunteers: known(value.volunteers),
     foraged: unique(strings(value.foraged).map((id) => LEGACY_FINDS[id] ?? id).filter((id) => catalog.find(id))),
     focus: readFocus(value.focus, catalog),
+    bars: {},
     today: { planted: 0, spent: readSpent(value.today, catalog) },
     night: null,
   }

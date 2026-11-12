@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { buildCatalog } from './catalog'
 import { readiness } from './readiness'
+import { RULES } from './rules'
 import type { Crop, Layer, PackDef, SeedDef } from './types'
 
 const seed = (id: string, layer: Layer, more: Partial<SeedDef> = {}): SeedDef =>
@@ -14,7 +15,7 @@ const catalog = buildCatalog([orchard, pack('other', [seed('fern', 'herb')]), pa
 
 const crop = (id: string, more: Partial<Crop> = {}): Crop =>
   ({ seed: id, x: 0, y: 0, stage: 4, best: 4, due: 99, wilted: false, perennial: true, notes: '', journal: [], ...more })
-const of = (...crops: Crop[]) => readiness('orchard', { crops }, catalog)
+const of = (...crops: Crop[]) => readiness('orchard', { crops, bars: {} }, catalog)
 
 describe('readiness', () => {
   it('is nothing for a field with nothing rooted, and every layer it has is hollow', () => {
@@ -31,7 +32,7 @@ describe('readiness', () => {
 
   it('rounds down, so only a field with every seed rooted reads 100', () => {
     const three = buildCatalog([pack('orchard', [seed('oak', 'canopy'), seed('elm', 'canopy'), seed('mint', 'herb')])])
-    const at = (...ids: string[]) => readiness('orchard', { crops: ids.map((id) => crop(id)) }, three)?.percent
+    const at = (...ids: string[]) => readiness('orchard', { crops: ids.map((id) => crop(id)), bars: {} }, three)?.percent
     expect([at('oak'), at('oak', 'elm'), at('oak', 'elm', 'mint')]).toEqual([33, 66, 100])
   })
 
@@ -54,12 +55,34 @@ describe('readiness', () => {
   })
 
   it('has no answer for a field with no end, or for a pack it does not know', () => {
-    expect(readiness('tongue', { crops: [crop('word')] }, catalog)).toBeNull()
-    expect(readiness('nowhere', { crops: [] }, catalog)).toBeNull()
+    expect(readiness('tongue', { crops: [crop('word')], bars: {} }, catalog)).toBeNull()
+    expect(readiness('nowhere', { crops: [], bars: {} }, catalog)).toBeNull()
   })
 
   it('reads 0, not a broken number, for a field whose every seed is wild', () => {
     const wild = buildCatalog([pack('orchard', [seed('hop', 'vine', { wild: true })])])
-    expect(readiness('orchard', { crops: [crop('hop')] }, wild)).toMatchObject({ total: 0, rooted: 0, percent: 0, hollow: [] })
+    expect(readiness('orchard', { crops: [crop('hop')], bars: {} }, wild)).toMatchObject({ total: 0, rooted: 0, percent: 0, hollow: [] })
+  })
+
+  it("takes its bar from the farmer, else from the pack, else from the rules", () => {
+    const withBar = buildCatalog([{ ...orchard, readiness_bar: 60 }])
+    expect(of()?.bar).toBe(RULES.readiness.bar)
+    expect(readiness('orchard', { crops: [], bars: {} }, withBar)?.bar).toBe(60)
+    expect(readiness('orchard', { crops: [], bars: { orchard: 45 } }, withBar)?.bar).toBe(45)
+    expect(readiness('orchard', { crops: [], bars: { other: 45 } }, withBar)?.bar).toBe(60)
+  })
+
+  it('is at its bar only when the number is there and no layer is hollow', () => {
+    const at = (bar: number, ...ids: string[]) => readiness('orchard', { crops: ids.map((id) => crop(id)), bars: { orchard: bar } }, catalog)?.atBar
+    // Three of four is 75, but nothing stands in the root layer.
+    expect(at(75, 'oak', 'elm', 'mint')).toBe(false)
+    expect(at(75, 'oak', 'mint', 'beet')).toBe(true)
+    expect(at(76, 'oak', 'mint', 'beet')).toBe(false)
+    expect(at(100, 'oak', 'elm', 'mint', 'beet')).toBe(true)
+  })
+
+  it('is never at its bar with nothing to root', () => {
+    const wild = buildCatalog([pack('orchard', [seed('hop', 'vine', { wild: true })], { readiness_bar: 0 })])
+    expect(readiness('orchard', { crops: [], bars: {} }, wild)?.atBar).toBe(false)
   })
 })

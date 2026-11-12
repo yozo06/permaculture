@@ -70,6 +70,7 @@ Two days past thirsty without water, a crop wilts overnight unless the barrel ha
 | Farm name | 1 to 24 characters |
 | Neighbours | at most 24 |
 | A neighbour's picture | forgotten by your game 60 days after it was made |
+| Readiness bar | 80 unless the pack or the farmer sets another; the farmer may set 1 to 100 |
 | Compost | everything in the heap is due again the next day |
 
 ### The depth ladder

@@ -39,6 +39,7 @@ const numbersRows = [
   `| Farm name | 1 to ${RULES.farmName.max} characters |`,
   `| Neighbours | at most ${RULES.neighbours.max} |`,
   `| A neighbour's picture | forgotten by your game ${RULES.neighbours.forgetDays} days after it was made |`,
+  `| Readiness bar | ${RULES.readiness.bar} unless the pack or the farmer sets another; the farmer may set ${RULES.readiness.min} to ${RULES.readiness.max} |`,
   '| Compost | everything in the heap is due again the next day |',
 ]
 

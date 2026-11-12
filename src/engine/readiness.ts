@@ -1,6 +1,7 @@
 // How ready a field is: how much of its catalogue stands as trees today, and which of its layers are hollow.
 // Pure, and never part of a saved farm: it is worked out from the crops each time it is asked for.
 import { LAYERS, type Catalog } from './catalog'
+import { RULES } from './rules'
 import type { FarmState, Layer } from './types'
 
 export interface LayerCount {
@@ -23,10 +24,14 @@ export interface Readiness {
   layers: LayerCount[]
   /** Layers the catalogue has seeds in but the farm has no standing tree in. */
   hollow: Layer[]
+  /** What the field is held to: the farmer's bar, else the pack's, else the rules'. */
+  bar: number
+  /** The number is at the bar and no layer is hollow. */
+  atBar: boolean
 }
 
 /** A field's readiness, or null for a pack with no end (a language, the Workshop) or one that is not in the catalogue. */
-export function readiness(packId: string, s: Pick<FarmState, 'crops'>, catalog: Catalog): Readiness | null {
+export function readiness(packId: string, s: Pick<FarmState, 'crops' | 'bars'>, catalog: Catalog): Readiness | null {
   const pack = catalog.pack(packId)
   if (!pack || pack.perennial === true) return null
   const standing = new Set(s.crops.filter((c) => c.perennial && !c.wilted).map((c) => c.seed))
@@ -36,9 +41,8 @@ export function readiness(packId: string, s: Pick<FarmState, 'crops'>, catalog: 
     return mine.length ? [{ layer, total: mine.length, rooted: mine.filter((seed) => standing.has(seed.id)).length }] : []
   })
   const rooted = layers.reduce((n, l) => n + l.rooted, 0)
-  return {
-    pack: packId, total: seeds.length, rooted,
-    percent: seeds.length ? Math.floor((100 * rooted) / seeds.length) : 0,
-    layers, hollow: layers.filter((l) => l.rooted === 0).map((l) => l.layer),
-  }
+  const percent = seeds.length ? Math.floor((100 * rooted) / seeds.length) : 0
+  const hollow = layers.filter((l) => l.rooted === 0).map((l) => l.layer)
+  const bar = (Object.hasOwn(s.bars, packId) ? s.bars[packId] : undefined) ?? pack.readiness_bar ?? RULES.readiness.bar
+  return { pack: packId, total: seeds.length, rooted, percent, layers, hollow, bar, atBar: seeds.length > 0 && percent >= bar && hollow.length === 0 }
 }

@@ -22,6 +22,7 @@ type Intent =
   | { k: 'domesticate'; a: number }
   | { k: 'unlock'; a: number; ok: boolean }
   | { k: 'focus'; a: number; b: number }
+  | { k: 'bar'; a: number; b: number }
   | { k: 'name'; len: number }
   | { k: 'raw'; event: unknown }
 
@@ -32,7 +33,7 @@ const usuallyOk = fc.oneof({ weight: 4, arbitrary: fc.constant(true) }, { weight
 const writing = fc.oneof({ weight: 6, arbitrary: fc.integer({ min: 90, max: 200 }) }, { weight: 1, arbitrary: fc.nat({ max: 120 }) })
 const rawEvents = fc.oneof(
   fc.anything(),
-  fc.record({ type: fc.constantFrom('planted', 'watered', 'harvested', 'fenced', 'foraged', 'domesticated', 'unlocked', 'focus-set', 'field-opened', 'farm-started', 'farm-named'), name: fc.string({ maxLength: 40 }), seed: fc.string(), pack: fc.string(), find: fc.string(), x: fc.integer({ min: -3, max: 30 }), y: fc.integer({ min: -3, max: 30 }), slot: fc.integer({ min: -2, max: 12 }), ok: fc.boolean(), branch: fc.option(fc.string()) }),
+  fc.record({ type: fc.constantFrom('planted', 'watered', 'harvested', 'fenced', 'foraged', 'domesticated', 'unlocked', 'focus-set', 'bar-set', 'field-opened', 'farm-started', 'farm-named'), bar: fc.oneof(fc.integer({ min: -5, max: 110 }), fc.double()), name: fc.string({ maxLength: 40 }), seed: fc.string(), pack: fc.string(), find: fc.string(), x: fc.integer({ min: -3, max: 30 }), y: fc.integer({ min: -3, max: 30 }), slot: fc.integer({ min: -2, max: 12 }), ok: fc.boolean(), branch: fc.option(fc.string()) }),
 )
 const intents: fc.Arbitrary<Intent> = fc.oneof(
   { weight: 5, arbitrary: fc.record({ k: fc.constant('plant' as const), a: idx, b: idx, len: writing }) },
@@ -44,6 +45,7 @@ const intents: fc.Arbitrary<Intent> = fc.oneof(
   { weight: 1, arbitrary: fc.record({ k: fc.constant('domesticate' as const), a: idx }) },
   { weight: 1, arbitrary: fc.record({ k: fc.constant('unlock' as const), a: idx, ok: usuallyOk }) },
   { weight: 1, arbitrary: fc.record({ k: fc.constant('focus' as const), a: idx, b: idx }) },
+  { weight: 1, arbitrary: fc.record({ k: fc.constant('bar' as const), a: idx, b: idx }) },
   { weight: 1, arbitrary: fc.record({ k: fc.constant('name' as const), len: fc.nat({ max: 30 }) }) },
   { weight: 1, arbitrary: fc.record({ k: fc.constant('raw' as const), event: rawEvents }) },
 )
@@ -131,6 +133,11 @@ function toEvent(s: FarmState, catalog: Catalog, intent: Intent): unknown {
     }
     case 'name':
       return { type: 'farm-named', name: ' ' + 'n'.repeat(intent.len) + ' ' }
+    case 'bar': {
+      // Any field the farm has, perennial ones too, and now and then a bar no farmer may set.
+      const pack = pick(packs, intent.a)
+      return pack ? { type: 'bar-set', pack, bar: intent.b % 104 } : null
+    }
     case 'focus': {
       const pack = catalog.pack(pick(packs, intent.a) ?? '')
       const branches = pack ? [null, ...pack.branches.map((b) => b.id)] : []
@@ -194,6 +201,13 @@ function verify(s: FarmState, before: FarmState, e: FarmEvent, catalog: Catalog)
   expect(s.name.length).toBeLessThanOrEqual(RULES.farmName.max)
   if (e.type === 'farm-named') expect(s.name).toBe(e.name.trim())
   else expect(s.name).toBe(before.name)
+  // 11. a bar is only ever set by its own event, on an open field that has an end, to a number a farmer may set
+  if (e.type === 'bar-set') expect(s.bars).toEqual({ ...before.bars, [e.pack]: e.bar })
+  else expect(s.bars).toEqual(before.bars)
+  for (const [pack, bar] of Object.entries(s.bars)) {
+    expect(Object.hasOwn(s.fields, pack) && catalog.pack(pack)?.perennial !== true).toBe(true)
+    expect(Number.isInteger(bar) && bar >= RULES.readiness.min && bar <= RULES.readiness.max).toBe(true)
+  }
   // 10. nothing is planted, found, domesticated or jumped to in a pack the farm has no field for
   if (e.type === 'planted' || e.type === 'unlocked' || e.type === 'domesticated') expect(Object.hasOwn(s.fields, catalog.seed(e.seed)?.pack ?? '')).toBe(true)
   if (e.type === 'foraged') expect(Object.hasOwn(s.fields, catalog.find(e.find)?.pack ?? '')).toBe(true)

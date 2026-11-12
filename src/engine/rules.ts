@@ -31,6 +31,8 @@ export const RULES = {
   farmName: { max: 24 },
   /** How many neighbours a game keeps, and how many days after a picture of a farm was made it is forgotten. */
   neighbours: { max: 24, forgetDays: 60 },
+  /** The bar a field's readiness is held to when neither its pack nor its farmer sets one, and what a farmer may set. */
+  readiness: { bar: 80, min: 1, max: 100 },
   defaultRubric: [
     "Says what it is in plain words, not the source's",
     'Says why it matters: the problem it solves or the mistake it prevents',

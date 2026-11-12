@@ -125,6 +125,8 @@ export interface FarmState {
   foraged: string[]
   /** pack id -> branch id; absent means no focus */
   focus: Record<string, string>
+  /** pack id -> the readiness bar the farmer set for that field; absent means the pack's own */
+  bars: Record<string, number>
   /** `spent` is energy used per field today; Sleep resets both. */
   today: { planted: number; spent: Record<string, number> }
   /** Set by `slept`. */
@@ -146,6 +148,7 @@ export type FarmEvent =
   /** A jump-the-fence attempt; `ok` means it passed. A write-up proof is kept on the event, like a harvest's. */
   | { type: 'unlocked'; seed: string; ok: boolean; text?: string; ticked?: number; of?: number }
   | { type: 'focus-set'; pack: string; branch: string | null }
+  | { type: 'bar-set'; pack: string; bar: number }
   | { type: 'farm-named'; name: string }
   /** A Phase 0 (v2) save, converted by `fromV2`. */
   | { type: 'snapshot-imported'; snapshot: unknown }

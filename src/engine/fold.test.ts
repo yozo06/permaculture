@@ -57,6 +57,44 @@ describe('farm-started', () => {
   })
 })
 
+describe('bar-set', () => {
+  const bar = (pack: string, n: unknown) => ({ type: 'bar-set', pack, bar: n })
+
+  it("sets a field's bar, and the last one set is the one that stands", () => {
+    const s = run(cat, [{ type: 'bar-set', pack: 'garden', bar: 60 }], smallFarm())
+    expect(s.bars).toEqual({ garden: 60 })
+    expect(run(cat, [{ type: 'bar-set', pack: 'garden', bar: 95 }], s).bars).toEqual({ garden: 95 })
+  })
+
+  it('costs nothing', () => {
+    const before = smallFarm()
+    const s = run(cat, [{ type: 'bar-set', pack: 'garden', bar: 60 }], before)
+    expect({ energy: s.energy, coins: s.coins, today: s.today }).toEqual({ energy: before.energy, coins: before.coins, today: before.today })
+  })
+
+  it('takes any whole number from 1 to 100 and nothing else', () => {
+    const s = smallFarm()
+    for (const ok of [1, 80, 100]) expect(check(s, bar('garden', ok), cat)).toBeNull()
+    for (const bad of [0, 101, -5, 79.5, '80', null, undefined, Number.NaN]) refusal(s, bar('garden', bad))
+  })
+
+  it('refuses a field that is not open, a pack that does not exist, and a field with no end', () => {
+    const unopened = run(cat, [started, { type: 'field-opened', pack: 'shed', slot: 0 }])
+    expect(refusal(unopened, bar('garden', 60))).toBe('The Garden field is not open yet.')
+    refusal(smallFarm(), bar('nowhere', 60))
+    expect(refusal(smallFarm(), bar('shed', 60))).toBe('The Shed field has no end, so it has no bar.')
+  })
+
+  it('keeps only what an event of this kind holds', () => {
+    expect(parseEvent({ type: 'bar-set', pack: 'garden', bar: 60, id: 'x', at: 'y', extra: 1 })).toEqual({ type: 'bar-set', pack: 'garden', bar: 60 })
+  })
+
+  it('starts every farm with no bars set', () => {
+    expect(initialState().bars).toEqual({})
+    expect(smallFarm().bars).toEqual({})
+  })
+})
+
 describe('field-opened', () => {
   it('opens a field of a pack in a free slot', () => {
     expect(smallFarm().fields).toEqual({ garden: 0, shed: 1 })
