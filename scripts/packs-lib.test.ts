@@ -120,10 +120,31 @@ describe('a seed that has to be earned', () => {
     expect(withEarned('{ rooted: ' + (every + 1) + ' }')).toContain('seed repo: earned asks for ' + (every + 1) + ' rooted seeds, and the other packs have ' + every)
   })
 
+  it('does not blame a pack that exists for another file being broken', () => {
+    const dir = tempCopy()
+    // The Workshop's weather is earned by Infra. Break Infra's shape: only Infra should be reported.
+    edit(dir, 'infra.yaml', (t) => t.replace('\nversion: 0\n', '\nversion: zero\n'))
+    const said = errorsOf(dir).join('\n')
+    expect(said).toContain('/version')
+    expect(said).not.toContain('unknown pack')
+  })
+
   it('takes whole numbers in range and no other keys', () => {
     for (const bad of ['{ rooted: 0 }', '{ pack: infra, readiness: 0 }', '{ pack: infra, readiness: 101 }', '{ rooted: 1.5 }', '{ rooted: 1, by: friday }', 'soon']) {
       expect(withEarned(bad), bad).toContain('/seeds/')
     }
+  })
+})
+
+describe("a pack's own bar", () => {
+  it('is one a farmer could have set: 1 to 100', () => {
+    const withBar = (bar: string): string => {
+      const dir = tempCopy()
+      edit(dir, 'infra.yaml', (t) => t.replace('\nversion: 0\n', '\nversion: 0\nreadiness_bar: ' + bar + '\n'))
+      return errorsOf(dir).join('\n')
+    }
+    for (const ok of ['1', '80', '100']) expect(withBar(ok), ok).toBe('')
+    for (const bad of ['0', '101', '79.5']) expect(withBar(bad), bad).toContain('/readiness_bar')
   })
 })
 

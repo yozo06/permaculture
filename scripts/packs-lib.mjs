@@ -56,14 +56,18 @@ export function loadPacks(dir = defaultPacksDir) {
       else findOwner.set(f.id, r.file);
     }
   }
-  checkEarned(results.filter(r => r.shapeOk));
+  checkEarned(results);
   return results;
 }
 
 // What a seed asks to be earned names other packs, so it is checked once every pack has been read.
-function checkEarned(results) {
+// A pack whose own shape is wrong is still a pack that exists: another pack that names it is not told otherwise, and
+// what depends on its contents is left unchecked until it is mended.
+function checkEarned(all) {
   const countable = pack => pack.seeds.filter(s => s.wild !== true).length;
+  const results = all.filter(r => r.shapeOk);
   const packs = new Map(results.map(r => [r.pack.pack, r.pack]));
+  const broken = new Set(all.filter(r => r.pack && !r.shapeOk && typeof r.pack.pack === 'string').map(r => r.pack.pack));
   for (const r of results) for (const s of r.pack.seeds) {
     const e = s.earned;
     if (!e) continue;
@@ -75,12 +79,13 @@ function checkEarned(results) {
     if (e.pack !== undefined) {
       const other = packs.get(e.pack);
       if (e.pack === r.pack.pack) { say('names its own pack'); continue; }
+      if (broken.has(e.pack)) continue;
       if (!other) { say(`names an unknown pack "${e.pack}"`); continue; }
       if (readiness && other.perennial === true) say(`asks for the readiness of ${e.pack}, which has no end and so no readiness`);
       if (rooted && e.rooted > countable(other)) say(`asks for ${e.rooted} rooted seeds, and ${e.pack} has ${countable(other)}`);
     } else {
       const every = [...packs.values()].filter(p => p.pack !== r.pack.pack).reduce((n, p) => n + countable(p), 0);
-      if (e.rooted > every) say(`asks for ${e.rooted} rooted seeds, and the other packs have ${every}`);
+      if (broken.size === 0 && e.rooted > every) say(`asks for ${e.rooted} rooted seeds, and the other packs have ${every}`);
     }
   }
 }

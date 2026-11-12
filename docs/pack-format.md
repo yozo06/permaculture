@@ -12,7 +12,7 @@ version: 0
 title: System design
 color: "#E0A93E"             # the field's colour on the map
 description: One or two sentences on what this field grows.
-readiness_bar: 80            # optional, default target; the player can change it
+readiness_bar: 80            # optional, 1–100: the bar this field is held to unless its farmer sets another
 perennial: false             # true for goals with no end (a language). Hides readiness.
 energy_cap: 30               # optional: most of each day's energy this field may use, in percent (1–100)
 

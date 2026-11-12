@@ -11,7 +11,7 @@
     "title": { "type": "string", "minLength": 1, "maxLength": 60 },
     "color": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$" },
     "description": { "type": "string", "maxLength": 400 },
-    "readiness_bar": { "type": "integer", "minimum": 0, "maximum": 100, "description": "Default readiness target for this field (player can change it)." },
+    "readiness_bar": { "type": "integer", "minimum": 1, "maximum": 100, "description": "The bar this field's readiness is held to unless its farmer sets another: 1 to 100, as a farmer may set." },
     "perennial": { "type": "boolean", "description": "true for goals with no end (a language, a habit). Readiness is not shown." },
     "energy_cap": { "type": "integer", "minimum": 1, "maximum": 100, "description": "The most of each day's energy this field may use, in percent. The Workshop uses 30." },
     "branches": {
