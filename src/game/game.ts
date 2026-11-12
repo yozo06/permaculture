@@ -308,7 +308,8 @@ function buildStatics(): void {
     statics.push({
       s: at.x + at.y - 0.6, kind: 'flag', pack,
       d: (t) => { const p = iso(at.x, at.y); drawFlag(p.sx, p.sy, colorOf(pack), t) },
-      hit: (ix, iy) => { const p = iso(at.x, at.y); return ix >= p.sx - 3 && ix <= p.sx + FLAG.w + 3 && iy >= p.sy - FLAG.top - 3 && iy <= p.sy - FLAG.top + FLAG.h + 4 },
+      // The cloth and a finger's margin around it, but not the pole: what stands behind the pole keeps its own taps.
+      hit: (ix, iy) => { const p = iso(at.x, at.y); return ix >= p.sx + 1 && ix <= p.sx + FLAG.w + 5 && iy >= p.sy - FLAG.top - 8 && iy <= p.sy - FLAG.top + FLAG.h + 4 },
     })
   }
   // fences: one segment per field edge that borders a different field or open land
@@ -522,6 +523,8 @@ function tileAt(ix: number, iy: number): { x: number; y: number } | null {
   return (x >= 0 && y >= 0 && x < N && y < N) ? { x, y } : null
 }
 function pick(ix: number, iy: number): Pick | null {
+  // A flag is drawn over whatever stands behind it, so it takes the tap first: what you see is what you tap.
+  for (const o of statics) if (o.kind === 'flag' && o.pack !== undefined && o.hit?.(ix, iy)) return { kind: 'flag', pack: o.pack }
   let best: { s: number; crop: Crop } | null = null
   for (const c of D().crops) {
     const { sx, sy } = iso(c.x, c.y)
@@ -529,9 +532,8 @@ function pick(ix: number, iy: number): Pick | null {
   }
   if (best) return { kind: 'crop', crop: best.crop }
   for (const o of statics) {
-    if (!o.hit || !o.kind || o.kind === 'forest' || !o.hit(ix, iy)) continue
-    if (o.kind !== 'flag') return { kind: o.kind }
-    if (o.pack !== undefined) return { kind: 'flag', pack: o.pack }
+    if (!o.hit || !o.kind || o.kind === 'forest' || o.kind === 'flag' || !o.hit(ix, iy)) continue
+    return { kind: o.kind }
   }
   const t = tileAt(ix, iy)
   return t ? { kind: 'tile', x: t.x, y: t.y } : null
