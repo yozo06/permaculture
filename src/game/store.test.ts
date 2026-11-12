@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest'
 import { collectPacks } from '../../scripts/packs-lib.mjs'
 import { buildCatalog } from '../engine/catalog'
 import { fold } from '../engine/fold'
+import { fieldOrigin } from '../engine/land'
+import type { LoggedEvent } from '../engine/types'
 import { farmFileText, parseFarmFile } from '../engine/log'
 import sample from './sample-farm.json'
 import { BROKEN_KEY, LEGACY_KEY, LOG_KEY, UI_KEY, createStore, type StorageLike } from './store'
@@ -85,6 +87,27 @@ describe('dispatch', () => {
     const before = store.events().length
     expect(store.dispatch({ type: 'watered', seed: 'stm', ok: true, work: 'recall' })).toMatch(/not planted/)
     expect(store.events()).toHaveLength(before)
+  })
+
+  it('asks a player for a seed to be earned, and never asks a farm that is loaded or imported', () => {
+    // Sprite sheets are earned by a seed rooted in another field. Here nothing is rooted anywhere.
+    const disk = memory()
+    const store = make(disk)
+    const { x0, y0 } = fieldOrigin(0)
+    store.dispatch({ type: 'field-opened', pack: 'workshop', slot: 0 })
+    expect(store.dispatch({ type: 'unlocked', seed: 'sprites', ok: true, text: 'A link to the sheet.', ticked: 2, of: 2 })).toBeNull()
+    const planting = { type: 'planted' as const, seed: 'sprites', x: x0, y: y0, notes: 'One sheet for every crop, tree and building, drawn the same way.' }
+    const before = store.events().length
+    expect(store.dispatch(planting)).toBe('Sprite sheets is earned by a seed rooted in another field.')
+    expect(store.events()).toHaveLength(before)
+    expect(store.state().crops).toEqual([])
+    // The same planting in a log from before the rule is kept, on import and on the next load.
+    const old: LoggedEvent[] = [...store.events(), { ...planting, id: 'old', at: '2026-10-01T00:00:00Z' }]
+    expect(store.importLog(old)).toBeNull()
+    expect(store.state().crops.map((c) => c.seed)).toEqual(['sprites'])
+    const again = make(disk)
+    expect(again.refused).toBe(0)
+    expect(again.state().crops.map((c) => c.seed)).toEqual(['sprites'])
   })
 
   it('keeps going when storage refuses to save', () => {
