@@ -14,6 +14,7 @@ import type { Crop, FarmEvent, FarmState, LoggedEvent, Mcq, Night } from '../eng
 import { almanacHtml } from './almanac'
 import sampleFarm from './sample-farm.json'
 import { readLink } from './links'
+import { MOMENT_MS, momentDots, type DotTone, type MomentKind } from './moments'
 import { BOOK_KEY, ageText, bookText, readBook, receive, remove, tooOld, type Arrival, type Book } from './neighbours'
 import { cropShape, partColor, shapeHeight } from './shapes'
 import { createStore, defaultId, LOG_KEY, type StorageLike } from './store'
@@ -180,6 +181,7 @@ function refused(e: FarmEvent): boolean {
 /** Pick up a farm the store has just replaced (new farm, import). */
 function adopt(): void {
   S = store.state()
+  moments = []
   buildStatics()
   clampCam()
   hud()
@@ -365,6 +367,45 @@ buildStatics()
 /* ---------- clouds ---------- */
 const clouds = [{ x: 40, y: 22, w: [10, 18, 24, 22, 14], v: 0.035 }, { x: 260, y: 12, w: [8, 14, 20, 18, 10], v: 0.025 }, { x: 400, y: 34, w: [12, 20, 26, 22, 12], v: 0.03 }]
 
+/* ---------- small moments ---------- */
+/** Something that flies off a crop for a blink: a splash, a ring, a burst of sparks. It changes nothing on the farm. */
+interface Moment {
+  kind: MomentKind
+  x: number
+  y: number
+  /** How far above the ground it begins. */
+  lift: number
+  field: string
+  /** Milliseconds to wait once the farm is in view, so a splash can land before the crop is seen to grow. */
+  wait: number
+  /** When it began, by the clock of `frame`. Null until the farm is in view: a sheet may still be covering it. */
+  at: number | null
+}
+let moments: Moment[] = []
+const DOT_COLORS: Record<Exclude<DotTone, 'field'>, string> = { water: '#4FA3E8', spray: '#DFF2FF', leaf: '#8AD47A', gold: '#FFD95A' }
+const stillLife = typeof window.matchMedia === 'function' ? window.matchMedia('(prefers-reduced-motion: reduce)') : null
+/** Play a moment on a crop. Nothing plays for someone who has asked their device for less motion. */
+function celebrate(kind: MomentKind, c: Crop, wait = 0): void {
+  const seed = catalog.seed(c.seed)
+  if (!seed || stillLife?.matches) return
+  const lift = kind === 'splash' ? 0 : shapeHeight(cropShape(seed.layer, c.stage, c.perennial))
+  moments.push({ kind, x: c.x, y: c.y, lift, field: colorOf(seed.pack), wait, at: null })
+}
+/** The moments still playing at time `t`, ready to be drawn in their place among the crops. */
+function momentDrawables(t: number): Drawable[] {
+  const farmInView = veil.hidden
+  for (const m of moments) if (m.at === null && farmInView) m.at = t + m.wait
+  moments = moments.filter((m) => m.at === null || t - m.at < MOMENT_MS[m.kind])
+  return moments.flatMap((m): Drawable[] => {
+    const at = m.at
+    if (at === null) return []
+    return [{ s: m.x + m.y + 0.02, d: () => {
+      const p = iso(m.x, m.y)
+      for (const dot of momentDots(m.kind, t - at)) px(p.sx + dot.x, p.sy + 11 - m.lift + dot.y, 2, 2, dot.tone === 'field' ? m.field : DOT_COLORS[dot.tone])
+    } }]
+  })
+}
+
 /* ---------- render ---------- */
 let hover: { x: number; y: number } | null = null
 function frame(t: number): void {
@@ -389,6 +430,7 @@ function frame(t: number): void {
   for (const c of D().crops) list.push({ s: c.x + c.y, d: () => { const p = iso(c.x, c.y); drawCrop(c, p.sx, p.sy, t); drawMarker(c, p.sx, p.sy, t) } })
   // Your farmer stays at home while you look at someone else's farm.
   if (!visiting) list.push({ s: f.x + f.y + 0.01, d: () => { const p = iso(f.x, f.y); drawFarmer(Math.round(p.sx), Math.round(p.sy + 13), walking, t) } })
+  list.push(...momentDrawables(t))
   list.sort((a, b) => a.s - b.s)
   for (const o of list) o.d(t)
   requestAnimationFrame(frame)
@@ -640,6 +682,8 @@ function plant(): void {
   if (!act({ type: 'planted', seed: p.seed.id, x: p.x, y: p.y, notes })) return
   PLANT = null
   store.ui.seedSel = null
+  const sprout = cropOf(S, p.seed.id)
+  if (sprout) celebrate('grow', sprout)
   close()
   hint('Planted <b>' + esc(p.seed.name) + '</b>. It will be thirsty tomorrow. Tap it then and answer to make it grow. Tap it any time it is idle to read your notes.')
   toast('Planted ' + p.seed.name + '.')
@@ -746,9 +790,15 @@ function workEvent(seed: Seed, mode: Mode, ok: boolean, d: Detail): FarmEvent {
 
 /** Send the outcome of a piece of work to the farm and describe it. Null if the farm refused it (the reason is already on screen). */
 function settle(seed: Seed, mode: Mode, ok: boolean, detail: Detail): string | null {
+  const before = cropOf(S, seed.id)?.stage
   if (!act(workEvent(seed, mode, ok, detail))) return null
   const name = esc(seed.name)
   const c = cropOf(S, seed.id)
+  if (c && ok && mode === 'harvest') celebrate('harvest', c)
+  if (c && ok && mode === 'water') {
+    celebrate('splash', c)
+    if (before !== undefined && c.stage > before) celebrate('grow', c, MOMENT_MS.splash / 2)
+  }
   if (mode === 'testout') {
     return ok ? '<b>Over the fence.</b> ' + name + ' is unlocked. Plant it from the seed bag.' : '<b>Not yet.</b> ' + name + ' stays locked. Root its prerequisites, or try again tomorrow.'
   }
@@ -970,6 +1020,8 @@ const packsOf = (p: Picture): string[] => p.fields.map((f) => f.pack)
 function enterVisit(state: FarmState, who: string, label: string, detail: string, packs: string[]): void {
   if (!visiting) homeHint = $('hint').innerHTML
   visiting = { state, who, label, cam: { x: 0, y: 0 }, packs }
+  // A moment belongs to your own farm: it does not follow you through the gate.
+  moments = []
   buildStatics()
   visiting.cam = camHome()
   hover = null
