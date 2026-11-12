@@ -1,7 +1,8 @@
 // HTML for the sheets of the depth ladder: plant with notes, explain, write up, and the crop sheet.
 // Pure strings in, strings out, so they can be tested without a browser. Everything that came from a player or a pack is escaped.
+import { cropShape, shapeSvg } from './shapes'
 import type { NeighbourCropView, NeighbourRow, ShareView } from './visit'
-import type { CropView, PickerPack, SourceLink } from './views'
+import type { CropView, EarnedRow, PickerPack, ReadinessRow, ReadinessView, SourceLink } from './views'
 import { esc } from './util'
 
 export const chipHtml = (title: string, color: string): string => '<div><span class="chip" style="--c:' + esc(color) + '">' + esc(title) + '</span></div>'
@@ -99,6 +100,56 @@ export function pickerHtml(packs: readonly PickerPack[]): string {
     packs.filter((p) => !p.open).map((p) =>
       '<label class="tick"><input type="checkbox" data-pack="' + esc(p.pack) + '"' + (p.ticked ? ' checked' : '') + '> <span><b style="color:' + esc(p.color) + '">' + esc(p.title) + '</b> · ' + p.seeds + ' seeds<br><span class="sub">' + esc(p.description) + '</span></span></label>').join('') +
     '</fieldset>'
+  )
+}
+
+/* ---------- readiness ---------- */
+
+/** A pack's colour if it is one, else the game's green: it goes into a style, so nothing else may. */
+const hex = (color: string): string => (/^#[0-9A-Fa-f]{6}$/.test(color) ? color : '#6DB24F')
+const fieldHead = (r: ReadinessRow, tag = ''): string => '<div class="fh"><i style="background:' + hex(r.color) + '"></i>' + esc(r.title) + tag + '</div>'
+const standing = (r: ReadinessRow): string => r.rooted + ' of ' + r.total + ' rooted · ' + r.growing + ' growing'
+
+function readinessRowHtml(r: ReadinessRow, limits: { min: number; max: number }): string {
+  const ready = r.readiness
+  if (!ready) return '<div class="ready">' + fieldHead(r) + '<div class="sub">This field has no end, so it has no number and no bar. ' + standing(r) + '.</div></div>'
+  const id = 'bar-' + esc(r.pack)
+  // Each layer as the tree it grows into, in the field's colour, faded where nothing stands yet.
+  const layers = ready.layers.map((l) =>
+    '<div class="lay' + (l.rooted === 0 ? ' hollow' : '') + '">' + shapeSvg(cropShape(l.layer, 4, true), hex(r.color), 2) + '<span>' + esc(l.name) + ' <b>' + l.rooted + '</b> of ' + l.total + '</span></div>').join('')
+  return (
+    '<div class="ready">' + fieldHead(r, ready.atBar ? ' <span class="tag">at its bar</span>' : '') +
+    '<div class="gauge" role="img" aria-label="Readiness ' + ready.percent + ', bar ' + ready.bar + '"><i style="width:' + ready.percent + '%;background:' + hex(r.color) + '"></i><b style="left:' + ready.bar + '%"></b></div>' +
+    '<div class="sub"><b>' + ready.percent + '</b> · bar ' + ready.bar + ' · ' + standing(r) + '</div>' +
+    (layers ? '<div class="layers">' + layers + '</div>' : '') +
+    (ready.hollow.length ? '<div class="sub">Hollow: ' + esc(ready.hollow.join(', ')) + '.</div>' : '') +
+    '<div class="setbar"><label for="' + id + '" class="sub">Your bar for this field</label>' +
+    '<input type="number" id="' + id + '" class="write" min="' + limits.min + '" max="' + limits.max + '" step="1" inputmode="numeric" value="' + ready.bar + '">' +
+    '<button type="button" data-act="setBar" data-arg="' + esc(r.pack) + '">Set bar</button></div>' +
+    '</div>'
+  )
+}
+
+const earnedRowHtml = (e: EarnedRow, field: string): string =>
+  '<div class="row slim"><div class="n">' + esc(e.name) + '<small>' + esc(field) + ' · earned by ' + esc(e.line) + '</small></div>' +
+  '<span class="sub">' + (e.met ? 'earned, ready to plant' : e.have + ' of ' + e.want) + '</span></div>'
+
+/** The seeds that have still to be earned, under their own heading; nothing at all when there are none. */
+export const earnedSectionHtml = (rows: readonly EarnedRow[], titleOf: (pack: string) => string): string =>
+  rows.length
+    ? '<h3>Earned by learning</h3><p class="sub">These seeds can be planted only once the learning is on your farm. A jump over the fence does not clear them.</p><div>' +
+      rows.map((e) => earnedRowHtml(e, titleOf(e.pack))).join('') + '</div>'
+    : ''
+
+/** How ready each field is, the bar it is held to, and what has still to be earned. `limits` is what a farmer may set a bar to. */
+export function readinessSheetHtml(v: ReadinessView, limits: { min: number; max: number }): string {
+  const title = (pack: string): string => v.rows.find((r) => r.pack === pack)?.title ?? pack
+  return (
+    '<h2>Readiness</h2><p class="sub">How much of each field stands as trees today. There are no dates here: a field is ready when it reaches the bar you set for it and none of its layers is hollow. A layer is hollow while no tree stands in it.</p>' +
+    (v.withBar ? '<p><b>' + v.atBar + ' of ' + v.withBar + '</b> ' + (v.withBar === 1 ? 'field is' : 'fields are') + ' at the bar.</p>' : '') +
+    v.rows.map((r) => readinessRowHtml(r, limits)).join('') +
+    earnedSectionHtml(v.earned, title) +
+    footHtml()
   )
 }
 

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { RULES } from '../engine/rules'
-import { cropSheetHtml, countText, footHtml, NO_NOTES, plantSheetHtml, tickList, writingBox, pickerHtml, arrivalSheetHtml, neighbourCropSheetHtml, neighboursSheetHtml, shareSheetHtml } from './sheets'
-import type { CropView } from './views'
+import { cropSheetHtml, countText, footHtml, NO_NOTES, plantSheetHtml, readinessSheetHtml, tickList, writingBox, pickerHtml, arrivalSheetHtml, neighbourCropSheetHtml, neighboursSheetHtml, shareSheetHtml } from './sheets'
+import type { CropView, EarnedRow, ReadinessRow, ReadinessView } from './views'
 
 const view = (patch: Partial<CropView> = {}): CropView => ({
   seed: 'raft', name: 'Raft', pack: 'system-design', layer: 'Root', stageLine: 'Stage 2 of 5 · Z2 · Recall', statusLine: 'Growing.', nextWork: null,
@@ -188,5 +188,85 @@ describe('shareSheetHtml', () => {
     const html = shareSheetHtml({ name: 'Asha', packs, view: null, url: null, canShare: true })
     expect(html).toMatch(/Tick at least one field/)
     expect(html).not.toContain('shareLink')
+  })
+})
+
+describe('readinessSheetHtml', () => {
+  const row = (patch: Partial<ReadinessRow> = {}): ReadinessRow => ({
+    pack: 'infra', title: 'Infra', color: '#5FA8C9', rooted: 22, total: 36, growing: 5,
+    readiness: { percent: 61, bar: 80, atBar: false, hollow: ['Root'], layers: [{ layer: 'canopy', name: 'Canopy', rooted: 2, total: 5 }, { layer: 'root', name: 'Root', rooted: 0, total: 4 }] },
+    ...patch,
+  })
+  const earned = (patch: Partial<EarnedRow> = {}): EarnedRow => ({ id: 'sprites', name: 'Sprite sheets', pack: 'workshop', line: 'a seed rooted in another field', have: 0, want: 1, met: false, ...patch })
+  const view = (patch: Partial<ReadinessView> = {}): ReadinessView => ({ rows: [row()], atBar: 0, withBar: 1, earned: [], ...patch })
+  const html = (v: ReadinessView = view()): string => readinessSheetHtml(v, RULES.readiness)
+
+  it('shows the number against the bar, what stands and what is growing', () => {
+    const h = html()
+    expect(h).toContain('<h2>Readiness</h2>')
+    expect(h).toContain('<b>61</b>')
+    expect(h).toContain('bar 80')
+    expect(h).toContain('22 of 36 rooted')
+    expect(h).toContain('5 growing')
+    expect(h).toContain('aria-label="Readiness 61, bar 80"')
+    expect(h).toContain('width:61%')
+    expect(h).toContain('left:80%')
+  })
+
+  it('draws each layer with its count, and marks and names the hollow ones', () => {
+    const h = html()
+    expect(h.split('<svg ').length - 1).toBe(2)
+    expect(h).toContain('Canopy <b>2</b> of 5')
+    expect(h).toContain('Root <b>0</b> of 4')
+    expect(h.split('class="lay hollow"').length - 1).toBe(1)
+    expect(h).toContain('Hollow: Root.')
+    expect(html(view({ rows: [row({ readiness: { percent: 61, bar: 80, atBar: false, hollow: [], layers: [] } })] }))).not.toContain('Hollow')
+  })
+
+  it('lets the farmer set the bar, within what a bar may be', () => {
+    const h = html()
+    expect(h).toContain('<input type="number" id="bar-infra"')
+    expect(h).toContain('min="1" max="100"')
+    expect(h).toContain('value="80"')
+    expect(h).toContain('data-act="setBar" data-arg="infra"')
+    expect(h).toContain('<label for="bar-infra"')
+  })
+
+  it('gives a field with no end no number, no bar and nothing to set', () => {
+    const h = html(view({ rows: [row({ pack: 'kannada', title: 'Kannada', readiness: null, rooted: 3, total: 8, growing: 2 })], withBar: 0 }))
+    expect(h).toContain('Kannada')
+    expect(h).toContain('3 of 8 rooted')
+    expect(h).toContain('2 growing')
+    expect(h).toContain('no bar')
+    expect(h).not.toContain('<input')
+    expect(h).not.toContain('at the bar')
+  })
+
+  it('says how many fields are at the bar, and which', () => {
+    const there = row({ pack: 'dsa', title: 'DSA', readiness: { percent: 90, bar: 80, atBar: true, hollow: [], layers: [] } })
+    const h = html(view({ rows: [row(), there], atBar: 1, withBar: 2 }))
+    expect(h).toContain('<b>1 of 2</b> fields are at the bar')
+    expect(h.split('at its bar').length - 1).toBe(1)
+    expect(html(view({ atBar: 0, withBar: 1 }))).toContain('<b>0 of 1</b> field is at the bar')
+  })
+
+  it('lists what has still to be earned, its field, and how far along the farm is', () => {
+    const h = html(view({ rows: [row(), row({ pack: 'workshop', title: 'Workshop', readiness: null })], earned: [earned(), earned({ id: 'weather', name: 'Coorg weather', line: 'the Infra field at 60', have: 61, want: 60, met: true })] }))
+    expect(h).toContain('<h3>Earned by learning</h3>')
+    expect(h).toContain('Sprite sheets')
+    expect(h).toContain('Workshop · earned by a seed rooted in another field')
+    expect(h).toContain('0 of 1')
+    expect(h).toContain('Workshop · earned by the Infra field at 60')
+    expect(h).toContain('earned, ready to plant')
+    expect(html()).not.toContain('Earned by learning')
+  })
+
+  it('escapes what came from a pack', () => {
+    const h = html(view({ rows: [row({ title: '<i>Infra</i>', pack: 'in"fra', color: '"><script>' })], earned: [earned({ name: '<b>x</b>', line: '<u>y</u>' })] }))
+    expect(h).not.toContain('<i>Infra</i>')
+    expect(h).not.toContain('<script>')
+    expect(h).not.toContain('<b>x</b>')
+    expect(h).not.toContain('<u>y</u>')
+    expect(h).not.toContain('id="bar-in"fra"')
   })
 })

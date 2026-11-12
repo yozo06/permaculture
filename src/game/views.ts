@@ -1,8 +1,9 @@
 // What the seed bag and the learning tree draw, worked out from the packs and the farm. Pure: no DOM.
 import { HARVEST_NAMES, LAYER_NAMES, type Catalog, type Seed } from '../engine/catalog'
 import { harvestWork, rungName, waterWork, type WaterKind } from '../engine/ladder'
+import { earnedLine, earnedProgress, readiness } from '../engine/readiness'
 import { RULES, available, cropOf, revivable, ripe, rooted, thirsty, visible, zone } from '../engine/rules'
-import type { Crop, FarmState, PackDef } from '../engine/types'
+import type { Crop, FarmState, Layer, PackDef } from '../engine/types'
 
 export const DEFAULT_COLOR = '#6DB24F'
 export const packColor = (p: PackDef): string => p.color ?? DEFAULT_COLOR
@@ -125,6 +126,83 @@ export function bagView(state: FarmState, catalog: Catalog, selected: string | n
   return sections
 }
 
+/* ---------- earned seeds, and readiness ---------- */
+
+export interface EarnedRow {
+  id: string
+  name: string
+  pack: string
+  /** What earns it, to finish "Earned by …". */
+  line: string
+  /** Trees counted so far, or the field's readiness today. */
+  have: number
+  want: number
+  met: boolean
+}
+
+/** Of these seeds, the ones that have to be earned and are not in the ground yet. */
+function earnedRows(seeds: readonly Seed[], state: FarmState, catalog: Catalog): EarnedRow[] {
+  return seeds.flatMap((seed): EarnedRow[] => {
+    const progress = earnedProgress(seed, state, catalog)
+    if (!seed.earned || !progress || cropOf(state, seed.id)) return []
+    return [{ id: seed.id, name: seed.name, pack: seed.pack, line: earnedLine(seed.earned, catalog), ...progress }]
+  })
+}
+
+export interface ReadinessRow {
+  pack: string
+  title: string
+  color: string
+  /** Trees standing today, of the seeds that count (wild ones do not). */
+  rooted: number
+  total: number
+  /** Crops in the ground that are not trees yet. */
+  growing: number
+  /** Null for a field with no end: it has no number and no bar. */
+  readiness: {
+    percent: number
+    bar: number
+    atBar: boolean
+    /** Names of the layers nothing stands in. */
+    hollow: string[]
+    layers: { layer: Layer; name: string; rooted: number; total: number }[]
+  } | null
+}
+
+export interface ReadinessView {
+  /** One per field the farm has, in pack order. */
+  rows: ReadinessRow[]
+  /** How many fields are at their bar, of how many have one. */
+  atBar: number
+  withBar: number
+  earned: EarnedRow[]
+}
+
+/** How ready each of the farm's fields is, and what its seeds have still to earn. */
+export function readinessView(state: FarmState, catalog: Catalog): ReadinessView {
+  const packs = catalog.packs.filter((p) => Object.hasOwn(state.fields, p.pack))
+  const rows = packs.map((p): ReadinessRow => {
+    const counts = new Set(catalog.seedsOf(p.pack).filter((s) => !s.wild).map((s) => s.id))
+    const crops = state.crops.filter((c) => counts.has(c.seed))
+    const r = readiness(p.pack, state, catalog)
+    return {
+      pack: p.pack, title: p.title, color: packColor(p), total: counts.size,
+      rooted: crops.filter((c) => c.perennial && !c.wilted).length,
+      growing: crops.filter((c) => !c.perennial).length,
+      readiness: r && {
+        percent: r.percent, bar: r.bar, atBar: r.atBar, hollow: r.hollow.map((l) => LAYER_NAMES[l]),
+        layers: r.layers.map((l) => ({ layer: l.layer, name: LAYER_NAMES[l.layer], rooted: l.rooted, total: l.total })),
+      },
+    }
+  })
+  return {
+    rows,
+    atBar: rows.filter((r) => r.readiness?.atBar).length,
+    withBar: rows.filter((r) => r.readiness).length,
+    earned: earnedRows(packs.flatMap((p) => catalog.seedsOf(p.pack)).filter((s) => visible(s, state)), state, catalog),
+  }
+}
+
 /* ---------- learning tree ---------- */
 
 export const TREE_WIDTH = 480
@@ -184,6 +262,8 @@ export interface TreeView {
   guilds: TreeGuild[]
   /** Seeds you could jump the fence to: visible, locked, not planted. */
   locked: { id: string; name: string; needs: string }[]
+  /** The field's readiness in a line, or null for a field with no end. */
+  readiness: { percent: number; bar: number; atBar: boolean; hollow: string[] } | null
 }
 
 /** Break a long name over two lines at a space near the middle. */
@@ -247,6 +327,7 @@ export function treeView(packId: string, state: FarmState, catalog: Catalog): Tr
     return { id: g.id, title: g.title, members, rooted: members.filter((m) => m.status === 'rooted').length, total: members.length }
   })
 
+  const ready = readiness(packId, state, catalog)
   const locked = seeds
     .filter((s) => seedStatus(s, state) === 'locked')
     .map((s) => ({ id: s.id, name: s.name, needs: needsText(s, catalog) }))
@@ -255,6 +336,7 @@ export function treeView(packId: string, state: FarmState, catalog: Catalog): Tr
     pack: packId, title: pack.title, color: packColor(pack), width: TREE_WIDTH, height: y, columnWidth,
     branches: pack.branches.map((b, i) => ({ id: b.id, title: b.title, focus: state.focus[packId] === b.id, x: (i + 0.5) * columnWidth })),
     nodes, edges, guilds, locked,
+    readiness: ready && { percent: ready.percent, bar: ready.bar, atBar: ready.atBar, hollow: ready.hollow.map((l) => LAYER_NAMES[l]) },
   }
 }
 

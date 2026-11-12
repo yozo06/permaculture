@@ -2,11 +2,12 @@ import { describe, expect, it } from 'vitest'
 import { collectPacks } from '../../scripts/packs-lib.mjs'
 import { buildCatalog } from '../engine/catalog'
 import type { Crop, PackDef, SeedDef } from '../engine/types'
+import { earningCatalog, run, started } from '../engine/fixtures'
 import { apply, fieldsToOpen, fold } from '../engine/fold'
 import { RULES } from '../engine/rules'
 import type { FarmState } from '../engine/types'
 import sampleFarm from './sample-farm.json'
-import { bagView, cropView, sourceLinks, splitName, tending, treeView, driftText, pickerView } from './views'
+import { bagView, cropView, readinessView, sourceLinks, splitName, tending, treeView, driftText, pickerView } from './views'
 
 const catalog = buildCatalog(collectPacks())
 
@@ -263,5 +264,53 @@ describe('pickerView', () => {
     expect(kannada?.description).toMatch(/Everyday Kannada/)
     expect(kannada?.seeds).toBe(catalog.seedsOf('kannada').length)
     expect(v.find((p) => p.pack === 'infra')).toMatchObject({ open: false, ticked: true })
+  })
+})
+
+/* ---------- readiness and earned seeds ---------- */
+
+// The small farm whose shed has a kiln, a forge and an anvil that the garden has to earn (see `earningCatalog`).
+const c = earningCatalog
+const open = (...packs: string[]): FarmState => run(c, [started, ...packs.map((pack, slot) => ({ type: 'field-opened' as const, pack, slot }))])
+const standing = (seed: string, patch: Partial<Crop> = {}): Crop => ({ seed, x: 0, y: 0, stage: 4, best: 4, due: 99, wilted: false, perennial: true, notes: '', journal: [], ...patch })
+const withCrops = (s: FarmState, ...crops: Crop[]): FarmState => ({ ...s, crops: [...s.crops, ...crops] })
+
+describe('readinessView', () => {
+  it('has a row for each field the farm has, in pack order, and a number only for a field with an end', () => {
+    const v = readinessView(open('garden', 'shed'), c)
+    expect(v.rows.map((r) => [r.pack, r.title, r.rooted, r.total, r.growing])).toEqual([['garden', 'Garden', 0, 3, 0], ['shed', 'Shed', 0, 6, 0]])
+    expect(v.rows[0]?.readiness).toEqual({
+      percent: 0, bar: RULES.readiness.bar, atBar: false, hollow: ['Canopy', 'Ground cover', 'Vine'],
+      layers: [{ layer: 'canopy', name: 'Canopy', rooted: 0, total: 1 }, { layer: 'ground-cover', name: 'Ground cover', rooted: 0, total: 1 }, { layer: 'vine', name: 'Vine', rooted: 0, total: 1 }],
+    })
+    expect(v.rows[1]?.readiness).toBeNull()
+    expect(readinessView(open('shed'), c).rows.map((r) => r.pack)).toEqual(['shed'])
+  })
+
+  it('counts what stands, what is growing, and the fields at their bar', () => {
+    const s = run(c, [{ type: 'bar-set', pack: 'garden', bar: 60 }], open('garden', 'shed'))
+    const part = readinessView(withCrops(s, standing('corn'), standing('beans'), standing('squash', { perennial: false, stage: 2 }), standing('saw')), c)
+    expect(part.rows[0]).toMatchObject({ rooted: 2, growing: 1, readiness: { percent: 66, bar: 60, atBar: false, hollow: ['Ground cover'] } })
+    expect(part.rows[1]).toMatchObject({ rooted: 1, growing: 0 })
+    expect({ atBar: part.atBar, withBar: part.withBar }).toEqual({ atBar: 0, withBar: 1 })
+    const all = readinessView(withCrops(s, standing('corn'), standing('beans'), standing('squash')), c)
+    expect(all.rows[0]?.readiness).toMatchObject({ percent: 100, atBar: true, hollow: [] })
+    expect({ atBar: all.atBar, withBar: all.withBar }).toEqual({ atBar: 1, withBar: 1 })
+  })
+
+  it('does not count a wild seed, rooted or growing, on either side', () => {
+    const v = readinessView(withCrops(open('garden', 'shed'), standing('bees')), c)
+    expect(v.rows[0]).toMatchObject({ rooted: 0, total: 3, growing: 0 })
+  })
+
+  it("gives the learning tree its field's readiness in a line, and none for a field with no end", () => {
+    const s = withCrops(open('garden', 'shed'), standing('corn'))
+    expect(treeView('garden', s, c)?.readiness).toEqual({ percent: 33, bar: RULES.readiness.bar, atBar: false, hollow: ['Ground cover', 'Vine'] })
+    expect(treeView('shed', s, c)?.readiness).toBeNull()
+  })
+
+  it('lists what is still to be earned in the fields the farm has, and nothing from a field it has not', () => {
+    expect(readinessView(open('garden', 'shed'), c).earned.map((x) => x.id)).toEqual(['kiln', 'forge', 'anvil'])
+    expect(readinessView(open('garden'), c).earned).toEqual([])
   })
 })

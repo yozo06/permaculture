@@ -21,10 +21,10 @@ import { createStore, defaultId, LOG_KEY, type StorageLike } from './store'
 import { esc, shuffle } from './util'
 import {
   arrivalSheetHtml, chipHtml, countText, cropSheetHtml, footHtml, nameSheetHtml, neighbourCropSheetHtml, neighboursSheetHtml, noteHtml, NO_NOTES,
-  pickerHtml, plantSheetHtml, shareSheetHtml, tickList, writingBox,
+  pickerHtml, plantSheetHtml, readinessSheetHtml, shareSheetHtml, tickList, writingBox,
 } from './sheets'
 import { arrivalText, neighbourCropView, neighbourRows, shareView, type ShareView } from './visit'
-import { bagView, cropView, driftText, needsText, packColor, pickerView, sourceLinks, splitName, tending, treeView, type TreeView } from './views'
+import { bagView, cropView, driftText, needsText, packColor, pickerView, readinessView, sourceLinks, splitName, tending, treeView, type TreeView } from './views'
 
 /* ---------- types ---------- */
 type Mode = 'water' | 'harvest' | 'testout'
@@ -1013,7 +1013,7 @@ let visitedPacks: string[] = []
 let ARRIVAL: { picture: Picture; state: FarmState } | null = null
 /** The hint line as it was before a visit replaced it. */
 let homeHint = ''
-const BAR_BUTTONS = ['bBag', 'bTree', 'bSleep']
+const BAR_BUTTONS = ['bBag', 'bTree', 'bReady', 'bSleep']
 const visitLabel = (p: Picture): string => p.name + "'s farm"
 const visitDetail = (p: Picture): string => 'day ' + p.day + ', picture ' + ageText(p.at, Date.now())
 const packsOf = (p: Picture): string[] => p.fields.map((f) => f.pack)
@@ -1222,6 +1222,7 @@ function openTree(packId: string = treePack()): void {
       foot('Close', '<button type="button" data-act="openField" data-arg="' + esc(v.pack) + '">Open this field</button>')
     return open(html)
   }
+  if (v.readiness) html += '<p class="sub">Readiness <b>' + v.readiness.percent + '</b> · bar ' + v.readiness.bar + (v.readiness.atBar ? ' · at its bar' : '') + (v.readiness.hollow.length ? ' · hollow: ' + esc(v.readiness.hollow.join(', ')) : '') + '</p>'
   html += treeSvg(v)
   html += '<div class="branches">' + v.branches.map((b) => '<button type="button" data-act="focus" data-arg="' + esc(v.pack) + '|' + esc(b.id) + '"' + (b.focus ? ' class="pri"' : '') + '>' + (b.focus ? 'Focus: ' : 'Focus on ') + esc(b.title) + '</button>').join('') + '</div>'
   html += '<p class="sub">Solid box: rooted · outline: growing (bar = stage) · cream outline: ready to plant · dashed: locked · green dot: found in the wild.</p>'
@@ -1230,8 +1231,22 @@ function openTree(packId: string = treePack()): void {
       v.guilds.map((g) => '<div class="row"><div class="n">' + esc(g.title) + '<small>' + g.members.map((m) => esc(m.name ?? 'a wild seed')).join(', ') + '</small></div><span class="sub">' + g.rooted + ' of ' + g.total + ' rooted</span></div>').join('') + '</div>'
   }
   if (v.locked.length) html += '<h3>Jump the fence</h3><p class="sub">Already know one of these? Prove it on a harvest-grade question (10 energy) and it unlocks without its prerequisites.</p><div>' + v.locked.map((t) => '<div class="row"><div class="n">' + esc(t.name) + '<small>needs ' + esc(t.needs) + '</small></div><button type="button" data-act="testout" data-arg="' + esc(t.id) + '">Test out</button></div>').join('') + '</div>'
-  html += foot()
+  html += foot('Close', '<button type="button" data-act="readiness">Readiness</button>')
   open(html)
+}
+
+/* ---------- readiness ---------- */
+function openReadiness(): void { open(readinessSheetHtml(readinessView(S, catalog), RULES.readiness)) }
+function setBar(pack: string): void {
+  const box = document.getElementById('bar-' + pack)
+  if (!(box instanceof HTMLInputElement)) return
+  // An empty box reads as 0 and half a number as itself: the farm refuses both, and says what a bar may be.
+  if (!act({ type: 'bar-set', pack, bar: Number(box.value) })) return
+  // The sheet is drawn again with the new bar, where the farmer was reading.
+  const at = sheet.scrollTop
+  openReadiness()
+  sheet.scrollTop = at
+  toast('The bar for ' + packTitle(pack) + ' is ' + S.bars[pack] + '.')
 }
 
 /* ---------- almanac ---------- */
@@ -1320,6 +1335,8 @@ sheet.addEventListener('click', (e) => {
   else if (what === 'addNeighbour') { const said = keepArrival(); if (said) toast(said); openNeighbours() }
   else if (what === 'justLook') { const a = ARRIVAL; if (a) { enterVisit(a.state, a.picture.name, visitLabel(a.picture), visitDetail(a.picture), packsOf(a.picture)); close() } }
   else if (what === 'startFromVisit') startFromVisit()
+  else if (what === 'readiness') openReadiness()
+  else if (what === 'setBar') setBar(arg)
   else if (what === 'expand') expand(arg)
   else if (what === 'forage') forage(arg)
   else if (what === 'domesticate') domesticate(arg)
@@ -1357,6 +1374,7 @@ window.addEventListener('storage', (e) => {
 })
 byId('bBag').addEventListener('click', openBag)
 byId('bTree').addEventListener('click', () => openTree())
+byId('bReady').addEventListener('click', openReadiness)
 byId('bAlm').addEventListener('click', openAlmanac)
 byId('bSleep').addEventListener('click', sleep)
 hud()
