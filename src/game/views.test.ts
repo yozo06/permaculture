@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { collectPacks } from '../../scripts/packs-lib.mjs'
 import { buildCatalog } from '../engine/catalog'
 import type { Crop, PackDef, SeedDef } from '../engine/types'
-import { earningCatalog, run, started } from '../engine/fixtures'
+import { earningCatalog, layeredCatalog, run, started } from '../engine/fixtures'
 import { apply, fieldsToOpen, fold } from '../engine/fold'
 import { RULES } from '../engine/rules'
 import type { FarmState } from '../engine/types'
@@ -129,7 +129,8 @@ describe('treeView', () => {
   it('rates every node and draws needs as links', () => {
     const v = treeView('infra', farm(), catalog)
     const status = (id: string) => v?.nodes.find((n) => n.id === id)?.status
-    expect([status('mvcc'), status('k8s'), status('pgidx'), status('mesh')]).toEqual(['rooted', 'growing', 'ready', 'locked'])
+    // pgidx is a shrub with nothing it needs, but the Infra field has roots it could plant and none standing: it waits.
+    expect([status('mvcc'), status('k8s'), status('tls'), status('pgidx'), status('mesh')]).toEqual(['rooted', 'growing', 'ready', 'held', 'locked'])
     expect(v?.nodes.find((n) => n.id === 'k8s')?.progress).toBe(3 / 5)
     expect(v?.edges.find((e) => e.to.y > e.from.y && e.rooted)).toBeDefined()
     expect(v?.locked.map((l) => l.id)).toEqual(expect.arrayContaining(['mesh', 'slo']))
@@ -363,5 +364,38 @@ describe('readinessView', () => {
   it('lists what is still to be earned in the fields the farm has, and nothing from a field it has not', () => {
     expect(readinessView(open('garden', 'shed'), c).earned.map((x) => x.id)).toEqual(['kiln', 'forge', 'anvil'])
     expect(readinessView(open('garden'), c).earned).toEqual([])
+  })
+})
+
+describe('a seed that layer balance holds back', () => {
+  // The garden from the ground up: beet (root), squash (ground cover, locked), thyme (herb), corn (canopy), and beans (a vine).
+  const lc = layeredCatalog
+  const fresh = (): FarmState => run(lc, [started, { type: 'field-opened', pack: 'garden', slot: 0 }, { type: 'field-opened', pack: 'shed', slot: 1 }])
+  const of = (id: string) => { const seed = lc.seed(id); if (!seed) throw new Error('no seed ' + id); return seed }
+
+  it('is held, not ready and not locked', () => {
+    const s = fresh()
+    expect(['corn', 'thyme', 'beet', 'beans', 'squash'].map((id) => seedStatus(of(id), s, lc))).toEqual(['held', 'held', 'ready', 'ready', 'locked'])
+    const planted = withCrops(s, standing('beet', { perennial: false, stage: 0 }))
+    expect(['corn', 'thyme'].map((id) => seedStatus(of(id), planted, lc))).toEqual(['held', 'ready'])
+  })
+
+  it('stays in the seed bag with the layer to plant in first, and cannot be picked up', () => {
+    const garden = bagView(fresh(), lc).find((x) => x.pack === 'garden')
+    expect(garden?.seeds.map((x) => [x.id, x.status, x.below])).toEqual([['corn', 'held', 'Root'], ['beans', 'ready', null], ['beet', 'ready', null], ['thyme', 'held', 'Root']])
+    expect(garden?.lockedCount).toBe(1)
+  })
+
+  it('is never the seed in hand, even if it was picked up before it was held', () => {
+    const garden = bagView(fresh(), lc, 'corn').find((x) => x.pack === 'garden')
+    expect(garden?.seeds.find((x) => x.id === 'corn')).toMatchObject({ status: 'held', selected: false })
+  })
+
+  it('is drawn as held in the learning tree, which lists what each one waits for', () => {
+    const tree = treeView('garden', fresh(), lc)
+    expect(tree?.nodes.filter((n) => n.status === 'held').map((n) => n.id).sort()).toEqual(['corn', 'thyme'])
+    expect(tree?.held).toEqual([{ id: 'corn', name: 'Corn', layer: 'Canopy', below: 'Root' }, { id: 'thyme', name: 'Thyme', layer: 'Herb', below: 'Root' }])
+    expect(tree?.locked.map((x) => x.id)).toEqual(['squash'])
+    expect(treeView('shed', fresh(), lc)?.held).toEqual([])
   })
 })

@@ -2,7 +2,7 @@
 // Pure strings in, strings out, so they can be tested without a browser. Everything that came from a player or a pack is escaped.
 import { cropShape, shapeSvg } from './shapes'
 import type { NeighbourCropView, NeighbourRow, ShareView } from './visit'
-import type { CropView, EarnedRow, PickerPack, ReadinessRow, ReadinessView, SourceLink } from './views'
+import type { CropView, EarnedRow, HeldRow, PickerPack, ReadinessRow, ReadinessView, SourceLink } from './views'
 import { esc } from './util'
 
 export const chipHtml = (title: string, color: string): string => '<div><span class="chip" style="--c:' + esc(color) + '">' + esc(title) + '</span></div>'
@@ -139,6 +139,13 @@ export const earnedSectionHtml = (rows: readonly EarnedRow[], titleOf: (pack: st
   rows.length
     ? '<h3>Earned by learning</h3><p class="sub">These seeds can be planted only once the learning is on your farm. A jump over the fence does not clear them.</p><div>' +
       rows.map((e) => earnedRowHtml(e, titleOf(e.pack))).join('') + '</div>'
+    : ''
+
+/** The seeds that layer balance holds back, under their own heading; nothing at all when there are none. */
+export const heldSectionHtml = (rows: readonly HeldRow[]): string =>
+  rows.length
+    ? '<h3>Waiting for a lower layer</h3><p class="sub">A field is built from the ground up. A seed waits while a layer two or more beneath its own has no tree standing and has something you could plant.</p><div>' +
+      rows.map((r) => '<div class="row slim"><div class="n">' + esc(r.name) + '<small>' + esc(r.layer) + ' · plant in the ' + esc(r.below) + ' layer first</small></div></div>').join('') + '</div>'
     : ''
 
 /** How ready each field is, the bar it is held to, and what has still to be earned. `limits` is what a farmer may set a bar to. */

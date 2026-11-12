@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { NOTES, earningCatalog, run, smallCatalog as cat, started } from '../engine/fixtures'
+import { NOTES, earningCatalog, layeredCatalog, run, smallCatalog as cat, started } from '../engine/fixtures'
 import { layOut, readPicture } from '../engine/picture'
 import type { Crop, FarmEvent, FarmState } from '../engine/types'
 import { readLink } from './links'
@@ -66,6 +66,14 @@ describe('neighbourCropView', () => {
     const shedOnly = run(cat, [started, { type: 'field-opened', pack: 'shed', slot: 0 }])
     expect(yours('corn', shedOnly)).toMatch(/You do not have the Garden field/)
     expect(yours('corn', run(cat, [started]))).toBe('Start a farm of your own and you can grow this too.')
+  })
+
+  it('does not call a seed ready to plant while layer balance holds it back', () => {
+    const c = layeredCatalog
+    const yours = (seed: string, s: FarmState): string => neighbourCropView(theirs(seed), s, c)?.yours ?? ''
+    const mineNow = run(c, base)
+    expect(yours('corn', mineNow)).toBe('Waiting on your farm: nothing stands in the Root layer of your Garden field yet. Plant there first.')
+    expect(yours('beet', mineNow)).toBe('In your seed bag, ready to plant.')
   })
 
   it('does not call a seed ready to plant while it has still to be earned', () => {

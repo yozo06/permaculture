@@ -20,7 +20,7 @@ import { cropShape, partColor, shapeHeight } from './shapes'
 import { createStore, defaultId, LOG_KEY, type StorageLike } from './store'
 import { esc, shuffle } from './util'
 import {
-  arrivalSheetHtml, chipHtml, countText, cropSheetHtml, earnedSectionHtml, footHtml, nameSheetHtml, neighbourCropSheetHtml, neighboursSheetHtml, noteHtml, NO_NOTES,
+  arrivalSheetHtml, chipHtml, countText, cropSheetHtml, earnedSectionHtml, footHtml, heldSectionHtml, nameSheetHtml, neighbourCropSheetHtml, neighboursSheetHtml, noteHtml, NO_NOTES,
   pickerHtml, plantSheetHtml, readinessSheetHtml, shareSheetHtml, tickList, writingBox,
 } from './sheets'
 import { arrivalText, neighbourCropView, neighbourRows, shareView, type ShareView } from './visit'
@@ -863,7 +863,8 @@ function openBag(): void {
     html += '<div class="fh"><i style="background:' + sec.color + '"></i>' + esc(sec.title) + '</div>' + (labels.length ? '<div class="sub">' + labels.join(' · ') + '</div>' : '') + '<div>'
     for (const sd of sec.seeds) {
       const tag = '<span class="tag">' + esc(sd.harvest) + '</span>'
-      if (sd.status !== 'ready') html += '<div class="row slim"><div class="n">' + esc(sd.name) + '<small>' + esc(sd.layer) + ' · in the ground ' + tag + ' ' + sd.status + '</small></div><button type="button" data-act="cropSheet" data-arg="' + esc(sd.id) + '">Notes</button></div>'
+      if (sd.status === 'held') html += '<div class="row"><div class="n">' + esc(sd.name) + '<small>' + esc(sd.layer) + ' ' + tag + ' · plant in the ' + esc(sd.below ?? '') + ' layer first</small></div><span class="sub">waiting</span></div>'
+      else if (sd.status !== 'ready') html += '<div class="row slim"><div class="n">' + esc(sd.name) + '<small>' + esc(sd.layer) + ' · in the ground ' + tag + ' ' + sd.status + '</small></div><button type="button" data-act="cropSheet" data-arg="' + esc(sd.id) + '">Notes</button></div>'
       else html += '<div class="row"><div class="n">' + esc(sd.name) + '<small>' + esc(sd.layer) + ' ' + tag + (sd.focus ? ' · focus' : '') + '</small></div><button type="button" data-act="seed" data-arg="' + sd.id + '"' + (sd.selected ? ' class="pri"' : '') + '>' + (sd.selected ? 'Selected' : 'Select') + '</button></div>'
     }
     if (sec.lockedCount) html += '<div class="row locked slim"><div class="n">' + sec.lockedCount + ' locked<small>see the learning tree</small></div></div>'
@@ -1201,9 +1202,9 @@ function treeSvg(v: TreeView): string {
   }
   for (const n of v.nodes) {
     const fill = n.status === 'rooted' ? v.color : '#3B3020'
-    const stroke = n.status === 'rooted' || n.status === 'growing' ? v.color : n.status === 'ready' ? '#F4EAD0' : '#5C4A2E'
+    const stroke = n.status === 'rooted' || n.status === 'growing' ? v.color : n.status === 'ready' || n.status === 'held' ? '#F4EAD0' : '#5C4A2E'
     const tc = n.status === 'rooted' ? '#10200C' : n.status === 'locked' ? '#8F7F60' : '#F4EAD0'
-    s += '<rect x="' + (n.x - n.width / 2) + '" y="' + (n.y - 18) + '" width="' + n.width + '" height="36" rx="6" fill="' + fill + '" stroke="' + stroke + '" stroke-width="2"' + (n.status === 'locked' ? ' stroke-dasharray="4 3"' : '') + '/>'
+    s += '<rect x="' + (n.x - n.width / 2) + '" y="' + (n.y - 18) + '" width="' + n.width + '" height="36" rx="6" fill="' + fill + '" stroke="' + stroke + '" stroke-width="2"' + (n.status === 'locked' ? ' stroke-dasharray="4 3"' : n.status === 'held' ? ' stroke-dasharray="8 4"' : '') + '/>'
     n.lines.forEach((l, i) => { s += '<text x="' + n.x + '" y="' + (n.y + (n.lines.length === 1 ? 4 : (i === 0 ? -1 : 11))) + '" text-anchor="middle" fill="' + tc + '" font-size="10.5" font-weight="600" ' + SVG_FONT + '>' + esc(l) + '</text>' })
     if (n.progress !== null) s += '<rect x="' + (n.x - n.width / 2) + '" y="' + (n.y + 14) + '" width="' + (n.width * n.progress) + '" height="4" rx="2" fill="' + v.color + '"/>'
     if (n.wild) s += '<circle cx="' + (n.x + n.width / 2 - 6) + '" cy="' + (n.y - 12) + '" r="4" fill="#4F8F3C"/>'
@@ -1225,12 +1226,13 @@ function openTree(packId: string = treePack()): void {
   if (v.readiness) html += '<p class="sub">Readiness <b>' + v.readiness.percent + '</b> · bar ' + v.readiness.bar + (v.readiness.atBar ? ' · at its bar' : '') + (v.readiness.hollow.length ? ' · hollow: ' + esc(v.readiness.hollow.join(', ')) : '') + '</p>'
   html += treeSvg(v)
   html += '<div class="branches">' + v.branches.map((b) => '<button type="button" data-act="focus" data-arg="' + esc(v.pack) + '|' + esc(b.id) + '"' + (b.focus ? ' class="pri"' : '') + '>' + (b.focus ? 'Focus: ' : 'Focus on ') + esc(b.title) + '</button>').join('') + '</div>'
-  html += '<p class="sub">Solid box: rooted · outline: growing (bar = stage) · cream outline: ready to plant · dashed: locked · green dot: found in the wild.</p>'
+  html += '<p class="sub">Solid box: rooted · outline: growing (bar = stage) · cream outline: ready to plant · cream dashes: waiting for a lower layer · dashed: locked · green dot: found in the wild.</p>'
   if (v.guilds.length) {
     html += '<h3>Guilds</h3><p class="sub">Seeds that grow well together. No bonus yet; the tree just shows how far each guild has come.</p><div>' +
       v.guilds.map((g) => '<div class="row"><div class="n">' + esc(g.title) + '<small>' + g.members.map((m) => esc(m.name ?? 'a wild seed')).join(', ') + '</small></div><span class="sub">' + g.rooted + ' of ' + g.total + ' rooted</span></div>').join('') + '</div>'
   }
   if (v.locked.length) html += '<h3>Jump the fence</h3><p class="sub">Already know one of these? Prove it on a harvest-grade question (10 energy) and it unlocks without its prerequisites.</p><div>' + v.locked.map((t) => '<div class="row"><div class="n">' + esc(t.name) + '<small>needs ' + esc(t.needs) + (t.earned ? ' · a jump will not earn it: that takes ' + esc(t.earned) : '') + '</small></div><button type="button" data-act="testout" data-arg="' + esc(t.id) + '">Test out</button></div>').join('') + '</div>'
+  html += heldSectionHtml(v.held)
   html += earnedSectionHtml(v.earned, packTitle)
   html += foot('Close', '<button type="button" data-act="readiness">Readiness</button>')
   open(html)

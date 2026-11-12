@@ -1,8 +1,8 @@
 // What the neighbours sheets show, worked out with no DOM: what a farm link will hold, a neighbour's crop seen from
 // your own farm, the list of neighbours, and what to say when a link lands.
-import { LAYER_NAMES, type Catalog } from '../engine/catalog'
+import { LAYER_NAMES, type Catalog, type Seed } from '../engine/catalog'
 import { layOut, makePicture, readPicture, type Picture } from '../engine/picture'
-import { earnedLine, isEarned } from '../engine/readiness'
+import { earnedLine, heldBy, isEarned } from '../engine/readiness'
 import { RULES, available, cropOf, visible } from '../engine/rules'
 import type { Crop, FarmState } from '../engine/types'
 import { linkHash } from './links'
@@ -58,6 +58,12 @@ export interface NeighbourCropView {
   yours: string
 }
 
+/** What to say of a seed that layer balance holds back on your own farm, or null if nothing holds it. */
+function heldLine(seed: Seed, mine: FarmState, catalog: Catalog, packTitle: string): string | null {
+  const below = heldBy(seed, mine, catalog)
+  return below ? 'Waiting on your farm: nothing stands in the ' + LAYER_NAMES[below] + ' layer of your ' + packTitle + ' field yet. Plant there first.' : null
+}
+
 /** A crop on a neighbour's farm, seen from `mine`. Null for a seed this game does not know. */
 export function neighbourCropView(crop: Crop, mine: FarmState, catalog: Catalog): NeighbourCropView | null {
   const seed = catalog.seed(crop.seed)
@@ -71,7 +77,7 @@ export function neighbourCropView(crop: Crop, mine: FarmState, catalog: Catalog)
   else if (!visible(seed, mine)) yours = 'A wild seed. You have not found it yet: forage in the forest near what you grow.'
   else if (!available(seed, mine)) yours = 'Locked for you: it needs ' + needsText(seed, catalog) + '.'
   else if (seed.earned && !isEarned(seed, mine, catalog)) yours = 'Locked for you: you have not earned it yet. It takes ' + earnedLine(seed.earned, catalog) + '.'
-  else yours = 'In your seed bag, ready to plant.'
+  else yours = heldLine(seed, mine, catalog, packTitle) ?? 'In your seed bag, ready to plant.'
   return {
     seed: seed.id, name: seed.name, pack: seed.pack, packTitle, layer: LAYER_NAMES[seed.layer],
     stageLine: crop.perennial ? 'A rooted tree' : 'Grown to stage ' + (crop.best + 1) + ' of ' + (RULES.maxStage + 1),

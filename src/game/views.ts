@@ -1,20 +1,24 @@
 // What the seed bag and the learning tree draw, worked out from the packs and the farm. Pure: no DOM.
 import { HARVEST_NAMES, LAYER_NAMES, type Catalog, type Seed } from '../engine/catalog'
 import { harvestWork, rungName, waterWork, type WaterKind } from '../engine/ladder'
-import { earnedLine, earnedProgress, isEarned, readiness } from '../engine/readiness'
+import { earnedLine, earnedProgress, heldBy, isEarned, readiness } from '../engine/readiness'
 import { RULES, available, cropOf, revivable, ripe, rooted, thirsty, visible, zone } from '../engine/rules'
 import type { Crop, FarmState, Layer, PackDef } from '../engine/types'
 
 export const DEFAULT_COLOR = '#6DB24F'
 export const packColor = (p: PackDef): string => p.color ?? DEFAULT_COLOR
 
-export type SeedStatus = 'ready' | 'growing' | 'rooted' | 'locked'
+export type SeedStatus = 'ready' | 'held' | 'growing' | 'rooted' | 'locked'
 
-/** Where a seed stands: rooted (a perennial), growing (in the ground), ready to plant, or locked (by what it needs, or by what it is earned by). */
+/**
+ * Where a seed stands: rooted (a perennial), growing (in the ground), ready to plant, held (it could be planted, but a
+ * hollow layer beneath it comes first), or locked (by what it needs, or by what it is earned by).
+ */
 export function seedStatus(seed: Seed, state: FarmState, catalog: Catalog): SeedStatus {
   const crop = cropOf(state, seed.id)
   if (crop) return crop.perennial ? 'rooted' : 'growing'
-  return available(seed, state) && isEarned(seed, state, catalog) ? 'ready' : 'locked'
+  if (!available(seed, state) || !isEarned(seed, state, catalog)) return 'locked'
+  return heldBy(seed, state, catalog) ? 'held' : 'ready'
 }
 
 export const needsText = (seed: Seed, catalog: Catalog): string =>
@@ -79,8 +83,11 @@ export interface BagSeed {
   layer: string
   /** recall, solve, judged or artifact. */
   harvest: string
-  status: 'ready' | 'growing' | 'rooted'
+  status: 'ready' | 'held' | 'growing' | 'rooted'
+  /** For a held seed, the name of the layer to plant in first. */
+  below: string | null
   focus: boolean
+  /** In the player's hand. Never true of a held seed: it cannot be planted, so it cannot be picked up. */
   selected: boolean
 }
 
@@ -92,7 +99,7 @@ export interface BagSection {
   /** Percent of the day's energy this field may use, if capped. */
   capPercent: number | null
   focusTitle: string | null
-  /** Plantable seeds and seeds in the ground: focus branch first, then by tier. */
+  /** Plantable seeds, seeds a lower layer holds back, and seeds in the ground: focus branch first, then by tier. */
   seeds: BagSeed[]
   /** Visible seeds that are not plantable yet. They are shown as one line. */
   lockedCount: number
@@ -111,9 +118,11 @@ export function bagView(state: FarmState, catalog: Catalog, selected: string | n
       if (!visible(seed, state)) continue
       const status = seedStatus(seed, state, catalog)
       if (status === 'locked') { lockedCount++; continue }
+      const below = status === 'held' ? heldBy(seed, state, catalog) : null
       seeds.push({
         id: seed.id, name: seed.name, layer: LAYER_NAMES[seed.layer], harvest: HARVEST_NAMES[seed.harvest], status,
-        focus: focusTitle !== null && seed.branch === focusId, selected: selected === seed.id,
+        below: below && LAYER_NAMES[below],
+        focus: focusTitle !== null && seed.branch === focusId, selected: status === 'ready' && selected === seed.id,
       })
     }
     const tier = (s: BagSeed) => catalog.seed(s.id)?.tier ?? 0
@@ -149,6 +158,16 @@ function earnedRows(seeds: readonly Seed[], state: FarmState, catalog: Catalog):
     if (!seed.earned || !progress || cropOf(state, seed.id)) return []
     return [{ id: seed.id, name: seed.name, pack: seed.pack, line: earnedLine(seed.earned, catalog), ...progress, locked: !available(seed, state) }]
   })
+}
+
+/** A seed that layer balance holds back. */
+export interface HeldRow {
+  id: string
+  name: string
+  /** The name of its own layer. */
+  layer: string
+  /** The name of the hollow layer to plant in first. */
+  below: string
 }
 
 export interface ReadinessRow {
@@ -268,6 +287,8 @@ export interface TreeView {
   earned: EarnedRow[]
   /** The field's readiness in a line, or null for a field with no end. */
   readiness: { percent: number; bar: number; atBar: boolean; hollow: string[] } | null
+  /** Seeds that could be planted but for layer balance, each with its own layer and the layer to plant in first. */
+  held: HeldRow[]
 }
 
 /** Break a long name over two lines at a space near the middle. */
@@ -341,6 +362,10 @@ export function treeView(packId: string, state: FarmState, catalog: Catalog): Tr
     pack: packId, title: pack.title, color: packColor(pack), width: TREE_WIDTH, height: y, columnWidth,
     branches: pack.branches.map((b, i) => ({ id: b.id, title: b.title, focus: state.focus[packId] === b.id, x: (i + 0.5) * columnWidth })),
     nodes, edges, guilds, locked, earned: earnedRows(seeds, state, catalog),
+    held: seeds.flatMap((s): HeldRow[] => {
+      const below = seedStatus(s, state, catalog) === 'held' ? heldBy(s, state, catalog) : null
+      return below ? [{ id: s.id, name: s.name, layer: LAYER_NAMES[s.layer], below: LAYER_NAMES[below] }] : []
+    }),
     readiness: ready && { percent: ready.percent, bar: ready.bar, atBar: ready.atBar, hollow: ready.hollow.map((l) => LAYER_NAMES[l]) },
   }
 }

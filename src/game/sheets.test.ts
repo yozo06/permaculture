@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { RULES } from '../engine/rules'
-import { cropSheetHtml, countText, footHtml, NO_NOTES, plantSheetHtml, readinessSheetHtml, tickList, writingBox, pickerHtml, arrivalSheetHtml, neighbourCropSheetHtml, neighboursSheetHtml, shareSheetHtml } from './sheets'
+import { cropSheetHtml, countText, footHtml, heldSectionHtml, NO_NOTES, plantSheetHtml, readinessSheetHtml, tickList, writingBox, pickerHtml, arrivalSheetHtml, neighbourCropSheetHtml, neighboursSheetHtml, shareSheetHtml } from './sheets'
 import type { CropView, EarnedRow, ReadinessRow, ReadinessView } from './views'
 
 const view = (patch: Partial<CropView> = {}): CropView => ({
@@ -272,5 +272,22 @@ describe('readinessSheetHtml', () => {
     expect(h).not.toContain('<b>x</b>')
     expect(h).not.toContain('<u>y</u>')
     expect(h).not.toContain('id="bar-in"fra"')
+  })
+})
+
+describe('heldSectionHtml', () => {
+  it('lists each seed that waits, its layer, and the layer to plant in first', () => {
+    const h = heldSectionHtml([{ id: 'corn', name: 'Corn', layer: 'Canopy', below: 'Root' }, { id: 'thyme', name: 'Thyme', layer: 'Herb', below: 'Ground cover' }])
+    expect(h).toContain('<h3>Waiting for a lower layer</h3>')
+    expect(h).toContain('Corn<small>Canopy · plant in the Root layer first</small>')
+    expect(h).toContain('Thyme<small>Herb · plant in the Ground cover layer first</small>')
+  })
+
+  it('is nothing at all when nothing waits', () => {
+    expect(heldSectionHtml([])).toBe('')
+  })
+
+  it('escapes what came from a pack', () => {
+    expect(heldSectionHtml([{ id: 'x', name: '<b>x</b>', layer: 'Herb', below: 'Root' }])).not.toContain('<b>x</b>')
   })
 })
