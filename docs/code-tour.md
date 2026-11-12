@@ -51,6 +51,7 @@ When the page loads, the store reads the log and folds it. If the log cannot be 
 - `game/sheets.ts`: HTML for the sheets, as strings in and strings out. Tested, including with hostile text.
 - `game/almanac.ts`: the rules page, written from `RULES` so its numbers cannot drift.
 - `game/links.ts`, `game/neighbours.ts`, `game/visit.ts`: farm links (the picture rides in the address after the `#`), the list of neighbours kept in the browser beside the farm, and what the neighbours sheets show. All three are pure and tested; `game.ts` only wires them up. While you visit a neighbour, `game.ts` draws their farm through `D()` and routes every tap away from your own. `docs/neighbours.md` is the design.
+- `game/shapes.ts`, `game/moments.ts`: what a crop looks like (a short list of rectangles for each layer and stage) and the small moments that play on it (a splash, a ring, sparks). Pure and tested; `game.ts` only colours them and puts them on a tile. The Almanac's pictures are drawn from the same shapes.
 - `game/util.ts`: `esc`, which every piece of player or pack text passes through, and `shuffle`.
 
 ## Tests
@@ -62,7 +63,8 @@ When the page loads, the store reads the log and folds it. If the log cannot be 
 - `scripts/catalogues.test.ts`: what the catalogues promise, such as every seed id from the Phase 0 farm still existing.
 - `scripts/lock.test.ts` and `src/engine/played-farm.test.ts`: saved farms keep replaying (see above).
 - `scripts/packs-lib.test.ts`: the validator catches what it should.
-- `src/game/*.test.ts`: the views, the sheets, the store and the Almanac.
+- `scripts/page.test.ts`: the page loads nothing from another site (the game carries its own fonts).
+- `src/game/*.test.ts`: the views, the sheets, the store, the Almanac, the crop shapes and the moments.
 
 ## Where to change what
 
@@ -74,6 +76,7 @@ When the page loads, the store reads the log and folds it. If the log cannot be 
 | add something to the farm's state | `FarmState` in `types.ts`, then `initialState` and `copy` in `fold.ts`, and `fromV2` in `v2.ts`. |
 | change what a sheet says | `game/sheets.ts` if it is built there, else `game/game.ts`. Put text from a player or a pack through `esc`. |
 | show something worked out from the farm | a pure function in `game/views.ts`, with a test. |
+| change how a crop looks | the list for its layer in `game/shapes.ts`. Its tests say what must stay true: a crop never looks smaller when it grows, and no two layers look alike. |
 | change what a farm link holds | `engine/picture.ts`. Format 1 links must stay readable for good, so add a format rather than change one, and read `docs/neighbours.md` §6 first. |
 
 ## Checks

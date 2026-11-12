@@ -35,7 +35,7 @@ These hold in every phase. A change that breaks one is the wrong change.
 | 1 | The rules as their own tested engine; packs loaded from files; seven packs and 200+ seeds; the depth ladder (notes → recall → explain → harvest) | Done — version 0.1.0 |
 | 2 | **Neighbours**: farms you can see and rain you can send, with no server | Seeing is built (version 0.2.0); rain is next |
 | 3 | **Your own AI key** (optional): judged harvests, a pack forge, fresh wild finds | Next |
-| 4 | **Art**: sprite sheets, a faster renderer, terraces, weather | Later (small steps can land any time) |
+| 4 | **Art**: a farm you can read at a glance, then sprite sheets, a faster renderer, terraces, weather | First step built (version 0.3.0); sprite sheets wait for an art direction |
 | 5 | **The village server**: pictures that can be withdrawn, rain that arrives by itself | When players need it |
 
 ## The plan, phase by phase
@@ -60,12 +60,12 @@ The key is yours, kept only in your browser, and calls go straight from your bro
 
 ### Phase 4 — Art
 
-Today every tile, crop and building is drawn by code, as small rectangles on a 480×300 canvas. That keeps the game tiny and fast, but every crop of a stage looks alike, there is no zoom, and one season.
+Every tile, crop and building is drawn by code, as small rectangles on a 480×300 canvas. That keeps the game tiny and fast, but there is no zoom, one season, and the art is as good as rectangles get.
 
 In order, each step shipping by itself:
 
-1. **Readable at a glance** (no new technology; can land any time). Crops drawn by their **layer**, so a canopy seed grows tall, a vine climbs a pole, a root shows as a mound and ground cover spreads low: the map then says what *kind* of knowledge sits where. A sign and a colour for each field. Small moments: a splash when you water, a pop when a crop grows, rain falling when a neighbour sends it. Fonts served by the game itself.
-2. **Sprite sheets.** One consistent pixel-art tileset replaces the code-drawn shapes: growth animations, day and night, seasons. Art becomes a file anyone can contribute, the way a pack is.
+1. **Readable at a glance** *(done, version 0.3.0; no new technology)*. Crops are drawn by their **layer**: a canopy seed grows into a tall tree, an understory seed into a small pointed one, a shrub is a round bush, a herb a stalk, ground cover a flat mat, a root a mound of earth, and a vine climbs a pole. The map now says what *kind* of knowledge sits where. Each field flies a flag in its colour. Small moments: a splash when you water, a ring when a crop grows, sparks from a harvest. The game carries its own fonts, so the page asks no other site for anything. Still to come here: rain falling when a neighbour sends it, which arrives with rain itself.
+2. **Sprite sheets** *(next; needs an art direction and a licence for the art first)*. One consistent pixel-art tileset replaces the code-drawn shapes: growth animations, day and night, seasons. Art becomes a file anyone can contribute, the way a pack is.
 3. **A faster renderer** (PixiJS): zoom, smooth panning, particles, and worlds much larger than one screen at 60 frames a second on a phone.
 4. **Layers as terraces.** A field's seven layers drawn up a hillside, so a hollow layer is visible from across the map.
 5. **Weather.** Real weather drives the sky.
@@ -84,7 +84,7 @@ In the design, marked *(planned)*, and not scheduled: readiness per field and th
 |---|---|---|
 | want to learn something | Play for a week and tell us what felt like a game and what felt like a quiz wearing a hat | the README, then an Issue or a Discussion |
 | know a subject well | Write a pack for a goal of your own, or sharpen the questions in one that exists. No code | [`docs/pack-format.md`](docs/pack-format.md) |
-| can draw pixel art | Phase 4, step 1 and 2: crop shapes by layer, buildings, a tileset | open a Discussion with a sketch first |
+| can draw pixel art | Improve a crop's shape (each is a short list of rectangles in `src/game/shapes.ts`), or sketch a tileset for Phase 4 step 2 | open a Discussion with a sketch first |
 | write TypeScript | A seed from the roadmap pack, a bug, or a *(planned)* mechanic from the design | [`docs/code-tour.md`](docs/code-tour.md), [`CONTRIBUTING.md`](CONTRIBUTING.md) |
 | care about accessibility | The game has had no full accessibility pass yet: contrast, keyboard play, screen readers | an Issue |
 

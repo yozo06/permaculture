@@ -20,9 +20,11 @@ A link shows only the fields you tick, with each crop at the furthest it has gro
 
 ## Status
 
-Phase 1 is done: the rules are an engine of their own (a farm is a fold over a log of what you did), the game is built from `packs/`, and a crop climbs a depth ladder — notes when you plant it, recall cards, explaining it in your own words, then a harder harvest. There are seven packs and 209 seeds: five full catalogues (Haskell backend, system design, infra, DSA patterns, leadership), everyday Kannada, and the Workshop, the game's own roadmap. The pixel art is still procedural, with a drag-to-pan world, a learning tree, wild finds and an almanac. Everything runs in your browser; your farm is saved there. Export it from the seed bag before clearing site data. Farms from the Phase 0 prototype still import.
+Phase 1 is done: the rules are an engine of their own (a farm is a fold over a log of what you did), the game is built from `packs/`, and a crop climbs a depth ladder — notes when you plant it, recall cards, explaining it in your own words, then a harder harvest. There are seven packs and 210 seeds: five full catalogues (Haskell backend, system design, infra, DSA patterns, leadership), everyday Kannada, and the Workshop, the game's own roadmap. The pixel art is still procedural, with a drag-to-pan world, a learning tree, wild finds and an almanac. Everything runs in your browser; your farm is saved there. Export it from the seed bag before clearing site data. Farms from the Phase 0 prototype still import.
 
 Phase 2, **Neighbours**, is half built (version 0.2.0): saved farms are guarded against later edits to the packs and rules, new farmers choose their fields, and farms can be shared and visited by link. Rain comes after a first week of beta. After that comes optional AI with your own key, then art.
+
+The first step of the art plan is in (version 0.3.0): each of the seven layers has a shape of its own, so the map shows what kind of knowledge sits where; each field flies a flag in its colour; and the game carries its own fonts, so the page asks no other site for anything.
 
 Why this exists, what it promises and the whole plan are in [`ROADMAP.md`](ROADMAP.md).
 

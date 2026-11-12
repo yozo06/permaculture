@@ -103,7 +103,7 @@ A pack can be **perennial** (a language, a habit): no readiness, it just lives o
 
 ## 6. Land
 
-The homestead has a field for each pack the farmer chose, laid out on a grid around the barn; the world grows to fit them (20×20 for four fields, 27×27 for up to nine). A new farmer picks their fields at the start and can open more later from the learning tree. Everything beyond the fence is wilderness. Land next to a field can be fenced in with coins (open ground is cheaper than forest). Fields grow one tile at a time in any shape. Later: the seven layers drawn as terraces up a hillside, and chunked worlds per big goal.
+The homestead has a field for each pack the farmer chose, laid out on a grid around the barn; the world grows to fit them (20×20 for four fields, 27×27 for up to nine). A new farmer picks their fields at the start and can open more later from the learning tree. Everything beyond the fence is wilderness. Land next to a field can be fenced in with coins (open ground is cheaper than forest). Fields grow one tile at a time in any shape. Each field flies a flag in its colour, and a crop is drawn by its layer (a tall tree for canopy, a pole for a vine, a mound for a root), so the map shows what kind of knowledge sits where. Later: the seven layers drawn as terraces up a hillside, and chunked worlds per big goal.
 
 ## 7. Packs
 
