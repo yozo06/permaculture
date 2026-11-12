@@ -37,6 +37,7 @@ These hold in every phase. A change that breaks one is the wrong change.
 | 3 | **Your own AI key** (optional): judged harvests, a pack forge, fresh wild finds | Next |
 | 4 | **Art**: a farm you can read at a glance, then sprite sheets, a faster renderer, terraces, weather | First step built (version 0.3.0); sprite sheets wait for an art direction |
 | 5 | **The village server**: pictures that can be withdrawn, rain that arrives by itself | When players need it |
+| any | **The rest of the rules**, which need no AI and no server: readiness, earned unlocks, then layer balance, guilds, edges, saplings, the market | Readiness and earned unlocks are next |
 
 ## The plan, phase by phase
 
@@ -48,15 +49,22 @@ The full design is [`docs/neighbours.md`](docs/neighbours.md).
 2. **See** *(done)*. Name your farm. Make a **farm link** that carries a picture of your farm inside the link itself, for the fields you choose. A friend taps it, lands on your farm, looks around, and starts their own next door, picking the fields they want. A gate on the map opens your list of neighbours.
 3. *A first week of beta with a handful of people.*
 4. **Do.** Visit a neighbour, answer one card about something they grow, and send them **rain**: a day in their rain barrel, and the crop remembers who came by. It never grows a crop for them.
+5. **Trade.** Share a pack with a neighbour, the way you share a farm.
+
+A link stays the only way to share until the village server: there is no store in between. So a sent link cannot be taken back, and a neighbour's game forgets a picture after 60 days.
 
 ### Phase 3 — Your own AI key (optional, never required)
 
+- **Your key**: a settings page for it, a choice of provider, and a local model if you would rather. The game warns you before you save a key on a shared machine.
 - **Judged harvests**: a write-up graded line by line against the seed's rubric, and you can dispute any line.
 - **Apply**: a new rung on the ladder — a problem, a design, a debugging session.
+- **Timed solves**: a problem against the clock, with tests that run.
 - **Pack forge**: paste a syllabus or three job descriptions and get a draft pack that passes the validator.
-- **Fresh wild finds** next to what you are growing.
+- **Fresh wild finds** each day, next to what you are growing in Zone 1.
+- **A gap audit** each quarter: paste three job descriptions, compare them with your catalogue, and get new wild seeds for what is missing.
+- **A recruiter visit**: now and then, a surprise timed mock.
 
-The key is yours, kept only in your browser, and calls go straight from your browser to the provider. A local model works. Nobody pays for anyone else's farm.
+The key is yours, kept only in your browser, and calls go straight from your browser to the provider. A local model works. Nobody pays for anyone else's farm, and the game never passes on anyone's key. Grades differ between models, so they are never compared between players.
 
 ### Phase 4 — Art
 
@@ -65,18 +73,42 @@ Every tile, crop and building is drawn by code, as small rectangles on a 480×30
 In order, each step shipping by itself:
 
 1. **Readable at a glance** *(done, version 0.3.0; no new technology)*. Crops are drawn by their **layer**: a canopy seed grows into a tall tree, an understory seed into a small pointed one, a shrub is a round bush, a herb a stalk, ground cover a flat mat, a root a mound of earth, and a vine climbs a pole. The map now says what *kind* of knowledge sits where. Each field flies a flag in its colour. Small moments: a splash when you water, a ring when a crop grows, sparks from a harvest. The game carries its own fonts, so the page asks no other site for anything. Still to come here: rain falling when a neighbour sends it, which arrives with rain itself.
-2. **Sprite sheets** *(next; needs an art direction and a licence for the art first)*. One consistent pixel-art tileset replaces the code-drawn shapes: growth animations, day and night, seasons. Art becomes a file anyone can contribute, the way a pack is.
-3. **A faster renderer** (PixiJS): zoom, smooth panning, particles, and worlds much larger than one screen at 60 frames a second on a phone.
+2. **Sprite sheets** *(next; needs a choice of art first)*. One consistent pixel-art tileset replaces the code-drawn shapes: growth animations, day and night, seasons. Two sources are on the table: Kenney's isometric set, which is free for any use (CC0), or art that is generated and then touched up by hand in Aseprite. Art becomes a file anyone can contribute, the way a pack is.
+3. **A faster renderer** (PixiJS or Phaser): a camera, zoom, smooth panning, particles, and worlds much larger than one screen at 60 frames a second on a phone.
 4. **Layers as terraces.** A field's seven layers drawn up a hillside, so a hollow layer is visible from across the map.
-5. **Weather.** Real weather drives the sky.
+5. **Weather, sound and tools.** Real weather from Coorg drives the sky. The farm has sound. Tools you have earned stand on the farm as things you can see.
+6. **A field drawn from real land.** A research field can be a scale copy of real plots, so coffee research happens on the coffee terrace.
+
+The look to aim for is a farm you want to keep looking at, the way FarmVille and Township are. Art never blocks the loop: every step here is optional for playing.
 
 ### Phase 5 — The village server
 
 A small server that holds the same farm pictures and delivers the same rain, so a published picture can be withdrawn and rain arrives without sending a link. It is deliberately last: everything before it works without one.
 
-### Further out
+- **The store**: a free tier first (Supabase or Cloudflare), then a small server written in Haskell, for about $5 a month. The server is itself a seed in the Workshop.
+- **Who you are**: a farm code first. A login only when something needs one, and then a GitHub login. Writes are rate-limited.
+- **Together**: a weekly village harvest, which is a challenge the whole village works on, and a market square where neighbours who both choose to can stand their readiness side by side. It is never a ranking.
 
-In the design, marked *(planned)*, and not scheduled: readiness per field and the market that opens when every field is at its bar; the rival, who is last-month-you; the Sunday walk; guild bonuses; seeds on the edge of two fields; trees that drop saplings; loading your own pack in the browser; merging one farm across devices.
+### The rest of the rules (any time: no AI, no server)
+
+These are in the design, marked *(planned)* until they are built. They serve plant → water → harvest directly, so they come before more art.
+
+1. **Readiness** *(next)*. Each field shows how much of it is rooted, which of its layers are hollow, and the bar you set for it. There are no dates: you are ready when the field is at your bar.
+2. **Earned unlocks** *(next)*. A seed in the Workshop can ask for learning first: the first real harvest earns sprite sheets, a first season of Kannada earns sharing a pack, Infra at 60 earns live weather. The game's own backlog cannot outrun the studying. This is the guard against building the game instead of playing it.
+3. **Layer balance, guilds, edges and saplings.** A field cannot run two layers ahead of a hollow one. A complete guild pays a bonus and a wilting member drags the rest. A seed on the edge of two fields yields double. Harvesting a tree drops new seeds, so depth keeps seeding itself.
+4. **The market, the rival and the Sunday walk.** The market opens when every field is at its bar; its buyers are named bars (a Haskell-first shop, fintech infrastructure, big-tech backend) and an offer is a sale. The rival is last-month-you. The Sunday walk shows the map and asks three questions, with no tasks.
+5. **A planner.** It orders the day: reviews first, then prerequisites, layer balance, finishing guilds, each field's share of energy, and the two-seed cap last. If you do set a date, it scales how fast you plant, and says so when the date does not fit your energy.
+6. **Tools.** Time-savers you earn: drip irrigation halves the cost of a review, a tractor speeds planting. They break after a week left idle.
+7. **Fields for other kinds of goal.** Orchard crops for goals with no answer (reading, a habit): slow, paid for showing up, never quizzed. A research field harvested with real decisions and memos.
+8. **Your farm in more places.** Loading your own pack in the browser; one farm merged across devices; installing the game like an app, with no app store; a backup you opt into.
+
+## What slows us down, and the rules we keep
+
+- **Content takes the hours, not code.** A seed is worth only as much as its questions. Questions are original, sources are cited and never pasted, and multiple choice is for recall only.
+- **Browsers lose things.** A farm lives in one browser, and browsers get wiped. Export stays easy to find.
+- **A farm shows what you do not know.** Sharing is something you choose, field by field, every time.
+- **No paid dependency without talking about it first.**
+- **Time is the scarcest thing.** Anything that does not serve plant → water → harvest waits.
 
 ## Where you can help
 
@@ -85,7 +117,7 @@ In the design, marked *(planned)*, and not scheduled: readiness per field and th
 | want to learn something | Play for a week and tell us what felt like a game and what felt like a quiz wearing a hat | the README, then an Issue or a Discussion |
 | know a subject well | Write a pack for a goal of your own, or sharpen the questions in one that exists. No code | [`docs/pack-format.md`](docs/pack-format.md) |
 | can draw pixel art | Improve a crop's shape (each is a short list of rectangles in `src/game/shapes.ts`), or sketch a tileset for Phase 4 step 2 | open a Discussion with a sketch first |
-| write TypeScript | A seed from the roadmap pack, a bug, or a *(planned)* mechanic from the design | [`docs/code-tour.md`](docs/code-tour.md), [`CONTRIBUTING.md`](CONTRIBUTING.md) |
+| write TypeScript | A seed from the roadmap pack, a bug, or one of the rest of the rules above | [`docs/code-tour.md`](docs/code-tour.md), [`CONTRIBUTING.md`](CONTRIBUTING.md) |
 | care about accessibility | The game has had no full accessibility pass yet: contrast, keyboard play, screen readers | an Issue |
 
 ## How things get decided

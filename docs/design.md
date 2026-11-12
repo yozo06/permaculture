@@ -22,7 +22,7 @@ The game must be useful with ugly tiles. Art is an unlock, never a prerequisite.
 | **Produce no waste** | Wrong answers go to the **compost heap** and come back as reviews. A failed harvest drops the crop back a stage; *(planned)* it also generates the next seeds. |
 | **Small and slow** | Hard cap on new seeds per day (two). |
 | **Obtain a yield** | Every planting leaves notes in your own words, and a judged or artifact harvest leaves a write-up or proof. No yield, no credit. |
-| **Observe and interact** | The Sunday walk: the game shows the map and asks three questions. No tasks. Zone 5 is for foraging **wild finds**, facts next to what is growing, which add nothing to readiness and can be **domesticated** into volunteer seeds. |
+| **Observe and interact** | *(planned)* The Sunday walk: the game shows the map and asks three questions. No tasks. Zone 5 is for foraging **wild finds**, facts next to what is growing, which add nothing to readiness and can be **domesticated** into volunteer seeds. |
 | **Use edges** | *(planned)* Seeds on the boundary of two fields (farm economics, Kannada tech vocabulary) yield double. |
 | **The problem is the solution** | A failed mock is not a loss; it is the next season's planting list. |
 
@@ -91,6 +91,12 @@ The AI phase adds **Apply** (a problem, a design, a debugging session) and judge
 
 Declared per seed in the pack. **recall** (auto-graded cards) · **solve** (timed problem, tests run) · **judged** (written answer graded against the seed's rubric; the player can dispute each line) · **artifact** (a memo, a recording, a real decision). Self-rating is the fallback for judged when no AI is configured.
 
+### Tools and visits
+
+*(planned)* **Tools** are time-savers a farmer earns: drip irrigation halves the cost of a review, a tractor speeds planting. A tool breaks after a week left idle.
+
+*(planned)* Now and then a **recruiter visits**: a surprise timed mock. It arrives with timed solves, in the AI phase.
+
 ## 4. The learning tree
 
 Every seed in a pack, locked or not, is on the tree. One to four branches per field (the shipped packs have two). A seed unlocks when the seeds it **needs** are rooted (harvested to perennial), never by points. The player picks a focus branch; the seed bag puts it first and the other branches stay open. **Jump the fence**: any locked seed can be tested out of with a harvest-grade question. A tree that makes a senior engineer replant basics is a tree nobody uses.
@@ -101,15 +107,19 @@ Every seed in a pack, locked or not, is on the tree. One to four branches per fi
 
 A pack can be **perennial** (a language, a habit): no readiness, it just lives on the farm.
 
+*(planned)* A **planner** orders the day: reviews first, then prerequisites, layer balance, finishing guilds, each field's share of energy, and the two-seed cap last. A player who does set a date gets a planting rate scaled to it, and is told when the date does not fit the energy they have.
+
 ## 6. Land
 
-The homestead has a field for each pack the farmer chose, laid out on a grid around the barn; the world grows to fit them (20×20 for four fields, 27×27 for up to nine). A new farmer picks their fields at the start and can open more later from the learning tree. Everything beyond the fence is wilderness. Land next to a field can be fenced in with coins (open ground is cheaper than forest). Fields grow one tile at a time in any shape. Each field flies a flag in its colour, and a crop is drawn by its layer (a tall tree for canopy, a pole for a vine, a mound for a root), so the map shows what kind of knowledge sits where. Later: the seven layers drawn as terraces up a hillside, and chunked worlds per big goal.
+The homestead has a field for each pack the farmer chose, laid out on a grid around the barn; the world grows to fit them (20×20 for four fields, 27×27 for up to nine). A new farmer picks their fields at the start and can open more later from the learning tree. Everything beyond the fence is wilderness. Land next to a field can be fenced in with coins (open ground is cheaper than forest). Fields grow one tile at a time in any shape. Each field flies a flag in its colour, and a crop is drawn by its layer (a tall tree for canopy, a pole for a vine, a mound for a root), so the map shows what kind of knowledge sits where. Later: the seven layers drawn as terraces up a hillside, a valley for each big goal in a world of many screens, and a research field drawn as a scale copy of real plots, so coffee research happens on the coffee terrace.
 
 ## 7. Packs
 
 A pack is one YAML file: a goal, its branches, sources, guilds and seeds. The engine never knows what a seed means; the pack does. See `pack-format.md`. Adding a goal never touches engine code.
 
 Pack #0 is the **Workshop**: the game's own backlog as seeds, capped at 30% of daily energy, with features unlocking from learning milestones. The game gamifies its own development.
+
+*(planned)* An **orchard** pack is for a goal with no answer (reading, a habit): its crops are slow, pay for showing up, and are never quizzed. A **research** pack is harvested with artifacts: a memo, a real decision.
 
 ## 8. Architecture
 
@@ -118,9 +128,10 @@ Pack #0 is the **Workshop**: the game's own backlog as seeds, capped at 30% of d
 - **Static hosting.** The game is files on GitHub Pages. No server until the village needs one.
 - **Engine / game / packs.** `src/engine/`: pure rules with property tests. `src/game/`: renderer and UI. `packs/`: data, validated in CI.
 - **AI is optional and bring-your-own-key.** Authoring (catalogues, questions, the pack forge) is offline work committed as data. Runtime AI (judged harvests, wild finds, gap audits) uses the player's own key, stored only in their browser, with calls made browser-to-provider. A local model works. The no-AI game is complete.
-- **Neighbours (Phase 2).** A player may share a **farm link**: a picture of the farm carried inside the link itself, with no server. It holds the map and the trees of the fields the player chose, never notes, the compost heap, failed answers or a wilted crop. A sent link cannot be taken back and never updates by itself; a neighbour's game forgets a picture after 60 days. *(planned)* Visiting means answering one card about a neighbour's crop and sending them **rain**: a day in their barrel and a visit the crop remembers. Farms have codes; identity comes later if ever. Nobody is ranked. The full design is `neighbours.md`.
-- **Village (later).** A server that holds the same pictures and delivers the same rain, where a published picture can be withdrawn. Grades are not comparable across models or players.
+- **Neighbours (Phase 2).** A player may share a **farm link**: a picture of the farm carried inside the link itself, with no server. It holds the map and the trees of the fields the player chose, never notes, the compost heap, failed answers or a wilted crop. A sent link cannot be taken back and never updates by itself; a neighbour's game forgets a picture after 60 days. *(planned)* Visiting means answering one card about a neighbour's crop and sending them **rain**: a day in their barrel and a visit the crop remembers. Farms have codes; identity comes later if ever. *(planned)* Neighbours can trade seeds by sharing a pack. Nobody is ranked. The full design is `neighbours.md`.
+- **Village (later).** A server that holds the same pictures and delivers the same rain, where a published picture can be withdrawn. A free tier first, then the Haskell server. With it come a weekly village harvest (a challenge the village works on together) and a market square, where neighbours who both choose to can stand their readiness side by side. Grades are not comparable across models or players.
 - **Haskell backend** is the village server, when there are players who need one. Not before.
+- **Installable later**, as a web app. No app store.
 
 ## 9. Phases
 
@@ -132,6 +143,8 @@ Each phase ends with something a friend can play.
 3. BYOK AI: judged harvests, pack forge, wild finds.
 4. Art: sprite sheets, PixiJS, terraces, weather.
 5. The village server, when there are players who need it.
+
+The rules marked *(planned)* that need no AI and no server (readiness, earned unlocks, layer balance, guilds, edges, saplings, the market) are built between these, the ones closest to the loop first.
 
 The plan in full, with what is done and how to help, is `../ROADMAP.md`.
 
