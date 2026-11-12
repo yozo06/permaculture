@@ -3,7 +3,7 @@ import { buildCatalog, LAYER_NAMES, type Seed } from '../engine/catalog'
 import { findCandidates, pickFind } from '../engine/finds'
 import { check, fieldsToOpen, refusedCount } from '../engine/fold'
 import {
-  BARN, COMPOST, GATE, SIGN, WELL, fenceCost, fieldOf as landFieldOf, hash, homestead, inHomestead, isBuildingTile,
+  BARN, COMPOST, GATE, SIGN, WELL, fenceCost, fieldOf as landFieldOf, fieldOrigin, hash, homestead, inHomestead, isBuildingTile,
   neighbourFields, terrain as landTerrain, tileKey, wildKind, worldSize, type Terrain,
 } from '../engine/land'
 import { farmFileName, farmFileText, parseFarmFile } from '../engine/log'
@@ -27,12 +27,14 @@ import { bagView, cropView, driftText, needsText, packColor, pickerView, sourceL
 
 /* ---------- types ---------- */
 type Mode = 'water' | 'harvest' | 'testout'
-type StaticKind = 'forest' | 'barn' | 'well' | 'compost' | 'sign' | 'gate'
+type StaticKind = 'forest' | 'barn' | 'well' | 'compost' | 'sign' | 'gate' | 'flag'
 
 interface Drawable {
   s: number
   d: (t: number) => void
   kind?: StaticKind
+  /** The field a flag stands for. */
+  pack?: string
   hit?: (ix: number, iy: number) => boolean
 }
 
@@ -44,6 +46,7 @@ type Pick =
   | { kind: 'compost' }
   | { kind: 'sign' }
   | { kind: 'gate' }
+  | { kind: 'flag'; pack: string }
 
 /* ---------- page ---------- */
 const W = 480
@@ -262,6 +265,13 @@ function drawGate(): void {const {sx,sy}=iso(GATE.x,GATE.y);
   for(const [x,y] of [[ax,ay],[bx,by]] as Pt[]){px(x-1,y-20,3,21,'#6B4A2B');px(x-1,y-20,3,1,'#B8804A');px(x-2,y,5,1,'rgba(0,0,0,.2)');}
   for(let t=0;t<16;t++){px(ax-2*t-1,ay-23+t,3,3,'#8E5A34');px(ax-2*t-1,ay-23+t,3,1,'#C98A52');}
   px(sx-17,sy-9,3,4,'#3C2316');px(sx-16,sy-8,1,2,'#FFD95A');}
+/** A field's flag, in the field's colour, on a tall pole at its north corner: it shows over any crop, from across the map. */
+const FLAG = { top: 27, w: 8, h: 5 }
+function drawFlag(sx: number, sy: number, color: string, t: number): void {
+  px(sx,sy-FLAG.top,1,FLAG.top-5,'#6B4A2B');px(sx-1,sy-FLAG.top-1,3,1,'#B8804A');
+  // The cloth ripples away from the pole, three columns at a time.
+  for(let k=0;k<FLAG.w;k++){const y=sy-FLAG.top+(Math.floor(t/320)+Math.floor(k/3))%2;px(sx+1+k,y,1,FLAG.h,color);px(sx+1+k,y+FLAG.h-1,1,1,'rgba(0,0,0,.22)');}
+}
 
 /* ---------- world objects (rebuilt when land changes) ---------- */
 let statics: Drawable[] = []
@@ -291,6 +301,14 @@ function buildStatics(): void {
   statics.push({ s: COMPOST.x + COMPOST.y, d: drawCompost, kind: 'compost', hit: (ix, iy) => { const p = iso(COMPOST.x, COMPOST.y); return Math.abs(ix - p.sx) <= 8 && iy >= p.sy + 2 && iy <= p.sy + 14 } })
   statics.push({ s: GATE.x + GATE.y + 1.5, d: drawGate, kind: 'gate', hit: (ix, iy) => { const p = iso(GATE.x, GATE.y); return Math.abs(ix - (p.sx - 16)) <= 20 && iy >= p.sy - 24 && iy <= p.sy + 20 } })
   statics.push({ s: SIGN.x + SIGN.y, d: drawSign, kind: 'sign', hit: (ix, iy) => { const p = iso(SIGN.x, SIGN.y); return Math.abs(ix - p.sx) <= 8 && iy >= p.sy - 4 && iy <= p.sy + 14 } })
+  for (const [pack, slot] of Object.entries(D().fields)) {
+    const { x0, y0 } = fieldOrigin(slot)
+    statics.push({
+      s: x0 + y0 - 0.6, kind: 'flag', pack,
+      d: (t) => { const p = iso(x0, y0); drawFlag(p.sx, p.sy, colorOf(pack), t) },
+      hit: (ix, iy) => { const p = iso(x0, y0); return ix >= p.sx - 3 && ix <= p.sx + FLAG.w + 3 && iy >= p.sy - FLAG.top - 3 && iy <= p.sy - FLAG.top + FLAG.h + 4 },
+    })
+  }
   // fences: one segment per field edge that borders a different field or open land
   for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
     const f = fieldOf(x, y)
@@ -306,7 +324,8 @@ function buildStatics(): void {
         if (!a || !b) return
         rail(a[0], a[1] - 5, b[0], b[1] - 5, '#A26A40')
         rail(a[0], a[1] - 2, b[0], b[1] - 2, '#A26A40')
-        for (const v of [a, b]) { px(v[0] - 1, v[1] - 6, 2, 7, '#8E5A34'); px(v[0] - 1, v[1] - 6, 2, 1, '#B8804A') }
+        // Each post is capped in its field's colour, so a field's outline says whose it is.
+        for (const v of [a, b]) { px(v[0] - 1, v[1] - 6, 2, 7, '#8E5A34'); px(v[0] - 1, v[1] - 7, 2, 2, colorOf(f)) }
       } })
     }
   }
@@ -467,7 +486,11 @@ function pick(ix: number, iy: number): Pick | null {
     if (Math.abs(ix - sx) <= 7 && iy >= sy - 16 && iy <= sy + 14 && (!best || c.x + c.y > best.s)) best = { s: c.x + c.y, crop: c }
   }
   if (best) return { kind: 'crop', crop: best.crop }
-  for (const o of statics) if (o.hit && o.kind && o.kind !== 'forest' && o.hit(ix, iy)) return { kind: o.kind }
+  for (const o of statics) {
+    if (!o.hit || !o.kind || o.kind === 'forest' || !o.hit(ix, iy)) continue
+    if (o.kind !== 'flag') return { kind: o.kind }
+    if (o.pack !== undefined) return { kind: 'flag', pack: o.pack }
+  }
   const t = tileAt(ix, iy)
   return t ? { kind: 'tile', x: t.x, y: t.y } : null
 }
@@ -505,13 +528,18 @@ cv.addEventListener('pointerup', (e) => {
   const p = pick(ix, iy)
   if (!p) return
   // On a neighbour's farm a tap can only look.
-  if (visiting) { if (p.kind === 'crop') openNeighbourCrop(p.crop); return }
+  if (visiting) {
+    if (p.kind === 'crop') openNeighbourCrop(p.crop)
+    else if (p.kind === 'flag') toast('The ' + packTitle(p.pack) + ' field.')
+    return
+  }
   if (p.kind === 'crop') { walkTo(p.crop.x, p.crop.y); onCrop(p.crop) }
   else if (p.kind === 'barn') { walkTo(9, 6); openBag() }
   else if (p.kind === 'well') { walkTo(14, 9); openWell() }
   else if (p.kind === 'compost') { walkTo(14, 10); openCompost() }
   else if (p.kind === 'sign') { walkTo(9, 8); openAlmanac() }
   else if (p.kind === 'gate') { walkTo(5, 9); openNeighbours() }
+  else if (p.kind === 'flag') openTree(p.pack)
   else onTile(p.x, p.y)
 })
 cv.addEventListener('pointercancel', () => { down = null; dragging = false; cv.classList.remove('drag') })
