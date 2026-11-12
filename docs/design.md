@@ -104,7 +104,11 @@ Every seed in a pack, locked or not, is on the tree. One to four branches per fi
 
 ## 5. Readiness, not deadlines
 
-*(planned)* A field's readiness is the share of its catalogue that is perennial and in Z3 or beyond, with all seven layers present. The player sets the bar (default 80). The market opens when every field is at its bar; "buyers" are named bars, nothing more. The **rival** is last-month-you. There are no leaderboards: the only person you can cheat is yourself.
+A field's **readiness** is the share of its catalogue that stands as trees today, rounded down. A tree counts while it is rooted and not wilted by a wrong check-in. A seed found in the wild is an extra and is never counted, so foraging cannot lower the number. A layer of the catalogue with no standing tree is **hollow**.
+
+The player sets the **bar** (80 unless the pack says otherwise). A field is at its bar when its readiness has reached the bar and none of its layers is hollow. There are no dates.
+
+*(planned)* The market opens when every field is at its bar; "buyers" are named bars, nothing more. The **rival** is last-month-you. There are no leaderboards: the only person you can cheat is yourself.
 
 A pack can be **perennial** (a language, a habit): no readiness, it just lives on the farm.
 
@@ -118,7 +122,9 @@ The homestead has a field for each pack the farmer chose, laid out on a grid aro
 
 A pack is one YAML file: a goal, its branches, sources, guilds and seeds. The engine never knows what a seed means; the pack does. See `pack-format.md`. Adding a goal never touches engine code.
 
-Pack #0 is the **Workshop**: the game's own backlog as seeds, capped at 30% of daily energy, with features unlocking from learning milestones. The game gamifies its own development.
+Pack #0 is the **Workshop**: the game's own backlog as seeds, capped at 30% of daily energy. The game gamifies its own development.
+
+A seed can be **earned**: it asks for learning before it can be planted, either so many seeds rooted (in other fields, or in one named field) or one field's readiness. Jumping the fence does not clear it. The Workshop uses this so its backlog cannot outrun the studying: sprite sheets wait for a first real harvest, sharing a pack for a first season of Kannada, live weather for Infra at 60.
 
 *(planned)* An **orchard** pack is for a goal with no answer (reading, a habit): its crops are slow, pay for showing up, and are never quizzed. A **research** pack is harvested with artifacts: a memo, a real decision.
 
@@ -145,7 +151,7 @@ Each phase ends with something a friend can play.
 4. Art: sprite sheets, PixiJS, terraces, weather.
 5. The village server, when there are players who need it.
 
-The rules marked *(planned)* that need no AI and no server (readiness, earned unlocks, layer balance, guilds, edges, saplings, the market) are built between these, the ones closest to the loop first.
+The rules that need no AI and no server are built between these, the ones closest to the loop first. Readiness and earned unlocks are in; layer balance, guilds, edges, saplings and the market are marked *(planned)*.
 
 The plan in full, with what is done and how to help, is `../ROADMAP.md`.
 

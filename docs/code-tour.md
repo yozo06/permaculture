@@ -23,7 +23,9 @@ The engine does not know what any seed means. Adding a goal never touches engine
 The player's farm is not saved as a picture of the farm. It is saved as the list of everything they did, and the farm is what you get by replaying that list.
 
 - `types.ts` has `FarmEvent`, every kind of thing that can happen (planted, watered, harvested, slept, fenced…), and `FarmState`, what a farm is after them.
-- `fold.ts` is the heart. `check(state, event)` says whether an event is allowed and, if not, gives a reason a player can read. `apply(state, event)` returns the next state, or the very same state if the event is refused. `fold(events)` replays a whole log from nothing. `parseEvent` reads an event that could be anything, because a log comes from storage or from a file.
+- `fold.ts` is the heart. `check(state, event)` says whether a player may do something now and, if not, gives a reason they can read. `apply(state, event)` returns the next state, or the very same state if a log may not hold the event there. `fold(events)` replays a whole log from nothing. `parseEvent` reads an event that could be anything, because a log comes from storage or from a file.
+- `fold.ts` keeps two questions apart. `allowed` is what a log may hold, and it is all that replay asks. `check` asks that and one thing more of what is done today: that a seed has been earned. A rule that only holds back what a player starts belongs in the second, where it cannot change a saved farm.
+- `readiness.ts` works out how ready a field is (its number, its hollow layers, its bar) and what a seed is earned by. Neither is saved: both are worked out from the crops each time.
 - `rules.ts` has `RULES`, every number the game plays by, and the small questions asked of a crop: `thirsty`, `ripe`, `available`.
 - `ladder.ts` decides which kind of work a crop asks for at each stage: a recall card, an explanation, or a harvest.
 - `land.ts` is the geometry: where fields sit, what kind of ground a tile is.
@@ -47,7 +49,7 @@ When the page loads, the store reads the log and folds it. If the log cannot be 
 ## The screen
 
 - `game/game.ts`: drawing (the pixel helpers and sprites, `buildStatics`, `buildGround`, `frame`), input, and one click handler for every button in every sheet, keyed by `data-act`. It runs when imported and needs a browser, so it has no tests. Keep decisions out of it.
-- `game/views.ts`: what to show, worked out from the farm and the packs with no DOM: the seed bag, the learning tree's layout, a crop's sheet, the morning's to-do. Tested.
+- `game/views.ts`: what to show, worked out from the farm and the packs with no DOM: the seed bag, the learning tree's layout, a crop's sheet, the morning's to-do, the readiness of each field. Tested.
 - `game/sheets.ts`: HTML for the sheets, as strings in and strings out. Tested, including with hostile text.
 - `game/almanac.ts`: the rules page, written from `RULES` so its numbers cannot drift.
 - `game/links.ts`, `game/neighbours.ts`, `game/visit.ts`: farm links (the picture rides in the address after the `#`), the list of neighbours kept in the browser beside the farm, and what the neighbours sheets show. All three are pure and tested; `game.ts` only wires them up. While you visit a neighbour, `game.ts` draws their farm through `D()` and routes every tap away from your own. `docs/neighbours.md` is the design.
@@ -73,6 +75,7 @@ When the page loads, the store reads the log and folds it. If the log cannot be 
 | add a seed, a question or a whole goal | a file in `packs/`. No code. See `pack-format.md`. |
 | change a number | `RULES` in `src/engine/rules.ts`, and the same row in `docs/design.md`. A test fails until they agree. The Almanac follows by itself. |
 | add a rule | a new event in `types.ts`; its shape in `parseEvent`, its check and its effect in `fold.ts`; tests in `fold.test.ts`; and teach `fold.property.test.ts` to play it. |
+| hold back something a player may start, without touching saved farms | `whyToday` in `fold.ts`, which only `check` asks. Replay never does. |
 | add something to the farm's state | `FarmState` in `types.ts`, then `initialState` and `copy` in `fold.ts`, and `fromV2` in `v2.ts`. |
 | change what a sheet says | `game/sheets.ts` if it is built there, else `game/game.ts`. Put text from a player or a pack through `esc`. |
 | show something worked out from the farm | a pure function in `game/views.ts`, with a test. |

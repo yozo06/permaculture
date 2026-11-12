@@ -33,6 +33,32 @@ describe('almanacHtml', () => {
     expect(section).toContain('ripe')
   })
 
+  it('says what readiness is, with the bar from RULES, and which fields have none', () => {
+    const html = almanacHtml(catalog, RULES.energyMax, '0.0.0')
+    const section = html.split('<h3>Readiness</h3>')[1]?.split('<h3>')[0] ?? ''
+    expect(section).toContain('rounded down')
+    expect(section).toContain('<b>bar</b>: ' + RULES.readiness.bar + ' unless')
+    expect(section).toContain('from ' + RULES.readiness.min + ' to ' + RULES.readiness.max)
+    expect(section).toContain('hollow')
+    expect(section).toContain('There are no dates')
+    for (const p of catalog.packs) expect(section.includes('<b>' + p.title + '</b>'), p.title).toBe(p.perennial === true)
+  })
+
+  it('names every seed that has to be earned and what earns it, from the packs themselves', () => {
+    const html = almanacHtml(catalog, RULES.energyMax, '0.0.0')
+    const section = html.split('<h3>Readiness</h3>')[1]?.split('<h3>')[0] ?? ''
+    expect(section).toContain('<b>Sprite sheets</b>: a seed rooted in another field')
+    expect(section).toContain('<b>Share a pack</b>: 4 seeds rooted in the Kannada field')
+    expect(section).toContain('<b>Coorg weather</b>: the Infra field at 60')
+    expect(section).toContain('Jumping the fence does not clear')
+  })
+
+  it('no longer lists readiness as something to come', () => {
+    const later = almanacHtml(catalog, RULES.energyMax, '0.0.0').split('<h3>Not here yet</h3>')[1] ?? ''
+    expect(later).not.toContain('readiness')
+    expect(later).toContain('the market')
+  })
+
   it('says which version of the game it is, so a bug report can name it', () => {
     expect(almanacHtml(catalog, RULES.energyMax, '9.9.9 (abc1234)')).toContain('Version 9.9.9 (abc1234)')
   })

@@ -2,6 +2,7 @@
 // docs/design.md says the same things; src/engine/design-doc.test.ts checks its tables against RULES.
 import { LAYER_NAMES, type Catalog } from '../engine/catalog'
 import { LADDER } from '../engine/ladder'
+import { earnedLine } from '../engine/readiness'
 import { RULES } from '../engine/rules'
 import type { Layer } from '../engine/types'
 import { cropShape, shapeSvg } from './shapes'
@@ -47,6 +48,9 @@ export function almanacHtml(catalog: Catalog, energyMax: number, version: string
     .map((p) => 'The <b>' + esc(p.title) + '</b> field is capped: all its work together may use at most ' + p.energy_cap + "% of a day's energy (" + catalog.capOf(p.pack, energyMax) + ' of ' + energyMax + '), so it never becomes the only crop.')
     .join('</li><li>')
   const last = RULES.maxStage
+  const noEnd = catalog.packs.filter((p) => p.perennial === true).map((p) => '<b>' + esc(p.title) + '</b>')
+  // What each earned seed asks for, read from the packs, so this page cannot say something the game does not do.
+  const earned = catalog.packs.flatMap((p) => catalog.seedsOf(p.pack)).flatMap((s) => (s.earned ? ['<b>' + esc(s.name) + '</b>: ' + esc(earnedLine(s.earned, catalog))] : []))
   return (
     '<h2>Almanac</h2><p class="sub">The rules of this farm, as they stand today. Everything here is in the game right now.</p>' +
     '<h3>The depth ladder</h3>' +
@@ -100,6 +104,13 @@ export function almanacHtml(catalog: Catalog, energyMax: number, version: string
       'Pick a branch to focus; the seed bag puts it first. Or jump the fence: pass a harvest-grade question to unlock a seed early (' + RULES.testOut.energy + ' energy).',
       'Guilds are sets of seeds that belong together. The tree shows how many of each are rooted; there is no bonus yet.',
     ]) +
+    '<h3>Readiness</h3>' +
+    list([
+      "A field's readiness is the share of its seeds that stand as trees today, rounded down. A tree that a wrong check-in has wilted does not count until it comes back. Seeds you found in the wild are extras and are never counted, so foraging cannot lower the number.",
+      'Every field is held to a <b>bar</b>: ' + RULES.readiness.bar + ' unless its pack says otherwise, and you can set your own, from ' + RULES.readiness.min + ' to ' + RULES.readiness.max + '. A field is at its bar when its readiness has reached it and none of its layers is hollow. A layer is hollow while no tree stands in it.',
+      'There are no dates, and nobody to compare with. The Readiness button shows every field.' + (noEnd.length ? ' A field with no end has no readiness and no bar: ' + noEnd.join(', ') + '.' : ''),
+      ...(earned.length ? ['Some seeds have to be <b>earned</b>: they can be planted only once the learning is on your farm. Jumping the fence does not clear this. ' + earned.join('. ') + '.'] : []),
+    ]) +
     '<h3>Neighbours</h3>' +
     list([
       'Tap the <b>gate</b> where the main path leaves the homestead. Name your farm (1 to ' + RULES.farmName.max + ' characters) and make a <b>farm link</b>: a picture of your farm, held inside the link itself. Send it in any chat you already use. Nothing is uploaded.',
@@ -116,7 +127,7 @@ export function almanacHtml(catalog: Catalog, energyMax: number, version: string
       'Everything you do is saved as an event in this browser, and your farm is what you get by replaying them. Export gives you that log; import replays it.',
       'Farms from the first prototype (v2) still import: the game turns them into the first event of a new log.',
     ]) +
-    '<h3>Not here yet</h3><p class="sub">The Apply rung (a problem, a design, a debugging session), timed solves and AI judging, readiness and the market, the rival farm, the Sunday walk, guild bonuses, layer balance, seeds on the edge of two fields, saplings, a planner, tools, orchard crops, layers as terraces, real weather from Coorg, loading your own pack in the browser, rain for a neighbour (answer a card about one of their crops and send them a day in the barrel), trading seeds, the village server.</p>' +
+    '<h3>Not here yet</h3><p class="sub">The Apply rung (a problem, a design, a debugging session), timed solves and AI judging, the market, the rival farm, the Sunday walk, guild bonuses, layer balance, seeds on the edge of two fields, saplings, a planner, tools, orchard crops, layers as terraces, real weather from Coorg, loading your own pack in the browser, rain for a neighbour (answer a card about one of their crops and send them a day in the barrel), trading seeds, the village server.</p>' +
     '<div class="foot"><span class="sub">Version ' + esc(version) + '</span><button type="button" class="pri" data-act="close">Close</button></div>'
   )
 }
