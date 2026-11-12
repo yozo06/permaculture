@@ -2,6 +2,9 @@
 // (the seed and find ids they mention still exist), and the full catalogues keep their bar.
 import { describe, expect, it } from 'vitest'
 import { LAYER_NAMES, buildCatalog } from '../src/engine/catalog'
+import { apply, fieldsToOpen, initialState } from '../src/engine/fold'
+import { heldBy, isEarned } from '../src/engine/readiness'
+import { RULES, available } from '../src/engine/rules'
 import { fromV2 } from '../src/engine/v2'
 import sampleFarm from '../src/game/sample-farm.json'
 import { collectPacks } from './packs-lib.mjs'
@@ -73,5 +76,21 @@ describe('the Workshop', () => {
   it('has a seed for readiness and one for earned unlocks', () => {
     expect(catalog.seed('readiness')).toMatchObject({ pack: 'workshop', harvest: 'artifact' })
     expect(catalog.seed('earned-unlocks')).toMatchObject({ pack: 'workshop', needs: ['readiness'] })
+  })
+})
+
+describe('layer balance on a new farm', () => {
+  let farm = apply(initialState(), { type: 'farm-started', ...RULES.start, energy: RULES.energyMax }, catalog)
+  for (const e of fieldsToOpen(farm, catalog)) farm = apply(farm, e, catalog)
+
+  it.each(packs.map((p) => p.pack))('lets the %s field start, and from the ground', (id) => {
+    const could = catalog.seedsOf(id).filter((s) => !s.wild && available(s, farm) && isEarned(s, farm, catalog))
+    const free = could.filter((s) => heldBy(s, farm, catalog) === null)
+    expect(free.length).toBeGreaterThan(0)
+    // Whatever waits on day one is waiting for a layer that has a free seed in it.
+    for (const s of could) {
+      const below = heldBy(s, farm, catalog)
+      if (below) expect(free.some((f) => f.layer === below), s.id + ' waits for ' + below).toBe(true)
+    }
   })
 })
