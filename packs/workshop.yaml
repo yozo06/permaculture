@@ -173,7 +173,7 @@ seeds:
     needs: [repo]
     harvest: artifact
     minutes: 90
-    summary: Share a read-only picture of the farm (map and trees only, never notes, compost or failed answers) inside a link, with no server. You choose the fields each time. A sent link cannot be taken back until the village server exists.
+    summary: Share a read-only picture of the farm (the map and each crop at the furthest it has grown; never notes, compost, failed answers or a wilted crop) inside a link, with no server. You choose the fields each time. A sent link cannot be taken back until the village server exists.
     prompts: [A link opens someone else's farm read-only.]
   - id: visit
     name: Visit & water

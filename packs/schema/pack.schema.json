@@ -51,7 +51,7 @@
           "name": { "type": "string", "minLength": 1, "maxLength": 48 },
           "layer": { "enum": ["canopy", "understory", "shrub", "herb", "ground-cover", "root", "vine"] },
           "branch": { "$ref": "#/$defs/slug", "description": "Must match a branch id in this pack." },
-          "tier": { "type": "integer", "minimum": 0, "maximum": 8, "description": "Depth in the learning tree. 0 = plantable from the start." },
+          "tier": { "type": "integer", "minimum": 0, "maximum": 8, "description": "Depth in the learning tree. 0 = needs nothing rooted first. Layer balance may still make a seed in a high layer wait." },
           "needs": { "type": "array", "items": { "$ref": "#/$defs/slug" }, "description": "Seed ids that must be rooted first. Same pack only, for now." },
           "wild": { "type": "boolean", "description": "Hidden until foraged and domesticated. Needs a find that points at it." },
           "earned": {

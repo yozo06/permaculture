@@ -46,7 +46,7 @@ seeds:
     name: Raft
     layer: root              # canopy | understory | shrub | herb | ground-cover | root | vine
     branch: distributed-data
-    tier: 1                  # depth in the tree; 0 is plantable from the start
+    tier: 1                  # depth in the tree; 0 needs nothing rooted first (layer balance may still make it wait)
     needs: [con]             # seed ids that must be rooted first (same pack)
     wild: false              # true: hidden until foraged and domesticated; needs a find that points at it
     earned: { rooted: 1 }    # optional: learning that has to happen before it can be planted. See "Earned seeds"

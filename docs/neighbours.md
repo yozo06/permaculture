@@ -23,7 +23,7 @@ Four things in this design change a promise or need the owner's account. They we
 3. **Neighbours before the AI phase.** The first half of the village is pulled forward.
 4. **The village green.** One pinned GitHub Discussion where people post their farm links to find neighbours. The owner sets it up and invites the first three to six people.
 
-One smaller thing is still open: the Workshop seed `snapshot` says the picture is published "to a free KV store". This design needs no store. The seed's wording is the owner's call and has not been touched.
+The Workshop seed `snapshot` used to say the picture is published "to a free KV store". This design needs no store, and on the owner's word the seed now describes the link that was built.
 
 ## 3. Why, and what for
 
@@ -287,7 +287,7 @@ Each step leaves the game playable and ends with something a friend can use.
 
 Step 2 after a week of step 1 means the rain is shaped by what the first testers actually did. The Workshop seed `snapshot` is harvested at the end of step 1, `visit` at the end of step 2. One seed is added for step 0.
 
-Plan steps 0 and 1 in full. Step 2 is described here so that step 1 leaves room for it (the farm code, the link format, the crop sheet on a neighbour's farm), and gets its own plan after the beta week. The village green and the wording of the Workshop seed are the owner's and sit outside any plan.
+Plan steps 0 and 1 in full. Step 2 is described here so that step 1 leaves room for it (the farm code, the link format, the crop sheet on a neighbour's farm), and gets its own plan after the beta week. The village green is the owner's and sits outside any plan. (The wording of the Workshop seed was too; the owner has since had it reworded to match the link.)
 
 ## 11. Calls made in this design
 
@@ -326,7 +326,7 @@ The owner asked for other people playing alongside as neighbouring farmers and l
 - §3 Numbers: the new rows from section 7.
 - The Almanac: a Neighbours section, a line for the gate under Buildings, and "the village" in *Not here yet* becomes "the village server".
 - README: a short "Play with neighbours" section and the village green link.
-- Workshop pack: one added seed for safe saves. The `snapshot` wording is left as it is.
+- Workshop pack: one added seed for safe saves. The `snapshot` wording was left as it was, and reworded later on the owner's word.
 
 ## 13. Other ways that were looked at
 
