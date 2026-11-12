@@ -214,6 +214,7 @@
     "snapshot": {"pack":"workshop","needs":["repo"],"harvest":"artifact","wild":false},
     "visit": {"pack":"workshop","needs":["snapshot"],"harvest":"artifact","wild":false},
     "village-server": {"pack":"workshop","needs":["visit"],"harvest":"artifact","wild":false},
+    "readable-farm": {"pack":"workshop","needs":["repo"],"harvest":"artifact","wild":false},
     "sprites": {"pack":"workshop","needs":["repo"],"harvest":"artifact","wild":false},
     "renderer": {"pack":"workshop","needs":["sprites"],"harvest":"artifact","wild":false},
     "terraces": {"pack":"workshop","needs":["renderer","catalogues"],"harvest":"artifact","wild":false},

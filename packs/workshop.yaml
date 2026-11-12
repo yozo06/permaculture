@@ -166,6 +166,16 @@ seeds:
     summary: Small Haskell service holding snapshots and gift events. Also a system-design talking point.
     prompts: [Deployed; the game reads snapshots from it.]
   # ---- Phase 4 ----
+  - id: readable-farm
+    name: Readable at a glance
+    layer: ground-cover
+    branch: world
+    tier: 1
+    needs: [repo]
+    harvest: artifact
+    minutes: 90
+    summary: Before any new art, make the farm say more with the pixels it has. Each layer gets a shape of its own, each field a flag in its colour, good work a small moment on the map, and the fonts ship with the game.
+    prompts: [A canopy seed and a root seed can be told apart from across the map.]
   - id: sprites
     name: Sprite sheets
     layer: herb
