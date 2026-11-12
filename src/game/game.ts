@@ -1182,7 +1182,7 @@ const treePack = (): string => {
   if (saved && catalog.pack(saved) && Object.hasOwn(S.fields, saved)) return saved
   return (catalog.packs.find((p) => Object.hasOwn(S.fields, p.pack)) ?? catalog.packs[0])?.pack ?? ''
 }
-const SVG_FONT = 'font-family="DM Sans,system-ui"'
+const SVG_FONT = 'font-family="DM Sans Variable,system-ui"'
 function treeSvg(v: TreeView): string {
   const narrow = v.columnWidth < 200
   let s = '<svg class="tree" width="' + v.width + '" height="' + v.height + '" viewBox="0 0 ' + v.width + ' ' + v.height + '" style="aspect-ratio:' + v.width + '/' + v.height + ';flex:none" role="img" aria-label="Learning tree for ' + esc(v.title) + '">'

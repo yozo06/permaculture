@@ -97,4 +97,4 @@ In the design, marked *(planned)*, and not scheduled: readiness per field and th
 
 ## Licence
 
-Code is MIT. Packs and other content are CC-BY-SA 4.0.
+Code is MIT. Packs and other content are CC-BY-SA 4.0. The fonts the game carries are under the SIL Open Font License.

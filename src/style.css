@@ -4,8 +4,8 @@
   --ink:#1A1610; --panel:#2B2318; --panel-2:#3B3020; --line:#5C4A2E; --line-2:#7A6340;
   --cream:#F4EAD0; --muted:#C6B48E; --dim:#8F7F60;
   --green:#6DB24F; --ochre:#E0A93E; --blue:#5FA8C9; --purple:#B089D6; --red:#D9534F; --water:#4FA3E8;
-  --font-display:'Pixelify Sans','DM Sans',system-ui,sans-serif;
-  --font-body:'DM Sans',system-ui,sans-serif;
+  --font-display:'Pixelify Sans Variable','DM Sans Variable',system-ui,sans-serif;
+  --font-body:'DM Sans Variable',system-ui,sans-serif;
   color-scheme:dark;
 }
 html,body{height:100%;margin:0}
