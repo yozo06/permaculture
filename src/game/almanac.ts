@@ -2,7 +2,7 @@
 // docs/design.md says the same things; src/engine/design-doc.test.ts checks its tables against RULES.
 import { LAYER_NAMES, type Catalog } from '../engine/catalog'
 import { LADDER } from '../engine/ladder'
-import { earnedLine } from '../engine/readiness'
+import { GROUND_UP, earnedLine } from '../engine/readiness'
 import { RULES } from '../engine/rules'
 import type { Layer } from '../engine/types'
 import { cropShape, shapeSvg } from './shapes'
@@ -108,6 +108,7 @@ export function almanacHtml(catalog: Catalog, energyMax: number, version: string
     list([
       "A field's readiness is the share of its seeds that stand as trees today, rounded down. A tree that a wrong check-in has wilted does not count until it comes back. Seeds you found in the wild are extras and are never counted, so foraging cannot lower the number.",
       'Every field is held to a <b>bar</b>: ' + RULES.readiness.bar + ' unless its pack says otherwise, and you can set your own, from ' + RULES.readiness.min + ' to ' + RULES.readiness.max + '. A field is at its bar when its readiness has reached it and none of its layers is hollow. A layer is hollow while no tree stands in it.',
+      '<b>Layer balance</b>: a field is built from the ground up: ' + GROUND_UP.map((l) => LAYER_NAMES[l]).join(', ') + '. A seed waits while a layer ' + RULES.balance.below + ' or more beneath its own is hollow and has a seed you could plant today. The seed bag says which layer to plant in first. A hollow layer with nothing left to plant holds nothing back, so a field is never stuck. Vines climb through every layer and never wait, and nothing waits in a field with no end.',
       'There are no dates, and nobody to compare with. The Readiness button shows every field.' + (noEnd.length ? ' A field with no end has no readiness and no bar: ' + noEnd.join(', ') + '.' : ''),
       ...(earned.length ? ['Some seeds have to be <b>earned</b>: they can be planted only once the learning is on your farm. Jumping the fence does not clear this. ' + earned.join('. ') + '.'] : []),
     ]) +
@@ -127,7 +128,7 @@ export function almanacHtml(catalog: Catalog, energyMax: number, version: string
       'Everything you do is saved as an event in this browser, and your farm is what you get by replaying them. Export gives you that log; import replays it.',
       'Farms from the first prototype (v2) still import: the game turns them into the first event of a new log.',
     ]) +
-    '<h3>Not here yet</h3><p class="sub">The Apply rung (a problem, a design, a debugging session), timed solves and AI judging, the market, the rival farm, the Sunday walk, guild bonuses, layer balance, seeds on the edge of two fields, saplings, replanting annuals, a planner, tools, recruiter visits, orchard and research fields, layers as terraces, real weather from Coorg, loading your own pack in the browser, rain for a neighbour (answer a card about one of their crops and send them a day in the barrel), trading seeds, the village server.</p>' +
+    '<h3>Not here yet</h3><p class="sub">The Apply rung (a problem, a design, a debugging session), timed solves and AI judging, the market, the rival farm, the Sunday walk, guild bonuses, seeds on the edge of two fields, saplings, replanting annuals, a planner, tools, recruiter visits, orchard and research fields, layers as terraces, real weather from Coorg, loading your own pack in the browser, rain for a neighbour (answer a card about one of their crops and send them a day in the barrel), trading seeds, the village server.</p>' +
     '<div class="foot"><span class="sub">Version ' + esc(version) + '</span><button type="button" class="pri" data-act="close">Close</button></div>'
   )
 }

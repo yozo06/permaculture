@@ -37,7 +37,7 @@ These hold in every phase. A change that breaks one is the wrong change.
 | 3 | **Your own AI key** (optional): judged harvests, a pack forge, fresh wild finds | Next |
 | 4 | **Art**: a farm you can read at a glance, then sprite sheets, a faster renderer, terraces, weather | First step built (version 0.3.0); sprite sheets wait for an art direction |
 | 5 | **The village server**: pictures that can be withdrawn, rain that arrives by itself | When players need it |
-| any | **The rest of the rules**, which need no AI and no server: readiness, earned unlocks, then layer balance, guilds, edges, saplings, the market | Readiness and earned unlocks are built (version 0.4.0) |
+| any | **The rest of the rules**, which need no AI and no server: readiness, earned unlocks, then layer balance, guilds, edges, saplings, the market | Readiness and earned unlocks (version 0.4.0) and layer balance (0.5.0) are built; guilds, edges and saplings are next |
 
 ## The plan, phase by phase
 
@@ -95,12 +95,13 @@ These are in the design, marked *(planned)* until they are built. They serve pla
 
 1. **Readiness** *(done, version 0.4.0)*. Each field shows how much of it stands as trees, which of its layers are hollow, and the bar you set for it. There are no dates: a field is ready when it is at your bar with no layer hollow.
 2. **Earned unlocks** *(done, version 0.4.0)*. A seed can ask for learning before it is planted. In the Workshop, a first real harvest earns sprite sheets, four seeds rooted in Kannada earn sharing a pack, and Infra at 60 earns live weather. The game's own backlog cannot outrun the studying. This is the guard against building the game instead of playing it. It is asked of what you do today and never of a saved farm, so no farm loses a crop to it.
-3. **Layer balance, guilds, edges and saplings.** A field cannot run two layers ahead of a hollow one. A complete guild pays a bonus and a wilting member drags the rest. A seed on the edge of two fields yields double. Harvesting a tree drops new seeds, so depth keeps seeding itself.
-4. **The market, the rival and the Sunday walk.** The market opens when every field is at its bar; its buyers are named bars (a Haskell-first shop, fintech infrastructure, big-tech backend) and an offer is a sale. The rival is last-month-you. The Sunday walk shows the map and asks three questions, with no tasks.
-5. **A planner.** It orders the day: reviews first, then prerequisites, layer balance, finishing guilds, each field's share of energy, and the two-seed cap last. If you do set a date, it scales how fast you plant, and says so when the date does not fit your energy.
-6. **Tools.** Time-savers you earn: drip irrigation halves the cost of a review, a tractor speeds planting. They break after a week left idle.
-7. **Fields for other kinds of goal.** Orchard crops for goals with no answer (reading, a habit): slow, paid for showing up, never quizzed. A research field harvested with real decisions and memos.
-8. **Your farm in more places.** Loading your own pack in the browser; one farm merged across devices; installing the game like an app, with no app store; a backup you opt into.
+3. **Layer balance** *(done, version 0.5.0)*. A field is built from the ground up and cannot run two layers ahead of a hollow one: a seed waits while a layer two or more beneath its own has no tree standing and has a seed you could plant today. The seed bag says where to begin. Like an earned seed, it is asked of what you do today and never of a saved farm.
+4. **Guilds, edges and saplings.** A complete guild pays a bonus and a wilting member drags the rest. A seed on the edge of two fields yields double. Harvesting a tree drops new seeds, so depth keeps seeding itself.
+5. **The market, the rival and the Sunday walk.** The market opens when every field is at its bar; its buyers are named bars (a Haskell-first shop, fintech infrastructure, big-tech backend) and an offer is a sale. The rival is last-month-you. The Sunday walk shows the map and asks three questions, with no tasks.
+6. **A planner.** It orders the day: reviews first, then prerequisites, layer balance, finishing guilds, each field's share of energy, and the two-seed cap last. If you do set a date, it scales how fast you plant, and says so when the date does not fit your energy.
+7. **Tools.** Time-savers you earn: drip irrigation halves the cost of a review, a tractor speeds planting. They break after a week left idle.
+8. **Fields for other kinds of goal.** Orchard crops for goals with no answer (reading, a habit): slow, paid for showing up, never quizzed. A research field harvested with real decisions and memos.
+9. **Your farm in more places.** Loading your own pack in the browser; one farm merged across devices; installing the game like an app, with no app store; a backup you opt into.
 
 ## What slows us down, and the rules we keep
 

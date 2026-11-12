@@ -129,7 +129,7 @@ Seed ids, find ids and pack ids are unique across all packs, and branch ids with
 ## Writing good seeds
 
 - **A seed is a thing you can root**, not a chapter. "Raft" is a seed; "Chapter 9" is not.
-- **Layer by what it is**, not how hard it is. GC internals are `root` even if they are easy for you.
+- **Layer by what it is**, not how hard it is. GC internals are `root` even if they are easy for you. The layer also sets the order a field is planted in: under layer balance a seed waits while a layer two or more beneath its own (from the ground up: root, ground cover, herb, shrub, understory, canopy) is hollow and has a seed that could be planted. So give a field's low layers some seeds that need nothing, or its first days will be spent high up.
 - **Questions teach.** `why` is shown after every answer. Write it so a wrong answer still ends with understanding.
 - **Distractors are plausible.** The wrong options should be things people actually believe.
 - **Cite, never paste.** Questions are original. `source` points at where to read more.

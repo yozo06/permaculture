@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { collectPacks } from '../../scripts/packs-lib.mjs'
 import { buildCatalog, LAYER_NAMES } from '../engine/catalog'
+import { GROUND_UP } from '../engine/readiness'
 import { RULES } from '../engine/rules'
 import { almanacHtml } from './almanac'
 
@@ -53,6 +54,16 @@ describe('almanacHtml', () => {
     expect(section).toContain('Jumping the fence does not clear')
   })
 
+  it('says what layer balance is, in the order and with the number the game plays by', () => {
+    const html = almanacHtml(catalog, RULES.energyMax, '0.0.0')
+    const section = html.split('<h3>Readiness</h3>')[1]?.split('<h3>')[0] ?? ''
+    expect(section).toContain('<b>Layer balance</b>')
+    expect(section).toContain(GROUND_UP.map((l) => LAYER_NAMES[l]).join(', '))
+    expect(section).toContain('a layer ' + RULES.balance.below + ' or more beneath its own')
+    expect(section).toContain('Vines')
+    expect(html.split('<h3>Not here yet</h3>')[1] ?? '').not.toContain('layer balance')
+  })
+
   it('no longer lists readiness as something to come', () => {
     const later = almanacHtml(catalog, RULES.energyMax, '0.0.0').split('<h3>Not here yet</h3>')[1] ?? ''
     expect(later).not.toContain('readiness')
@@ -61,7 +72,7 @@ describe('almanacHtml', () => {
 
   it('lists under Not here yet the rules the design marks as planned', () => {
     const later = almanacHtml(catalog, RULES.energyMax, '0.0.0').split('<h3>Not here yet</h3>')[1] ?? ''
-    for (const planned of ['the Sunday walk', 'guild bonuses', 'layer balance', 'saplings', 'tools', 'recruiter visits', 'orchard and research fields', 'replanting annuals', 'a planner', 'trading seeds']) {
+    for (const planned of ['the Sunday walk', 'guild bonuses', 'saplings', 'tools', 'recruiter visits', 'orchard and research fields', 'replanting annuals', 'a planner', 'trading seeds']) {
       expect(later, planned).toContain(planned)
     }
   })

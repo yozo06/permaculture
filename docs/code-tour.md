@@ -24,8 +24,8 @@ The player's farm is not saved as a picture of the farm. It is saved as the list
 
 - `types.ts` has `FarmEvent`, every kind of thing that can happen (planted, watered, harvested, slept, fenced…), and `FarmState`, what a farm is after them.
 - `fold.ts` is the heart. `check(state, event)` says whether a player may do something now and, if not, gives a reason they can read. `apply(state, event)` returns the next state, or the very same state if a log may not hold the event there. `fold(events)` replays a whole log from nothing. `parseEvent` reads an event that could be anything, because a log comes from storage or from a file.
-- `fold.ts` keeps two questions apart. `allowed` is what a log may hold, and it is all that replay asks. `check` asks that and one thing more of what is done today: that a seed has been earned. A rule that only holds back what a player starts belongs in the second, where it cannot change a saved farm.
-- `readiness.ts` works out how ready a field is (its number, its hollow layers, its bar) and what a seed is earned by. Neither is saved: both are worked out from the crops each time.
+- `fold.ts` keeps two questions apart. `allowed` is what a log may hold, and it is all that replay asks. `check` asks that and a little more of what is done today: that a seed has been earned, and that it does not run two layers ahead of a hollow one. A rule that only holds back what a player starts belongs in the second, where it cannot change a saved farm.
+- `readiness.ts` works out how ready a field is (its number, its hollow layers, its bar), what a seed is earned by, and which layer holds a seed back under layer balance. None of it is saved: it is worked out from the crops each time.
 - `rules.ts` has `RULES`, every number the game plays by, and the small questions asked of a crop: `thirsty`, `ripe`, `available`.
 - `ladder.ts` decides which kind of work a crop asks for at each stage: a recall card, an explanation, or a harvest.
 - `land.ts` is the geometry: where fields sit, what kind of ground a tile is.
