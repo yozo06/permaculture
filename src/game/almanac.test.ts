@@ -64,6 +64,14 @@ describe('almanacHtml', () => {
     expect(html.split('<h3>Not here yet</h3>')[1] ?? '').not.toContain('layer balance')
   })
 
+  it('says what a jump over the fence does not do, and what does not fill a hollow layer', () => {
+    const html = almanacHtml(catalog, RULES.energyMax, '0.0.0')
+    const tree = html.split('<h3>Learning tree</h3>')[1]?.split('<h3>')[0] ?? ''
+    expect(tree).toContain('A jump clears what a seed needs and nothing else: it does not earn a seed, and it does not put one ahead of a hollow layer.')
+    const section = html.split('<h3>Readiness</h3>')[1]?.split('<h3>')[0] ?? ''
+    expect(section).toContain('A seed you found in the wild does not fill a layer.')
+  })
+
   it('no longer lists readiness as something to come', () => {
     const later = almanacHtml(catalog, RULES.energyMax, '0.0.0').split('<h3>Not here yet</h3>')[1] ?? ''
     expect(later).not.toContain('readiness')

@@ -281,17 +281,19 @@ describe('readinessSheetHtml', () => {
 
 describe('heldSectionHtml', () => {
   it('lists each seed that waits, its layer, and the layer to plant in first', () => {
-    const h = heldSectionHtml([{ id: 'corn', name: 'Corn', layer: 'Canopy', below: 'Root' }, { id: 'thyme', name: 'Thyme', layer: 'Herb', below: 'Ground cover' }])
+    const h = heldSectionHtml([{ id: 'corn', name: 'Corn', layer: 'Canopy', below: 'Root' }, { id: 'thyme', name: 'Thyme', layer: 'Herb', below: 'Ground cover' }], RULES.balance.below)
+    expect(h).toContain('a layer ' + RULES.balance.below + ' or more beneath its own')
+    expect(heldSectionHtml([{ id: 'corn', name: 'Corn', layer: 'Canopy', below: 'Root' }], 3)).toContain('a layer 3 or more beneath its own')
     expect(h).toContain('<h3>Waiting for a lower layer</h3>')
     expect(h).toContain('Corn<small>Canopy · plant in the Root layer first</small>')
     expect(h).toContain('Thyme<small>Herb · plant in the Ground cover layer first</small>')
   })
 
   it('is nothing at all when nothing waits', () => {
-    expect(heldSectionHtml([])).toBe('')
+    expect(heldSectionHtml([], 2)).toBe('')
   })
 
   it('escapes what came from a pack', () => {
-    expect(heldSectionHtml([{ id: 'x', name: '<b>x</b>', layer: 'Herb', below: 'Root' }])).not.toContain('<b>x</b>')
+    expect(heldSectionHtml([{ id: 'x', name: '<b>x</b>', layer: 'Herb', below: 'Root' }], 2)).not.toContain('<b>x</b>')
   })
 })

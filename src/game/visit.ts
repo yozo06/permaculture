@@ -61,7 +61,7 @@ export interface NeighbourCropView {
 /** What to say of a seed that layer balance holds back on your own farm, or null if nothing holds it. */
 function heldLine(seed: Seed, mine: FarmState, catalog: Catalog, packTitle: string): string | null {
   const below = heldBy(seed, mine, catalog)
-  return below ? 'Waiting on your farm: nothing stands in the ' + LAYER_NAMES[below] + ' layer of your ' + packTitle + ' field yet. Plant there first.' : null
+  return below ? 'Waiting on your farm: the ' + LAYER_NAMES[below] + ' layer of your ' + packTitle + ' field is hollow. Plant there first.' : null
 }
 
 /** A crop on a neighbour's farm, seen from `mine`. Null for a seed this game does not know. */

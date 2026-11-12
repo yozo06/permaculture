@@ -297,7 +297,7 @@ function whyToday(s: FarmState, e: FarmEvent, catalog: Catalog): string | null {
   if (!seed) return null
   if (seed.earned && !isEarned(seed, s, catalog)) return 'You have not earned ' + seed.name + ' yet. It takes ' + earnedLine(seed.earned, catalog) + '.'
   const below = heldBy(seed, s, catalog)
-  return below ? 'Nothing stands in the ' + LAYER_NAMES[below] + ' layer of the ' + (catalog.pack(seed.pack)?.title ?? seed.pack) + ' field yet. Plant there before ' + seed.name + '.' : null
+  return below ? 'The ' + LAYER_NAMES[below] + ' layer of the ' + (catalog.pack(seed.pack)?.title ?? seed.pack) + ' field is hollow. Plant there before ' + seed.name + '.' : null
 }
 
 const NOT_AN_EVENT = 'That is not something the farm can do.'

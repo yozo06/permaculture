@@ -704,12 +704,12 @@ describe('a seed that has to be earned', () => {
 describe('layer balance', () => {
   // The garden from the ground up: beet (root), squash (ground cover, locked), thyme (herb), corn (canopy). See `layeredCatalog`.
   const farm = (): FarmState => run(layerCat, [started, { type: 'field-opened', pack: 'garden', slot: 0 }, { type: 'field-opened', pack: 'shed', slot: 1 }])
-  const ROOT_FIRST = 'Nothing stands in the Root layer of the Garden field yet. Plant there before Corn.'
+  const ROOT_FIRST = 'The Root layer of the Garden field is hollow. Plant there before Corn.'
 
   it('holds a seed back while a layer two or more beneath it is hollow and has a seed to plant, and says where to begin', () => {
     const s = farm()
     expect(check(s, plant('corn', 5, 5), layerCat)).toBe(ROOT_FIRST)
-    expect(check(s, plant('thyme', 5, 5), layerCat)).toBe('Nothing stands in the Root layer of the Garden field yet. Plant there before Thyme.')
+    expect(check(s, plant('thyme', 5, 5), layerCat)).toBe('The Root layer of the Garden field is hollow. Plant there before Thyme.')
     expect(check(s, plant('beet', 5, 5), layerCat)).toBeNull()
   })
 
@@ -717,7 +717,7 @@ describe('layer balance', () => {
     const rooted = run(layerCat, [plant('beet', 5, 5)], farm())
     // The root has nothing left to plant. The herb is free; the canopy now waits for the herb.
     expect(check(rooted, plant('thyme', 6, 5), layerCat)).toBeNull()
-    expect(check(rooted, plant('corn', 6, 5), layerCat)).toBe('Nothing stands in the Herb layer of the Garden field yet. Plant there before Corn.')
+    expect(check(rooted, plant('corn', 6, 5), layerCat)).toBe('The Herb layer of the Garden field is hollow. Plant there before Corn.')
     const both = run(layerCat, [plant('thyme', 6, 5), sleep], rooted)
     expect(check(both, plant('corn', 7, 5), layerCat)).toBeNull()
   })

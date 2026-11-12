@@ -141,10 +141,10 @@ export const earnedSectionHtml = (rows: readonly EarnedRow[], titleOf: (pack: st
       rows.map((e) => earnedRowHtml(e, titleOf(e.pack))).join('') + '</div>'
     : ''
 
-/** The seeds that layer balance holds back, under their own heading; nothing at all when there are none. */
-export const heldSectionHtml = (rows: readonly HeldRow[]): string =>
+/** The seeds that layer balance holds back, under their own heading; nothing at all when there are none. `below` is how many layers down the rule looks. */
+export const heldSectionHtml = (rows: readonly HeldRow[], below: number): string =>
   rows.length
-    ? '<h3>Waiting for a lower layer</h3><p class="sub">A field is built from the ground up. A seed waits while a layer two or more beneath its own has no tree standing and has something you could plant.</p><div>' +
+    ? '<h3>Waiting for a lower layer</h3><p class="sub">A field is built from the ground up. A seed waits while a layer ' + below + ' or more beneath its own is hollow and has something you could plant.</p><div>' +
       rows.map((r) => '<div class="row slim"><div class="n">' + esc(r.name) + '<small>' + esc(r.layer) + ' · plant in the ' + esc(r.below) + ' layer first</small></div></div>').join('') + '</div>'
     : ''
 
@@ -152,7 +152,7 @@ export const heldSectionHtml = (rows: readonly HeldRow[]): string =>
 export function readinessSheetHtml(v: ReadinessView, limits: { min: number; max: number }): string {
   const title = (pack: string): string => v.rows.find((r) => r.pack === pack)?.title ?? pack
   return (
-    '<h2>Readiness</h2><p class="sub">How much of each field stands as trees today. There are no dates here: a field is ready when it reaches the bar you set for it and none of its layers is hollow. A layer is hollow while no tree stands in it.</p>' +
+    '<h2>Readiness</h2><p class="sub">How much of each field stands as trees today. There are no dates here: a field is ready when it reaches the bar you set for it and none of its layers is hollow. A layer is hollow while none of its seeds stands as a tree.</p>' +
     (v.withBar ? '<p><b>' + v.atBar + ' of ' + v.withBar + '</b> ' + (v.withBar === 1 ? 'field is' : 'fields are') + ' at the bar.</p>' : '') +
     v.rows.map((r) => readinessRowHtml(r, limits)).join('') +
     earnedSectionHtml(v.earned, title) +

@@ -223,6 +223,8 @@ describe('layer balance', () => {
     expect(held('rose', [crop('tap'), growing('moss'), crop('fern')])).toBe('ground-cover')
     // A wild root that has been found is an extra: it never holds anything back.
     expect(held('mint', [growing('tap')], { volunteers: ['truffle'] })).toBeNull()
+    // Nor does it fill the layer once it is a tree: the root is still hollow, and still has the tap to plant.
+    expect(held('mint', [crop('truffle')], { volunteers: ['truffle'] })).toBe('root')
   })
 
   it('counts a seed that a jump over the fence has made plantable', () => {

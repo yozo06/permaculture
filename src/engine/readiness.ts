@@ -100,7 +100,8 @@ export const GROUND_UP: readonly Layer[] = LAYERS.filter((l) => l !== 'vine').re
  *
  * "Could be planted today" is what keeps a field from ever being stuck: a hollow layer whose seeds are all locked, not
  * earned or already in the ground holds nothing back, and the lowest layer that does hold something back is itself
- * held by nothing. Wild seeds are extras and never count. A field with no end has no hollow layers, so nothing waits.
+ * held by nothing. Wild seeds are extras and never count: a found one neither holds a seed back nor, as a tree, fills a
+ * layer. A field with no end has no hollow layers, so nothing waits.
  */
 export function heldBy(seed: Seed, s: Pick<FarmState, 'crops' | 'bars' | 'unlocked' | 'volunteers'>, catalog: Catalog): Layer | null {
   const height = GROUND_UP.indexOf(seed.layer)

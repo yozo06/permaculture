@@ -105,7 +105,7 @@ Every seed in a pack, locked or not, is on the tree. One to four branches per fi
 
 ## 5. Readiness, not deadlines
 
-A field's **readiness** is the share of its catalogue that stands as trees today, rounded down. A tree counts while it is rooted and not wilted by a wrong check-in. A seed found in the wild is an extra and is never counted, so foraging cannot lower the number. A layer of the catalogue with no standing tree is **hollow**.
+A field's **readiness** is the share of its catalogue that stands as trees today, rounded down. A tree counts while it is rooted and not wilted by a wrong check-in. A seed found in the wild is an extra and is never counted, so foraging cannot lower the number. A layer of the catalogue with none of its seeds standing as a tree is **hollow**; a tree grown from a wild find does not fill it.
 
 The player sets the **bar** (80 unless the pack says otherwise). A field is at its bar when its readiness has reached the bar and none of its layers is hollow. There are no dates.
 

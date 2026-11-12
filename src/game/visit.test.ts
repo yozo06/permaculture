@@ -72,7 +72,7 @@ describe('neighbourCropView', () => {
     const c = layeredCatalog
     const yours = (seed: string, s: FarmState): string => neighbourCropView(theirs(seed), s, c)?.yours ?? ''
     const mineNow = run(c, base)
-    expect(yours('corn', mineNow)).toBe('Waiting on your farm: nothing stands in the Root layer of your Garden field yet. Plant there first.')
+    expect(yours('corn', mineNow)).toBe('Waiting on your farm: the Root layer of your Garden field is hollow. Plant there first.')
     expect(yours('beet', mineNow)).toBe('In your seed bag, ready to plant.')
   })
 
