@@ -10,6 +10,9 @@ export const LAYER_NAMES: Record<Layer, string> = {
   vine: 'Vine',
 }
 
+/** The seven layers, from the canopy down, with the vines that climb through all of them last. */
+export const LAYERS = Object.keys(LAYER_NAMES) as Layer[]
+
 export const HARVEST_NAMES: Record<HarvestType, string> = {
   recall: 'recall',
   solve: 'solve',
