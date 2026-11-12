@@ -2,6 +2,7 @@
 // your own farm, the list of neighbours, and what to say when a link lands.
 import { LAYER_NAMES, type Catalog } from '../engine/catalog'
 import { layOut, makePicture, readPicture, type Picture } from '../engine/picture'
+import { earnedLine, isEarned } from '../engine/readiness'
 import { RULES, available, cropOf, visible } from '../engine/rules'
 import type { Crop, FarmState } from '../engine/types'
 import { linkHash } from './links'
@@ -68,8 +69,9 @@ export function neighbourCropView(crop: Crop, mine: FarmState, catalog: Catalog)
   else if (Object.keys(mine.fields).length === 0) yours = 'Start a farm of your own and you can grow this too.'
   else if (!Object.hasOwn(mine.fields, seed.pack)) yours = 'You do not have the ' + packTitle + ' field. Open it from the learning tree to grow this.'
   else if (!visible(seed, mine)) yours = 'A wild seed. You have not found it yet: forage in the forest near what you grow.'
-  else if (available(seed, mine)) yours = 'In your seed bag, ready to plant.'
-  else yours = 'Locked for you: it needs ' + needsText(seed, catalog) + '.'
+  else if (!available(seed, mine)) yours = 'Locked for you: it needs ' + needsText(seed, catalog) + '.'
+  else if (seed.earned && !isEarned(seed, mine, catalog)) yours = 'Locked for you: you have not earned it yet. It takes ' + earnedLine(seed.earned, catalog) + '.'
+  else yours = 'In your seed bag, ready to plant.'
   return {
     seed: seed.id, name: seed.name, pack: seed.pack, packTitle, layer: LAYER_NAMES[seed.layer],
     stageLine: crop.perennial ? 'A rooted tree' : 'Grown to stage ' + (crop.best + 1) + ' of ' + (RULES.maxStage + 1),

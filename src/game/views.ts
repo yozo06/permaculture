@@ -138,6 +138,8 @@ export interface EarnedRow {
   have: number
   want: number
   met: boolean
+  /** Something it needs is not rooted either, so earning it does not make it plantable by itself. */
+  locked: boolean
 }
 
 /** Of these seeds, the ones that have to be earned and are not in the ground yet. */
@@ -145,7 +147,7 @@ function earnedRows(seeds: readonly Seed[], state: FarmState, catalog: Catalog):
   return seeds.flatMap((seed): EarnedRow[] => {
     const progress = earnedProgress(seed, state, catalog)
     if (!seed.earned || !progress || cropOf(state, seed.id)) return []
-    return [{ id: seed.id, name: seed.name, pack: seed.pack, line: earnedLine(seed.earned, catalog), ...progress }]
+    return [{ id: seed.id, name: seed.name, pack: seed.pack, line: earnedLine(seed.earned, catalog), ...progress, locked: !available(seed, state) }]
   })
 }
 
@@ -260,8 +262,8 @@ export interface TreeView {
   nodes: TreeNode[]
   edges: TreeEdge[]
   guilds: TreeGuild[]
-  /** Seeds you could jump the fence to: visible, not planted, and missing something they need. */
-  locked: { id: string; name: string; needs: string }[]
+  /** Seeds you could jump the fence to: visible, not planted, and missing something they need. `earned` is what one must also be earned by, if it is not yet: the jump will not clear that. */
+  locked: { id: string; name: string; needs: string; earned: string | null }[]
   /** Seeds of this field that have to be earned and are not in the ground yet. No jump clears these. */
   earned: EarnedRow[]
   /** The field's readiness in a line, or null for a field with no end. */
@@ -333,7 +335,7 @@ export function treeView(packId: string, state: FarmState, catalog: Catalog): Tr
   // A jump clears what a seed needs and nothing else, so a seed that only has to be earned is not offered one.
   const locked = seeds
     .filter((s) => !cropOf(state, s.id) && !available(s, state))
-    .map((s) => ({ id: s.id, name: s.name, needs: needsText(s, catalog) }))
+    .map((s) => ({ id: s.id, name: s.name, needs: needsText(s, catalog), earned: s.earned && !isEarned(s, state, catalog) ? earnedLine(s.earned, catalog) : null }))
 
   return {
     pack: packId, title: pack.title, color: packColor(pack), width: TREE_WIDTH, height: y, columnWidth,

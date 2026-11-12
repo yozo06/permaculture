@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { NOTES, run, smallCatalog as cat, started } from '../engine/fixtures'
+import { NOTES, earningCatalog, run, smallCatalog as cat, started } from '../engine/fixtures'
 import { layOut, readPicture } from '../engine/picture'
 import type { Crop, FarmEvent, FarmState } from '../engine/types'
 import { readLink } from './links'
@@ -66,6 +66,16 @@ describe('neighbourCropView', () => {
     const shedOnly = run(cat, [started, { type: 'field-opened', pack: 'shed', slot: 0 }])
     expect(yours('corn', shedOnly)).toMatch(/You do not have the Garden field/)
     expect(yours('corn', run(cat, [started]))).toBe('Start a farm of your own and you can grow this too.')
+  })
+
+  it('does not call a seed ready to plant while it has still to be earned', () => {
+    const c = earningCatalog
+    const yours = (seed: string, s: FarmState): string => neighbourCropView(theirs(seed), s, c)?.yours ?? ''
+    const mineNow = run(c, base)
+    expect(yours('kiln', mineNow)).toBe('Locked for you: you have not earned it yet. It takes a seed rooted in another field.')
+    expect(yours('anvil', mineNow)).toBe('Locked for you: it needs Saw.')
+    const withTree: FarmState = { ...mineNow, crops: [theirs('corn', { stage: 4, best: 4, perennial: true })] }
+    expect(yours('kiln', withTree)).toBe('In your seed bag, ready to plant.')
   })
 })
 

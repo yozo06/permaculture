@@ -197,7 +197,7 @@ describe('readinessSheetHtml', () => {
     readiness: { percent: 61, bar: 80, atBar: false, hollow: ['Root'], layers: [{ layer: 'canopy', name: 'Canopy', rooted: 2, total: 5 }, { layer: 'root', name: 'Root', rooted: 0, total: 4 }] },
     ...patch,
   })
-  const earned = (patch: Partial<EarnedRow> = {}): EarnedRow => ({ id: 'sprites', name: 'Sprite sheets', pack: 'workshop', line: 'a seed rooted in another field', have: 0, want: 1, met: false, ...patch })
+  const earned = (patch: Partial<EarnedRow> = {}): EarnedRow => ({ id: 'sprites', name: 'Sprite sheets', pack: 'workshop', line: 'a seed rooted in another field', have: 0, want: 1, met: false, locked: false, ...patch })
   const view = (patch: Partial<ReadinessView> = {}): ReadinessView => ({ rows: [row()], atBar: 0, withBar: 1, earned: [], ...patch })
   const html = (v: ReadinessView = view()): string => readinessSheetHtml(v, RULES.readiness)
 
@@ -258,6 +258,10 @@ describe('readinessSheetHtml', () => {
     expect(h).toContain('0 of 1')
     expect(h).toContain('Workshop · earned by the Infra field at 60')
     expect(h).toContain('earned, ready to plant')
+    // Earned, but something it needs is not rooted yet: it is not ready, and the sheet does not say it is.
+    const waiting = html(view({ earned: [earned({ have: 1, met: true, locked: true })] }))
+    expect(waiting).toContain('earned, still locked by what it needs')
+    expect(waiting).not.toContain('ready to plant')
     expect(html()).not.toContain('Earned by learning')
   })
 

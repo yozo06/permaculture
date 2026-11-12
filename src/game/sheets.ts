@@ -132,7 +132,7 @@ function readinessRowHtml(r: ReadinessRow, limits: { min: number; max: number })
 
 const earnedRowHtml = (e: EarnedRow, field: string): string =>
   '<div class="row slim"><div class="n">' + esc(e.name) + '<small>' + esc(field) + ' · earned by ' + esc(e.line) + '</small></div>' +
-  '<span class="sub">' + (e.met ? 'earned, ready to plant' : e.have + ' of ' + e.want) + '</span></div>'
+  '<span class="sub">' + (e.met ? (e.locked ? 'earned, still locked by what it needs' : 'earned, ready to plant') : e.have + ' of ' + e.want) + '</span></div>'
 
 /** The seeds that have still to be earned, under their own heading; nothing at all when there are none. */
 export const earnedSectionHtml = (rows: readonly EarnedRow[], titleOf: (pack: string) => string): string =>

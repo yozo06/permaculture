@@ -296,19 +296,28 @@ describe('a seed that has to be earned', () => {
     const tree = treeView('shed', open('garden', 'shed'), c)
     // The lathe and the anvil need the saw. The kiln and the forge need nothing: they only have to be earned.
     expect(tree?.locked.map((x) => x.id)).toEqual(['lathe', 'anvil'])
+    // A jump clears what the anvil needs and not what it is earned by, and its row says so before energy is spent.
+    expect(tree?.locked.map((x) => x.earned)).toEqual([null, 'a seed rooted in another field'])
+    const earnedIt = treeView('shed', withCrops(open('garden', 'shed'), standing('corn')), c)
+    expect(earnedIt?.locked.map((x) => x.earned)).toEqual([null, null])
     expect(tree?.nodes.filter((n) => n.status === 'locked').map((n) => n.id).sort()).toEqual(['anvil', 'forge', 'kiln', 'lathe'])
   })
 
   it('says in the tree what earns it and how far along the farm is', () => {
     const s = open('garden', 'shed')
     expect(treeView('shed', s, c)?.earned).toEqual([
-      { id: 'kiln', name: 'Kiln', pack: 'shed', line: 'a seed rooted in another field', have: 0, want: 1, met: false },
-      { id: 'forge', name: 'Forge', pack: 'shed', line: 'the Garden field at 50', have: 0, want: 50, met: false },
-      { id: 'anvil', name: 'Anvil', pack: 'shed', line: 'a seed rooted in another field', have: 0, want: 1, met: false },
+      { id: 'kiln', name: 'Kiln', pack: 'shed', line: 'a seed rooted in another field', have: 0, want: 1, met: false, locked: false },
+      { id: 'forge', name: 'Forge', pack: 'shed', line: 'the Garden field at 50', have: 0, want: 50, met: false, locked: false },
+      { id: 'anvil', name: 'Anvil', pack: 'shed', line: 'a seed rooted in another field', have: 0, want: 1, met: false, locked: true },
     ])
     const one = treeView('shed', withCrops(s, standing('corn')), c)?.earned
     expect(one?.map((x) => [x.id, x.have, x.met])).toEqual([['kiln', 1, true], ['forge', 33, false], ['anvil', 1, true]])
     expect(treeView('garden', s, c)?.earned).toEqual([])
+  })
+
+  it('says when a seed has been earned but is still locked by what it needs', () => {
+    const rows = treeView('shed', withCrops(open('garden', 'shed'), standing('corn')), c)?.earned
+    expect(rows?.map((x) => [x.id, x.met, x.locked])).toEqual([['kiln', true, false], ['forge', false, false], ['anvil', true, true]])
   })
 
   it('leaves the list once it is in the ground', () => {
