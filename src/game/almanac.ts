@@ -1,8 +1,10 @@
 // The Almanac is written from RULES (and the packs' caps), so the numbers on the page cannot drift from the game.
 // docs/design.md says the same things; src/engine/design-doc.test.ts checks its tables against RULES.
-import type { Catalog } from '../engine/catalog'
+import { LAYER_NAMES, type Catalog } from '../engine/catalog'
 import { LADDER } from '../engine/ladder'
 import { RULES } from '../engine/rules'
+import type { Layer } from '../engine/types'
+import { cropShape, shapeSvg } from './shapes'
 import { esc } from './util'
 
 const days = (n: number): string => n + (n === 1 ? ' day' : ' days')
@@ -22,6 +24,21 @@ function zoneLines(): string[] {
     return '<b>' + z + '</b>: ' + label + ', thirsty again after ' + waitText(waits)
   })
 }
+
+/** What each layer looks like on the map, and the kind of knowledge it holds. In the order of a forest, top to bottom. */
+const LAYER_LINES: [Layer, string][] = [
+  ['canopy', 'a tall tree with a wide crown. The big picture.'],
+  ['understory', 'a small tree that comes to a point. Patterns.'],
+  ['vine', 'leaves climbing a pole, and a trellis once it is a tree. What runs through everything else.'],
+  ['shrub', 'a round bush. Structures, and where things are kept.'],
+  ['herb', 'one stalk with leaves in pairs. Techniques.'],
+  ['ground-cover', 'a mat lying flat on the soil. Fundamentals.'],
+  ['root', 'a mound of earth with a fan of leaves. What works underneath.'],
+]
+/** The fruit in the legend: no field's colour, so it stands for any of them. */
+const LEGEND_FRUIT = '#F4EAD0'
+const legend = (): string =>
+  '<div class="legend">' + LAYER_LINES.map(([layer, line]) => '<div>' + shapeSvg(cropShape(layer, RULES.maxStage, true), LEGEND_FRUIT) + '<span><b>' + LAYER_NAMES[layer] + '</b>: ' + line + '</span></div>').join('') + '</div>'
 
 /** `version` is what the build calls itself ("0.1.0 (a031b7a)"); it sits in the footer so a bug report can name it. */
 export function almanacHtml(catalog: Catalog, energyMax: number, version: string): string {
@@ -63,6 +80,14 @@ export function almanacHtml(catalog: Catalog, energyMax: number, version: string
       'Each pack you chose is a field. They sit on a grid around the barn, and the world grows to fit them. Open another from its tab in the learning tree; it is free. Drag to pan; everything beyond the homestead is wilderness.',
       'Tap land next to a field to fence it in: ' + RULES.fence.open + ' coins for open ground, ' + RULES.fence.forest + ' to clear forest. Fields grow one tile at a time, any shape.',
       "Some seeds are not questions. The Workshop's are days of work on the game itself: you explain what moved forward, and you harvest when it ships, with a link as proof.",
+    ]) +
+    '<h3>Reading the farm</h3>' +
+    '<p class="sub">Every seed belongs to one of seven layers, as in a forest garden, and each layer has a shape of its own. So the map shows what kind of knowledge sits where, and which kind a field is missing. These are the trees; a crop starts as a sprout of the same kind and gets bigger at each stage.</p>' +
+    legend() +
+    list([
+      "Fruit in the field's colour means a crop is ripe. A tree keeps its fruit. A wilted crop turns brown and has none.",
+      "Each field flies a <b>flag</b> in its colour, and its fence posts are capped in it. Tap a flag to open that field's learning tree.",
+      'Water splashes when you water a crop, a ring spreads when it grows, and sparks rise from a harvest. They are only for show.',
     ]) +
     '<h3>Wilderness (Zone 5)</h3>' +
     list([

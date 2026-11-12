@@ -146,3 +146,18 @@ export function cropShape(layer: Layer, stage: number, perennial: boolean): read
 
 /** How far a shape rises above the ground, in pixels. */
 export const shapeHeight = (parts: readonly Part[]): number => Math.max(0, ...parts.map((p) => -p.y))
+
+/** The colour fruit takes when a field's own is not a plain hex colour. */
+const FALLBACK_FRUIT = '#E0A93E'
+
+/**
+ * A crop as a small picture for a page of text: one sharp-edged rectangle for each part, standing on the bottom edge.
+ * `scale` is screen pixels for each pixel of the shape.
+ */
+export function shapeSvg(parts: readonly Part[], fieldColor: string, scale = 3): string {
+  const field = /^#[0-9A-Fa-f]{6}$/.test(fieldColor) ? fieldColor : FALLBACK_FRUIT
+  const width = SHAPE_BOX.right - SHAPE_BOX.left + 1
+  const height = shapeHeight(parts)
+  const rects = parts.map((p) => '<rect x="' + p.x + '" y="' + p.y + '" width="' + p.w + '" height="' + p.h + '" fill="' + (partColor(p.tone, field, false) ?? field) + '"/>').join('')
+  return '<svg class="shape" aria-hidden="true" shape-rendering="crispEdges" width="' + width * scale + '" height="' + height * scale + '" viewBox="' + SHAPE_BOX.left + ' ' + -height + ' ' + width + ' ' + height + '">' + rects + '</svg>'
+}

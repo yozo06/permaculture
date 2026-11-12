@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { LAYER_NAMES } from '../engine/catalog'
 import type { Layer } from '../engine/types'
-import { SHAPE_BOX, cropShape, partColor, shapeHeight, type Part } from './shapes'
+import { SHAPE_BOX, cropShape, partColor, shapeHeight, shapeSvg, type Part } from './shapes'
 
 const LAYERS = Object.keys(LAYER_NAMES) as Layer[]
 const STAGES = [0, 1, 2, 3, 4]
@@ -114,5 +114,30 @@ describe('partColor', () => {
 
   it('leaves wood, poles and earth as they are when a crop wilts', () => {
     for (const tone of ['wood', 'pole', 'earth'] as const) expect(partColor(tone, '#B089D6', true)).toBe(partColor(tone, '#B089D6', false))
+  })
+})
+
+describe('shapeSvg', () => {
+  const tree = cropShape('canopy', 4, true)
+
+  it('draws a crop as a picture with one rectangle for each part', () => {
+    const svg = shapeSvg(tree, '#B089D6')
+    expect(svg.startsWith('<svg ') && svg.endsWith('</svg>')).toBe(true)
+    expect(svg.split('<rect ').length - 1).toBe(tree.length)
+    expect(svg).toContain('fill="#B089D6"')
+    // The words beside it name the layer, so a screen reader skips the picture.
+    expect(svg).toContain('aria-hidden="true"')
+  })
+
+  it('is as tall as the crop and sized by the scale', () => {
+    const svg = shapeSvg(tree, '#B089D6', 2)
+    expect(svg).toContain('height="' + shapeHeight(tree) * 2 + '"')
+    expect(shapeSvg(cropShape('ground-cover', 4, true), '#B089D6', 2)).toContain('height="' + shapeHeight(cropShape('ground-cover', 4, true)) * 2 + '"')
+  })
+
+  it('never lets a field colour break out of the picture', () => {
+    const svg = shapeSvg(tree, '"><script>alert(1)</script>')
+    expect(svg).not.toContain('script')
+    expect(svg.split('<rect ').length - 1).toBe(tree.length)
   })
 })

@@ -111,3 +111,6 @@ button.pri:disabled:hover{background:var(--panel-2)}
 .pair{display:flex;align-items:center;gap:6px;flex:none}
 .sheet input.write{width:100%;box-sizing:border-box;min-height:44px;background:var(--ink);color:var(--cream);border:1px solid var(--line-2);border-radius:8px;padding:10px;font-family:var(--font-body);font-size:16px}
 .sheet textarea.short{min-height:72px;word-break:break-all}
+.legend{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px 14px;background:#7A5230;border:1px solid var(--line-2);border-radius:8px;padding:12px}
+.legend div{display:flex;align-items:flex-end;gap:10px;font-size:13px;line-height:1.35}
+.legend .shape{flex:none}
