@@ -16,7 +16,7 @@ The game must be useful with ugly tiles. Art is an unlock, never a prerequisite.
 |---|---|
 | **Zones** (tend what is near, often) | Z1 daily · Z2 every two or three days · Z3 every four or five · Z4 every ten (perennials) · Z5 wilderness. Spaced repetition is crops migrating outward as reviews succeed; forgetting is drifting back inward. |
 | **Annuals vs perennials** | Facts and vocab are annuals, cheap to plant. A harvested crop becomes a **perennial tree**: rooted, checked once every ten days. "Skilled enough" means mostly perennials. *(planned)* over time an annual needs replanting. |
-| **Layers** (forest garden) | Every full catalogue has seven: canopy (architecture), understory (patterns), shrub (data structures / storage), herb (idioms, techniques), ground cover (fundamentals), root (internals, runtime), vine (cross-cutting: concurrency, observability, security, SRE). *(planned)* a field cannot run two layers ahead of a hollow one. |
+| **Layers** (forest garden) | Every full catalogue has seven: canopy (architecture), understory (patterns), shrub (data structures / storage), herb (idioms, techniques), ground cover (fundamentals), root (internals, runtime), vine (cross-cutting: concurrency, observability, security, SRE). **Layer balance**: a field is built from the ground up (root, ground cover, herb, shrub, understory, canopy; vines climb through all of them), and it cannot run two layers ahead of a hollow one. A seed waits while a layer two or more beneath its own has no tree standing and has a seed that could be planted today. A hollow layer with nothing left to plant holds nothing back, so a field is never stuck. Fields with no end are exempt. |
 | **Guilds** (companion planting) | Named sets of seeds that go together. *(planned)* a complete guild gives a yield bonus; a wilting member drags the rest. |
 | **Catch and store energy** | A daily energy budget shared by all fields. Unused energy fills the **rain barrel**; a stored day is spent automatically to stop a crop from wilting. A pack can cap its share (the Workshop uses at most 30%). No streaks. |
 | **Produce no waste** | Wrong answers go to the **compost heap** and come back as reviews. A failed harvest drops the crop back a stage; *(planned)* it also generates the next seeds. |
@@ -71,6 +71,7 @@ Two days past thirsty without water, a crop wilts overnight unless the barrel ha
 | Neighbours | at most 24 |
 | A neighbour's picture | forgotten by your game 60 days after it was made |
 | Readiness bar | 80 unless the pack or the farmer sets another; the farmer may set 1 to 100 |
+| Layer balance | a seed waits while a layer 2 or more beneath its own is hollow and has a seed to plant |
 | Compost | everything in the heap is due again the next day |
 
 ### The depth ladder
@@ -131,7 +132,7 @@ A seed can be **earned**: it asks for learning before it can be planted, either 
 ## 8. Architecture
 
 - **Local-first.** A farm is an append-only event log in the player's browser. Farm state is a pure fold over the log. Export is the log. Multi-device merge is a later, easy step because events have ids and the fold is deterministic.
-- **Saved farms are protected.** A farm is replayed against today's packs and rules, so a careless edit could quietly drop part of someone's history. Ids are locked (`packs/lock.json`), a played farm must always replay, a farm's first event is never refused over one number, and the game says so when a farm's history no longer fits. A rule that only holds back what a player starts today (a seed that has to be earned, a bar for a field with no end) is asked of the player and never of the log, so a pack can add or change it without touching a saved farm.
+- **Saved farms are protected.** A farm is replayed against today's packs and rules, so a careless edit could quietly drop part of someone's history. Ids are locked (`packs/lock.json`), a played farm must always replay, a farm's first event is never refused over one number, and the game says so when a farm's history no longer fits. A rule that only holds back what a player starts today (a seed that has to be earned, a seed two layers ahead of a hollow one, a bar for a field with no end) is asked of the player and never of the log, so a pack can add or change it without touching a saved farm.
 - **Static hosting.** The game is files on GitHub Pages. No server until the village needs one.
 - **Engine / game / packs.** `src/engine/`: pure rules with property tests. `src/game/`: renderer and UI. `packs/`: data, validated in CI.
 - **AI is optional and bring-your-own-key.** Authoring (catalogues, questions, the pack forge) is offline work committed as data. Runtime AI (judged harvests, wild finds, gap audits) uses the player's own key, stored only in their browser, with calls made browser-to-provider. A local model works. The no-AI game is complete.
@@ -151,7 +152,7 @@ Each phase ends with something a friend can play.
 4. Art: sprite sheets, PixiJS, terraces, weather.
 5. The village server, when there are players who need it.
 
-The rules that need no AI and no server are built between these, the ones closest to the loop first. Readiness and earned unlocks are in; layer balance, guilds, edges, saplings and the market are marked *(planned)*.
+The rules that need no AI and no server are built between these, the ones closest to the loop first. Readiness, earned unlocks and layer balance are in; guilds, edges, saplings and the market are marked *(planned)*.
 
 The plan in full, with what is done and how to help, is `../ROADMAP.md`.
 

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import sampleFarm from '../game/sample-farm.json'
 import { allowed, apply, check, fieldsToOpen, fold, initialState, parseEvent, refusedCount } from './fold'
-import { EXPLANATION, NOTES, earningCatalog as earnCat, run, smallCatalog as cat, smallFarm, started } from './fixtures'
+import { EXPLANATION, NOTES, earningCatalog as earnCat, layeredCatalog as layerCat, run, smallCatalog as cat, smallFarm, started } from './fixtures'
 import { fieldOf, terrain, wildKind, worldSize } from './land'
 import { RULES, available, ripe, thirsty } from './rules'
 import type { Crop, FarmEvent, FarmState } from './types'
@@ -698,5 +698,50 @@ describe('a seed that has to be earned', () => {
     for (const e of [planting(s, 'saw'), sleep, { type: 'farm-named', name: 'Ours' }, { type: 'bar-set', pack: 'garden', bar: 50 }, { type: 'bar-set', pack: 'shed', bar: 0 }, { type: 'nonsense' }, null]) {
       expect(check(s, e, earnCat)).toBe(allowed(s, e, earnCat))
     }
+  })
+})
+
+describe('layer balance', () => {
+  // The garden from the ground up: beet (root), squash (ground cover, locked), thyme (herb), corn (canopy). See `layeredCatalog`.
+  const farm = (): FarmState => run(layerCat, [started, { type: 'field-opened', pack: 'garden', slot: 0 }, { type: 'field-opened', pack: 'shed', slot: 1 }])
+  const ROOT_FIRST = 'Nothing stands in the Root layer of the Garden field yet. Plant there before Corn.'
+
+  it('holds a seed back while a layer two or more beneath it is hollow and has a seed to plant, and says where to begin', () => {
+    const s = farm()
+    expect(check(s, plant('corn', 5, 5), layerCat)).toBe(ROOT_FIRST)
+    expect(check(s, plant('thyme', 5, 5), layerCat)).toBe('Nothing stands in the Root layer of the Garden field yet. Plant there before Thyme.')
+    expect(check(s, plant('beet', 5, 5), layerCat)).toBeNull()
+  })
+
+  it('lets the next layer up go in once the one below has been planted, a layer at a time', () => {
+    const rooted = run(layerCat, [plant('beet', 5, 5)], farm())
+    // The root has nothing left to plant. The herb is free; the canopy now waits for the herb.
+    expect(check(rooted, plant('thyme', 6, 5), layerCat)).toBeNull()
+    expect(check(rooted, plant('corn', 6, 5), layerCat)).toBe('Nothing stands in the Herb layer of the Garden field yet. Plant there before Corn.')
+    const both = run(layerCat, [plant('thyme', 6, 5), sleep], rooted)
+    expect(check(both, plant('corn', 7, 5), layerCat)).toBeNull()
+  })
+
+  it('never holds a vine, or anything in a field with no end', () => {
+    const s = farm()
+    expect(check(s, plant('beans', 5, 5), layerCat)).toBeNull()
+    const { x, y } = (() => { const n = worldSize(s.fields); for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) if (fieldOf(x, y, s.fields, s.cleared) === 'shed') return { x, y }; throw new Error('no shed tile') })()
+    expect(check(s, plant('saw', x, y), layerCat)).toBeNull()
+  })
+
+  it('gives the ordinary reasons first', () => {
+    const s = farm()
+    expect(check(s, plant('corn', 5, 5, 'too short'), layerCat)).toContain('Write at least')
+    expect(check(s, plant('squash', 5, 5), layerCat)).toBe('Squash is still locked.')
+  })
+
+  it('is asked of what is done today and never of a saved farm: a log that planted the canopy first replays', () => {
+    const s = farm()
+    const e = plant('corn', 5, 5)
+    expect(check(s, e, layerCat)).toBe(ROOT_FIRST)
+    expect(allowed(s, e, layerCat)).toBeNull()
+    const log = [started, { type: 'field-opened', pack: 'garden', slot: 0 }, { type: 'field-opened', pack: 'shed', slot: 1 }, e]
+    expect(refusedCount(log, layerCat)).toBe(0)
+    expect(fold(log, layerCat).crops.map((c) => c.seed)).toEqual(['corn'])
   })
 })

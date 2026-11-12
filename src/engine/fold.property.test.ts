@@ -6,10 +6,10 @@ import { collectPacks } from '../../scripts/packs-lib.mjs'
 import { buildCatalog, type Catalog } from './catalog'
 import { findCandidates, pickFind } from './finds'
 import { allowed, apply, check, fieldsToOpen, fold, initialState } from './fold'
-import { EXPLANATION, NOTES, earningCatalog, harvestEvent, smallCatalog, started, waterEvent } from './fixtures'
+import { EXPLANATION, NOTES, earningCatalog, harvestEvent, layeredCatalog, smallCatalog, started, waterEvent } from './fixtures'
 import { explainChecklist, explainPasses, harvestWork, waterWork, writePasses } from './ladder'
 import { FIELD_SIZE, fieldOf, fieldOrigin, terrain, tileKey, wildKind, worldSize } from './land'
-import { isEarned } from './readiness'
+import { heldBy, isEarned } from './readiness'
 import { RULES, available, cropOf, ripe, revivable, thirsty, visible } from './rules'
 import type { FarmEvent, FarmState, LoggedEvent } from './types'
 
@@ -147,12 +147,12 @@ function toEvent(s: FarmState, catalog: Catalog, intent: Intent): unknown {
   }
 }
 
-/** True for what only a player today is refused: planting a seed that is not earned yet, and a bar for a field with no end. */
+/** True for what only a player today is refused: planting a seed that is not earned yet or is held back by a hollow layer, and a bar for a field with no end. */
 function onlyToday(s: FarmState, event: unknown, catalog: Catalog): boolean {
   const e = event as { type?: unknown; seed?: unknown; pack?: unknown } | null
   if (e && e.type === 'bar-set' && typeof e.pack === 'string') return catalog.pack(e.pack)?.perennial === true
   const seed = e && e.type === 'planted' && typeof e.seed === 'string' ? catalog.seed(e.seed) : undefined
-  return seed !== undefined && !isEarned(seed, s, catalog)
+  return seed !== undefined && (!isEarned(seed, s, catalog) || heldBy(seed, s, catalog) !== null)
 }
 
 const logged = (events: FarmEvent[]): LoggedEvent[] => events.map((e, i) => ({ ...e, id: 'e' + i, at: '2026-01-01T00:00:00Z' }))
@@ -183,8 +183,8 @@ function play(catalog: Catalog, list: Intent[], mask: boolean[] = [true]): { sta
     // Nothing touches the old state. Replay follows what a log may hold, and that alone.
     expect(JSON.stringify(before)).toBe(frozen)
     expect(after === before).toBe(fits !== null)
-    // 12. The game asks all of that of a player and two things more: a seed is earned before it is planted, and a bar
-    // is for a field with an end.
+    // 12. The game asks all of that of a player and three things more: a seed is earned before it is planted, it does
+    // not run two layers ahead of a hollow one, and a bar is for a field with an end.
     if (fits !== null) expect(why).not.toBeNull()
     if (why !== null) {
       if (fits === null) expect(onlyToday(before, event, catalog)).toBe(true)
@@ -269,6 +269,11 @@ function verify(s: FarmState, before: FarmState, e: FarmEvent, catalog: Catalog)
       expect(apply(s, harvest, catalog)).toBe(s)
     }
   }
+  // 13. layer balance never leaves a field stuck: if anything in it could be planted but for the balance, something can be
+  for (const pack of Object.keys(s.fields)) {
+    const could = catalog.seedsOf(pack).filter((x) => visible(x, s) && available(x, s) && isEarned(x, s, catalog) && !cropOf(s, x.id))
+    if (could.length > 0) expect(could.some((x) => heldBy(x, s, catalog) === null), pack).toBe(true)
+  }
   // 7. two plantings a day, caps hold, crops sit on their own field, one per tile and per seed
   expect(s.today.planted).toBeLessThanOrEqual(RULES.newSeedsPerDay)
   for (const [pack, spent] of Object.entries(s.today.spent)) expect(spent).toBeLessThanOrEqual(catalog.capOf(pack, s.energyMax))
@@ -311,6 +316,7 @@ function properties(name: string, catalog: Catalog, runs: number): void {
 
 properties('the small test farm', smallCatalog, 150)
 properties('a farm whose seeds have to be earned', earningCatalog, 150)
+properties('a farm with layers to balance', layeredCatalog, 150)
 properties('the real packs', buildCatalog(collectPacks()), 60)
 
 describe('a diligent player', () => {

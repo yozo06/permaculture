@@ -31,6 +31,16 @@ export const smallPacks: PackDef[] = [
   },
 ]
 
+/**
+ * The small farm with a root and a herb added to the garden, so its canopy (corn) has layers beneath it to wait for.
+ * From the ground up the garden is then: beet (root), squash (ground cover, needs corn and beans), thyme (herb), corn (canopy).
+ */
+export const layeredCatalog = buildCatalog(smallPacks.map((p) => (p.pack !== 'garden' ? p : { ...p, seeds: [
+  ...p.seeds,
+  { id: 'beet', name: 'Beet', layer: 'root', branch: 'roots', tier: 0, harvest: 'recall', questions: { water: [mcq('Beet?')] } },
+  { id: 'thyme', name: 'Thyme', layer: 'herb', branch: 'leaves', tier: 0, harvest: 'recall', questions: { water: [mcq('Thyme?')] } },
+] })))
+
 /** Notes and an explanation long enough to plant and to water with. */
 export const NOTES = 'Corn is tall and the beans climb it, and squash covers the ground below.'
 export const EXPLANATION = 'Corn gives the beans a pole to climb, the beans feed the soil with nitrogen, and the squash shades the ground so the water stays in. Together they need less than apart.'

@@ -2,12 +2,13 @@
 // Everything here is pure: state in, state out, nothing mutated, nothing random, no clock.
 //
 // Two questions are kept apart. `allowed` is what a log may hold, and replaying a farm asks only that. `check` is what
-// the game asks of something done today: everything `allowed` asks, and that a seed has been earned and a bar is for a
-// field with an end. A rule added to the second can never change how a saved farm replays, whatever a pack does later.
-import type { Catalog } from './catalog'
+// the game asks of something done today: everything `allowed` asks, and that a seed has been earned, that it does not
+// run two layers ahead of a hollow one, and that a bar is for a field with an end. A rule added to the second can never
+// change how a saved farm replays, whatever a pack does later.
+import { LAYER_NAMES, type Catalog } from './catalog'
 import { isRecord } from './util'
 import { fieldOf, fenceCost, isBuildingTile, neighbourFields, nextFreeSlot, terrain, tileKey, wildKind, worldSize } from './land'
-import { earnedLine, isEarned } from './readiness'
+import { earnedLine, heldBy, isEarned } from './readiness'
 import { RULES, available, capLeft, cropOf, interval, revivable, ripe, thirsty, visible } from './rules'
 import { fromV2 } from './v2'
 import type { Crop, FarmEvent, FarmState } from './types'
@@ -283,6 +284,7 @@ function why(s: FarmState, e: FarmEvent, catalog: Catalog): string | null {
  * What the game asks of something done today, on top of what a log may hold. Replay never asks any of it, so a pack
  * can change these things under a saved farm and the farm loses nothing:
  * - a seed that has to be earned is planted only once it has been (a farm that planted it earlier keeps the crop);
+ * - a seed is not planted two layers ahead of a hollow one (a farm that grew its canopy first keeps it);
  * - a bar is set only for a field with an end (a bar set before a pack was marked as having none stays in the log, unused).
  */
 function whyToday(s: FarmState, e: FarmEvent, catalog: Catalog): string | null {
@@ -292,7 +294,10 @@ function whyToday(s: FarmState, e: FarmEvent, catalog: Catalog): string | null {
   }
   if (e.type !== 'planted') return null
   const seed = catalog.seed(e.seed)
-  return seed?.earned && !isEarned(seed, s, catalog) ? 'You have not earned ' + seed.name + ' yet. It takes ' + earnedLine(seed.earned, catalog) + '.' : null
+  if (!seed) return null
+  if (seed.earned && !isEarned(seed, s, catalog)) return 'You have not earned ' + seed.name + ' yet. It takes ' + earnedLine(seed.earned, catalog) + '.'
+  const below = heldBy(seed, s, catalog)
+  return below ? 'Nothing stands in the ' + LAYER_NAMES[below] + ' layer of the ' + (catalog.pack(seed.pack)?.title ?? seed.pack) + ' field yet. Plant there before ' + seed.name + '.' : null
 }
 
 const NOT_AN_EVENT = 'That is not something the farm can do.'
