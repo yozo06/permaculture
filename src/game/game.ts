@@ -1247,6 +1247,7 @@ function setBar(pack: string): void {
   const at = sheet.scrollTop
   openReadiness()
   sheet.scrollTop = at
+  document.getElementById('bar-' + pack)?.focus({ preventScroll: true })
   toast('The bar for ' + packTitle(pack) + ' is ' + S.bars[pack] + '.')
 }
 
@@ -1357,6 +1358,13 @@ sheet.addEventListener('click', (e) => {
     if (!seed || refused({ type: 'unlocked', seed: seed.id, ok: true })) return
     startWork(seed, 'testout')
   }
+})
+// Enter in a bar's box sets that bar, as its button does.
+sheet.addEventListener('keydown', (e) => {
+  const box = e.target
+  if (e.key !== 'Enter' || e.isComposing || !(box instanceof HTMLInputElement) || !box.id.startsWith('bar-')) return
+  e.preventDefault()
+  setBar(box.id.slice('bar-'.length))
 })
 // The same farm open in another tab writes the shared log; warn once rather than let the two silently overwrite each other.
 let staleFarm = false
