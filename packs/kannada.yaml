@@ -7,6 +7,7 @@ color: "#B089D6"
 description: >-
   Everyday Kannada for Bengaluru and Coorg: words first, then the script and the small grammar that holds
   sentences together.
+perennial: true
 branches:
   - id: words
     title: Words
