@@ -22,7 +22,7 @@ The game must be useful with ugly tiles. Art is an unlock, never a prerequisite.
 | **Produce no waste** | Wrong answers go to the **compost heap** and come back as reviews. A failed harvest drops the crop back a stage; *(planned)* it also generates the next seeds. |
 | **Small and slow** | Hard cap on new seeds per day (two). |
 | **Obtain a yield** | Every planting leaves notes in your own words, and a judged or artifact harvest leaves a write-up or proof. No yield, no credit. |
-| **Observe and interact** | *(planned)* The Sunday walk: the game shows the map and asks three questions. No tasks. Zone 5 is for foraging **wild finds**, facts next to what is growing, which add nothing to readiness and can be **domesticated** into volunteer seeds. |
+| **Observe and interact** | Zone 5 is for foraging **wild finds**, facts next to what is growing, which add nothing to readiness and can be **domesticated** into volunteer seeds. *(planned)* The Sunday walk: the game shows the map and asks three questions. No tasks. |
 | **Use edges** | *(planned)* Seeds on the boundary of two fields (farm economics, Kannada tech vocabulary) yield double. |
 | **The problem is the solution** | A failed mock is not a loss; it is the next season's planting list. |
 

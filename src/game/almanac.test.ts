@@ -59,6 +59,13 @@ describe('almanacHtml', () => {
     expect(later).toContain('the market')
   })
 
+  it('lists under Not here yet the rules the design marks as planned', () => {
+    const later = almanacHtml(catalog, RULES.energyMax, '0.0.0').split('<h3>Not here yet</h3>')[1] ?? ''
+    for (const planned of ['the Sunday walk', 'guild bonuses', 'layer balance', 'saplings', 'tools', 'recruiter visits', 'orchard and research fields', 'replanting annuals', 'a planner', 'trading seeds']) {
+      expect(later, planned).toContain(planned)
+    }
+  })
+
   it('says which version of the game it is, so a bug report can name it', () => {
     expect(almanacHtml(catalog, RULES.energyMax, '9.9.9 (abc1234)')).toContain('Version 9.9.9 (abc1234)')
   })
