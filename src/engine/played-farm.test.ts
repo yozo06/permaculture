@@ -116,7 +116,7 @@ describe('a farm that planted Sprite sheets before they had to be earned', () =>
   it('would not be allowed that planting today', () => {
     const s = fold(before, catalog)
     expect(s.unlocked).toEqual(['sprites'])
-    expect(check(s, planting, catalog)).toBe('Sprite sheets is earned by a seed rooted in another field.')
+    expect(check(s, planting, catalog)).toBe('You have not earned Sprite sheets yet. It takes a seed rooted in another field.')
     expect(allowed(s, planting, catalog)).toBeNull()
   })
 

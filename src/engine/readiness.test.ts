@@ -149,7 +149,7 @@ describe('what a seed is earned by', () => {
     expect(line('one')).toBe('a seed rooted in another field')
     expect(line('any')).toBe('2 seeds rooted in other fields')
     expect(line('oaks')).toBe('2 seeds rooted in the orchard field')
-    expect(line('ready')).toBe('the orchard field at 50')
+    expect(line('ready')).toBe('the orchard field at readiness 50')
     expect(line('gone')).toBe('a seed rooted in the nowhere field')
     expect(line('free')).toBeNull()
   })

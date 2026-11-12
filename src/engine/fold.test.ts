@@ -646,22 +646,22 @@ describe('a seed that has to be earned', () => {
 
   it('cannot be planted until the learning is there, and says what earns it', () => {
     const s = farm()
-    expect(check(s, planting(s, 'kiln'), earnCat)).toBe('Kiln is earned by a seed rooted in another field.')
+    expect(check(s, planting(s, 'kiln'), earnCat)).toBe('You have not earned Kiln yet. It takes a seed rooted in another field.')
     expect(check(withTrees(s, 'corn'), planting(s, 'kiln'), earnCat)).toBeNull()
   })
 
   it('is not earned by a tree in its own field', () => {
     const s = withTrees(farm(), 'saw')
-    expect(check(s, planting(s, 'kiln'), earnCat)).toBe('Kiln is earned by a seed rooted in another field.')
+    expect(check(s, planting(s, 'kiln'), earnCat)).toBe('You have not earned Kiln yet. It takes a seed rooted in another field.')
   })
 
   it("follows a field's readiness, and is lost again when a tree there wilts", () => {
     const s = farm()
-    expect(check(withTrees(s, 'corn'), planting(s, 'forge'), earnCat)).toBe('Forge is earned by the Garden field at 50.')
+    expect(check(withTrees(s, 'corn'), planting(s, 'forge'), earnCat)).toBe('You have not earned Forge yet. It takes the Garden field at readiness 50.')
     const ready = withTrees(s, 'corn', 'beans')
     expect(check(ready, planting(s, 'forge'), earnCat)).toBeNull()
     const slipped = { ...ready, crops: ready.crops.map((c) => (c.seed === 'beans' ? { ...c, wilted: true } : c)) }
-    expect(check(slipped, planting(s, 'forge'), earnCat)).toBe('Forge is earned by the Garden field at 50.')
+    expect(check(slipped, planting(s, 'forge'), earnCat)).toBe('You have not earned Forge yet. It takes the Garden field at readiness 50.')
   })
 
   it('is not something a jump over the fence gets round', () => {
@@ -670,7 +670,7 @@ describe('a seed that has to be earned', () => {
     expect(check(s, planting(s, 'anvil'), earnCat)).toBe('Anvil is still locked.')
     const jumped = run(earnCat, [{ type: 'unlocked', seed: 'anvil', ok: true, text: 'A link to it.', ticked: 2, of: 2 }], s)
     expect(jumped.unlocked).toEqual(['anvil'])
-    expect(check(jumped, planting(s, 'anvil'), earnCat)).toBe('Anvil is earned by a seed rooted in another field.')
+    expect(check(jumped, planting(s, 'anvil'), earnCat)).toBe('You have not earned Anvil yet. It takes a seed rooted in another field.')
     // And a seed that only has to be earned is not locked, so there is no fence to jump.
     expect(check(s, { type: 'unlocked', seed: 'kiln', ok: true, text: 'A link to it.', ticked: 2, of: 2 }, earnCat)).toBe('Kiln is not locked.')
   })

@@ -49,7 +49,7 @@ describe('almanacHtml', () => {
     const section = html.split('<h3>Readiness</h3>')[1]?.split('<h3>')[0] ?? ''
     expect(section).toContain('<b>Sprite sheets</b>: a seed rooted in another field')
     expect(section).toContain('<b>Share a pack</b>: 4 seeds rooted in the Kannada field')
-    expect(section).toContain('<b>Coorg weather</b>: the Infra field at 60')
+    expect(section).toContain('<b>Coorg weather</b>: the Infra field at readiness 60')
     expect(section).toContain('Jumping the fence does not clear')
   })
 

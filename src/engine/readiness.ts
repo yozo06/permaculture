@@ -80,10 +80,10 @@ export function earnedProgress(seed: Seed, s: Pick<FarmState, 'crops' | 'bars'>,
 export const isEarned = (seed: Seed, s: Pick<FarmState, 'crops' | 'bars'>, catalog: Catalog): boolean =>
   earnedProgress(seed, s, catalog)?.met ?? true
 
-/** What a seed is earned by, to finish the sentence "It is earned by …". */
+/** What a seed is earned by, to finish the sentences "It is earned by …" and "It takes …". */
 export function earnedLine(e: Earned, catalog: Catalog): string {
   const field = (id: string): string => 'the ' + (catalog.pack(id)?.title ?? id) + ' field'
-  if (e.kind === 'readiness') return field(e.pack) + ' at ' + e.percent
+  if (e.kind === 'readiness') return field(e.pack) + ' at readiness ' + e.percent
   const seeds = e.count === 1 ? 'a seed' : e.count + ' seeds'
   return seeds + ' rooted in ' + (e.pack === null ? (e.count === 1 ? 'another field' : 'other fields') : field(e.pack))
 }

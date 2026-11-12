@@ -307,7 +307,7 @@ describe('a seed that has to be earned', () => {
     const s = open('garden', 'shed')
     expect(treeView('shed', s, c)?.earned).toEqual([
       { id: 'kiln', name: 'Kiln', pack: 'shed', line: 'a seed rooted in another field', have: 0, want: 1, met: false, locked: false },
-      { id: 'forge', name: 'Forge', pack: 'shed', line: 'the Garden field at 50', have: 0, want: 50, met: false, locked: false },
+      { id: 'forge', name: 'Forge', pack: 'shed', line: 'the Garden field at readiness 50', have: 0, want: 50, met: false, locked: false },
       { id: 'anvil', name: 'Anvil', pack: 'shed', line: 'a seed rooted in another field', have: 0, want: 1, met: false, locked: true },
     ])
     const one = treeView('shed', withCrops(s, standing('corn')), c)?.earned

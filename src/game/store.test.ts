@@ -98,7 +98,7 @@ describe('dispatch', () => {
     expect(store.dispatch({ type: 'unlocked', seed: 'sprites', ok: true, text: 'A link to the sheet.', ticked: 2, of: 2 })).toBeNull()
     const planting = { type: 'planted' as const, seed: 'sprites', x: x0, y: y0, notes: 'One sheet for every crop, tree and building, drawn the same way.' }
     const before = store.events().length
-    expect(store.dispatch(planting)).toBe('Sprite sheets is earned by a seed rooted in another field.')
+    expect(store.dispatch(planting)).toBe('You have not earned Sprite sheets yet. It takes a seed rooted in another field.')
     expect(store.events()).toHaveLength(before)
     expect(store.state().crops).toEqual([])
     // The same planting in a log from before the rule is kept, on import and on the next load.

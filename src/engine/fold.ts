@@ -292,7 +292,7 @@ function whyToday(s: FarmState, e: FarmEvent, catalog: Catalog): string | null {
   }
   if (e.type !== 'planted') return null
   const seed = catalog.seed(e.seed)
-  return seed?.earned && !isEarned(seed, s, catalog) ? seed.name + ' is earned by ' + earnedLine(seed.earned, catalog) + '.' : null
+  return seed?.earned && !isEarned(seed, s, catalog) ? 'You have not earned ' + seed.name + ' yet. It takes ' + earnedLine(seed.earned, catalog) + '.' : null
 }
 
 const NOT_AN_EVENT = 'That is not something the farm can do.'
