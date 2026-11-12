@@ -15,6 +15,7 @@ import { almanacHtml } from './almanac'
 import sampleFarm from './sample-farm.json'
 import { readLink } from './links'
 import { BOOK_KEY, ageText, bookText, readBook, receive, remove, tooOld, type Arrival, type Book } from './neighbours'
+import { cropShape, partColor, shapeHeight } from './shapes'
 import { createStore, defaultId, LOG_KEY, type StorageLike } from './store'
 import { esc, shuffle } from './util'
 import {
@@ -201,23 +202,27 @@ function drawRock(sx: number, sy: number): void {blob(sx,sy+11,[6,8,6,3],['#6E6E
 function drawTuft(sx: number, sy: number, x: number, y: number): void {for(let i=0;i<3;i++){const ox=Math.floor(hash(x,y,i+30)*12)-6;px(sx+ox,sy+6+Math.floor(hash(x,y,i+40)*5),1,3,'#4E9A3A');}}
 function drawFlowers(sx: number, sy: number, x: number, y: number): void {for(let i=0;i<3;i++){const r=3+Math.floor(hash(x,y,i)*9),hw=r<8?(r+1)*2:(TH-r)*2;const fx=sx-hw+2+Math.floor(hash(x,y,i+7)*(hw*2-4));const c=['#F7D54A','#F2F2EC','#F08BB0'][Math.floor(hash(x,y,i+11)*3)]??'#F7D54A';if(hash(x,y,i+20)<0.35)px(fx,sy+r,1,1,c);}}
 function drawCrop(c: Crop, sx: number, sy: number, t: number): void {
-  const cx=sx,cy=sy+12;const seed=catalog.seed(c.seed);if(!seed)return;const F={color:colorOf(seed.pack)};
-  const w=c.wilted;const gg=w?'#8E6E33':'#3F8F2E',g2=w?'#6E5426':'#2E6E22',g3=w?'#B3924A':'#5BB83A';
-  const sway=w?0:Math.round(Math.sin(t/900+c.x*1.7+c.y)*0.6);
-  px(cx-3,cy,6,1,'rgba(0,0,0,.15)');
-  if(c.perennial){px(cx-1,cy-7,2,7,'#6B4A2B');blob(cx+sway,cy-7,[6,10,12,12,10,6],[g2,g2,gg,gg,g3,g3]);px(cx-3+sway,cy-9,2,2,F.color);px(cx+2+sway,cy-11,2,2,F.color);px(cx-1+sway,cy-13,2,1,F.color);return;}
-  const st=c.stage,dy=w?2:0;
-  if(st===0){px(cx,cy-3+dy,1,3,gg);px(cx-2,cy-3+dy,2,1,g3);px(cx+1,cy-4+dy,2,1,g3);}
-  else if(st===1){px(cx,cy-6+dy,1,6,gg);px(cx-3+sway,cy-4+dy,3,1,g3);px(cx+1+sway,cy-5+dy,3,1,g3);px(cx-2,cy-2+dy,2,1,g2);px(cx+1,cy-3+dy,2,1,g2);}
-  else if(st===2){blob(cx+sway,cy-1+dy,[7,9,9,7,5,3],[g2,g2,gg,gg,g3,g3]);}
-  else{px(cx,cy-10+dy,1,10,g2);px(cx-4+sway,cy-3+dy,4,1,gg);px(cx+1+sway,cy-4+dy,4,1,gg);px(cx-4+sway,cy-6+dy,4,1,g3);px(cx+1+sway,cy-7+dy,4,1,g3);px(cx-3+sway,cy-9+dy,3,1,g3);px(cx+1+sway,cy-9+dy,3,1,g3);px(cx-1+sway,cy-12+dy,3,2,g3);
-    if(st===4&&!w){px(cx-3+sway,cy-5,2,2,F.color);px(cx+2+sway,cy-8,2,2,F.color);px(cx-1+sway,cy-13,2,2,F.color);px(cx-3+sway,cy-5,1,1,'#FFFFFF');px(cx+2+sway,cy-8,1,1,'#FFFFFF');}}
-  if(w){px(cx+3,cy-1,1,1,'#B3924A');px(cx-4,cy,1,1,'#B3924A');}
+  const seed = catalog.seed(c.seed)
+  if (!seed) return
+  const cx = sx, cy = sy + 12, w = c.wilted
+  const field = colorOf(seed.pack)
+  const sway = w ? 0 : Math.round(Math.sin(t / 900 + c.x * 1.7 + c.y) * 0.6)
+  // A wilted crop hangs its leaves; a wilted tree keeps its shape.
+  const droop = w && !c.perennial ? 2 : 0
+  px(cx - 3, cy, 6, 1, 'rgba(0,0,0,.15)')
+  for (const p of cropShape(seed.layer, c.stage, c.perennial)) {
+    const color = partColor(p.tone, field, w)
+    if (color !== null) px(cx + p.x + (p.sway ? sway : 0), cy + p.y + (p.sway ? droop : 0), p.w, p.h, color)
+  }
+  if (w) { px(cx + 3, cy - 1, 1, 1, '#B3924A'); px(cx - 4, cy, 1, 1, '#B3924A') }
 }
 function drawMarker(c: Crop, sx: number, sy: number, t: number): void {
   // Thirst, wilting and ripeness are the owner's business: a neighbour's farm shows none of them.
   if (visiting) return
   const cx=sx;const bob=Math.round(Math.sin(t/260)*1.5);
+  // The marker floats over the crop: a tall one lifts it.
+  const layer=catalog.seed(c.seed)?.layer;
+  sy-=Math.max(0,(layer?shapeHeight(cropShape(layer,c.stage,c.perennial)):0)-16);
   if(c.wilted){const y=sy-10+bob;px(cx,y,1,4,'#E0893A');px(cx,y+5,1,1,'#E0893A');return;}
   if(thirsty(c)){const y=sy-11+bob;px(cx,y-1,1,1,'#4FA3E8');px(cx-1,y,3,1,'#4FA3E8');px(cx-2,y+1,5,2,'#4FA3E8');px(cx-1,y+3,3,1,'#2F7FC4');px(cx-1,y+1,1,1,'#DFF2FF');return;}
   if(ripe(c)){const y=sy-12+bob;const k=Math.floor(t/350)%2;px(cx,y,1,5,'#FFD95A');px(cx-2,y+2,5,1,'#FFD95A');if(k){px(cx-3,y-1,1,1,'#FFF4B0');px(cx+3,y+5,1,1,'#FFF4B0');}else{px(cx+3,y-1,1,1,'#FFF4B0');px(cx-3,y+5,1,1,'#FFF4B0');}}
