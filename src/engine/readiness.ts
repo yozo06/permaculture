@@ -1,8 +1,9 @@
 // How ready a field is: how much of its catalogue stands as trees today, and which of its layers are hollow.
-// And what a seed is earned by: learning that has to be on the farm before the seed can be planted.
-// Pure, and never part of a saved farm: both are worked out from the crops each time they are asked for.
+// What a seed is earned by: learning that has to be on the farm before the seed can be planted.
+// And layer balance: a seed waits while a layer well below it is hollow.
+// Pure, and never part of a saved farm: all three are worked out from the crops each time they are asked for.
 import { LAYERS, type Catalog, type Earned, type Seed } from './catalog'
-import { RULES } from './rules'
+import { RULES, available, cropOf } from './rules'
 import type { FarmState, Layer } from './types'
 
 export interface LayerCount {
@@ -86,4 +87,26 @@ export function earnedLine(e: Earned, catalog: Catalog): string {
   if (e.kind === 'readiness') return field(e.pack) + ' at readiness ' + e.percent
   const seeds = e.count === 1 ? 'a seed' : e.count + ' seeds'
   return seeds + ' rooted in ' + (e.pack === null ? (e.count === 1 ? 'another field' : 'other fields') : field(e.pack))
+}
+
+/* ---------- layer balance ---------- */
+
+/** The layers a field is built up through, from the ground. Vines climb through all of them and have no place in the order. */
+export const GROUND_UP: readonly Layer[] = LAYERS.filter((l) => l !== 'vine').reverse()
+
+/**
+ * The layer that holds this seed back, or null if nothing does. A seed waits while a layer `RULES.balance.below` or
+ * more beneath its own is hollow and has a seed that could be planted today. The lowest such layer is the one named.
+ *
+ * "Could be planted today" is what keeps a field from ever being stuck: a hollow layer whose seeds are all locked, not
+ * earned or already in the ground holds nothing back, and the lowest layer that does hold something back is itself
+ * held by nothing. Wild seeds are extras and never count. A field with no end has no hollow layers, so nothing waits.
+ */
+export function heldBy(seed: Seed, s: Pick<FarmState, 'crops' | 'bars' | 'unlocked' | 'volunteers'>, catalog: Catalog): Layer | null {
+  const height = GROUND_UP.indexOf(seed.layer)
+  if (height < RULES.balance.below) return null
+  const hollow = readiness(seed.pack, s, catalog)?.hollow ?? []
+  if (hollow.length === 0) return null
+  const plantable = catalog.seedsOf(seed.pack).filter((x) => !x.wild && !cropOf(s, x.id) && available(x, s) && isEarned(x, s, catalog))
+  return GROUND_UP.slice(0, height - RULES.balance.below + 1).find((layer) => hollow.includes(layer) && plantable.some((x) => x.layer === layer)) ?? null
 }

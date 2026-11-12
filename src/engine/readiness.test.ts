@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { buildCatalog } from './catalog'
-import { earnedLine, earnedProgress, isEarned, readiness } from './readiness'
+import { GROUND_UP, earnedLine, earnedProgress, heldBy, isEarned, readiness } from './readiness'
 import { RULES } from './rules'
 import type { Crop, Layer, PackDef, SeedDef } from './types'
 
@@ -152,5 +152,101 @@ describe('what a seed is earned by', () => {
     expect(line('ready')).toBe('the orchard field at readiness 50')
     expect(line('gone')).toBe('a seed rooted in the nowhere field')
     expect(line('free')).toBeNull()
+  })
+})
+
+describe('layer balance', () => {
+  // A field with every layer. The second root needs the first, and one seed of the ground cover has to be earned.
+  const tall = pack('tall', [
+    seed('tap', 'root'), seed('deep', 'root', { tier: 1, needs: ['tap'] }),
+    seed('moss', 'ground-cover'), seed('clover', 'ground-cover', { earned: { rooted: 1 } }),
+    seed('mint', 'herb'), seed('rose', 'shrub'), seed('hazel', 'understory'), seed('oak', 'canopy'), seed('hop', 'vine'),
+    seed('truffle', 'root', { wild: true }),
+  ])
+  const c = buildCatalog([tall, pack('other', [seed('fern', 'herb'), seed('pine', 'canopy')]), pack('tongue', [seed('word', 'root'), seed('song', 'canopy')], { perennial: true })])
+  const farm = (crops: Crop[] = [], more: { unlocked?: string[]; volunteers?: string[] } = {}) => ({ crops, bars: {}, unlocked: [], volunteers: [], ...more })
+  const held = (id: string, crops: Crop[] = [], more: { unlocked?: string[]; volunteers?: string[] } = {}) => {
+    const s = c.seed(id)
+    if (!s) throw new Error('no seed ' + id)
+    return heldBy(s, farm(crops, more), c)
+  }
+  const growing = (id: string) => crop(id, { perennial: false, stage: 1 })
+
+  it('builds a field from the ground up, with the vines left out', () => {
+    expect(GROUND_UP).toEqual(['root', 'ground-cover', 'herb', 'shrub', 'understory', 'canopy'])
+  })
+
+  it('holds a seed while a layer two or more below it is hollow and has something to plant', () => {
+    expect(held('mint')).toBe('root')
+    expect(held('rose')).toBe('root')
+    expect(held('oak')).toBe('root')
+  })
+
+  it('never holds the two lowest layers, or a layer only one above a hollow one', () => {
+    expect(held('tap')).toBeNull()
+    expect(held('moss')).toBeNull()
+    // The root has a tree; the ground cover is hollow, and the herb is only one layer above it.
+    expect(held('mint', [crop('tap')])).toBeNull()
+    expect(held('rose', [crop('tap')])).toBe('ground-cover')
+  })
+
+  it('lets go once everything that could be planted in the hollow layer is in the ground', () => {
+    // The first root is growing and the second still needs it: the root layer is hollow, with nothing left to plant.
+    expect(held('mint', [growing('tap')])).toBeNull()
+    expect(held('rose', [growing('tap')])).toBe('ground-cover')
+    expect(held('rose', [growing('tap'), growing('moss')])).toBeNull()
+  })
+
+  it('lets go once a tree stands in the layer, whatever else could be planted there', () => {
+    expect(held('rose', [crop('tap'), crop('moss')])).toBeNull()
+    expect(held('oak', [crop('tap'), crop('moss'), crop('mint'), crop('rose')])).toBeNull()
+  })
+
+  it('names the lowest layer in the way, so there is always somewhere to begin', () => {
+    expect(held('oak', [crop('tap')])).toBe('ground-cover')
+    expect(held('oak', [crop('tap'), crop('moss')])).toBe('herb')
+    expect(held('oak', [crop('tap'), crop('moss'), crop('mint')])).toBe('shrub')
+    // The understory is hollow, but it is only one below the canopy.
+    expect(held('oak', [crop('tap'), crop('moss'), crop('mint'), crop('rose')])).toBeNull()
+  })
+
+  it('holds again when the only tree in a layer wilts and there is something to plant there', () => {
+    // The first root is a wilted tree. It still counts as rooted for what the second root needs, so that one can be planted.
+    expect(held('mint', [crop('tap', { wilted: true })])).toBe('root')
+    expect(held('mint', [crop('tap', { wilted: true }), growing('deep')])).toBeNull()
+  })
+
+  it('does not count a seed that cannot be planted today: one that is locked, not earned, or wild', () => {
+    // Ground cover: moss is growing, clover is not earned. Nothing there can be planted, so the shrub is free.
+    expect(held('rose', [crop('tap'), growing('moss')])).toBeNull()
+    // Once clover is earned (a tree in another field), it can be planted, and the shrub waits for it.
+    expect(held('rose', [crop('tap'), growing('moss'), crop('fern')])).toBe('ground-cover')
+    // A wild root that has been found is an extra: it never holds anything back.
+    expect(held('mint', [growing('tap')], { volunteers: ['truffle'] })).toBeNull()
+  })
+
+  it('counts a seed that a jump over the fence has made plantable', () => {
+    expect(held('mint', [growing('tap')], { unlocked: ['deep'] })).toBe('root')
+  })
+
+  it('leaves vines alone: they climb through every layer', () => {
+    expect(held('hop')).toBeNull()
+  })
+
+  it('looks only at its own field, and never at a field with no end', () => {
+    // The other field has a herb and a canopy seed. Its herb holds its canopy back; the tall field's hollow root does not.
+    expect(held('pine')).toBe('herb')
+    expect(held('pine', [growing('fern')])).toBeNull()
+    // The tongue has a root and a canopy seed and no end, so it has no hollow layers and nothing waits.
+    expect(held('song')).toBeNull()
+  })
+
+  it('never leaves a field with nothing to plant: of the seeds that could go in, the lowest is always free', () => {
+    const seeds = c.seedsOf('tall')
+    const states = [[], [growing('tap')], [crop('tap')], [crop('tap', { wilted: true })], [crop('tap'), growing('moss'), crop('fern')], [growing('moss')], [crop('moss'), crop('mint')]]
+    for (const crops of states) {
+      const could = seeds.filter((x) => !x.wild && !crops.some((k) => k.seed === x.id) && (x.needs.every((n) => crops.some((k) => k.seed === n && k.perennial))) && isEarned(x, farm(crops), c))
+      expect(could.some((x) => heldBy(x, farm(crops), c) === null), JSON.stringify(crops.map((k) => k.seed))).toBe(true)
+    }
   })
 })

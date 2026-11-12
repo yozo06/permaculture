@@ -33,6 +33,8 @@ export const RULES = {
   neighbours: { max: 24, forgetDays: 60 },
   /** The bar a field's readiness is held to when neither its pack nor its farmer sets one, and what a farmer may set. */
   readiness: { bar: 80, min: 1, max: 100 },
+  /** Layer balance: a seed waits while a layer this many or more beneath its own is hollow and has a seed to plant. */
+  balance: { below: 2 },
   defaultRubric: [
     "Says what it is in plain words, not the source's",
     'Says why it matters: the problem it solves or the mistake it prevents',
