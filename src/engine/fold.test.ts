@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import sampleFarm from '../game/sample-farm.json'
-import { apply, check, fieldsToOpen, fold, initialState, parseEvent, refusedCount } from './fold'
-import { EXPLANATION, NOTES, run, smallCatalog as cat, smallFarm, started } from './fixtures'
-import { terrain, wildKind, worldSize } from './land'
+import { allowed, apply, check, fieldsToOpen, fold, initialState, parseEvent, refusedCount } from './fold'
+import { EXPLANATION, NOTES, earningCatalog as earnCat, run, smallCatalog as cat, smallFarm, started } from './fixtures'
+import { fieldOf, terrain, wildKind, worldSize } from './land'
 import { RULES, available, ripe, thirsty } from './rules'
 import type { Crop, FarmEvent, FarmState } from './types'
 
@@ -617,5 +617,75 @@ describe('a farm that grows only some packs', () => {
     expect(refusal(found, { type: 'domesticated', seed: 'bees' })).toMatch(/Garden field is not open/)
     expect(refusal(shedOnly(), { type: 'unlocked', seed: 'squash', ok: true })).toMatch(/Garden field is not open/)
     expect(check(shedOnly(), { type: 'unlocked', seed: 'lathe', ok: true }, cat)).toBeNull()
+  })
+})
+
+describe('a seed that has to be earned', () => {
+  // The shed has tools that the garden has to earn: see `earningCatalog`.
+  const farm = (): FarmState => run(earnCat, [started, { type: 'field-opened', pack: 'garden', slot: 0 }, { type: 'field-opened', pack: 'shed', slot: 1 }])
+  /** The farm with these seeds standing as trees, wherever they are: only the rules about earning look at them. */
+  const withTrees = (s: FarmState, ...ids: string[]): FarmState =>
+    ({ ...s, crops: [...s.crops, ...ids.map((seed, i): Crop => ({ seed, x: 20 + i, y: 20, stage: 4, best: 4, due: 99, wilted: false, perennial: true, notes: '', journal: [] }))] })
+  const shedTile = (s: FarmState): { x: number; y: number } => {
+    const n = worldSize(s.fields)
+    for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) if (fieldOf(x, y, s.fields, s.cleared) === 'shed') return { x, y }
+    throw new Error('no shed tile')
+  }
+  const planting = (s: FarmState, seed: string): FarmEvent => ({ type: 'planted', seed, ...shedTile(s), notes: NOTES })
+
+  it('cannot be planted until the learning is there, and says what earns it', () => {
+    const s = farm()
+    expect(check(s, planting(s, 'kiln'), earnCat)).toBe('Kiln is earned by a seed rooted in another field.')
+    expect(check(withTrees(s, 'corn'), planting(s, 'kiln'), earnCat)).toBeNull()
+  })
+
+  it('is not earned by a tree in its own field', () => {
+    const s = withTrees(farm(), 'saw')
+    expect(check(s, planting(s, 'kiln'), earnCat)).toBe('Kiln is earned by a seed rooted in another field.')
+  })
+
+  it("follows a field's readiness, and is lost again when a tree there wilts", () => {
+    const s = farm()
+    expect(check(withTrees(s, 'corn'), planting(s, 'forge'), earnCat)).toBe('Forge is earned by the Garden field at 50.')
+    const ready = withTrees(s, 'corn', 'beans')
+    expect(check(ready, planting(s, 'forge'), earnCat)).toBeNull()
+    const slipped = { ...ready, crops: ready.crops.map((c) => (c.seed === 'beans' ? { ...c, wilted: true } : c)) }
+    expect(check(slipped, planting(s, 'forge'), earnCat)).toBe('Forge is earned by the Garden field at 50.')
+  })
+
+  it('is not something a jump over the fence gets round', () => {
+    const s = farm()
+    // The anvil needs the saw and has to be earned. A jump clears the first and leaves the second.
+    expect(check(s, planting(s, 'anvil'), earnCat)).toBe('Anvil is still locked.')
+    const jumped = run(earnCat, [{ type: 'unlocked', seed: 'anvil', ok: true, text: 'A link to it.', ticked: 2, of: 2 }], s)
+    expect(jumped.unlocked).toEqual(['anvil'])
+    expect(check(jumped, planting(s, 'anvil'), earnCat)).toBe('Anvil is earned by a seed rooted in another field.')
+    // And a seed that only has to be earned is not locked, so there is no fence to jump.
+    expect(check(s, { type: 'unlocked', seed: 'kiln', ok: true, text: 'A link to it.', ticked: 2, of: 2 }, earnCat)).toBe('Kiln is not locked.')
+  })
+
+  it('gives the ordinary reasons first', () => {
+    const s = farm()
+    expect(check(s, { ...planting(s, 'kiln'), notes: 'too short' }, earnCat)).toContain('Write at least')
+    expect(check(s, { ...planting(s, 'kiln'), x: 5, y: 5 }, earnCat)).toBe('Kiln belongs in the Shed field.')
+  })
+
+  it('is asked of what is done today and never of a saved farm: a log that holds the planting replays', () => {
+    const s = farm()
+    const e = planting(s, 'kiln')
+    expect(check(s, e, earnCat)).not.toBeNull()
+    expect(allowed(s, e, earnCat)).toBeNull()
+    const after = apply(s, e, earnCat)
+    expect(after.crops.map((c) => c.seed)).toEqual(['kiln'])
+    const log = [started, { type: 'field-opened', pack: 'garden', slot: 0 }, { type: 'field-opened', pack: 'shed', slot: 1 }, e]
+    expect(refusedCount(log, earnCat)).toBe(0)
+    expect(fold(log, earnCat)).toEqual(after)
+  })
+
+  it('asks nothing more of any other kind of event, or of a seed that asks for nothing', () => {
+    const s = farm()
+    for (const e of [planting(s, 'saw'), sleep, { type: 'farm-named', name: 'Ours' }, { type: 'bar-set', pack: 'garden', bar: 50 }, { type: 'nonsense' }, null]) {
+      expect(check(s, e, earnCat)).toBe(allowed(s, e, earnCat))
+    }
   })
 })

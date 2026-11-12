@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { buildCatalog } from './catalog'
-import { readiness } from './readiness'
+import { earnedLine, earnedProgress, isEarned, readiness } from './readiness'
 import { RULES } from './rules'
 import type { Crop, Layer, PackDef, SeedDef } from './types'
 
@@ -84,5 +84,73 @@ describe('readiness', () => {
   it('is never at its bar with nothing to root', () => {
     const wild = buildCatalog([pack('orchard', [seed('hop', 'vine', { wild: true })], { readiness_bar: 0 })])
     expect(readiness('orchard', { crops: [], bars: {} }, wild)?.atBar).toBe(false)
+  })
+})
+
+describe('what a seed is earned by', () => {
+  // A workshop whose tools are earned by what grows in the orchard and the other field.
+  const tools = pack('tools', [
+    seed('free', 'herb'),
+    seed('any', 'herb', { earned: { rooted: 2 } }),
+    seed('one', 'herb', { earned: { rooted: 1 } }),
+    seed('oaks', 'herb', { earned: { pack: 'orchard', rooted: 2 } }),
+    seed('ready', 'herb', { earned: { pack: 'orchard', readiness: 50 } }),
+    seed('never', 'herb', { earned: { pack: 'tongue', readiness: 10 } }),
+    seed('gone', 'herb', { earned: { pack: 'nowhere', rooted: 1 } }),
+  ], { perennial: true })
+  const c = buildCatalog([orchard, pack('other', [seed('fern', 'herb')]), pack('tongue', [seed('word', 'herb')], { perennial: true }), tools])
+  const progress = (id: string, ...crops: Crop[]) => {
+    const s = c.seed(id)
+    if (!s) throw new Error('no seed ' + id)
+    return earnedProgress(s, { crops, bars: {} }, c)
+  }
+  const line = (id: string) => { const e = c.seed(id)?.earned; return e ? earnedLine(e, c) : null }
+
+  it('is nothing for a seed that asks for nothing, which is always earned', () => {
+    expect(progress('free')).toBeNull()
+    const free = c.seed('free')
+    expect(free && isEarned(free, { crops: [], bars: {} }, c)).toBe(true)
+  })
+
+  it('counts trees in every field but its own', () => {
+    expect(progress('any')).toEqual({ have: 0, want: 2, met: false })
+    expect(progress('any', crop('oak'))).toEqual({ have: 1, want: 2, met: false })
+    expect(progress('any', crop('oak'), crop('fern'))).toEqual({ have: 2, want: 2, met: true })
+    expect(progress('any', crop('oak'), crop('free'), crop('one'))).toEqual({ have: 1, want: 2, met: false })
+  })
+
+  it('counts a tree and not a crop that is still growing, and never a wild seed', () => {
+    expect(progress('one', crop('oak', { perennial: false, stage: 4 }))).toMatchObject({ have: 0, met: false })
+    expect(progress('one', crop('hop'))).toMatchObject({ have: 0, met: false })
+    expect(progress('one', crop('word'))).toMatchObject({ have: 1, met: true })
+  })
+
+  it('keeps counting a tree that a wrong check-in has wilted: what was rooted stays earned', () => {
+    expect(progress('one', crop('oak', { wilted: true }))).toMatchObject({ have: 1, met: true })
+  })
+
+  it('counts trees in the one field it names', () => {
+    expect(progress('oaks', crop('oak'), crop('fern'), crop('word'))).toEqual({ have: 1, want: 2, met: false })
+    expect(progress('oaks', crop('oak'), crop('mint'))).toEqual({ have: 2, want: 2, met: true })
+  })
+
+  it("follows a field's readiness as it stands today, so it can be lost again", () => {
+    expect(progress('ready', crop('oak'))).toEqual({ have: 25, want: 50, met: false })
+    expect(progress('ready', crop('oak'), crop('elm'))).toEqual({ have: 50, want: 50, met: true })
+    expect(progress('ready', crop('oak'), crop('elm', { wilted: true }))).toEqual({ have: 25, want: 50, met: false })
+  })
+
+  it('is never earned from a field with no readiness or a pack that is not there', () => {
+    expect(progress('never', crop('word'))).toEqual({ have: 0, want: 10, met: false })
+    expect(progress('gone', crop('oak'))).toEqual({ have: 0, want: 1, met: false })
+  })
+
+  it('says it in words a farmer can act on', () => {
+    expect(line('one')).toBe('a seed rooted in another field')
+    expect(line('any')).toBe('2 seeds rooted in other fields')
+    expect(line('oaks')).toBe('2 seeds rooted in the orchard field')
+    expect(line('ready')).toBe('the orchard field at 50')
+    expect(line('gone')).toBe('a seed rooted in the nowhere field')
+    expect(line('free')).toBeNull()
   })
 })

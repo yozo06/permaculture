@@ -3,7 +3,7 @@ import { buildCatalog } from './catalog'
 import { apply, initialState } from './fold'
 import { explainChecklist, explainPasses, harvestWork, waterWork, writePasses } from './ladder'
 import { RULES, cropOf } from './rules'
-import type { FarmEvent, FarmState, PackDef } from './types'
+import type { FarmEvent, FarmState, PackDef, SeedDef } from './types'
 
 const mcq = (q: string) => ({ q, answer: 'right', distractors: ['wrong', 'also wrong'], why: 'because' })
 
@@ -36,6 +36,19 @@ export const NOTES = 'Corn is tall and the beans climb it, and squash covers the
 export const EXPLANATION = 'Corn gives the beans a pole to climb, the beans feed the soil with nitrogen, and the squash shades the ground so the water stays in. Together they need less than apart.'
 
 export const smallCatalog = buildCatalog(smallPacks)
+
+const tool = (id: string, name: string, more: Partial<SeedDef>): SeedDef =>
+  ({ id, name, layer: 'herb', branch: 'build', tier: 0, harvest: 'artifact', prompts: ['Show it.'], ...more })
+/**
+ * The small farm with three more tools in the shed, each earned by what grows in the garden: the kiln by one tree
+ * there, the forge by the garden's readiness, and the anvil (which also needs the saw) by one tree.
+ */
+export const earningCatalog = buildCatalog(smallPacks.map((p) => (p.pack !== 'shed' ? p : { ...p, seeds: [
+  ...p.seeds,
+  tool('kiln', 'Kiln', { earned: { rooted: 1 } }),
+  tool('forge', 'Forge', { earned: { pack: 'garden', readiness: 50 } }),
+  tool('anvil', 'Anvil', { tier: 1, needs: ['saw'], earned: { rooted: 1 } }),
+] })))
 
 /** Apply events in order; throws if one is refused, so a test that sets up a farm fails loudly. */
 export function run(catalog: ReturnType<typeof buildCatalog>, events: FarmEvent[], from: FarmState = initialState()): FarmState {

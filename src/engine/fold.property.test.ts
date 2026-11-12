@@ -5,10 +5,11 @@ import { describe, expect, it } from 'vitest'
 import { collectPacks } from '../../scripts/packs-lib.mjs'
 import { buildCatalog, type Catalog } from './catalog'
 import { findCandidates, pickFind } from './finds'
-import { apply, check, fieldsToOpen, fold, initialState } from './fold'
-import { EXPLANATION, NOTES, harvestEvent, smallCatalog, started, waterEvent } from './fixtures'
+import { allowed, apply, check, fieldsToOpen, fold, initialState } from './fold'
+import { EXPLANATION, NOTES, earningCatalog, harvestEvent, smallCatalog, started, waterEvent } from './fixtures'
 import { explainChecklist, explainPasses, harvestWork, waterWork, writePasses } from './ladder'
 import { FIELD_SIZE, fieldOf, fieldOrigin, terrain, tileKey, wildKind, worldSize } from './land'
+import { isEarned } from './readiness'
 import { RULES, available, cropOf, ripe, revivable, thirsty, visible } from './rules'
 import type { FarmEvent, FarmState, LoggedEvent } from './types'
 
@@ -146,6 +147,13 @@ function toEvent(s: FarmState, catalog: Catalog, intent: Intent): unknown {
   }
 }
 
+/** True for the planting of a seed whose learning is not on the farm yet. */
+function unearned(s: FarmState, event: unknown, catalog: Catalog): boolean {
+  const e = event as { type?: unknown; seed?: unknown } | null
+  const seed = e && e.type === 'planted' && typeof e.seed === 'string' ? catalog.seed(e.seed) : undefined
+  return seed !== undefined && !isEarned(seed, s, catalog)
+}
+
 const logged = (events: FarmEvent[]): LoggedEvent[] => events.map((e, i) => ({ ...e, id: 'e' + i, at: '2026-01-01T00:00:00Z' }))
 
 /**
@@ -166,18 +174,24 @@ function play(catalog: Catalog, list: Intent[], mask: boolean[] = [true]): { sta
   for (const [step, intent] of list.entries()) {
     const event = toEvent(s, catalog, intent)
     if (event === null) continue
-    all.push(event)
     const before = s
     const frozen = JSON.stringify(before)
     const why = check(before, event, catalog)
+    const fits = allowed(before, event, catalog)
     const after = apply(before, event, catalog)
-    // A refused event changes nothing; an accepted one never touches the old state.
+    // Nothing touches the old state. Replay follows what a log may hold, and that alone.
     expect(JSON.stringify(before)).toBe(frozen)
+    expect(after === before).toBe(fits !== null)
+    // 12. The game asks all of that of a player and one thing more: that a seed has been earned before it is planted.
+    if (fits !== null) expect(why).not.toBeNull()
     if (why !== null) {
-      expect(after).toBe(before)
+      if (fits === null) expect(unearned(before, event, catalog)).toBe(true)
+      // What the game refused a player is not in their log, even where a log could have held it.
+      else all.push(event)
       continue
     }
-    expect(after).not.toBe(before)
+    expect(unearned(before, event, catalog)).toBe(false)
+    all.push(event)
     accepted.push(event as FarmEvent)
     s = after
     verify(s, before, event as FarmEvent, catalog)
@@ -294,6 +308,7 @@ function properties(name: string, catalog: Catalog, runs: number): void {
 }
 
 properties('the small test farm', smallCatalog, 150)
+properties('a farm whose seeds have to be earned', earningCatalog, 150)
 properties('the real packs', buildCatalog(collectPacks()), 60)
 
 describe('a diligent player', () => {
@@ -308,7 +323,8 @@ describe('a diligent player', () => {
         const tile = fieldTiles(s, seed.pack).find((t) => !s.crops.some((c) => c.x === t.x && c.y === t.y))
         if (tile) doing.push({ type: 'planted', seed: seed.id, x: tile.x, y: tile.y, notes: NOTES })
       }
-      for (const e of doing) s = apply(s, e, catalog)
+      // Only what the game would let a player do today.
+      for (const e of doing) if (check(s, e, catalog) === null) s = apply(s, e, catalog)
       s = apply(s, { type: 'slept' }, catalog)
     }
     return s

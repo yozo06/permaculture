@@ -1,8 +1,13 @@
-// The farm as an event log. `check` says whether an event is allowed, `apply` makes it happen, `fold` replays a log.
+// The farm as an event log. `check` says whether a player may do something now, `apply` makes it happen, `fold` replays a log.
 // Everything here is pure: state in, state out, nothing mutated, nothing random, no clock.
+//
+// Two questions are kept apart. `allowed` is what a log may hold, and replaying a farm asks only that. `check` is what
+// the game asks of something done today: everything `allowed` asks, and that a seed has been earned. A rule added to
+// the second can never change how a saved farm replays.
 import type { Catalog } from './catalog'
 import { isRecord } from './util'
 import { fieldOf, fenceCost, isBuildingTile, neighbourFields, nextFreeSlot, terrain, tileKey, wildKind, worldSize } from './land'
+import { earnedLine, isEarned } from './readiness'
 import { RULES, available, capLeft, cropOf, interval, revivable, ripe, thirsty, visible } from './rules'
 import { fromV2 } from './v2'
 import type { Crop, FarmEvent, FarmState } from './types'
@@ -275,10 +280,28 @@ function why(s: FarmState, e: FarmEvent, catalog: Catalog): string | null {
   }
 }
 
-/** Null if the event is allowed, else a reason the player can read. Never throws, whatever the event is. */
+/**
+ * What the game asks of something done today, on top of what a log may hold: a seed that has to be earned is planted
+ * only once it has been. Replay never asks this, so a farm that planted the seed before it had to be earned keeps it.
+ */
+function whyToday(s: FarmState, e: FarmEvent, catalog: Catalog): string | null {
+  if (e.type !== 'planted') return null
+  const seed = catalog.seed(e.seed)
+  return seed?.earned && !isEarned(seed, s, catalog) ? seed.name + ' is earned by ' + earnedLine(seed.earned, catalog) + '.' : null
+}
+
+const NOT_AN_EVENT = 'That is not something the farm can do.'
+
+/** Null if a log may hold this event after `s`, else a reason. This is all that replaying a farm asks. Never throws. */
+export function allowed(s: FarmState, event: unknown, catalog: Catalog): string | null {
+  const e = parseEvent(event)
+  return e ? why(s, e, catalog) : NOT_AN_EVENT
+}
+
+/** Null if a player may do this now, else a reason they can read. Never throws, whatever the event is. */
 export function check(s: FarmState, event: unknown, catalog: Catalog): string | null {
   const e = parseEvent(event)
-  return e ? why(s, e, catalog) : 'That is not something the farm can do.'
+  return e ? (why(s, e, catalog) ?? whyToday(s, e, catalog)) : NOT_AN_EVENT
 }
 
 /* ---------- what each event does ---------- */
@@ -415,7 +438,7 @@ function step(s: FarmState, e: FarmEvent, catalog: Catalog): FarmState {
   }
 }
 
-/** The state after the event, or the very same object if the event is not allowed. Never mutates `s`. */
+/** The state after the event, or the very same object if a log may not hold it here. Never mutates `s`. */
 export function apply(s: FarmState, event: unknown, catalog: Catalog): FarmState {
   const e = parseEvent(event)
   if (!e || why(s, e, catalog) !== null) return s

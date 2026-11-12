@@ -87,13 +87,28 @@ A crop climbs a ladder of different work (see `design.md`): notes when planted, 
 
 A pack with `energy_cap: 30` may use at most 30% of a day's energy across everything it does: planting, watering, harvesting and jumping the fence. The Workshop has one, so the farm never becomes the only crop. Foraging is not charged to any field.
 
+## Earned seeds
+
+A seed can ask for learning before it can be planted. The Workshop uses this so the game's own backlog cannot outrun the studying.
+
+```yaml
+earned: { rooted: 1 }                    # a seed rooted in any other field
+earned: { pack: kannada, rooted: 4 }     # four seeds rooted in the Kannada field
+earned: { pack: infra, readiness: 60 }   # the Infra field's readiness at 60 or over
+```
+
+- It is asked on top of `needs`, and jumping the fence does not get round it: a jump tests you out of a seed's prerequisites, not out of the learning it asks for.
+- `rooted` counts trees, and a tree stays counted if a wrong check-in wilts it. Wild seeds do not count.
+- `readiness` is today's number, so it can be lost again until the seed is in the ground.
+- It is asked only of a planting done today. A saved farm replays without it, so a farm that planted the seed earlier keeps the crop, and `earned` can be added, changed or removed on a released seed. It is the one thing about a seed that is not in `packs/lock.json`.
+
 ## Finds
 
 A find is a short fact the player forages in the wilderness. It is picked by what is growing, so `near` lists the seeds of this pack it grows next to. A find with a `seed` can be domesticated: that wild seed then joins the seed bag as a volunteer. A wild seed needs a find that points at it, or it could never be found.
 
 ## Ids are forever
 
-Seed ids, find ids and pack ids are unique across all packs, and branch ids within a pack. Farms refer to all of them and are replayed against the current packs, so never rename or remove a released one. Never change a released seed's `needs` or whether it is `wild`, in either direction, and never lower a pack's `energy_cap`: on replay the game skips any event that is no longer allowed, and the farm quietly changes.
+Seed ids, find ids and pack ids are unique across all packs, and branch ids within a pack. Farms refer to all of them and are replayed against the current packs, so never rename or remove a released one. Never change a released seed's `needs` or whether it is `wild`, in either direction, and never lower a pack's `energy_cap`: on replay the game skips any event that is no longer allowed, and the farm quietly changes. To hold a released seed back, give it `earned` instead.
 
 `packs/lock.json` holds these promises, one line per id, and `npm test` fails when a change would break one: an id that is gone or has moved, a seed whose `needs` or `wild` changed, an artifact seed that now asks for a write-up, a find that leads somewhere else, a cap that was lowered or added. Even needing *less* counts: a farm that jumped the fence to that seed holds a jump the game would now refuse. Adding seeds, finds, branches and packs is always fine: run `npm run lock` and commit the file with your change. It will not write over a breaking change, and it will not replace a lock file it cannot read.
 
