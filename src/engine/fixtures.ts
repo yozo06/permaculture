@@ -80,6 +80,25 @@ export const bountifulPacks: PackDef[] = smallPacks.map((p) => (p.pack !== 'gard
 }))
 export const bountifulCatalog = buildCatalog(bountifulPacks)
 
+/**
+ * The small farm with a market. The garden has three more seeds, one in each of its layers, so its readiness can sit
+ * between the bars of its two buyers: the cook wants the garden at 30, the grocer at 60.
+ */
+export const marketPacks: PackDef[] = smallPacks.map((p) => (p.pack !== 'garden' ? p : {
+  ...p,
+  buyers: [
+    { id: 'cook', name: 'The cook', note: 'Takes what is fresh.', bars: { garden: 30 } },
+    { id: 'grocer', name: 'The grocer', bars: { garden: 60 } },
+  ],
+  seeds: [
+    ...p.seeds,
+    { id: 'oak', name: 'Oak', layer: 'canopy', branch: 'roots', tier: 0, harvest: 'recall', questions: { water: [mcq('Oak?')] } },
+    { id: 'ivy', name: 'Ivy', layer: 'vine', branch: 'leaves', tier: 0, harvest: 'recall', questions: { water: [mcq('Ivy?')] } },
+    { id: 'clover', name: 'Clover', layer: 'ground-cover', branch: 'leaves', tier: 0, harvest: 'recall', questions: { water: [mcq('Clover?')] } },
+  ],
+}))
+export const marketCatalog = buildCatalog(marketPacks)
+
 /** Apply events in order; throws if one is refused, so a test that sets up a farm fails loudly. */
 export function run(catalog: ReturnType<typeof buildCatalog>, events: FarmEvent[], from: FarmState = initialState()): FarmState {
   return events.reduce((s, e) => {

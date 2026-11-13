@@ -30,6 +30,15 @@ export interface GuildDef {
   seeds: string[]
 }
 
+/** Someone at the market: a name, and the readiness they want of each field they care about. */
+export interface BuyerDef {
+  id: string
+  name: string
+  note?: string
+  /** pack id -> the readiness that field has to reach */
+  bars: Record<string, number>
+}
+
 export interface FindDef {
   id: string
   near: string[]
@@ -72,6 +81,7 @@ export interface PackDef {
   branches: BranchDef[]
   sources?: SourceDef[]
   guilds?: GuildDef[]
+  buyers?: BuyerDef[]
   finds?: FindDef[]
   seeds: SeedDef[]
 }
@@ -104,6 +114,14 @@ export interface Crop {
   journal: JournalEntry[]
 }
 
+/** Something real that came of the farm: an offer, a yes. Kept as the farmer wrote it. */
+export interface Sale {
+  /** The buyer's id. The buyer may since have left the market. */
+  buyer: string
+  day: number
+  text: string
+}
+
 /** What the morning report needs from the last Sleep. Seed ids. */
 export interface Night {
   saved: string[]
@@ -133,6 +151,8 @@ export interface FarmState {
   focus: Record<string, string>
   /** pack id -> the readiness bar the farmer set for that field; absent means the pack's own */
   bars: Record<string, number>
+  /** In the order they were made. */
+  sales: Sale[]
   /** `spent` is energy used per field today; Sleep resets both. */
   today: { planted: number; spent: Record<string, number> }
   /** Set by `slept`. */
@@ -156,6 +176,8 @@ export type FarmEvent =
   | { type: 'focus-set'; pack: string; branch: string | null }
   | { type: 'bar-set'; pack: string; bar: number }
   | { type: 'farm-named'; name: string }
+  /** A sale at the market: `text` says what really happened. */
+  | { type: 'sold'; buyer: string; text: string }
   /** A Phase 0 (v2) save, converted by `fromV2`. */
   | { type: 'snapshot-imported'; snapshot: unknown }
 

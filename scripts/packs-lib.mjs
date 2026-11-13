@@ -2,7 +2,7 @@
 // The schema catches shape errors; this file checks what a schema can't: references between seeds,
 // branches, sources, guilds, finds and the trees that drop saplings; no prerequisite cycles; tiers above prerequisites; and ids
 // that are unique across every pack, because farms refer to seeds and finds by bare id; and what a seed asks to be
-// earned and the edge it sits on, which may name another pack.
+// earned, the edge it sits on and the bars a buyer names, which may name another pack.
 import { readFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
@@ -58,7 +58,29 @@ export function loadPacks(dir = defaultPacksDir) {
   }
   checkEarned(results);
   checkEdges(results);
+  checkBuyers(results);
   return results;
+}
+
+// A buyer names bars on fields, its own and others', so it too is checked once every pack has been read. A sale
+// refers to a buyer by bare id, so ids are unique across packs.
+function checkBuyers(all) {
+  const results = all.filter(r => r.shapeOk);
+  const packs = new Map(results.map(r => [r.pack.pack, r.pack]));
+  const broken = new Set(all.filter(r => r.pack && !r.shapeOk && typeof r.pack.pack === 'string').map(r => r.pack.pack));
+  const seen = new Set();
+  for (const r of results) for (const b of r.pack.buyers || []) {
+    const say = text => r.errors.push(`buyer ${b.id}: ${text}`);
+    if (seen.has(b.id)) r.errors.push(`buyer id "${b.id}" is used twice; buyer ids are unique across packs`);
+    seen.add(b.id);
+    if (!Object.hasOwn(b.bars, r.pack.pack)) say(`names no bar for its own field, ${r.pack.pack}`);
+    for (const id of Object.keys(b.bars)) {
+      if (broken.has(id)) continue;
+      const other = packs.get(id);
+      if (!other) say(`names an unknown pack "${id}"`);
+      else if (other.perennial === true) say(`names ${id}, which has no end and so no readiness`);
+    }
+  }
 }
 
 // An edge names another pack, so like `earned` it is checked once every pack has been read, and a pack whose own shape

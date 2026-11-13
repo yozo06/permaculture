@@ -1,4 +1,4 @@
-import type { FindDef, GuildDef, HarvestType, Layer, Mcq, PackDef, SeedDef } from './types'
+import type { BuyerDef, FindDef, GuildDef, HarvestType, Layer, Mcq, PackDef, SeedDef } from './types'
 
 export const LAYER_NAMES: Record<Layer, string> = {
   canopy: 'Canopy',
@@ -54,9 +54,20 @@ export interface Find extends FindDef {
   pack: string
 }
 
+/** A buyer with the pack it stands in, and its bars as a list in the order the pack wrote them. */
+export interface Buyer extends Omit<BuyerDef, 'note' | 'bars'> {
+  pack: string
+  note: string
+  bars: { pack: string; want: number }[]
+}
+
 export interface Catalog {
   /** In file order. */
   packs: readonly PackDef[]
+  /** Every pack's buyers, in pack order. */
+  buyers: readonly Buyer[]
+  /** Buyer ids are unique across all packs. */
+  buyer(id: string): Buyer | undefined
   pack(id: string): PackDef | undefined
   /** Seed ids are unique across all packs. */
   seed(id: string): Seed | undefined
@@ -103,7 +114,9 @@ export function buildCatalog(packs: readonly PackDef[]): Catalog {
   const findsByPack = new Map<string, Find[]>()
   const guildsBySeed = new Map<string, GuildDef[]>()
   const saplingsBySeed = new Map<string, Seed[]>()
+  const buyers: Buyer[] = []
   for (const p of packs) {
+    for (const b of p.buyers ?? []) buyers.push({ id: b.id, name: b.name, note: b.note ?? '', pack: p.pack, bars: Object.entries(b.bars).map(([pack, want]) => ({ pack, want })) })
     byPack.set(p.pack, p)
     const mine = p.seeds.map((s) => normalise(p.pack, s))
     seedsByPack.set(p.pack, mine)
@@ -118,6 +131,8 @@ export function buildCatalog(packs: readonly PackDef[]): Catalog {
   }
   return {
     packs,
+    buyers,
+    buyer: (id) => buyers.find((b) => b.id === id),
     pack: (id) => byPack.get(id),
     seed: (id) => seeds.get(id),
     find: (id) => finds.get(id),

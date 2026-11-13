@@ -29,6 +29,27 @@
       "items": { "type": "object", "required": ["id", "title", "seeds"], "additionalProperties": false,
         "properties": { "id": { "$ref": "#/$defs/slug" }, "title": { "type": "string" }, "seeds": { "type": "array", "minItems": 2, "items": { "$ref": "#/$defs/slug" } } } }
     },
+    "buyers": {
+      "type": "array",
+      "description": "Buyers at the market who stand in this field. A buyer is a named set of bars, and is buying while the farm meets every one.",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "bars"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "$ref": "#/$defs/slug", "description": "Unique across all packs." },
+          "name": { "type": "string", "minLength": 1, "maxLength": 48 },
+          "note": { "type": "string", "maxLength": 200, "description": "A line on what they look for." },
+          "bars": {
+            "type": "object",
+            "description": "Pack id to the readiness that field has to reach, 1 to 100. Has to include this pack.",
+            "minProperties": 1,
+            "propertyNames": { "pattern": "^[a-z0-9][a-z0-9-]{0,40}$" },
+            "additionalProperties": { "type": "integer", "minimum": 1, "maximum": 100 }
+          }
+        }
+      }
+    },
     "finds": {
       "type": "array",
       "description": "Wild finds: short facts foraged in the wilderness next to what is growing. Add nothing to readiness.",

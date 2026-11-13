@@ -3,11 +3,12 @@
 //
 // Two questions are kept apart. `allowed` is what a log may hold, and replaying a farm asks only that. `check` is what
 // the game asks of something done today: everything `allowed` asks, and that a seed has been earned, that it does not
-// run two layers ahead of a hollow one, and that a bar is for a field with an end. A rule added to the second can never
-// change how a saved farm replays, whatever a pack does later.
+// run two layers ahead of a hollow one, that a bar is for a field with an end, and that a sale is to a buyer who is
+// buying. A rule added to the second can never change how a saved farm replays, whatever a pack does later.
 import { LAYER_NAMES, type Catalog } from './catalog'
 import { isRecord } from './util'
 import { fieldOf, fenceCost, isBuildingTile, neighbourFields, nextFreeSlot, terrain, tileKey, wildKind, worldSize } from './land'
+import { notBuying } from './market'
 import { earnedLine, heldBy, isEarned } from './readiness'
 import { RULES, available, capLeft, cropOf, interval, revivable, ripe, thirsty, visible } from './rules'
 import { fromV2 } from './v2'
@@ -18,6 +19,7 @@ import type { Crop, FarmEvent, FarmState } from './types'
 export const initialState = (): FarmState => ({
   name: '', day: 0, energy: 0, energyMax: 0, coins: 0, barrel: 0,
   fields: {}, cleared: {}, crops: [], compost: [], unlocked: [], volunteers: [], foraged: [], focus: {}, bars: {},
+  sales: [],
   today: { planted: 0, spent: {} }, night: null,
 })
 
@@ -34,6 +36,7 @@ function copy(s: FarmState): FarmState {
     foraged: s.foraged.slice(),
     focus: { ...s.focus },
     bars: { ...s.bars },
+    sales: s.sales.map((x) => ({ ...x })),
     today: { planted: s.today.planted, spent: { ...s.today.spent } },
     night: s.night ? { saved: s.night.saved.slice(), wilted: s.night.wilted.slice(), barrelFilled: s.night.barrelFilled } : null,
   }
@@ -95,6 +98,8 @@ export function parseEvent(raw: unknown): FarmEvent | null {
       return text(raw.pack) && typeof raw.bar === 'number' ? { type, pack: raw.pack, bar: raw.bar } : null
     case 'farm-named':
       return text(raw.name) ? { type, name: raw.name } : null
+    case 'sold':
+      return text(raw.buyer) && text(raw.text) ? { type, buyer: raw.buyer, text: raw.text } : null
     case 'snapshot-imported':
       return Object.hasOwn(raw, 'snapshot') ? { type, snapshot: raw.snapshot } : null
     default:
@@ -240,6 +245,13 @@ function whyBar(s: FarmState, e: Extract<FarmEvent, { type: 'bar-set' }>, catalo
   return Number.isInteger(e.bar) && e.bar >= min && e.bar <= max ? null : 'A bar is a whole number from ' + min + ' to ' + max + '.'
 }
 
+function whySold(s: FarmState, e: Extract<FarmEvent, { type: 'sold' }>): string | null {
+  if (s.day < 1) return 'There is no farm to sell from.'
+  const id = e.buyer.trim().length
+  if (id < 1 || id > 60) return 'That is not a buyer.'
+  return whyText(e.text, RULES.proofMin, 'to say what happened')
+}
+
 /** Why this cannot be a farm's name, or null. Also used by the game before it asks the farm. */
 export function whyName(name: string): string | null {
   const n = name.trim().length
@@ -276,6 +288,8 @@ function why(s: FarmState, e: FarmEvent, catalog: Catalog): string | null {
       return whyBar(s, e, catalog)
     case 'farm-named':
       return s.day < 1 ? 'There is no farm to name.' : whyName(e.name)
+    case 'sold':
+      return whySold(s, e)
     case 'snapshot-imported':
       return fromV2(e.snapshot, catalog) ? null : 'That is not a farm this game can read.'
   }
@@ -286,9 +300,14 @@ function why(s: FarmState, e: FarmEvent, catalog: Catalog): string | null {
  * can change these things under a saved farm and the farm loses nothing:
  * - a seed that has to be earned is planted only once it has been (a farm that planted it earlier keeps the crop);
  * - a seed is not planted two layers ahead of a hollow one (a farm that grew its canopy first keeps it);
- * - a bar is set only for a field with an end (a bar set before a pack was marked as having none stays in the log, unused).
+ * - a bar is set only for a field with an end (a bar set before a pack was marked as having none stays in the log, unused);
+ * - a sale is made only to a buyer who is buying today (a sale stays when its buyer's bars rise, or the buyer leaves).
  */
 function whyToday(s: FarmState, e: FarmEvent, catalog: Catalog): string | null {
+  if (e.type === 'sold') {
+    const buyer = catalog.buyer(e.buyer)
+    return buyer ? notBuying(buyer, s, catalog) : 'No buyer of that name is at the market.'
+  }
   if (e.type === 'bar-set') {
     const pack = catalog.pack(e.pack)
     return pack?.perennial === true ? 'The ' + pack.title + ' field has no end, so it has no bar.' : null
@@ -447,6 +466,9 @@ function step(s: FarmState, e: FarmEvent, catalog: Catalog): FarmState {
       return n
     case 'farm-named':
       n.name = e.name.trim()
+      return n
+    case 'sold':
+      n.sales.push({ buyer: e.buyer.trim(), day: n.day, text: e.text.trim() })
       return n
     case 'snapshot-imported':
       return fromV2(e.snapshot, catalog) ?? s
