@@ -137,7 +137,7 @@ Those coins are part of a saved farm, so `edge` may be added to a released seed 
 
 A guild is a named set of seeds from this pack that a practitioner would study together. It is **whole** while every member stands as a tree, and a whole guild pays a few coins each time one of its members is harvested or checked in on. A wilted member stops the pay until it is revived. A seed may be in more than one guild, and is paid by each that is whole. A guild may hold a wild seed: it is then whole only once the farmer has found and rooted it.
 
-Those coins are part of a saved farm, so a released guild is a promise: it may not be removed, and it may lose members but never gain one. To group more seeds, add a new guild.
+Those coins are part of a saved farm, so a released guild is a promise: it may not be removed, and its members may not change. With one more seed it would be whole later, and a seed that left would no longer be paid by it; either way a farm would replay with fewer coins than it spent. To group seeds differently, add a new guild.
 
 ## Finds
 
@@ -147,7 +147,7 @@ A find is a short fact the player forages in the wilderness. It is picked by wha
 
 Seed ids, find ids and pack ids are unique across all packs, and branch ids within a pack. Farms refer to all of them and are replayed against the current packs, so never rename or remove a released one. Never change a released seed's `needs` or whether it is `wild`, in either direction, and never lower a pack's `energy_cap`: on replay the game skips any event that is no longer allowed, and the farm quietly changes. To hold a released seed back, give it `earned` instead. Whether a pack is `perennial` may change too: a bar a farmer set before a pack lost its end stays in their log and is simply not used.
 
-`packs/lock.json` holds these promises, one line per id, and `npm test` fails when a change would break one: an id that is gone or has moved, a seed whose `needs` or `wild` changed, an artifact seed that now asks for a write-up, a find that leads somewhere else, a cap that was lowered or added, a guild that is gone or has gained a member, a seed whose `edge` is gone or names another pack, a released seed that became a sapling or changed the seed that drops it. Even needing *less* counts: a farm that jumped the fence to that seed holds a jump the game would now refuse. Adding seeds, finds, branches, guilds and packs is always fine: run `npm run lock` and commit the file with your change. It will not write over a breaking change, and it will not replace a lock file it cannot read.
+`packs/lock.json` holds these promises, one line per id, and `npm test` fails when a change would break one: an id that is gone or has moved, a seed whose `needs` or `wild` changed, an artifact seed that now asks for a write-up, a find that leads somewhere else, a cap that was lowered or added, a guild that is gone or whose members changed, a seed whose `edge` is gone or names another pack, a released seed that became a sapling or changed the seed that drops it. Even needing *less* counts: a farm that jumped the fence to that seed holds a jump the game would now refuse. Adding seeds, finds, branches, guilds and packs is always fine: run `npm run lock` and commit the file with your change. It will not write over a breaking change, and it will not replace a lock file it cannot read.
 
 ## Rules the validator enforces
 

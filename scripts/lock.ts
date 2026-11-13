@@ -52,8 +52,9 @@ export function readLock(text: string): Lock {
  * A sapling is hidden until its parent is rooted, so a released seed may not become one or change parent; a sapling
  * may become an ordinary seed, which only shows it sooner.
  * An edge pays double, so a seed may gain one but never lose or move it.
- * A guild pays while it is whole, so it may not go, and may lose members but not gain them: with one more to root it
- * is whole later, the farm is paid less, and something it bought with those coins may no longer replay.
+ * A guild pays while it is whole, so it may not go and its members may not change in either direction. With one more
+ * to root it is whole later; with one fewer, the seed that left is no longer paid by it. Either way the farm replays
+ * with fewer coins, and something it bought with them may be refused.
  * What a seed needs and whether it is wild may not change in either direction: a farm that jumped the fence to a
  * seed, or domesticated it, has an event in its log that is refused once the seed no longer needed that.
  */
@@ -91,6 +92,7 @@ export function lockProblems(old: Lock, now: Lock): string[] {
     const is = now.guilds[id]
     if (!is) { problems.push('guild "' + id + '" is gone: it paid while it was whole, so farms would replay with fewer coins than they spent'); continue }
     for (const seed of is.seeds) if (!was.seeds.includes(seed)) problems.push('guild "' + id + '" gained "' + seed + '": a farm on which it was whole would be paid less, and may have spent those coins')
+    for (const seed of was.seeds) if (!is.seeds.includes(seed)) problems.push('guild "' + id + '" lost "' + seed + '": that seed was paid by it at every check-in, and a farm may have spent those coins')
   }
   return problems
 }

@@ -122,8 +122,13 @@ describe('an edge in the lock', () => {
 })
 
 describe('a guild in the lock', () => {
-  it('may lose a member: it is whole sooner, so no farm is paid less', () => {
-    expect(lockProblems(locked, changed((p) => { p[0]?.guilds?.[0]?.seeds.pop() }))).toEqual([])
+  // The others are whole sooner, but the seed that left is no longer paid by this guild: its own check-ins replay for less.
+  it('may not lose a member either: the seed that leaves stops being paid by it', () => {
+    expect(lockProblems(locked, changed((p) => { p[0]?.guilds?.[0]?.seeds.pop() })).join('\n')).toMatch(/guild "garden\/pair" lost "squash"/)
+  })
+
+  it('may list the same members in another order', () => {
+    expect(lockProblems(locked, changed((p) => { p[0]?.guilds?.[0]?.seeds.reverse() }))).toEqual([])
   })
 
   it('is told apart from a guild of the same name in another pack', () => {
