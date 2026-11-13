@@ -3,7 +3,8 @@ import { HARVEST_NAMES, LAYER_NAMES, type Catalog, type Seed } from '../engine/c
 import { harvestWork, rungName, waterWork, type WaterKind } from '../engine/ladder'
 import { earnedLine, earnedProgress, heldBy, isEarned, readiness } from '../engine/readiness'
 import { RULES, available, cropOf, revivable, ripe, rooted, thirsty, visible, zone } from '../engine/rules'
-import type { Crop, FarmState, Layer, PackDef } from '../engine/types'
+import { dragging, guildWhole, wholeGuilds } from '../engine/yields'
+import type { Crop, FarmState, GuildDef, Layer, PackDef } from '../engine/types'
 
 export const DEFAULT_COLOR = '#6DB24F'
 export const packColor = (p: PackDef): string => p.color ?? DEFAULT_COLOR
@@ -275,13 +276,63 @@ export interface TreeBranch {
   x: number
 }
 
-export interface TreeGuild {
+/** How a guild stands on the farm today. */
+export interface GuildStanding {
+  rooted: number
+  total: number
+  /** Every member stands as a tree, so the guild pays. */
+  whole: boolean
+  /** Names of the wilted trees that hold its pay back. Empty until every member is rooted. */
+  dragged: string[]
+}
+
+export interface TreeGuild extends GuildStanding {
   id: string
   title: string
   /** `name` is null for a wild seed that has not been found yet. */
   members: { id: string; name: string | null; status: SeedStatus }[]
-  rooted: number
-  total: number
+}
+
+/** "A", "A and B", "A, B and C". */
+const andList = (items: readonly string[]): string =>
+  items.length <= 1 ? items.join('') : items.slice(0, -1).join(', ') + ' and ' + items[items.length - 1]
+
+export function guildStanding(g: GuildDef, state: Pick<FarmState, 'crops'>, catalog: Catalog): GuildStanding {
+  const have = rooted(state)
+  return {
+    rooted: g.seeds.filter((id) => have.has(id)).length, total: g.seeds.length, whole: guildWhole(g, state),
+    dragged: dragging(g, state).map((id) => catalog.seed(id)?.name ?? id),
+  }
+}
+
+/** How a guild stands, in a few words. `coins` is what a whole one pays. */
+export function guildStatus(g: GuildStanding, coins: number): string {
+  if (g.whole) return 'whole · pays ' + coins + ' coins a check-in'
+  if (g.dragged.length) return andList(g.dragged) + (g.dragged.length === 1 ? ' has' : ' have') + ' wilted · no pay until revived'
+  return g.rooted + ' of ' + g.total + ' rooted'
+}
+
+export interface GuildNews {
+  /** What the seed's guilds just paid. */
+  coins: number
+  /** What to tell the farmer about them, a sentence each. */
+  lines: string[]
+}
+
+/**
+ * What a seed's guilds did at a harvest or a check-in. `state` is the farm afterwards. After work that passed, each
+ * whole guild has paid; after a check-in that wilted a tree, the guilds it now drags are named.
+ */
+export function guildNews(seed: Seed, state: Pick<FarmState, 'crops'>, catalog: Catalog, ok: boolean): GuildNews {
+  const named = (g: GuildDef): string => 'the ' + g.title + ' guild'
+  if (ok) {
+    const whole = wholeGuilds(seed.id, state, catalog)
+    return { coins: whole.length * RULES.guild.coins, lines: whole.map((g) => 'The ' + g.title + ' guild is whole: +' + RULES.guild.coins + ' coins.') }
+  }
+  const held = catalog.guildsOf(seed.id).filter((g) => dragging(g, state).includes(seed.id))
+  if (held.length === 0) return { coins: 0, lines: [] }
+  const guilds = andList(held.map(named))
+  return { coins: 0, lines: [guilds.charAt(0).toUpperCase() + guilds.slice(1) + (held.length === 1 ? ' pays' : ' pay') + ' nothing until ' + seed.name + ' is revived.'] }
 }
 
 export interface TreeView {
@@ -367,7 +418,7 @@ export function treeView(packId: string, state: FarmState, catalog: Catalog): Tr
       if (!seed) return []
       return [{ id, name: visible(seed, state) ? seed.name : null, status: seedStatus(seed, state, catalog) }]
     })
-    return { id: g.id, title: g.title, members, rooted: members.filter((m) => m.status === 'rooted').length, total: members.length }
+    return { id: g.id, title: g.title, members, ...guildStanding(g, state, catalog) }
   })
 
   const ready = readiness(packId, state, catalog)
@@ -432,12 +483,14 @@ export interface CropView {
   /** Newest first. */
   journal: JournalLine[]
   sources: SourceLink[]
+  /** The guilds it is in and how each stands: "Consensus core guild: 2 of 4 rooted". */
+  guilds: string[]
 }
 
 const WATER_WORK: Record<WaterKind, string> = { recall: 'a recall card', explain: 'an explanation in your own words' }
 
 /** What the crop sheet shows for a crop on a given day. */
-export function cropView(crop: Crop, state: Pick<FarmState, 'day'>, catalog: Catalog): CropView | null {
+export function cropView(crop: Crop, state: Pick<FarmState, 'day' | 'crops'>, catalog: Catalog): CropView | null {
   const seed = catalog.seed(crop.seed)
   if (!seed) return null
   const day = state.day
@@ -460,5 +513,6 @@ export function cropView(crop: Crop, state: Pick<FarmState, 'day'>, catalog: Cat
     seed: seed.id, name: seed.name, pack: seed.pack, layer: LAYER_NAMES[seed.layer], stageLine, statusLine, nextWork,
     notes: crop.notes, journal: crop.journal.map((j) => ({ day: j.day, label: j.kind === 'explain' ? 'Explained' : 'Harvest write-up', text: j.text, ok: j.ok })).reverse(),
     sources: sourceLinks(seed, catalog),
+    guilds: catalog.guildsOf(seed.id).map((g) => g.title + ' guild: ' + guildStatus(guildStanding(g, state, catalog), RULES.guild.coins)),
   }
 }

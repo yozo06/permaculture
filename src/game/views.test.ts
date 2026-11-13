@@ -2,12 +2,12 @@ import { describe, expect, it } from 'vitest'
 import { collectPacks } from '../../scripts/packs-lib.mjs'
 import { buildCatalog } from '../engine/catalog'
 import type { Crop, PackDef, SeedDef } from '../engine/types'
-import { earningCatalog, layeredCatalog, run, started } from '../engine/fixtures'
+import { bountifulCatalog, earningCatalog, layeredCatalog, run, smallCatalog, smallFarm, started } from '../engine/fixtures'
 import { apply, fieldsToOpen, fold } from '../engine/fold'
 import { RULES } from '../engine/rules'
 import type { FarmState } from '../engine/types'
 import sampleFarm from './sample-farm.json'
-import { afterJump, bagView, cropView, readinessView, seedStatus, sourceLinks, splitName, tending, treeView, driftText, pickerView } from './views'
+import { afterJump, bagView, cropView, guildNews, guildStatus, readinessView, seedStatus, sourceLinks, splitName, tending, treeView, driftText, pickerView } from './views'
 
 const catalog = buildCatalog(collectPacks())
 
@@ -183,7 +183,51 @@ describe('treeView with wrapped tiers', () => {
   it('counts how many of a guild are rooted', () => {
     expect(v?.guilds).toEqual([{ id: 'g', title: 'G', members: [
       { id: 'a1', name: 'a1', status: 'ready' }, { id: 'b1', name: 'b1', status: 'ready' }, { id: 'c1', name: 'c1', status: 'locked' },
-    ], rooted: 0, total: 3 }])
+    ], rooted: 0, total: 3, whole: false, dragged: [] }])
+  })
+})
+
+describe('a guild on the farm', () => {
+  // The garden's guild is corn, beans and squash: see `smallPacks`.
+  const tree = (seed: string, patch: Partial<Crop> = {}): Crop =>
+    ({ seed, x: 20, y: 20, stage: 4, best: 4, due: 99, wilted: false, perennial: true, notes: '', journal: [], ...patch })
+  const on = (...crops: Crop[]): FarmState => ({ ...smallFarm(), crops })
+  const sisters = (s: FarmState) => treeView('garden', s, smallCatalog)?.guilds[0]
+  const seed = (id: string) => { const x = bountifulCatalog.seed(id); if (!x) throw new Error('no seed ' + id); return x }
+
+  it('is growing, whole, or dragged by a wilted tree, and says so in a few words', () => {
+    const growing = sisters(on(tree('corn'), tree('beans', { perennial: false })))
+    expect(growing).toMatchObject({ rooted: 1, total: 3, whole: false, dragged: [] })
+    expect(guildStatus(growing!, 5)).toBe('1 of 3 rooted')
+    const whole = sisters(on(tree('corn'), tree('beans'), tree('squash')))
+    expect(whole).toMatchObject({ rooted: 3, whole: true, dragged: [] })
+    expect(guildStatus(whole!, 5)).toBe('whole · pays 5 coins a check-in')
+    const dragged = sisters(on(tree('corn', { wilted: true }), tree('beans'), tree('squash', { wilted: true })))
+    expect(dragged).toMatchObject({ rooted: 3, whole: false, dragged: ['Corn', 'Squash'] })
+    expect(guildStatus(dragged!, 5)).toBe('Corn and Squash have wilted · no pay until revived')
+    expect(guildStatus(sisters(on(tree('corn'), tree('beans', { wilted: true }), tree('squash')))!, 5)).toBe('Beans has wilted · no pay until revived')
+  })
+
+  it('shows on the crop sheet of each member, and not on a crop that is in no guild', () => {
+    const s = on(tree('corn'), tree('beans'), tree('squash'), tree('saw'))
+    expect(cropView(tree('corn'), s, smallCatalog)?.guilds).toEqual(['Three sisters guild: whole · pays ' + RULES.guild.coins + ' coins a check-in'])
+    expect(cropView(tree('corn'), on(tree('corn')), smallCatalog)?.guilds).toEqual(['Three sisters guild: 1 of 3 rooted'])
+    expect(cropView(tree('saw'), s, smallCatalog)?.guilds).toEqual([])
+  })
+
+  it('tells of each whole guild after a harvest or a check-in that passed', () => {
+    const s = on(tree('corn'), tree('beans'))
+    expect(guildNews(seed('corn'), s, bountifulCatalog, true)).toEqual({ coins: 2 * RULES.guild.coins, lines: ['The Tall guild is whole: +5 coins.', 'The Pole and climber guild is whole: +5 coins.'] })
+    expect(guildNews(seed('beans'), s, bountifulCatalog, true)).toEqual({ coins: RULES.guild.coins, lines: ['The Pole and climber guild is whole: +5 coins.'] })
+    expect(guildNews(seed('squash'), s, bountifulCatalog, true)).toEqual({ coins: 0, lines: [] })
+  })
+
+  it('tells which guilds a tree drags after a check-in that wilted it', () => {
+    const s = on(tree('corn', { wilted: true }), tree('beans'))
+    expect(guildNews(seed('corn'), s, bountifulCatalog, false)).toEqual({ coins: 0, lines: ['The Tall guild and the Pole and climber guild pay nothing until Corn is revived.'] })
+    expect(guildNews(seed('beans'), on(tree('corn'), tree('beans', { wilted: true })), bountifulCatalog, false).lines).toEqual(['The Pole and climber guild pays nothing until Beans is revived.'])
+    // A crop that is not a tree yet drags nothing: its guild was not whole to begin with.
+    expect(guildNews(seed('squash'), on(tree('corn'), tree('beans'), tree('squash', { perennial: false, wilted: true })), bountifulCatalog, false).lines).toEqual([])
   })
 })
 
@@ -199,7 +243,7 @@ describe('cropView', () => {
   const view = (seed: string, patch: Partial<FarmState['crops'][number]> = {}, day = s.day) => {
     const crop = s.crops.find((c) => c.seed === seed)
     if (!crop) throw new Error('no crop ' + seed)
-    return cropView({ ...crop, ...patch }, { day }, catalog)
+    return cropView({ ...crop, ...patch }, { ...s, day }, catalog)
   }
 
   it('says where a crop that is not thirsty stands, with nothing to do', () => {
@@ -245,7 +289,7 @@ describe('cropView', () => {
   })
 
   it('is null for a seed no pack has', () => {
-    expect(cropView({ seed: 'gone', x: 0, y: 0, stage: 0, best: 0, due: 1, wilted: false, perennial: false, notes: '', journal: [] }, { day: 1 }, catalog)).toBeNull()
+    expect(cropView({ seed: 'gone', x: 0, y: 0, stage: 0, best: 0, due: 1, wilted: false, perennial: false, notes: '', journal: [] }, { day: 1, crops: [] }, catalog)).toBeNull()
   })
 })
 

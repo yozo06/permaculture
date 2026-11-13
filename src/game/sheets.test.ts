@@ -5,7 +5,7 @@ import type { CropView, EarnedRow, ReadinessRow, ReadinessView } from './views'
 
 const view = (patch: Partial<CropView> = {}): CropView => ({
   seed: 'raft', name: 'Raft', pack: 'system-design', layer: 'Root', stageLine: 'Stage 2 of 5 · Z2 · Recall', statusLine: 'Growing.', nextWork: null,
-  notes: '', journal: [], sources: [], ...patch,
+  notes: '', journal: [], sources: [], guilds: [], ...patch,
 })
 
 describe('countText', () => {
@@ -96,6 +96,12 @@ describe('cropSheetHtml', () => {
     expect(html.indexOf('later')).toBeLessThan(html.indexOf('earlier'))
     expect(html).toContain('Day 9 · Explained · passed')
     expect(html).toContain('Day 4 · Explained · not yet')
+  })
+
+  it('says which guilds the crop is in and how each stands, escaped, and nothing for a crop in none', () => {
+    const html = cropSheetHtml('', view({ guilds: ['Consensus <core> guild: 2 of 4 rooted'] }))
+    expect(html).toContain('<p class="sub">Consensus &lt;core&gt; guild: 2 of 4 rooted</p>')
+    expect(cropSheetHtml('', view())).not.toContain('guild')
   })
 
   it('says what is waiting, when something is', () => {

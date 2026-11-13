@@ -24,7 +24,7 @@ import {
   pickerHtml, plantSheetHtml, readinessSheetHtml, shareSheetHtml, tickList, writingBox,
 } from './sheets'
 import { arrivalText, neighbourCropView, neighbourRows, shareView, type ShareView } from './visit'
-import { afterJump, bagView, cropView, driftText, needsText, packColor, pickerView, readinessView, sourceLinks, splitName, tending, treeView, type TreeView } from './views'
+import { afterJump, bagView, cropView, driftText, guildNews, guildStatus, needsText, packColor, pickerView, readinessView, sourceLinks, splitName, tending, treeView, type TreeView } from './views'
 
 /* ---------- types ---------- */
 type Mode = 'water' | 'harvest' | 'testout'
@@ -805,17 +805,19 @@ function settle(seed: Seed, mode: Mode, ok: boolean, detail: Detail): string | n
     return ok ? '<b>Over the fence.</b> ' + name + ' is unlocked. ' + esc(afterJump(seed, S, catalog)) : '<b>Not yet.</b> ' + name + ' stays locked. Root its prerequisites, or try again tomorrow.'
   }
   if (!c) return ''
+  // What the seed's guilds paid, or which of them the tree now drags.
+  const guilds = guildNews(seed, S, catalog, ok).lines.map((l) => ' ' + esc(l)).join('')
   if (mode === 'harvest') {
     return ok
-      ? '<b>Premium grade.</b> +' + RULES.harvest.coins + ' coins. ' + name + ' is now a perennial: rooted, it only needs a check-in every ' + RULES.perennialInterval + ' days. Seeds that needed it are now unlocked.'
+      ? '<b>Premium grade.</b> +' + RULES.harvest.coins + ' coins. ' + name + ' is now a perennial: rooted, it only needs a check-in every ' + RULES.perennialInterval + ' days. Seeds that needed it are now unlocked.' + guilds
       : '<b>Seconds.</b> Composted. ' + name + ' drops back to stage ' + (c.stage + 1) + ' and goes in the review heap.'
   }
   if (ok) {
     return c.perennial
-      ? '<b>Checked in.</b> ' + name + ' stays rooted. Next check-in on day ' + c.due + '.'
+      ? '<b>Checked in.</b> ' + name + ' stays rooted. Next check-in on day ' + c.due + '.' + guilds
       : '<b>Watered.</b> ' + name + ' grows to stage ' + (c.stage + 1) + '/5. Next watering on day ' + c.due + ' (' + zone(c) + ').'
   }
-  return '<b>Wilted.</b> ' + name + (c.perennial ? '' : ' drops a stage and') + ' goes in the compost heap. Revive it tomorrow.'
+  return '<b>Wilted.</b> ' + name + (c.perennial ? '' : ' drops a stage and') + ' goes in the compost heap. Revive it tomorrow.' + guilds
 }
 
 function answer(i: number): void {
@@ -1229,7 +1231,7 @@ function openTree(packId: string = treePack()): void {
   html += '<p class="sub">Solid box: rooted · outline: growing (bar = stage) · cream outline: ready to plant · cream dashes: waiting for a lower layer · dashed: locked · green dot: found in the wild.</p>'
   if (v.guilds.length) {
     html += '<h3>Guilds</h3><p class="sub">Seeds that grow well together. A guild is whole while every member stands as a tree, and a whole guild pays ' + RULES.guild.coins + ' coins each time you harvest or check in on one of its members. One wilted member and it pays nothing until you revive it.</p><div>' +
-      v.guilds.map((g) => '<div class="row"><div class="n">' + esc(g.title) + '<small>' + g.members.map((m) => esc(m.name ?? 'a wild seed')).join(', ') + '</small></div><span class="sub">' + g.rooted + ' of ' + g.total + ' rooted</span></div>').join('') + '</div>'
+      v.guilds.map((g) => '<div class="row"><div class="n">' + esc(g.title) + '<small>' + g.members.map((m) => esc(m.name ?? 'a wild seed')).join(', ') + '</small></div><span class="sub">' + esc(guildStatus(g, RULES.guild.coins)) + '</span></div>').join('') + '</div>'
   }
   if (v.locked.length) html += '<h3>Jump the fence</h3><p class="sub">Already know one of these? Prove it on a harvest-grade question (10 energy) and it unlocks without its prerequisites.</p><div>' + v.locked.map((t) => '<div class="row"><div class="n">' + esc(t.name) + '<small>needs ' + esc(t.needs) + (t.earned ? ' · a jump will not earn it: that takes ' + esc(t.earned) : '') + (t.held ? ' · after a jump it will still wait for the ' + esc(t.held) + ' layer' : '') + '</small></div><button type="button" data-act="testout" data-arg="' + esc(t.id) + '">Test out</button></div>').join('') + '</div>'
   html += heldSectionHtml(v.held, RULES.balance.below)

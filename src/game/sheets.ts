@@ -83,6 +83,7 @@ export function cropSheetHtml(chip: string, v: CropView): string {
     chip + '<h2>' + esc(v.name) + '</h2>' +
     '<p class="sub">' + esc(v.layer) + ' layer · ' + esc(v.stageLine) + '</p>' +
     '<p>' + esc(v.statusLine) + (v.nextWork ? ' ' + esc(v.nextWork) : '') + '</p>' +
+    v.guilds.map((g) => '<p class="sub">' + esc(g) + '</p>').join('') +
     '<h3>Your notes</h3>' + (v.notes ? noteHtml(v.notes) : '<p class="sub">' + NO_NOTES + '</p>') +
     '<h3>Journal</h3>' +
     (v.journal.length
