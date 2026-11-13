@@ -3,7 +3,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import { LAYERS } from '../../engine/catalog'
-import { KEYS, SHEET, cropHeight, cropLook, cropSprite, iconHtml, paintKeys, sprite, spriteNames, tones } from './sprites'
+import { KEYS, SHEET, cropHeight, cropLook, cropSprite, holds, iconHtml, paintKeys, sprite, spriteNames, tones } from './sprites'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 
@@ -19,7 +19,7 @@ describe('the sprite sheet', () => {
     const boxes = spriteNames().map((n) => ({ n, ...sprite(n)! }))
     for (const b of boxes) {
       expect(b.x >= 0 && b.y >= 0 && b.x + b.w <= SHEET.width && b.y + b.h <= SHEET.height, b.n).toBe(true)
-      expect(b.w > 0 && b.h > 0 && b.top >= 0 && b.top < b.h, b.n).toBe(true)
+      expect(b.w > 0 && b.h > 0 && b.top >= 0 && b.top <= b.bottom && b.bottom < b.h && b.left >= 0 && b.left <= b.right && b.right < b.w, b.n).toBe(true)
     }
     for (const a of boxes) for (const b of boxes) {
       if (a.n < b.n) expect(a.x + a.w <= b.x || b.x + b.w <= a.x || a.y + a.h <= b.y || b.y + b.h <= a.y, a.n + ' and ' + b.n).toBe(true)
@@ -74,6 +74,32 @@ describe('the sprite for a crop', () => {
     expect(cropHeight('crop/canopy/5')).toBeGreaterThan(20)
     expect(cropHeight('crop/ground-cover/5')).toBeLessThan(14)
     expect(cropHeight('no/such')).toBe(0)
+  })
+})
+
+describe('whether a point is on a sprite', () => {
+  // The well is 16 by 16 with its tile's top corner at (8, 3) of it; what is drawn of it starts a column in.
+  it('goes by what is drawn of it, not by the box it was drawn in', () => {
+    expect(holds('well', 100, 50, 100, 55)).toBe(true)
+    expect(holds('well', 100, 50, 100 - 7, 50 - 3)).toBe(true)
+    expect(holds('well', 100, 50, 100 - 8, 50 - 3)).toBe(false)
+    expect(holds('well', 100, 50, 100, 50 + 13)).toBe(false)
+    // A sprout's sprite is 24 by 32, and nearly all of it is empty.
+    expect(holds('crop/canopy/0', 100, 50, 100, 50 + 10)).toBe(true)
+    expect(holds('crop/canopy/0', 100, 50, 100, 50)).toBe(false)
+    expect(holds('crop/canopy/0', 100, 50, 100 + 5, 50 + 10)).toBe(false)
+    // Its shadow is the last row drawn; the row under that is empty.
+    expect(holds('crop/canopy/0', 100, 50, 100, 50 + 12)).toBe(true)
+    expect(holds('crop/canopy/0', 100, 50, 100, 50 + 13)).toBe(false)
+  })
+
+  it('reaches a margin further when one is asked for', () => {
+    expect(holds('crop/canopy/0', 100, 50, 100 + 3, 50 + 10, 2)).toBe(true)
+    expect(holds('crop/canopy/0', 100, 50, 100 + 4, 50 + 10, 2)).toBe(false)
+  })
+
+  it('is never so for a sprite the sheet does not have', () => {
+    expect(holds('no/such', 100, 50, 100, 50, 99)).toBe(false)
   })
 })
 

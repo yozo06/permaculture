@@ -1,8 +1,9 @@
 // Draws every sprite and packs them into one sheet. Run it with `npm run art`.
 //   src/game/art/sheet.png   the sprite sheet
-//   src/game/art/atlas.json  where each sprite is on it: name -> [x, y, w, h, ax, ay, top]
-// (ax, ay) is the pixel of the sprite that sits on the top corner of its tile, and `top` is its first row with
-// anything drawn in it, so the game knows how tall the thing itself is.
+//   src/game/art/atlas.json  where each sprite is on it: name -> [x, y, w, h, ax, ay, top, left, right, bottom]
+// (ax, ay) is the pixel of the sprite that sits on the top corner of its tile. The last four are the box of what is
+// drawn in it: its first and last rows and columns with anything in them, so the game knows how big the thing itself
+// is, whatever the size of the box it was drawn in.
 import { mkdirSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -18,6 +19,16 @@ const outDir = path.resolve(here, '..', 'src', 'game', 'art')
 /** Every sprite, by name. */
 export const sprites = () => ({ ...tiles(), ...wild(), ...crops(), ...props() })
 
+/** The box of what is drawn in a bitmap: [top, left, right, bottom], the first and last rows and columns with anything in them. */
+export function drawn(b) {
+  let top = b.h - 1, left = b.w - 1, right = 0, bottom = 0
+  for (let y = 0; y < b.h; y++) for (let x = 0; x < b.w; x++) {
+    if (!b.get(x, y)) continue
+    top = Math.min(top, y); left = Math.min(left, x); right = Math.max(right, x); bottom = Math.max(bottom, y)
+  }
+  return [top, left, right, bottom]
+}
+
 /** Pack sprites onto shelves, tallest first, with a pixel of space round each so nothing bleeds into its neighbour. */
 export function pack(all, width = 512) {
   const names = Object.keys(all).sort((a, b) => all[b].b.h - all[a].b.h || (a < b ? -1 : 1))
@@ -26,9 +37,7 @@ export function pack(all, width = 512) {
   for (const name of names) {
     const { b, ax, ay } = all[name]
     if (x + b.w + 1 > width) { x = 1; y += shelf + 1; shelf = 0 }
-    let top = 0
-    while (top < b.h - 1 && !Array.from({ length: b.w }, (_, i) => b.get(i, top)).some(Boolean)) top++
-    atlas[name] = [x, y, b.w, b.h, ax, ay, top]
+    atlas[name] = [x, y, b.w, b.h, ax, ay, ...drawn(b)]
     x += b.w + 1
     shelf = Math.max(shelf, b.h)
   }

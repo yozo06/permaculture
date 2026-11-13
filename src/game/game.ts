@@ -19,7 +19,8 @@ import sampleFarm from './sample-farm.json'
 import { readLink } from './links'
 import { MOMENT_MS, momentDots, type DotTone, type MomentKind } from './moments'
 import { BOOK_KEY, ageText, bookText, readBook, receive, remove, tooOld, type Arrival, type Book } from './neighbours'
-import { NEUTRAL_COLOR, cropHeight, cropSprite, paintKeys, sprite as spriteAt } from './art/sprites'
+import { NEUTRAL_COLOR, cropHeight, cropSprite, holds, paintKeys, sprite as spriteAt } from './art/sprites'
+import { frontmost } from './hand'
 import { createStore, defaultId, LOG_KEY, type StorageLike } from './store'
 import { esc, shuffle } from './util'
 import { REF, cameraAfter, defaultZoom, fitView, pinchZoom, shift, zoomRange, type View } from './view'
@@ -302,12 +303,14 @@ function buildStatics(): void {
       statics.push({ s: x + y, d: () => { const p = iso(x, y); drawBush(p.sx, p.sy) } })
     }
   }
-  statics.push({ s: BARN.x + BARN.y + 1.5, d: drawBarn, kind: 'barn', hit: (ix, iy) => { const p = iso(BARN.x, BARN.y); return ix >= p.sx - 32 && ix <= p.sx + 32 && iy >= p.sy - 30 && iy <= p.sy + 32 } })
-  statics.push({ s: WELL.x + WELL.y, d: drawWell, kind: 'well', hit: (ix, iy) => { const p = iso(WELL.x, WELL.y); return Math.abs(ix - p.sx) <= 8 && iy >= p.sy - 4 && iy <= p.sy + 14 } })
-  statics.push({ s: COMPOST.x + COMPOST.y, d: drawCompost, kind: 'compost', hit: (ix, iy) => { const p = iso(COMPOST.x, COMPOST.y); return Math.abs(ix - p.sx) <= 8 && iy >= p.sy + 2 && iy <= p.sy + 14 } })
-  statics.push({ s: GATE.x + GATE.y + 1.5, d: drawGate, kind: 'gate', hit: (ix, iy) => { const p = iso(GATE.x, GATE.y); return Math.abs(ix - (p.sx - 16)) <= 20 && iy >= p.sy - 24 && iy <= p.sy + 20 } })
-  statics.push({ s: MARKET.x + MARKET.y, d: drawMarket, kind: 'market', hit: (ix, iy) => { const p = iso(MARKET.x, MARKET.y); return Math.abs(ix - p.sx) <= 10 && iy >= p.sy - 12 && iy <= p.sy + 14 } })
-  statics.push({ s: SIGN.x + SIGN.y, d: drawSign, kind: 'sign', hit: (ix, iy) => { const p = iso(SIGN.x, SIGN.y); return Math.abs(ix - p.sx) <= 8 && iy >= p.sy - 4 && iy <= p.sy + 14 } })
+  // A building takes the taps that land on what is drawn of it, and a finger's margin round that.
+  const on = (name: string, at: { x: number; y: number }) => (ix: number, iy: number): boolean => { const p = iso(at.x, at.y); return holds(name, p.sx, p.sy, ix, iy, 3) }
+  statics.push({ s: BARN.x + BARN.y + 1.5, d: drawBarn, kind: 'barn', hit: on('barn', BARN) })
+  statics.push({ s: WELL.x + WELL.y, d: drawWell, kind: 'well', hit: on('well', WELL) })
+  statics.push({ s: COMPOST.x + COMPOST.y, d: drawCompost, kind: 'compost', hit: on('compost', COMPOST) })
+  statics.push({ s: GATE.x + GATE.y + 1.5, d: drawGate, kind: 'gate', hit: on('gate', GATE) })
+  statics.push({ s: MARKET.x + MARKET.y, d: drawMarket, kind: 'market', hit: on('stall', MARKET) })
+  statics.push({ s: SIGN.x + SIGN.y, d: drawSign, kind: 'sign', hit: on('sign', SIGN) })
   for (const [pack, slot] of Object.entries(D().fields)) {
     const at = flagTile(slot)
     statics.push({
@@ -585,12 +588,11 @@ function tileAt(ix: number, iy: number): { x: number; y: number } | null {
 function pick(ix: number, iy: number): Pick | null {
   // A flag is drawn over whatever stands behind it, so it takes the tap first: what you see is what you tap.
   for (const o of statics) if (o.kind === 'flag' && o.pack !== undefined && o.hit?.(ix, iy)) return { kind: 'flag', pack: o.pack }
-  let best: { s: number; crop: Crop } | null = null
-  for (const c of D().crops) {
-    const { sx, sy } = iso(c.x, c.y)
-    if (Math.abs(ix - sx) <= 7 && iy >= sy - 16 && iy <= sy + 14 && (!best || c.x + c.y > best.s)) best = { s: c.x + c.y, crop: c }
-  }
-  if (best) return { kind: 'crop', crop: best.crop }
+  const crop = frontmost(D().crops.map((c) => {
+    const seed = catalog.seed(c.seed)
+    return { what: c, ...iso(c.x, c.y), sprite: seed ? cropSprite(seed.layer, c.stage, c.perennial, c.wilted) : '', s: c.x + c.y }
+  }), ix, iy)
+  if (crop) return { kind: 'crop', crop }
   for (const o of statics) {
     if (!o.hit || !o.kind || o.kind === 'forest' || o.kind === 'flag' || !o.hit(ix, iy)) continue
     return { kind: o.kind }

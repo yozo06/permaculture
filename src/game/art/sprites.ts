@@ -3,8 +3,11 @@
 import type { Layer } from '../../engine/types'
 import atlas from './atlas.json'
 
-/** A sprite on the sheet. (ax, ay) is the pixel that sits on the top corner of its tile; `top` is its first row with anything in it. */
-export interface Sprite { x: number; y: number; w: number; h: number; ax: number; ay: number; top: number }
+/**
+ * A sprite on the sheet. (ax, ay) is the pixel that sits on the top corner of its tile. `top`, `left`, `right` and
+ * `bottom` are the box of what is drawn in it: its first and last rows and columns with anything in them.
+ */
+export interface Sprite { x: number; y: number; w: number; h: number; ax: number; ay: number; top: number; left: number; right: number; bottom: number }
 
 export const SHEET = { width: atlas.width, height: atlas.height }
 
@@ -12,8 +15,19 @@ const ENTRIES: Record<string, number[]> = atlas.sprites
 
 export function sprite(name: string): Sprite | undefined {
   if (!Object.hasOwn(ENTRIES, name)) return undefined
-  const [x = 0, y = 0, w = 0, h = 0, ax = 0, ay = 0, top = 0] = ENTRIES[name] ?? []
-  return { x, y, w, h, ax, ay, top }
+  const [x = 0, y = 0, w = 0, h = 0, ax = 0, ay = 0, top = 0, left = 0, right = w - 1, bottom = h - 1] = ENTRIES[name] ?? []
+  return { x, y, w, h, ax, ay, top, left, right, bottom }
+}
+
+/**
+ * Whether the point (ix, iy) is on what is drawn of a sprite whose tile has its top corner at (sx, sy), or within
+ * `margin` pixels of it. It goes by the box of what is drawn, so the empty space round a sprout takes no taps.
+ */
+export function holds(name: string, sx: number, sy: number, ix: number, iy: number, margin = 0): boolean {
+  const s = sprite(name)
+  if (!s) return false
+  const x = ix - (Math.round(sx) - s.ax), y = iy - (Math.round(sy) - s.ay)
+  return x >= s.left - margin && x < s.right + 1 + margin && y >= s.top - margin && y < s.bottom + 1 + margin
 }
 
 export const spriteNames = (): string[] => Object.keys(ENTRIES)
