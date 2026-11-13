@@ -369,7 +369,8 @@ function buildGround(): void {
 }
 buildStatics()
 /** Without the sheet there is nothing to draw the farm with. Say so: the farm itself is safe, and its sheets still open. */
-const sheetMissing = (): void => { $('hint').textContent = 'The farm\'s pictures did not load, so the land is blank. Your farm is safe. Reload the page to try again.' }
+let sheetGone = false
+const sheetMissing = (): void => { $('hint').textContent = 'The farm\'s pictures did not load, so the land is blank. Your farm is safe. Reload the page to try again.'; sheetGone = true }
 if (sheetImage.complete) { if (sheetImage.naturalWidth > 0) sheetLoaded(); else sheetMissing() }
 else { sheetImage.addEventListener('load', sheetLoaded); sheetImage.addEventListener('error', sheetMissing) }
 
@@ -476,7 +477,8 @@ function toast(m: string): void {
   clearTimeout(toastT)
   toastT = window.setTimeout(() => el.classList.remove('on'), 2800)
 }
-function hint(h: string): void { $('hint').innerHTML = h }
+// While the land is blank for want of its pictures, the line under it goes on saying why.
+function hint(h: string): void { if (!sheetGone) $('hint').innerHTML = h }
 const veil = $('veil')
 const sheet = $('sheet')
 function open(html: string): void {
