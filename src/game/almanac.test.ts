@@ -75,12 +75,12 @@ describe('almanacHtml', () => {
   it('no longer lists readiness as something to come', () => {
     const later = almanacHtml(catalog, RULES.energyMax, '0.0.0').split('<h3>Not here yet</h3>')[1] ?? ''
     expect(later).not.toContain('readiness')
-    expect(later).toContain('the market')
+    expect(later).toContain('a planner')
   })
 
   it('lists under Not here yet the rules the design marks as planned', () => {
     const later = almanacHtml(catalog, RULES.energyMax, '0.0.0').split('<h3>Not here yet</h3>')[1] ?? ''
-    for (const planned of ['the Sunday walk', 'tools', 'recruiter visits', 'orchard and research fields', 'replanting annuals', 'a planner', 'trading seeds']) {
+    for (const planned of ['tools', 'recruiter visits', 'orchard and research fields', 'replanting annuals', 'a planner', 'trading seeds']) {
       expect(later, planned).toContain(planned)
     }
   })
@@ -106,6 +106,18 @@ describe('almanacHtml', () => {
     expect(readiness).toContain('saplings a tree dropped are extras and are never counted, so neither foraging nor a harvest can lower the number.')
     expect(readiness).toContain('Neither does a sapling.')
     expect(html.split('<h3>Not here yet</h3>')[1] ?? '').not.toContain('sapling')
+  })
+
+  it('explains the market, names each buyer with its bars from the packs, and takes the rival and walk numbers from the rules', () => {
+    const html = almanacHtml(catalog, RULES.energyMax, '0.0.0')
+    const section = html.split('<h3>The market, last month and the weekly walk</h3>')[1]?.split('<h3>')[0] ?? ''
+    expect(section).toContain('<b>A Haskell-first shop</b> wants Backend · Haskell at 80, System design at 60')
+    expect(section).toContain('<b>Fintech infrastructure</b> wants Infra at 80, System design at 70, Leadership at 50')
+    expect(section).toContain('It costs nothing and pays nothing, and it is shown to nobody.')
+    expect(section).toContain('the farm you had ' + RULES.rival.days + ' days ago')
+    expect(section).toContain('Every ' + RULES.walk.every + ' days is a <b>walk day</b>')
+    const later = html.split('<h3>Not here yet</h3>')[1] ?? ''
+    for (const done of ['market', 'rival', 'walk']) expect(later, done).not.toContain(done)
   })
 
   it('says which version of the game it is, so a bug report can name it', () => {

@@ -50,6 +50,8 @@ export function almanacHtml(catalog: Catalog, energyMax: number, version: string
     .join('</li><li>')
   const last = RULES.maxStage
   const noEnd = catalog.packs.filter((p) => p.perennial === true).map((p) => '<b>' + esc(p.title) + '</b>')
+  const titleOf = (pack: string): string => catalog.pack(pack)?.title ?? pack
+  const buyers = catalog.buyers.map((b) => '<b>' + esc(b.name) + '</b> wants ' + b.bars.map((x) => esc(titleOf(x.pack)) + ' at ' + x.want).join(', '))
   // What each earned seed asks for, read from the packs, so this page cannot say something the game does not do.
   const earned = catalog.packs.flatMap((p) => catalog.seedsOf(p.pack)).flatMap((s) => (s.earned ? ['<b>' + esc(s.name) + '</b>: ' + esc(earnedLine(s.earned, catalog))] : []))
   return (
@@ -115,6 +117,13 @@ export function almanacHtml(catalog: Catalog, energyMax: number, version: string
       'There are no dates, and nobody to compare with. The Readiness button shows every field.' + (noEnd.length ? ' A field with no end has no readiness and no bar: ' + noEnd.join(', ') + '.' : ''),
       ...(earned.length ? ['Some seeds have to be <b>earned</b>: they can be planted only once the learning is on your farm. Jumping the fence does not clear this. ' + earned.join('. ') + '.'] : []),
     ]) +
+    '<h3>The market, last month and the weekly walk</h3>' +
+    list([
+      'The <b>market</b> stall stands on the path south of the barn. A buyer is a named set of bars: how ready they want each field to be. A buyer is buying while your farm meets every one, with no layer of those fields hollow, and a lantern is lit on the stall.' + (buyers.length ? ' ' + buyers.join('. ') + '.' : ''),
+      'A <b>sale</b> is something real that came of your farm: an offer, a contract, a yes. You record it at the market in your own words, with a buyer who is buying. It costs nothing and pays nothing, and it is shown to nobody.',
+      'Your only <b>rival</b> is the farm you had ' + RULES.rival.days + ' days ago. The Readiness sheet puts today beside it in plain counts, and lets you walk round the old farm. Nobody else is compared.',
+      'Every ' + RULES.walk.every + ' days is a <b>walk day</b>. The farm asks for no work: it shows the week that was and asks three questions, and you answer the ones you have something to say to. A walk costs nothing and pays nothing. What you write is kept.',
+    ]) +
     '<h3>Neighbours</h3>' +
     list([
       'Tap the <b>gate</b> where the main path leaves the homestead. Name your farm (1 to ' + RULES.farmName.max + ' characters) and make a <b>farm link</b>: a picture of your farm, held inside the link itself. Send it in any chat you already use. Nothing is uploaded.',
@@ -125,13 +134,13 @@ export function almanacHtml(catalog: Catalog, energyMax: number, version: string
       'Nobody is ranked. Your neighbours are listed in the order you met them.',
     ]) +
     '<h3>Buildings</h3>' +
-    list(['<b>Barn</b>: seed bag. <b>Well</b>: rain barrel. <b>Compost heap</b>: what to review. <b>Signpost</b>: this almanac. <b>Gate</b>: your neighbours.']) +
+    list(['<b>Barn</b>: seed bag. <b>Well</b>: rain barrel. <b>Compost heap</b>: what to review. <b>Signpost</b>: this almanac. <b>Gate</b>: your neighbours. <b>Stall</b>: the market.']) +
     '<h3>Your farm is an event log</h3>' +
     list([
       'Everything you do is saved as an event in this browser, and your farm is what you get by replaying them. Export gives you that log; import replays it.',
       'Farms from the first prototype (v2) still import: the game turns them into the first event of a new log.',
     ]) +
-    '<h3>Not here yet</h3><p class="sub">The Apply rung (a problem, a design, a debugging session), timed solves and AI judging, the market, the rival farm, the Sunday walk, replanting annuals, a planner, tools, recruiter visits, orchard and research fields, layers as terraces, real weather from Coorg, loading your own pack in the browser, rain for a neighbour (answer a card about one of their crops and send them a day in the barrel), trading seeds, the village server.</p>' +
+    '<h3>Not here yet</h3><p class="sub">The Apply rung (a problem, a design, a debugging session), timed solves and AI judging, replanting annuals, a planner, tools, recruiter visits, orchard and research fields, layers as terraces, real weather from Coorg, loading your own pack in the browser, rain for a neighbour (answer a card about one of their crops and send them a day in the barrel), trading seeds, the village server.</p>' +
     '<div class="foot"><span class="sub">Version ' + esc(version) + '</span><button type="button" class="pri" data-act="close">Close</button></div>'
   )
 }
