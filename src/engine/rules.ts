@@ -35,6 +35,8 @@ export const RULES = {
   readiness: { bar: 80, min: 1, max: 100 },
   /** Layer balance: a seed waits while a layer this many or more beneath its own is hollow and has a seed to plant. */
   balance: { below: 2 },
+  /** What a whole guild pays at each harvest or check-in of one of its members. */
+  guild: { coins: 5 },
   defaultRubric: [
     "Says what it is in plain words, not the source's",
     'Says why it matters: the problem it solves or the mistake it prevents',

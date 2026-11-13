@@ -102,7 +102,7 @@ export function almanacHtml(catalog: Catalog, energyMax: number, version: string
     list([
       'Every seed of every field, including locked ones, is on the tree. A seed unlocks when what it needs is rooted.',
       'Pick a branch to focus; the seed bag puts it first. Or jump the fence: pass a harvest-grade question to unlock a seed early (' + RULES.testOut.energy + ' energy). A jump clears what a seed needs and nothing else: it does not earn a seed, and it does not put one ahead of a hollow layer.',
-      'Guilds are sets of seeds that belong together. The tree shows how many of each are rooted; there is no bonus yet.',
+      'A <b>guild</b> is a set of seeds that belong together, and it is whole while every member stands as a tree. A whole guild pays ' + RULES.guild.coins + ' coins each time you harvest or check in on one of its members. One wilted member and the guild pays nothing until you revive it. The tree shows how far each guild has come.',
     ]) +
     '<h3>Readiness</h3>' +
     list([
@@ -128,7 +128,7 @@ export function almanacHtml(catalog: Catalog, energyMax: number, version: string
       'Everything you do is saved as an event in this browser, and your farm is what you get by replaying them. Export gives you that log; import replays it.',
       'Farms from the first prototype (v2) still import: the game turns them into the first event of a new log.',
     ]) +
-    '<h3>Not here yet</h3><p class="sub">The Apply rung (a problem, a design, a debugging session), timed solves and AI judging, the market, the rival farm, the Sunday walk, guild bonuses, seeds on the edge of two fields, saplings, replanting annuals, a planner, tools, recruiter visits, orchard and research fields, layers as terraces, real weather from Coorg, loading your own pack in the browser, rain for a neighbour (answer a card about one of their crops and send them a day in the barrel), trading seeds, the village server.</p>' +
+    '<h3>Not here yet</h3><p class="sub">The Apply rung (a problem, a design, a debugging session), timed solves and AI judging, the market, the rival farm, the Sunday walk, seeds on the edge of two fields, saplings, replanting annuals, a planner, tools, recruiter visits, orchard and research fields, layers as terraces, real weather from Coorg, loading your own pack in the browser, rain for a neighbour (answer a card about one of their crops and send them a day in the barrel), trading seeds, the village server.</p>' +
     '<div class="foot"><span class="sub">Version ' + esc(version) + '</span><button type="button" class="pri" data-act="close">Close</button></div>'
   )
 }

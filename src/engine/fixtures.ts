@@ -63,6 +63,16 @@ export const earningCatalog = buildCatalog(smallPacks.map((p) => (p.pack !== 'sh
   tool('anvil', 'Anvil', { tier: 1, needs: ['saw'], earned: { rooted: 1 } }),
 ] })))
 
+/**
+ * The small farm with guilds that are quick to make whole, so random play reaches what a guild pays: corn alone, and
+ * corn with beans, beside the three sisters. Corn is in all three.
+ */
+export const bountifulCatalog = buildCatalog(smallPacks.map((p) => (p.pack !== 'garden' ? p : { ...p, guilds: [
+  ...(p.guilds ?? []),
+  { id: 'tall', title: 'Tall', seeds: ['corn'] },
+  { id: 'pole', title: 'Pole and climber', seeds: ['corn', 'beans'] },
+] })))
+
 /** Apply events in order; throws if one is refused, so a test that sets up a farm fails loudly. */
 export function run(catalog: ReturnType<typeof buildCatalog>, events: FarmEvent[], from: FarmState = initialState()): FarmState {
   return events.reduce((s, e) => {

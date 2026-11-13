@@ -344,6 +344,55 @@ describe('harvested', () => {
   })
 })
 
+describe('a guild', () => {
+  // The garden's guild is corn, beans and squash: see `smallPacks`.
+  const tree = (seed: string, patch: Partial<Crop> = {}): Crop =>
+    ({ seed, x: 20, y: 20, stage: 4, best: 4, due: 1, wilted: false, perennial: true, notes: '', journal: [], ...patch })
+  const farm = (...crops: Crop[]): FarmState => ({ ...smallFarm(), crops })
+  const checkIn = (seed: string, ok = true): FarmEvent => ({ type: 'watered', seed, ok, work: 'recall' })
+  const ripeSquash = tree('squash', { perennial: false, due: 9 })
+  const harvestSquash = (ok: boolean): FarmEvent => ({ type: 'harvested', seed: 'squash', ok, text: EXPLANATION, ticked: ok ? 1 : 0, of: 1 })
+
+  it('pays nothing while a member has still to be rooted', () => {
+    const s = farm(tree('corn'), tree('beans'), ripeSquash)
+    expect(run(cat, [checkIn('corn')], s).coins).toBe(s.coins)
+  })
+
+  it('pays at the harvest that makes it whole, on top of what the harvest pays', () => {
+    const s = farm(tree('corn'), tree('beans'), ripeSquash)
+    expect(run(cat, [harvestSquash(true)], s).coins).toBe(s.coins + RULES.harvest.coins + RULES.guild.coins)
+    expect(run(cat, [harvestSquash(false)], s).coins).toBe(s.coins)
+  })
+
+  it('pays at every check-in of a member while it is whole', () => {
+    const s = farm(tree('corn'), tree('beans'), tree('squash'))
+    const after = run(cat, [checkIn('corn'), checkIn('beans')], s)
+    expect(after.coins).toBe(s.coins + 2 * RULES.guild.coins)
+  })
+
+  it('pays nothing for a wrong check-in, which wilts the tree', () => {
+    const s = farm(tree('corn'), tree('beans'), tree('squash'))
+    const after = run(cat, [checkIn('corn', false)], s)
+    expect(crop(after, 'corn').wilted).toBe(true)
+    expect(after.coins).toBe(s.coins)
+  })
+
+  it('is dragged by a wilted member: the rest earn nothing until it is revived, and reviving it pays', () => {
+    const s = farm(tree('corn'), tree('beans', { wilted: true }), tree('squash'))
+    const dragged = run(cat, [checkIn('corn'), checkIn('squash')], s)
+    expect(dragged.coins).toBe(s.coins)
+    const revived = run(cat, [checkIn('beans')], dragged)
+    expect(crop(revived, 'beans').wilted).toBe(false)
+    expect(revived.coins).toBe(s.coins + RULES.guild.coins)
+  })
+
+  it('pays nothing for a seed that is in no guild, or for watering a crop that is not a tree yet', () => {
+    const s = farm(tree('corn'), tree('beans'), tree('squash'), tree('saw'), tree('bees', { perennial: false, stage: 1 }))
+    expect(run(cat, [checkIn('saw')], s).coins).toBe(s.coins)
+    expect(run(cat, [checkIn('bees')], s).coins).toBe(s.coins)
+  })
+})
+
 describe('slept', () => {
   it('starts the next day with full energy and a clean tally, and fills the barrel when 30 or more is left', () => {
     const s = run(cat, [plant('corn', 5, 5), sleep], smallFarm())

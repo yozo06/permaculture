@@ -80,9 +80,16 @@ describe('almanacHtml', () => {
 
   it('lists under Not here yet the rules the design marks as planned', () => {
     const later = almanacHtml(catalog, RULES.energyMax, '0.0.0').split('<h3>Not here yet</h3>')[1] ?? ''
-    for (const planned of ['the Sunday walk', 'guild bonuses', 'saplings', 'tools', 'recruiter visits', 'orchard and research fields', 'replanting annuals', 'a planner', 'trading seeds']) {
+    for (const planned of ['the Sunday walk', 'saplings', 'tools', 'recruiter visits', 'orchard and research fields', 'replanting annuals', 'a planner', 'trading seeds']) {
       expect(later, planned).toContain(planned)
     }
+  })
+
+  it('says what a whole guild pays, from the rules, and no longer lists it as something to come', () => {
+    const html = almanacHtml(catalog, RULES.energyMax, '0.0.0')
+    expect(html).toContain('A whole guild pays ' + RULES.guild.coins + ' coins each time you harvest or check in on one of its members.')
+    expect(html).toContain('One wilted member and the guild pays nothing until you revive it.')
+    expect(html.split('<h3>Not here yet</h3>')[1] ?? '').not.toContain('guild')
   })
 
   it('says which version of the game it is, so a bug report can name it', () => {

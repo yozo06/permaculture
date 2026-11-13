@@ -11,6 +11,7 @@ import { fieldOf, fenceCost, isBuildingTile, neighbourFields, nextFreeSlot, terr
 import { earnedLine, heldBy, isEarned } from './readiness'
 import { RULES, available, capLeft, cropOf, interval, revivable, ripe, thirsty, visible } from './rules'
 import { fromV2 } from './v2'
+import { guildCoins } from './yields'
 import type { Crop, FarmEvent, FarmState } from './types'
 
 /** A farm with nothing in it: the state before `farm-started`. */
@@ -351,7 +352,7 @@ function sleep(s: FarmState): void {
   s.night = { saved, wilted, barrelFilled }
 }
 
-function water(s: FarmState, c: Crop, e: Extract<FarmEvent, { type: 'watered' }>): void {
+function water(s: FarmState, c: Crop, e: Extract<FarmEvent, { type: 'watered' }>, catalog: Catalog): void {
   const { ok } = e
   if (e.work === 'explain') c.journal.push({ day: s.day, kind: 'explain', text: (e.text ?? '').trim(), ok })
   if (ok) {
@@ -360,6 +361,8 @@ function water(s: FarmState, c: Crop, e: Extract<FarmEvent, { type: 'watered' }>
     c.best = Math.max(c.best, c.stage)
     c.due = s.day + interval(c)
     uncompost(s, c.seed)
+    // Asked once the tree stands again, so the check-in that revives a wilted member is the one that pays.
+    s.coins += guildCoins(c.seed, s, catalog)
   } else {
     c.wilted = true
     if (!c.perennial) c.stage = Math.max(0, c.stage - 1)
@@ -368,7 +371,7 @@ function water(s: FarmState, c: Crop, e: Extract<FarmEvent, { type: 'watered' }>
   }
 }
 
-function harvest(s: FarmState, c: Crop, e: Extract<FarmEvent, { type: 'harvested' }>): void {
+function harvest(s: FarmState, c: Crop, e: Extract<FarmEvent, { type: 'harvested' }>, catalog: Catalog): void {
   const { ok } = e
   if (e.text !== undefined) c.journal.push({ day: s.day, kind: 'harvest', text: e.text.trim(), ok })
   if (ok) {
@@ -376,7 +379,8 @@ function harvest(s: FarmState, c: Crop, e: Extract<FarmEvent, { type: 'harvested
     c.stage = RULES.maxStage
     c.best = RULES.maxStage
     c.due = s.day + RULES.perennialInterval
-    s.coins += RULES.harvest.coins
+    // The guild's share is asked once the tree is rooted: the harvest that makes a guild whole is the first it pays for.
+    s.coins += RULES.harvest.coins + guildCoins(c.seed, s, catalog)
     uncompost(s, c.seed)
   } else {
     c.stage = RULES.maxStage - 1
@@ -406,12 +410,12 @@ function step(s: FarmState, e: FarmEvent, catalog: Catalog): FarmState {
     case 'watered':
       if (!crop || !pack) return s
       spend(n, pack, RULES.water.energy)
-      water(n, crop, e)
+      water(n, crop, e, catalog)
       return n
     case 'harvested':
       if (!crop || !pack) return s
       spend(n, pack, RULES.harvest.energy)
-      harvest(n, crop, e)
+      harvest(n, crop, e, catalog)
       return n
     case 'slept':
       sleep(n)

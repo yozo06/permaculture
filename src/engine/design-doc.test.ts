@@ -41,6 +41,7 @@ const numbersRows = [
   `| A neighbour's picture | forgotten by your game ${RULES.neighbours.forgetDays} days after it was made |`,
   `| Readiness bar | ${RULES.readiness.bar} unless the pack or the farmer sets another; the farmer may set ${RULES.readiness.min} to ${RULES.readiness.max} |`,
   `| Layer balance | a seed waits while a layer ${RULES.balance.below} or more beneath its own is hollow and has a seed to plant |`,
+  `| A whole guild | pays ${RULES.guild.coins} coins at each harvest or check-in of one of its members |`,
   '| Compost | everything in the heap is due again the next day |',
 ]
 

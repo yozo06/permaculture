@@ -1,4 +1,4 @@
-import type { FindDef, HarvestType, Layer, Mcq, PackDef, SeedDef } from './types'
+import type { FindDef, GuildDef, HarvestType, Layer, Mcq, PackDef, SeedDef } from './types'
 
 export const LAYER_NAMES: Record<Layer, string> = {
   canopy: 'Canopy',
@@ -53,6 +53,8 @@ export interface Catalog {
   find(id: string): Find | undefined
   seedsOf(packId: string): Seed[]
   findsOf(packId: string): Find[]
+  /** The guilds a seed is a member of, in the order its pack lists them. */
+  guildsOf(seedId: string): readonly GuildDef[]
   /** Most energy a field may use in a day: the pack's `energy_cap` percent of `energyMax`, or Infinity. */
   capOf(packId: string, energyMax: number): number
 }
@@ -84,6 +86,7 @@ export function buildCatalog(packs: readonly PackDef[]): Catalog {
   const seedsByPack = new Map<string, Seed[]>()
   const finds = new Map<string, Find>()
   const findsByPack = new Map<string, Find[]>()
+  const guildsBySeed = new Map<string, GuildDef[]>()
   for (const p of packs) {
     byPack.set(p.pack, p)
     const mine = p.seeds.map((s) => normalise(p.pack, s))
@@ -92,6 +95,7 @@ export function buildCatalog(packs: readonly PackDef[]): Catalog {
     const myFinds = (p.finds ?? []).map((f) => ({ ...f, pack: p.pack }))
     findsByPack.set(p.pack, myFinds)
     for (const f of myFinds) finds.set(f.id, f)
+    for (const g of p.guilds ?? []) for (const id of new Set(g.seeds)) guildsBySeed.set(id, [...(guildsBySeed.get(id) ?? []), g])
   }
   return {
     packs,
@@ -100,6 +104,7 @@ export function buildCatalog(packs: readonly PackDef[]): Catalog {
     find: (id) => finds.get(id),
     seedsOf: (id) => seedsByPack.get(id) ?? [],
     findsOf: (id) => findsByPack.get(id) ?? [],
+    guildsOf: (id) => guildsBySeed.get(id) ?? [],
     capOf: (id, energyMax) => {
       const pct = byPack.get(id)?.energy_cap
       return pct === undefined ? Infinity : Math.floor((energyMax * pct) / 100)

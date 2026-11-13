@@ -6,7 +6,7 @@ import { collectPacks } from '../../scripts/packs-lib.mjs'
 import { buildCatalog, type Catalog } from './catalog'
 import { findCandidates, pickFind } from './finds'
 import { allowed, apply, check, fieldsToOpen, fold, initialState } from './fold'
-import { EXPLANATION, NOTES, earningCatalog, harvestEvent, layeredCatalog, smallCatalog, started, waterEvent } from './fixtures'
+import { EXPLANATION, NOTES, bountifulCatalog, earningCatalog, harvestEvent, layeredCatalog, smallCatalog, started, waterEvent } from './fixtures'
 import { explainChecklist, explainPasses, harvestWork, waterWork, writePasses } from './ladder'
 import { FIELD_SIZE, fieldOf, fieldOrigin, terrain, tileKey, wildKind, worldSize } from './land'
 import { heldBy, isEarned } from './readiness'
@@ -317,7 +317,42 @@ function properties(name: string, catalog: Catalog, runs: number): void {
 properties('the small test farm', smallCatalog, 150)
 properties('a farm whose seeds have to be earned', earningCatalog, 150)
 properties('a farm with layers to balance', layeredCatalog, 150)
+properties('a farm with guilds that pay', bountifulCatalog, 150)
 properties('the real packs', buildCatalog(collectPacks()), 60)
+
+describe('what a guild pays', () => {
+  /** The same packs as they were before anything paid extra: no guilds. */
+  const before = (catalog: Catalog): Catalog => buildCatalog(catalog.packs.map((p) => ({ ...p, guilds: [] })))
+  const coinless = (s: FarmState): FarmState => ({ ...s, coins: 0 })
+
+  // 14. What a guild pays only ever adds. A farm played before it paid anything replays event for event, and differs
+  // only in having at least the coins it had. So no saved farm can lose by it.
+  it.each<[string, Catalog, number]>([
+    ['the farm with guilds that pay', bountifulCatalog, 150],
+    ['the real packs', buildCatalog(collectPacks()), 40],
+  ])('only ever adds on %s: a farm played without it replays whole, with at least the coins it had', (_name, catalog, runs) => {
+    const old = before(catalog)
+    let paid = 0
+    fc.assert(
+      fc.property(fc.array(intents, { minLength: 80, maxLength: 300 }), fc.array(fc.boolean(), { minLength: 1, maxLength: 8 }), (list, mask) => {
+        let was = initialState()
+        let now = initialState()
+        for (const e of play(old, list, mask).accepted) {
+          const next = apply(now, e, catalog)
+          expect(next).not.toBe(now)
+          was = apply(was, e, old)
+          now = next
+          expect(coinless(now)).toEqual(coinless(was))
+          expect(now.coins).toBeGreaterThanOrEqual(was.coins)
+        }
+        paid += now.coins - was.coins
+      }),
+      { numRuns: runs },
+    )
+    // The play reaches a whole guild often enough for this to have been a test of something.
+    if (catalog === bountifulCatalog) expect(paid).toBeGreaterThan(0)
+  })
+})
 
 describe('a diligent player', () => {
   /** Plants what is plantable, waters everything thirsty, harvests what is ripe, sleeps. Always answers right. */
