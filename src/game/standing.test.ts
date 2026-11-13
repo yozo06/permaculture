@@ -40,7 +40,7 @@ describe('the market', () => {
 
   it('draws a sheet with a way to record a sale only beside a buyer who is buying, and everything escaped', () => {
     const html = marketSheetHtml(marketView(half({ sales: [{ buyer: 'cook', day: 3, text: 'An <offer>.' }] }), cat))
-    expect(html).toContain('data-act="sell" data-arg="cook"')
+    expect(html).toContain('data-act="sell" data-arg="cook" aria-label="Record a sale to The cook"')
     expect(html).not.toContain('data-arg="grocer"')
     expect(html).toContain('<b>1</b> of 2 buyers')
     expect(html).toContain('An &lt;offer&gt;.')
@@ -153,11 +153,11 @@ describe('the weekly walk', () => {
     }
     expect(open).toContain('data-act="walkGo"')
     expect(open).toContain('Trees standing')
-    expect(open).toContain('The &lt;corn&gt; is tall.')
-    expect(open).not.toContain('<corn>')
     expect(open).toContain('The end of day 7 beside today.')
     // The boxes count as writing in progress, so a tap outside does not throw the answers away.
     expect(open.match(/<textarea id="walk\d" class="write" rows="3" data-min="0"/g)).toHaveLength(3)
+    expect(open).toContain('The &lt;corn&gt; is tall.')
+    expect(open).not.toContain('<corn>')
     // An answer left empty is not printed as a question with nothing under it.
     expect(open).not.toContain('Another?')
     const shut = walkSheetHtml(walkView(half({ day: 9, walks: [walked] }), null, cat), RULES.textMax)

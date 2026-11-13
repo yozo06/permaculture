@@ -1337,7 +1337,7 @@ function morningReport(night: Night): string {
     (todo || '<p>Nothing needs tending. Plant something, or forage.</p>') +
     (night.saved.length ? '<p><b>Rain barrel saved:</b> ' + names(night.saved) + '.</p>' : '') +
     (night.wilted.length ? '<p><b>Wilted overnight:</b> ' + names(night.wilted) + '. Revive them today.</p>' : '') +
-    (walkDue ? '<p><b>A walk day.</b> No tasks: look the farm over and answer three questions, in your own time today.</p>' : '') +
+    (walkDue ? '<p><b>A walk day.</b> The walk itself asks for no work: look the farm over and answer what you like of three questions, any time today.</p>' : '') +
     '<p class="sub">New wild finds have grown in the forest.</p>' + foot('Start the day', walkDue ? '<button type="button" data-act="walk">Take the walk</button>' : undefined)
 }
 function sleep(): void {

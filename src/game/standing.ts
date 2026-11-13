@@ -77,7 +77,7 @@ export function marketSheetHtml(v: MarketView): string {
     '<div class="ready">' + fieldHead(b.name, b.color, b.buying ? ' <span class="tag">buying</span>' : '') +
     '<div class="sub">' + esc(b.field) + ' field' + (b.note ? ' · ' + esc(b.note) : '') + (b.sales ? ' · sold to ' + b.sales + (b.sales === 1 ? ' time' : ' times') : '') + '</div>' +
     b.bars.map((bar) => '<div class="row slim"><div class="n">' + esc(bar.field) + '<small>' + esc(bar.line) + '</small></div><span class="sub">' + (bar.met ? 'met' : 'not yet') + '</span></div>').join('') +
-    (b.buying ? '<div class="branches"><button type="button" data-act="sell" data-arg="' + esc(b.id) + '">Record a sale</button></div>' : '') +
+    (b.buying ? '<div class="branches"><button type="button" data-act="sell" data-arg="' + esc(b.id) + '" aria-label="Record a sale to ' + esc(b.name) + '">Record a sale</button></div>' : '') +
     '</div>'
   return (
     '<h2>Market</h2><p class="sub">A buyer is a named set of bars: how ready they want each field to be. A buyer is buying while your farm meets every one, with no layer of those fields hollow. A sale is something real that came of it: an offer, a yes. Nobody is ranked, and nothing here has a date.</p>' +
@@ -219,12 +219,12 @@ export interface WalkView {
   /** The next walk day after today. */
   next: number
   questions: string[]
-  /** The farm of a week ago beside today's, if the log holds that morning. */
+  /** An earlier day of the farm beside today, if the log holds one: a week back, or the farm's first day on its first walk. */
   week: Compared | null
-  /** Walks already taken, newest first. */
-  past: Walk[]
   /** The day `week` looks back to. */
   since: number | null
+  /** Walks already taken, newest first. */
+  past: Walk[]
 }
 
 /** `weekAgo` is the farm as an earlier day ended (`farmAtEndOf`): a walk's length back, or the farm's first day. Null if there is none. */
