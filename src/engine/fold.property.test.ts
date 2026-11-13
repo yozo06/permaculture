@@ -13,6 +13,7 @@ import { notBuying } from './market'
 import { heldBy, isEarned } from './readiness'
 import { RULES, available, cropOf, ripe, revivable, thirsty, visible } from './rules'
 import type { FarmEvent, FarmState, LoggedEvent } from './types'
+import { WALK_QUESTIONS, isWalkDay, walkedToday } from './walk'
 
 type Intent =
   | { k: 'plant'; a: number; b: number; len: number }
@@ -27,6 +28,7 @@ type Intent =
   | { k: 'bar'; a: number; b: number }
   | { k: 'name'; len: number }
   | { k: 'sell'; a: number; len: number }
+  | { k: 'walk'; len: number; blank: boolean }
   | { k: 'raw'; event: unknown }
 
 const idx = fc.nat({ max: 1000 })
@@ -36,7 +38,7 @@ const usuallyOk = fc.oneof({ weight: 4, arbitrary: fc.constant(true) }, { weight
 const writing = fc.oneof({ weight: 6, arbitrary: fc.integer({ min: 90, max: 200 }) }, { weight: 1, arbitrary: fc.nat({ max: 120 }) })
 const rawEvents = fc.oneof(
   fc.anything(),
-  fc.record({ type: fc.constantFrom('planted', 'watered', 'harvested', 'fenced', 'foraged', 'domesticated', 'unlocked', 'focus-set', 'bar-set', 'field-opened', 'farm-started', 'farm-named', 'sold'), buyer: fc.string(), text: fc.string(), bar: fc.oneof(fc.integer({ min: -5, max: 110 }), fc.double()), name: fc.string({ maxLength: 40 }), seed: fc.string(), pack: fc.string(), find: fc.string(), x: fc.integer({ min: -3, max: 30 }), y: fc.integer({ min: -3, max: 30 }), slot: fc.integer({ min: -2, max: 12 }), ok: fc.boolean(), branch: fc.option(fc.string()) }),
+  fc.record({ type: fc.constantFrom('planted', 'watered', 'harvested', 'fenced', 'foraged', 'domesticated', 'unlocked', 'focus-set', 'bar-set', 'field-opened', 'farm-started', 'farm-named', 'sold', 'walked'), buyer: fc.string(), text: fc.string(), asked: fc.array(fc.string(), { maxLength: 8 }), answers: fc.array(fc.string(), { maxLength: 8 }), bar: fc.oneof(fc.integer({ min: -5, max: 110 }), fc.double()), name: fc.string({ maxLength: 40 }), seed: fc.string(), pack: fc.string(), find: fc.string(), x: fc.integer({ min: -3, max: 30 }), y: fc.integer({ min: -3, max: 30 }), slot: fc.integer({ min: -2, max: 12 }), ok: fc.boolean(), branch: fc.option(fc.string()) }),
 )
 const intents: fc.Arbitrary<Intent> = fc.oneof(
   { weight: 5, arbitrary: fc.record({ k: fc.constant('plant' as const), a: idx, b: idx, len: writing }) },
@@ -51,6 +53,7 @@ const intents: fc.Arbitrary<Intent> = fc.oneof(
   { weight: 1, arbitrary: fc.record({ k: fc.constant('bar' as const), a: idx, b: idx }) },
   { weight: 1, arbitrary: fc.record({ k: fc.constant('name' as const), len: fc.nat({ max: 30 }) }) },
   { weight: 1, arbitrary: fc.record({ k: fc.constant('sell' as const), a: idx, len: fc.nat({ max: 40 }) }) },
+  { weight: 1, arbitrary: fc.record({ k: fc.constant('walk' as const), len: fc.nat({ max: 40 }), blank: fc.boolean() }) },
   { weight: 1, arbitrary: fc.record({ k: fc.constant('raw' as const), event: rawEvents }) },
 )
 
@@ -142,6 +145,9 @@ function toEvent(s: FarmState, catalog: Catalog, intent: Intent): unknown {
       const buyer = intent.a % 7 === 0 ? 'a-stranger' : pick(catalog.buyers, intent.a)?.id
       return buyer === undefined ? null : { type: 'sold', buyer, text: 's'.repeat(intent.len) }
     }
+    case 'walk':
+      // On any day, walk day or not; sometimes with nothing written.
+      return { type: 'walked', asked: [...WALK_QUESTIONS], answers: [intent.blank ? '' : 'w'.repeat(intent.len), ' ', ''] }
     case 'bar': {
       // Any field the farm has, perennial ones too, and now and then a bar no farmer may set.
       const pack = pick(packs, intent.a)
@@ -157,12 +163,13 @@ function toEvent(s: FarmState, catalog: Catalog, intent: Intent): unknown {
 
 /**
  * True for what only a player today is refused: planting a seed that is not earned yet or is held back by a hollow
- * layer, a bar for a field with no end, and a sale to a buyer who is not buying.
+ * layer, a bar for a field with no end, a sale to a buyer who is not buying, and a walk on the wrong day or a second one.
  */
 function onlyToday(s: FarmState, event: unknown, catalog: Catalog): boolean {
   const e = event as { type?: unknown; seed?: unknown; pack?: unknown; buyer?: unknown } | null
   if (e && e.type === 'bar-set' && typeof e.pack === 'string') return catalog.pack(e.pack)?.perennial === true
   if (e && e.type === 'sold' && typeof e.buyer === 'string') { const b = catalog.buyer(e.buyer); return !b || notBuying(b, s, catalog) !== null }
+  if (e && e.type === 'walked') return !isWalkDay(s.day) || walkedToday(s)
   const seed = e && e.type === 'planted' && typeof e.seed === 'string' ? catalog.seed(e.seed) : undefined
   return seed !== undefined && (!isEarned(seed, s, catalog) || heldBy(seed, s, catalog) !== null)
 }
@@ -196,7 +203,8 @@ function play(catalog: Catalog, list: Intent[], mask: boolean[] = [true]): { sta
     expect(JSON.stringify(before)).toBe(frozen)
     expect(after === before).toBe(fits !== null)
     // 12. The game asks all of that of a player and a few things more: a seed is earned before it is planted, it does
-    // not run two layers ahead of a hollow one, a bar is for a field with an end, and a sale is to a buyer who is buying.
+    // not run two layers ahead of a hollow one, a bar is for a field with an end, a sale is to a buyer who is buying,
+    // and a walk is taken on a walk day, once.
     if (fits !== null) expect(why).not.toBeNull()
     if (why !== null) {
       if (fits === null) expect(onlyToday(before, event, catalog)).toBe(true)
@@ -281,12 +289,15 @@ function verify(s: FarmState, before: FarmState, e: FarmEvent, catalog: Catalog)
       expect(apply(s, harvest, catalog)).toBe(s)
     }
   }
-  // 16. a sale is a record and nothing else: only its own event adds one, and it moves no coins or energy.
-  // A player's sale is to a buyer who was buying.
+  // 16. a sale and a walk are records and nothing else: only their own events add one, and they move no coins or energy.
+  // A player's sale is to a buyer who was buying, and a player walks on walk days, once each.
   expect(s.sales.length - before.sales.length).toBe(e.type === 'sold' ? 1 : 0)
-  if (e.type === 'sold') expect({ ...s, sales: [] }).toEqual({ ...before, sales: [] })
+  expect(s.walks.length - before.walks.length).toBe(e.type === 'walked' ? 1 : 0)
+  if (e.type === 'sold' || e.type === 'walked') expect({ ...s, sales: [], walks: [] }).toEqual({ ...before, sales: [], walks: [] })
   if (e.type === 'sold') { const b = catalog.buyer(e.buyer); expect(b && notBuying(b, before, catalog)).toBeNull() }
   for (const x of s.sales) expect(x.text.length).toBeGreaterThanOrEqual(RULES.proofMin)
+  expect(s.walks.every((w) => isWalkDay(w.day) && w.answers.some((a) => a.length > 0))).toBe(true)
+  expect(new Set(s.walks.map((w) => w.day)).size).toBe(s.walks.length)
   // 15. a sapling is in the ground only on a farm where the tree it drops from is rooted
   for (const c of s.crops) {
     const parent = catalog.seed(c.seed)?.saplingOf

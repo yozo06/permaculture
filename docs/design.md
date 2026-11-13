@@ -74,6 +74,7 @@ Two days past thirsty without water, a crop wilts overnight unless the barrel ha
 | Layer balance | a seed waits while a layer 2 or more beneath its own is hollow and has a seed to plant |
 | A whole guild | pays 5 coins at each harvest or check-in of one of its members |
 | A seed on an edge | its harvest pays 2 times over once a tree is rooted in the field it borders |
+| The weekly walk | every 7 days; it costs nothing and pays nothing |
 | The rival | your own farm 30 days ago |
 | Compost | everything in the heap is due again the next day |
 

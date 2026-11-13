@@ -3,8 +3,9 @@
 //
 // Two questions are kept apart. `allowed` is what a log may hold, and replaying a farm asks only that. `check` is what
 // the game asks of something done today: everything `allowed` asks, and that a seed has been earned, that it does not
-// run two layers ahead of a hollow one, that a bar is for a field with an end, and that a sale is to a buyer who is
-// buying. A rule added to the second can never change how a saved farm replays, whatever a pack does later.
+// run two layers ahead of a hollow one, that a bar is for a field with an end, that a sale is to a buyer who is buying,
+// and that a walk is taken on a walk day. A rule added to the second can never change how a saved farm replays,
+// whatever a pack does later.
 import { LAYER_NAMES, type Catalog } from './catalog'
 import { isRecord } from './util'
 import { fieldOf, fenceCost, isBuildingTile, neighbourFields, nextFreeSlot, terrain, tileKey, wildKind, worldSize } from './land'
@@ -12,6 +13,7 @@ import { notBuying } from './market'
 import { earnedLine, heldBy, isEarned } from './readiness'
 import { RULES, available, capLeft, cropOf, interval, revivable, ripe, thirsty, visible } from './rules'
 import { fromV2 } from './v2'
+import { nextWalkDay, isWalkDay, walkedToday } from './walk'
 import { guildCoins, harvestCoins } from './yields'
 import type { Crop, FarmEvent, FarmState } from './types'
 
@@ -19,7 +21,7 @@ import type { Crop, FarmEvent, FarmState } from './types'
 export const initialState = (): FarmState => ({
   name: '', day: 0, energy: 0, energyMax: 0, coins: 0, barrel: 0,
   fields: {}, cleared: {}, crops: [], compost: [], unlocked: [], volunteers: [], foraged: [], focus: {}, bars: {},
-  sales: [],
+  sales: [], walks: [],
   today: { planted: 0, spent: {} }, night: null,
 })
 
@@ -37,6 +39,7 @@ function copy(s: FarmState): FarmState {
     focus: { ...s.focus },
     bars: { ...s.bars },
     sales: s.sales.map((x) => ({ ...x })),
+    walks: s.walks.map((w) => ({ day: w.day, asked: w.asked.slice(), answers: w.answers.slice() })),
     today: { planted: s.today.planted, spent: { ...s.today.spent } },
     night: s.night ? { saved: s.night.saved.slice(), wilted: s.night.wilted.slice(), barrelFilled: s.night.barrelFilled } : null,
   }
@@ -46,6 +49,7 @@ function copy(s: FarmState): FarmState {
 
 const whole = (v: unknown): v is number => typeof v === 'number' && Number.isInteger(v)
 const text = (v: unknown): v is string => typeof v === 'string'
+const texts = (v: unknown): v is string[] => Array.isArray(v) && v.every(text)
 
 /** The event if it has the right shape, else null. Extra keys (`id`, `at`) are dropped. */
 export function parseEvent(raw: unknown): FarmEvent | null {
@@ -100,6 +104,11 @@ export function parseEvent(raw: unknown): FarmEvent | null {
       return text(raw.name) ? { type, name: raw.name } : null
     case 'sold':
       return text(raw.buyer) && text(raw.text) ? { type, buyer: raw.buyer, text: raw.text } : null
+    case 'walked': {
+      const { asked, answers } = raw
+      if (!texts(asked) || !texts(answers) || asked.length !== answers.length || asked.length < 1 || asked.length > RULES.walk.most) return null
+      return { type, asked: asked.slice(), answers: answers.slice() }
+    }
     case 'snapshot-imported':
       return Object.hasOwn(raw, 'snapshot') ? { type, snapshot: raw.snapshot } : null
     default:
@@ -252,6 +261,13 @@ function whySold(s: FarmState, e: Extract<FarmEvent, { type: 'sold' }>): string 
   return whyText(e.text, RULES.proofMin, 'to say what happened')
 }
 
+function whyWalked(s: FarmState, e: Extract<FarmEvent, { type: 'walked' }>): string | null {
+  if (s.day < 1) return 'There is no farm to walk round.'
+  if (e.asked.some((q) => q.trim().length < 1 || q.length > RULES.walk.asked)) return 'A walk asks short questions.'
+  if (e.answers.some((a) => a.trim().length > RULES.textMax)) return 'Keep each answer under ' + RULES.textMax + ' characters.'
+  return e.answers.some((a) => a.trim().length > 0) ? null : 'Write an answer to at least one of the questions.'
+}
+
 /** Why this cannot be a farm's name, or null. Also used by the game before it asks the farm. */
 export function whyName(name: string): string | null {
   const n = name.trim().length
@@ -290,6 +306,8 @@ function why(s: FarmState, e: FarmEvent, catalog: Catalog): string | null {
       return s.day < 1 ? 'There is no farm to name.' : whyName(e.name)
     case 'sold':
       return whySold(s, e)
+    case 'walked':
+      return whyWalked(s, e)
     case 'snapshot-imported':
       return fromV2(e.snapshot, catalog) ? null : 'That is not a farm this game can read.'
   }
@@ -301,12 +319,17 @@ function why(s: FarmState, e: FarmEvent, catalog: Catalog): string | null {
  * - a seed that has to be earned is planted only once it has been (a farm that planted it earlier keeps the crop);
  * - a seed is not planted two layers ahead of a hollow one (a farm that grew its canopy first keeps it);
  * - a bar is set only for a field with an end (a bar set before a pack was marked as having none stays in the log, unused);
- * - a sale is made only to a buyer who is buying today (a sale stays when its buyer's bars rise, or the buyer leaves).
+ * - a sale is made only to a buyer who is buying today (a sale stays when its buyer's bars rise, or the buyer leaves);
+ * - a walk is taken on a walk day, once (the walks a farm took stay if the game later walks on other days).
  */
 function whyToday(s: FarmState, e: FarmEvent, catalog: Catalog): string | null {
   if (e.type === 'sold') {
     const buyer = catalog.buyer(e.buyer)
     return buyer ? notBuying(buyer, s, catalog) : 'No buyer of that name is at the market.'
+  }
+  if (e.type === 'walked') {
+    if (!isWalkDay(s.day)) return 'The next walk is on day ' + nextWalkDay(s.day) + '.'
+    return walkedToday(s) ? 'You have taken today\'s walk.' : null
   }
   if (e.type === 'bar-set') {
     const pack = catalog.pack(e.pack)
@@ -469,6 +492,9 @@ function step(s: FarmState, e: FarmEvent, catalog: Catalog): FarmState {
       return n
     case 'sold':
       n.sales.push({ buyer: e.buyer.trim(), day: n.day, text: e.text.trim() })
+      return n
+    case 'walked':
+      n.walks.push({ day: n.day, asked: e.asked.map((q) => q.trim()), answers: e.answers.map((a) => a.trim()) })
       return n
     case 'snapshot-imported':
       return fromV2(e.snapshot, catalog) ?? s

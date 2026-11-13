@@ -39,6 +39,8 @@ export const RULES = {
   guild: { coins: 5 },
   /** A seed on the edge of another field is paid its harvest this many times over, once a tree is rooted in that field. */
   edge: { times: 2 },
+  /** The weekly walk: every this many days, with questions no longer than `asked` characters and at most `most` of them. */
+  walk: { every: 7, asked: 200, most: 6 },
   /** The rival is your own farm this many days ago. */
   rival: { days: 30 },
   defaultRubric: [

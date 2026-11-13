@@ -174,6 +174,7 @@ export function fromV2(value: unknown, catalog: Catalog): FarmState | null {
     focus: readFocus(value.focus, catalog),
     bars: {},
     sales: [],
+    walks: [],
     today: { planted: 0, spent: readSpent(value.today, catalog) },
     night: null,
   }

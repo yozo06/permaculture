@@ -122,6 +122,13 @@ export interface Sale {
   text: string
 }
 
+/** A weekly walk: the questions the game asked that day, and what the farmer wrote. An answer may be empty. */
+export interface Walk {
+  day: number
+  asked: string[]
+  answers: string[]
+}
+
 /** What the morning report needs from the last Sleep. Seed ids. */
 export interface Night {
   saved: string[]
@@ -153,6 +160,8 @@ export interface FarmState {
   bars: Record<string, number>
   /** In the order they were made. */
   sales: Sale[]
+  /** In the order they were taken. */
+  walks: Walk[]
   /** `spent` is energy used per field today; Sleep resets both. */
   today: { planted: number; spent: Record<string, number> }
   /** Set by `slept`. */
@@ -178,6 +187,8 @@ export type FarmEvent =
   | { type: 'farm-named'; name: string }
   /** A sale at the market: `text` says what really happened. */
   | { type: 'sold'; buyer: string; text: string }
+  /** A weekly walk. `asked` is kept with the answers, so the journal reads whole whatever the game asks later. */
+  | { type: 'walked'; asked: string[]; answers: string[] }
   /** A Phase 0 (v2) save, converted by `fromV2`. */
   | { type: 'snapshot-imported'; snapshot: unknown }
 
