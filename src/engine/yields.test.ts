@@ -59,7 +59,7 @@ describe('a seed on the edge of another field', () => {
   const beans = rich.seed('beans')!
   const corn = rich.seed('corn')!
 
-  it('is on a live edge once a tree stands in the field it borders', () => {
+  it('is on a live edge once a tree is rooted in the field it borders', () => {
     expect(edgeLive(beans, farm(), rich)).toBe(false)
     expect(edgeLive(beans, farm(tree('saw')), rich)).toBe(true)
   })

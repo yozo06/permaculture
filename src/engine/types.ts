@@ -47,7 +47,7 @@ export interface SeedDef {
   wild?: boolean
   /** The seed of this pack that drops this one when it is harvested. A sapling is hidden until then. */
   sapling_of?: string
-  /** The pack id of a second field this seed also belongs to: it sits on the edge of the two. */
+  /** The pack id of a second field this seed borders: it sits on the edge of the two, and grows in its own. */
   edge?: string
   /** Learning that has to happen first: `rooted` seeds (in `pack`, or in any other field), or `pack`'s `readiness`. */
   earned?: { pack?: string; rooted?: number; readiness?: number }

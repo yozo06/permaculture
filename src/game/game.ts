@@ -1222,7 +1222,7 @@ function treeSvg(v: TreeView): string {
 function openTree(packId: string = treePack()): void {
   const v = treeView(packId, S, catalog)
   if (!v) return
-  let html = '<h2>Learning tree</h2><p class="sub">What you could grow, including what you cannot reach yet. Wild finds and saplings join it as they turn up. A seed unlocks when the seeds it needs are <b>rooted</b> (harvested to perennial). Pick a branch to focus; the seed bag puts it first.</p>'
+  let html = '<h2>Learning tree</h2><p class="sub">What you could grow, including what you cannot reach yet. A wild seed joins it when you domesticate it, and a sapling when its tree drops it. A seed unlocks when the seeds it needs are <b>rooted</b> (harvested to perennial). Pick a branch to focus; the seed bag puts it first.</p>'
   html += '<div class="tabs">' + catalog.packs.map((p) => '<button type="button" data-act="treeTab" data-arg="' + esc(p.pack) + '"' + (p.pack === v.pack ? ' class="on"' : '') + '><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:' + packColor(p) + ';margin-right:6px;vertical-align:-1px"></span>' + esc(p.title) + '</button>').join('') + '</div>'
   if (!Object.hasOwn(S.fields, v.pack)) {
     // A pack this farm does not grow yet: say what it is and offer the field.
@@ -1237,7 +1237,7 @@ function openTree(packId: string = treePack()): void {
   html += '<p class="sub">Solid box: rooted · outline: growing (bar = stage) · cream outline: ready to plant · cream dashes: waiting for a lower layer · dashed: locked · green dot: found in the wild · pale dot: a sapling a tree dropped.</p>'
   if (v.drops.length) html += '<p class="sub">To come: ' + v.drops.map((d) => esc(d.name) + ' drops ' + d.count + (d.count === 1 ? ' sapling' : ' saplings') + ' when it is harvested').join(' · ') + '.</p>'
   if (v.guilds.length) {
-    html += '<h3>Guilds</h3><p class="sub">Seeds that grow well together. A guild is whole while every member stands as a tree, and a whole guild pays ' + RULES.guild.coins + ' coins each time you harvest or check in on one of its members. One wilted member and it pays nothing until you revive it.</p><div>' +
+    html += '<h3>Guilds</h3><p class="sub">Seeds that grow well together. A guild is whole while every member stands as a tree, and a whole guild pays ' + RULES.guild.coins + ' coins each time you harvest or check in on one of its members. While any member is wilted it pays nothing.</p><div>' +
       v.guilds.map((g) => '<div class="row"><div class="n">' + esc(g.title) + '<small>' + g.members.map((m) => esc(m.name ?? (m.sapling ? 'a sapling' : 'a wild seed'))).join(', ') + '</small></div><span class="sub">' + esc(guildStatus(g, RULES.guild.coins)) + '</span></div>').join('') + '</div>'
   }
   if (v.borders.length || v.bordered.length) {

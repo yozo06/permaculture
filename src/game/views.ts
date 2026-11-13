@@ -92,7 +92,7 @@ export function edgeLine(seed: Seed, state: Pick<FarmState, 'crops'>, catalog: C
   return where + ': its harvest pays ' + timesOver(RULES.edge.times) + (edge.live ? '.' : ' once you have a tree there.')
 }
 
-/** How a seed's edge stands, in a few words. `waiting` is what to say while no tree stands in the field it borders. */
+/** How a seed's edge stands, in a few words. `waiting` is what to say while no tree is rooted in the field it borders. */
 const edgeStatus = (seed: Seed, edge: EdgeView, state: Pick<FarmState, 'crops'>, waiting: string): string =>
   cropOf(state, seed.id)?.perennial ? 'harvested' : edge.live ? 'pays ' + timesOver(RULES.edge.times) : waiting
 

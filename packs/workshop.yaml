@@ -172,7 +172,7 @@ seeds:
     needs: [catalogues]
     harvest: artifact
     minutes: 60
-    summary: A pack can put a seed on the edge of a second field it also belongs to. Its harvest pays double once a tree stands in that field.
+    summary: A pack can put a seed on the edge of its field, where it borders a second. Its harvest pays double once a tree is rooted in the field it borders.
     prompts: [An edge seed harvested on a farm with a tree in the field it borders pays double.]
   - id: saplings
     name: Saplings

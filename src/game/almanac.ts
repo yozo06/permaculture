@@ -84,7 +84,7 @@ export function almanacHtml(catalog: Catalog, energyMax: number, version: string
     list([
       'Each pack you chose is a field. They sit on a grid around the barn, and the world grows to fit them. Open another from its tab in the learning tree; it is free. Drag to pan; everything beyond the homestead is wilderness.',
       'Tap land next to a field to fence it in: ' + RULES.fence.open + ' coins for open ground, ' + RULES.fence.forest + ' to clear forest. Fields grow one tile at a time, any shape.',
-      'A seed can sit on the <b>edge</b> of a second field it also belongs to. Its harvest pays ' + timesOver(RULES.edge.times) + ', ' + RULES.edge.times * RULES.harvest.coins + ' coins, once you have a tree in that other field.',
+      'A seed can sit on the <b>edge</b> of its own field, where it borders a second. Its harvest pays ' + timesOver(RULES.edge.times) + ', ' + RULES.edge.times * RULES.harvest.coins + ' coins, once you have a tree rooted in the field it borders. The learning tree lists them under both fields.',
       "Some seeds are not questions. The Workshop's are days of work on the game itself: you explain what moved forward, and you harvest when it ships, with a link as proof.",
     ]) +
     '<h3>Reading the farm</h3>' +
@@ -102,9 +102,9 @@ export function almanacHtml(catalog: Catalog, energyMax: number, version: string
     ]) +
     '<h3>Learning tree</h3>' +
     list([
-      'Every seed of every field, including locked ones, is on the tree, except the extras: a wild seed until you find it, and a sapling until its tree drops it. A seed unlocks when what it needs is rooted.',
+      'Every seed of every field, including locked ones, is on the tree, except the extras: a wild seed until you domesticate it, and a sapling until its tree drops it. A seed unlocks when what it needs is rooted.',
       'Pick a branch to focus; the seed bag puts it first. Or jump the fence: pass a harvest-grade question to unlock a seed early (' + RULES.testOut.energy + ' energy). A jump clears what a seed needs and nothing else: it does not earn a seed, and it does not put one ahead of a hollow layer.',
-      'A <b>guild</b> is a set of seeds that belong together, and it is whole while every member stands as a tree. A whole guild pays ' + RULES.guild.coins + ' coins each time you harvest or check in on one of its members. One wilted member and the guild pays nothing until you revive it. The tree shows how far each guild has come.',
+      'A <b>guild</b> is a set of seeds that belong together, and it is whole while every member stands as a tree. A whole guild pays ' + RULES.guild.coins + ' coins each time you harvest or check in on one of its members. While any member is wilted the guild pays nothing; revive it and the pay is back. The tree shows how far each guild has come.',
       'Some trees drop <b>saplings</b> when you harvest them: new seeds that grow from that one and go deeper. A sapling stays out of sight until then, and the tree says how many are to come, never which. Like a wild find it is an extra.',
     ]) +
     '<h3>Readiness</h3>' +

@@ -60,7 +60,7 @@
           },
           "edge": {
             "$ref": "#/$defs/slug",
-            "description": "The pack id of a second field this seed also belongs to. Its harvest pays double once a tree stands in that field. May be added to a released seed, never removed or changed."
+            "description": "The pack id of a second field this seed borders. Its harvest pays double once a tree is rooted in that field. May be added to a released seed, never removed or changed."
           },
           "earned": {
             "type": "object", "additionalProperties": false,

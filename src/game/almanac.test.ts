@@ -88,20 +88,20 @@ describe('almanacHtml', () => {
   it('says what a whole guild pays, from the rules, and no longer lists it as something to come', () => {
     const html = almanacHtml(catalog, RULES.energyMax, '0.0.0')
     expect(html).toContain('A whole guild pays ' + RULES.guild.coins + ' coins each time you harvest or check in on one of its members.')
-    expect(html).toContain('One wilted member and the guild pays nothing until you revive it.')
+    expect(html).toContain('While any member is wilted the guild pays nothing; revive it and the pay is back.')
     expect(html.split('<h3>Not here yet</h3>')[1] ?? '').not.toContain('guild')
   })
 
   it('says what a seed on an edge pays, from the rules, and no longer lists edges as something to come', () => {
     const html = almanacHtml(catalog, RULES.energyMax, '0.0.0')
-    expect(html).toContain('Its harvest pays double, ' + RULES.edge.times * RULES.harvest.coins + ' coins, once you have a tree in that other field.')
+    expect(html).toContain('Its harvest pays double, ' + RULES.edge.times * RULES.harvest.coins + ' coins, once you have a tree rooted in the field it borders.')
     expect(html.split('<h3>Not here yet</h3>')[1] ?? '').not.toContain('edge')
   })
 
   it('says what a sapling is, that it is an extra, and no longer lists saplings as something to come', () => {
     const html = almanacHtml(catalog, RULES.energyMax, '0.0.0')
     expect(html).toContain('Some trees drop <b>saplings</b> when you harvest them')
-    expect(html).toContain('is on the tree, except the extras: a wild seed until you find it, and a sapling until its tree drops it.')
+    expect(html).toContain('is on the tree, except the extras: a wild seed until you domesticate it, and a sapling until its tree drops it.')
     const readiness = html.split('<h3>Readiness</h3>')[1]?.split('<h3>')[0] ?? ''
     expect(readiness).toContain('saplings a tree dropped are extras and are never counted, so neither foraging nor a harvest can lower the number.')
     expect(readiness).toContain('Neither does a sapling.')
