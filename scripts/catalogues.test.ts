@@ -73,6 +73,10 @@ describe('the Workshop', () => {
     expect(asking.sort()).toEqual(['workshop/seed-trading', 'workshop/sprites', 'workshop/weather'])
   })
 
+  it('has a seed for each of the market, last month\'s farm and the weekly walk', () => {
+    for (const id of ['market-stall', 'rival-farm', 'weekly-walk']) expect(catalog.seed(id), id).toMatchObject({ pack: 'workshop', harvest: 'artifact', needs: ['readiness'] })
+  })
+
   it('has a seed for each of guild yields, edges and saplings', () => {
     for (const id of ['guild-yields', 'edge-seeds', 'saplings']) expect(catalog.seed(id), id).toMatchObject({ pack: 'workshop', harvest: 'artifact', earned: null })
   })
