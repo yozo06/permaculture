@@ -20,7 +20,7 @@ A link shows only the fields you tick, with each crop at the furthest it has gro
 
 ## Status
 
-Phase 1 is done: the rules are an engine of their own (a farm is a fold over a log of what you did), the game is built from `packs/`, and a crop climbs a depth ladder — notes when you plant it, recall cards, explaining it in your own words, then a harder harvest. There are seven packs and 221 seeds: five full catalogues (Haskell backend, system design, infra, DSA patterns, leadership), everyday Kannada, and the Workshop, the game's own roadmap. The pixel art is still procedural, with a drag-to-pan world, a learning tree, wild finds and an almanac. Everything runs in your browser; your farm is saved there. Export it from the seed bag before clearing site data. Farms from the Phase 0 prototype still import.
+Phase 1 is done: the rules are an engine of their own (a farm is a fold over a log of what you did), the game is built from `packs/`, and a crop climbs a depth ladder — notes when you plant it, recall cards, explaining it in your own words, then a harder harvest. There are seven packs and 224 seeds: five full catalogues (Haskell backend, system design, infra, DSA patterns, leadership), everyday Kannada, and the Workshop, the game's own roadmap. The pixel art is still procedural, with a drag-to-pan world, a learning tree, wild finds and an almanac. Everything runs in your browser; your farm is saved there. Export it from the seed bag before clearing site data. Farms from the Phase 0 prototype still import.
 
 Phase 2, **Neighbours**, is half built (version 0.2.0): saved farms are guarded against later edits to the packs and rules, new farmers choose their fields, and farms can be shared and visited by link. Rain comes after a first week of beta. After that comes optional AI with your own key, then art.
 
@@ -31,6 +31,8 @@ Readiness is in too (version 0.4.0): each field shows how much of it stands as t
 Layer balance followed (version 0.5.0): a field is built from the ground up, and a seed waits while a layer two or more beneath its own is hollow and has something you could plant. The seed bag says where to begin.
 
 Then three rules about what grows together (version 0.6.0). A **guild** is whole while every member stands as a tree, and a whole guild pays a few coins at each harvest and check-in of its members; one wilted member and it pays nothing until you revive it. A seed on the **edge** of two fields, such as Kannada words for technology, pays double at harvest once you have a tree in the other field. And harvesting some trees drops **saplings**: harvest Raft and three deeper seeds appear in the seed bag.
+
+Then where it all leads (version 0.7.0). At the **market** a buyer is a named set of bars, such as "Haskell at 80, System design at 60", and is buying once your farm meets them; a sale is something real that came of it, recorded in your own words. Your only **rival** is your own farm thirty days ago, which you can walk round. And every seventh day is a **walk day**: no tasks, the week that was, and three questions.
 
 Why this exists, what it promises and the whole plan are in [`ROADMAP.md`](ROADMAP.md).
 

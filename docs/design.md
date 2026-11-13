@@ -22,7 +22,7 @@ The game must be useful with ugly tiles. Art is an unlock, never a prerequisite.
 | **Produce no waste** | Wrong answers go to the **compost heap** and come back as reviews. A failed harvest drops the crop back a stage; *(planned)* it also generates the next seeds. |
 | **Small and slow** | Hard cap on new seeds per day (two). |
 | **Obtain a yield** | Every planting leaves notes in your own words, and a judged or artifact harvest leaves a write-up or proof. No yield, no credit. |
-| **Observe and interact** | Zone 5 is for foraging **wild finds**, facts next to what is growing, which add nothing to readiness and can be **domesticated** into volunteer seeds. *(planned)* The Sunday walk: the game shows the map and asks three questions. No tasks. |
+| **Observe and interact** | Zone 5 is for foraging **wild finds**, facts next to what is growing, which add nothing to readiness and can be **domesticated** into volunteer seeds. Every seventh day is a **walk day**: the game shows the week that was, a week ago beside today, and asks three questions. No tasks: a walk costs nothing and pays nothing, and what the farmer writes is kept as a journal. |
 | **Use edges** | A pack can put a seed on the **edge** of its field, where it borders a second (Kannada words for technology sit between Kannada and a technical field; farm economics would sit between two more). The seed grows in its own field. Its harvest pays double once a tree is rooted in the field it borders, wilted or not: an edge has two sides, so it pays on a farm that has learned something on both. |
 | **The problem is the solution** | A failed mock is not a loss; it is the next season's planting list. |
 
@@ -113,7 +113,9 @@ A field's **readiness** is the share of its catalogue that stands as trees today
 
 The player sets the **bar** (80 unless the pack says otherwise). A field is at its bar when its readiness has reached the bar and none of its layers is hollow. There are no dates.
 
-*(planned)* The market opens when every field is at its bar; "buyers" are named bars, nothing more. The **rival** is last-month-you. There are no leaderboards: the only person you can cheat is yourself.
+The **market** is a stall on the farm. A **buyer** is a named set of bars, nothing more: how ready they want each field they care about. A buyer is buying while the farm meets every one, in the sense a farmer's own bar is met: the number reached and no layer hollow. A **sale** is something real that came of the farm, an offer or a yes, recorded in the farmer's words with a buyer who is buying. It pays nothing and is shown to nobody. A pack brings its own buyers.
+
+The **rival** is last-month-you: the farm of thirty days ago, worked out by replaying less of the log. Today stands beside it in plain counts, and the farmer can walk round the old farm. There are no leaderboards: the only person you can cheat is yourself.
 
 A pack can be **perennial** (a language, a habit): no readiness, it just lives on the farm.
 
@@ -136,7 +138,7 @@ A seed can be **earned**: it asks for learning before it can be planted, either 
 ## 8. Architecture
 
 - **Local-first.** A farm is an append-only event log in the player's browser. Farm state is a pure fold over the log. Export is the log. Multi-device merge is a later, easy step because events have ids and the fold is deterministic.
-- **Saved farms are protected.** A farm is replayed against today's packs and rules, so a careless edit could quietly drop part of someone's history. Ids are locked (`packs/lock.json`), a played farm must always replay, a farm's first event is never refused over one number, and the game says so when a farm's history no longer fits. A rule that only holds back what a player starts today (a seed that has to be earned, a seed two layers ahead of a hollow one, a bar for a field with no end) is asked of the player and never of the log, so a pack can add or change it without touching a saved farm. A rule that changes what a farm *has* (what a whole guild pays, the double on an edge) cannot be kept out of replay, so it is built to only ever add: nothing in the game refuses a farm for having more coins, and the pack data it reads is locked so that a later edit cannot make a farm replay with fewer.
+- **Saved farms are protected.** A farm is replayed against today's packs and rules, so a careless edit could quietly drop part of someone's history. Ids are locked (`packs/lock.json`), a played farm must always replay, a farm's first event is never refused over one number, and the game says so when a farm's history no longer fits. A rule that only holds back what a player starts today (a seed that has to be earned, a seed two layers ahead of a hollow one, a bar for a field with no end, a sale to a buyer who is not buying, a walk on a day that is not a walk day) is asked of the player and never of the log, so a pack can add or change it without touching a saved farm. A rule that changes what a farm *has* (what a whole guild pays, the double on an edge) cannot be kept out of replay, so it is built to only ever add: nothing in the game refuses a farm for having more coins, and the pack data it reads is locked so that a later edit cannot make a farm replay with fewer.
 - **Static hosting.** The game is files on GitHub Pages. No server until the village needs one.
 - **Engine / game / packs.** `src/engine/`: pure rules with property tests. `src/game/`: renderer and UI. `packs/`: data, validated in CI.
 - **AI is optional and bring-your-own-key.** Authoring (catalogues, questions, the pack forge) is offline work committed as data. Runtime AI (judged harvests, wild finds, gap audits) uses the player's own key, stored only in their browser, with calls made browser-to-provider. A local model works. The no-AI game is complete.
@@ -156,7 +158,7 @@ Each phase ends with something a friend can play.
 4. Art: sprite sheets, PixiJS, terraces, weather.
 5. The village server, when there are players who need it.
 
-The rules that need no AI and no server are built between these, the ones closest to the loop first. Readiness, earned unlocks, layer balance, guilds, edges and saplings are in; the market, the rival and the Sunday walk are marked *(planned)*.
+The rules that need no AI and no server are built between these, the ones closest to the loop first. Readiness, earned unlocks, layer balance, guilds, edges, saplings, the market, the rival and the weekly walk are in; a planner and tools are marked *(planned)*.
 
 The plan in full, with what is done and how to help, is `../ROADMAP.md`.
 

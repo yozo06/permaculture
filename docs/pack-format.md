@@ -30,6 +30,12 @@ sources:                     # where seeds come from; cite, never paste
     title: In Search of an Understandable Consensus Algorithm
     url: https://raft.github.io/raft.pdf
 
+buyers:                      # optional: who at the market wants what this field grows. See "Buyers"
+  - id: consensus-shop
+    name: A shop that runs its own consensus
+    note: Wants Raft cold.   # optional, one line
+    bars: { system-design: 80, infra: 60 }   # pack id: the readiness that field has to reach
+
 guilds:                      # optional companion sets; a whole guild pays at each harvest and check-in
   - id: consensus
     title: Consensus
@@ -139,6 +145,12 @@ A guild is a named set of seeds from this pack that a practitioner would study t
 
 Those coins are part of a saved farm, so a released guild is a promise: it may not be removed, and its members may not change. With one more seed it would be whole later, and a seed that left would no longer be paid by it; either way a farm would replay with fewer coins than it spent. To group seeds differently, add a new guild.
 
+## Buyers
+
+A buyer is a named set of bars: the readiness they want of each field they care about. List a buyer in the pack of the field they stand in, and give `bars` a number from 1 to 100 for that pack and for any other pack they care about. A buyer is buying while the farm meets every bar, and a bar is met as a farmer's own is: the field's readiness has reached it and none of its layers is hollow. A farm sees the buyers of the fields it has.
+
+Nothing about a buyer is saved in a farm but the sales made to them, and a sale is kept whatever happens to its buyer. So buyers are not in `packs/lock.json`: add one, move a bar or remove one freely.
+
 ## Finds
 
 A find is a short fact the player forages in the wilderness. It is picked by what is growing, so `near` lists the seeds of this pack it grows next to. A find with a `seed` can be domesticated: that wild seed then joins the seed bag as a volunteer. A wild seed needs a find that points at it, or it could never be found.
@@ -163,6 +175,7 @@ Seed ids, find ids and pack ids are unique across all packs, and branch ids with
 - Every guild member is a seed in the same pack, listed once. Guild ids are unique within a pack.
 - A seed's `sapling_of` is another seed in its pack, in a lower tier, and a sapling is not wild.
 - A seed's `edge` names a pack that exists and is not its own.
+- A buyer names a bar for its own pack. Every pack it names exists and has an end. Buyer ids are unique across all packs.
 - A seed's `earned` asks for one thing, `rooted` or `readiness`. A `readiness` names its pack. The pack exists, is not the seed's own, and for `readiness` has an end. It never asks for more seeds than there are to root.
 
 ## Writing good seeds

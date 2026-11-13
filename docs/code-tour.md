@@ -24,10 +24,11 @@ The player's farm is not saved as a picture of the farm. It is saved as the list
 
 - `types.ts` has `FarmEvent`, every kind of thing that can happen (planted, watered, harvested, slept, fenced…), and `FarmState`, what a farm is after them.
 - `fold.ts` is the heart. `check(state, event)` says whether a player may do something now and, if not, gives a reason they can read. `apply(state, event)` returns the next state, or the very same state if a log may not hold the event there. `fold(events)` replays a whole log from nothing. `parseEvent` reads an event that could be anything, because a log comes from storage or from a file.
-- `fold.ts` keeps two questions apart. `allowed` is what a log may hold, and it is all that replay asks. `check` asks that and a little more of what is done today: that a seed has been earned, and that it does not run two layers ahead of a hollow one. A rule that only holds back what a player starts belongs in the second, where it cannot change a saved farm.
+- `fold.ts` keeps two questions apart. `allowed` is what a log may hold, and it is all that replay asks. `check` asks that and a little more of what is done today: that a seed has been earned, that it does not run two layers ahead of a hollow one, that a sale is to a buyer who is buying, and that a walk is taken on a walk day. A rule that only holds back what a player starts belongs in the second, where it cannot change a saved farm.
 - `readiness.ts` works out how ready a field is (its number, its hollow layers, its bar), what a seed is earned by, and which layer holds a seed back under layer balance. None of it is saved: it is worked out from the crops each time.
 - `yields.ts` works out what a harvest or a check-in pays beyond its plain coins: a share from each whole guild the seed is in, and the harvest over again for a seed on a live edge. Unlike readiness this is part of replaying a farm, so it only ever adds, and `packs/lock.json` guards the pack data it reads.
 - `rules.ts` has `RULES`, every number the game plays by, and the small questions asked of a crop: `thirsty`, `ripe`, `available`. `visible` says whether a seed is in the farmer's tree yet: a wild seed once it is domesticated, a sapling once the tree that drops it is rooted.
+- `market.ts` works out how a farm stands with a buyer: each bar they name, and whether they are buying. `walk.ts` says which days are walk days and what a walk asks. `past.ts` gives the farm of an earlier morning by replaying less of the log; the rival and the walk look back with it. None of the three saves anything.
 - `ladder.ts` decides which kind of work a crop asks for at each stage: a recall card, an explanation, or a harvest.
 - `land.ts` is the geometry: where fields sit, what kind of ground a tile is.
 - `finds.ts` picks the wild find a tile gives on a day.
@@ -50,6 +51,7 @@ When the page loads, the store reads the log and folds it. If the log cannot be 
 ## The screen
 
 - `game/game.ts`: drawing (the pixel helpers and sprites, `buildStatics`, `buildGround`, `frame`), input, and one click handler for every button in every sheet, keyed by `data-act`. It runs when imported and needs a browser, so it has no tests. Keep decisions out of it.
+- `game/standing.ts`: the market, last month's farm and the weekly walk: what each sheet shows, and the sheet itself as a string. Tested.
 - `game/views.ts`: what to show, worked out from the farm and the packs with no DOM: the seed bag, the learning tree's layout, a crop's sheet, the morning's to-do, the readiness of each field. Tested.
 - `game/sheets.ts`: HTML for the sheets, as strings in and strings out. Tested, including with hostile text.
 - `game/almanac.ts`: the rules page, written from `RULES` so its numbers cannot drift.
