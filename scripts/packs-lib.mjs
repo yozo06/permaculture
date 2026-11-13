@@ -1,6 +1,6 @@
 // Loads and checks every pack in a folder. Shared by the validator (CLI) and the Vite plugin (build).
 // The schema catches shape errors; this file checks what a schema can't: references between seeds,
-// branches, sources, guilds and finds; no prerequisite cycles; tiers above prerequisites; and ids
+// branches, sources, guilds, finds and the trees that drop saplings; no prerequisite cycles; tiers above prerequisites; and ids
 // that are unique across every pack, because farms refer to seeds and finds by bare id; and what a seed asks to be
 // earned and the edge it sits on, which may name another pack.
 import { readFileSync, readdirSync } from 'node:fs';
@@ -76,7 +76,8 @@ function checkEdges(all) {
 // A pack whose own shape is wrong is still a pack that exists: another pack that names it is not told otherwise, and
 // what depends on its contents is left unchecked until it is mended.
 function checkEarned(all) {
-  const countable = pack => pack.seeds.filter(s => s.wild !== true).length;
+  // Extras, wild seeds and saplings, are never counted.
+  const countable = pack => pack.seeds.filter(s => s.wild !== true && s.sapling_of === undefined).length;
   const results = all.filter(r => r.shapeOk);
   const packs = new Map(results.map(r => [r.pack.pack, r.pack]));
   const broken = new Set(all.filter(r => r.pack && !r.shapeOk && typeof r.pack.pack === 'string').map(r => r.pack.pack));
@@ -125,6 +126,16 @@ function checkPack(r) {
   for (const s of pack.seeds) for (const n of s.needs || []) {
     if (!ids.has(n)) errors.push(`seed ${s.id}: needs unknown seed "${n}"`);
     if (n === s.id) errors.push(`seed ${s.id}: needs itself`);
+  }
+  // A sapling drops from a seed of its own pack that comes before it, and that harvest is its one way in.
+  for (const s of pack.seeds) {
+    const from = s.sapling_of;
+    if (from === undefined) continue;
+    const parent = byId.get(from);
+    if (from === s.id) errors.push(`seed ${s.id}: sapling of itself`);
+    else if (!parent) errors.push(`seed ${s.id}: sapling of "${from}", which is not a seed in this pack`);
+    else if (parent.tier >= s.tier) errors.push(`seed ${s.id}: tier ${s.tier} is not above ${from} (tier ${parent.tier}), the seed that drops it`);
+    if (s.wild) errors.push(`seed ${s.id}: a sapling is not wild as well: it is found by harvesting ${from}`);
   }
   // A guild pays while it is whole, and the lock knows it by pack and id, so both its id and its members are checked.
   const guildIds = new Set();

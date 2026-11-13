@@ -22,6 +22,7 @@ const base: PackDef[] = [
       { id: 'corn', name: 'Corn', layer: 'canopy', branch: 'roots', tier: 0, harvest: 'recall' },
       { id: 'squash', name: 'Squash', layer: 'herb', branch: 'leaves', tier: 1, needs: ['corn'], edge: 'shed', harvest: 'artifact' },
       { id: 'bees', name: 'Bees', layer: 'herb', branch: 'roots', tier: 1, wild: true, harvest: 'recall' },
+      { id: 'husk', name: 'Husk', layer: 'herb', branch: 'roots', tier: 1, sapling_of: 'corn', harvest: 'recall' },
     ],
   },
   { pack: 'shed', version: 0, title: 'Shed', branches: [{ id: 'build', title: 'Build' }], seeds: [{ id: 'saw', name: 'Saw', layer: 'herb', branch: 'build', tier: 0, harvest: 'judged' }] },
@@ -65,6 +66,9 @@ describe('lockProblems', () => {
     ['a seed that needs more', (p) => { seedOf(p, 'squash').needs = ['corn', 'bees'] }, /seed "squash" now needs "bees"/],
     // Loosening is not free either: a farm that jumped the fence to squash would have that jump refused as "not locked".
     ['a seed that needs less', (p) => { delete seedOf(p, 'squash').needs }, /seed "squash" no longer needs "corn"/],
+    // A sapling is hidden until its parent is rooted, so making a seed one, or moving it, hides what a farm may have planted.
+    ['a seed that becomes a sapling', (p) => { seedOf(p, 'squash').sapling_of = 'corn' }, /seed "squash" became a sapling of "corn"/],
+    ['a sapling that moves to another tree', (p) => { seedOf(p, 'husk').sapling_of = 'squash' }, /seed "husk" became a sapling of "squash"/],
     // An edge pays double, and those coins are in the farm.
     ['an edge that is taken away', (p) => { delete seedOf(p, 'squash').edge }, /seed "squash" no longer sits on the edge of shed/],
     ['an edge that moves to another field', (p) => { seedOf(p, 'squash').edge = 'pond'; p.push({ pack: 'pond', version: 0, title: 'Pond', branches: [{ id: 'a', title: 'A' }], seeds: [] }) }, /seed "squash" no longer sits on the edge of shed/],
@@ -83,6 +87,23 @@ describe('lockProblems', () => {
   ])('refuses %s', (_name, edit, message) => {
     const problems = lockProblems(locked, changed(edit))
     expect(problems.join('\n')).toMatch(message)
+  })
+})
+
+describe('a sapling in the lock', () => {
+  it('may become an ordinary seed: it is then in the tree from the start, and nothing a farm did with it is refused', () => {
+    expect(lockProblems(locked, changed((p) => { delete seedOf(p, 'husk').sapling_of }))).toEqual([])
+  })
+
+  it('may be added to a pack as a new seed', () => {
+    const now = changed((p) => { p[0]?.seeds.push({ id: 'silk', name: 'Silk', layer: 'herb', branch: 'roots', tier: 2, sapling_of: 'husk', harvest: 'recall' }) })
+    expect(lockProblems(locked, now)).toEqual([])
+    expect(now.seeds.silk).toEqual({ pack: 'garden', needs: [], harvest: 'recall', wild: false, sapling: 'husk' })
+  })
+
+  it('is written only on the seeds that are one', () => {
+    expect(locked.seeds.husk?.sapling).toBe('corn')
+    expect(Object.hasOwn(locked.seeds.corn ?? {}, 'sapling')).toBe(false)
   })
 })
 

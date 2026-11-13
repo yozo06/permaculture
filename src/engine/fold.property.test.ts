@@ -269,6 +269,11 @@ function verify(s: FarmState, before: FarmState, e: FarmEvent, catalog: Catalog)
       expect(apply(s, harvest, catalog)).toBe(s)
     }
   }
+  // 15. a sapling is in the ground only on a farm where the tree it drops from is rooted
+  for (const c of s.crops) {
+    const parent = catalog.seed(c.seed)?.saplingOf
+    if (parent) expect(cropOf(s, parent)?.perennial, c.seed + ' is a sapling of ' + parent).toBe(true)
+  }
   // 13. layer balance never leaves a field stuck: if anything in it could be planted but for the balance, something can be
   for (const pack of Object.keys(s.fields)) {
     const could = catalog.seedsOf(pack).filter((x) => visible(x, s) && available(x, s) && isEarned(x, s, catalog) && !cropOf(s, x.id))
@@ -317,19 +322,20 @@ function properties(name: string, catalog: Catalog, runs: number): void {
 properties('the small test farm', smallCatalog, 150)
 properties('a farm whose seeds have to be earned', earningCatalog, 150)
 properties('a farm with layers to balance', layeredCatalog, 150)
-properties('a farm with guilds and an edge that pay', bountifulCatalog, 150)
+properties('a farm with guilds and an edge that pay, and saplings', bountifulCatalog, 150)
 properties('the real packs', buildCatalog(collectPacks()), 60)
 
-describe('what guilds and edges pay', () => {
-  /** The same packs as they were before anything paid extra: no guilds, and no seed on an edge. */
+describe('what guilds, edges and saplings add', () => {
+  /** The same packs as they were before any of the three: no guilds, no seed on an edge, and no saplings. */
   const before = (catalog: Catalog): Catalog =>
-    buildCatalog(catalog.packs.map((p) => ({ ...p, guilds: [], seeds: p.seeds.map(({ edge: _edge, ...seed }) => seed) })))
+    buildCatalog(catalog.packs.map((p) => ({ ...p, guilds: [], seeds: p.seeds.filter((s) => s.sapling_of === undefined).map(({ edge: _edge, ...seed }) => seed) })))
   const coinless = (s: FarmState): FarmState => ({ ...s, coins: 0 })
 
-  // 14. What a guild and an edge pay only ever adds. A farm played before they paid anything replays event for event,
-  // and differs only in having at least the coins it had. So no saved farm can lose by them.
+  // 14. What a guild and an edge pay only ever adds, and a sapling is a new seed nobody has planted. A farm played
+  // before any of them replays event for event, and differs only in having at least the coins it had. So no saved
+  // farm can lose by them.
   it.each<[string, Catalog, number]>([
-    ['the farm with guilds and an edge that pay', bountifulCatalog, 150],
+    ['the farm with guilds, an edge and saplings', bountifulCatalog, 150],
     ['the real packs', buildCatalog(collectPacks()), 40],
   ])('only ever adds on %s: a farm played without it replays whole, with at least the coins it had', (_name, catalog, runs) => {
     const old = before(catalog)

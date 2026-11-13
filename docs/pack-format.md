@@ -49,6 +49,7 @@ seeds:
     tier: 1                  # depth in the tree; 0 needs nothing rooted first (layer balance may still make it wait)
     needs: [con]             # seed ids that must be rooted first (same pack)
     wild: false              # true: hidden until foraged and domesticated; needs a find that points at it
+    sapling_of: con          # optional: hidden until that seed is harvested, which drops this one. See "Saplings"
     edge: infra              # optional: a second field it also belongs to; its harvest pays double there. See "Edges"
     earned: { rooted: 1 }    # optional: learning that has to happen before it can be planted. See "Earned seeds"
     harvest: recall          # recall | solve | judged | artifact
@@ -99,9 +100,25 @@ earned: { pack: infra, readiness: 60 }   # the Infra field's readiness at 60 or 
 ```
 
 - It is asked on top of `needs`, and jumping the fence does not get round it: a jump tests you out of a seed's prerequisites, not out of the learning it asks for.
-- `rooted` counts trees, and a tree stays counted if a wrong check-in wilts it. Wild seeds do not count.
+- `rooted` counts trees, and a tree stays counted if a wrong check-in wilts it. Wild seeds and saplings do not count.
 - `readiness` is today's number, so it can be lost again until the seed is in the ground.
 - It is asked only of a planting done today. A saved farm replays without it, so a farm that planted the seed earlier keeps the crop, and `earned` can be added, changed or removed on a released seed. It is the one thing about a seed that is not in `packs/lock.json`.
+
+## Saplings
+
+A tree can drop new seeds when it is harvested, so depth keeps seeding itself: harvest Raft and log compaction, membership changes and linearizable reads appear in the seed bag. Mark each of those with `sapling_of`, the id of the seed that drops it:
+
+```yaml
+  - id: raft-log-compaction
+    sapling_of: raft         # hidden until Raft is harvested
+    tier: 2                  # above the tier of the seed that drops it
+```
+
+- A sapling is hidden until its parent is rooted. The learning tree says how many a seed will drop, never which.
+- A sapling is an **extra**, like a wild seed: it is left out of readiness, of a field's layers, of what `earned` counts and of layer balance. So a harvest never lowers a field's readiness by dropping one. It can sit in a guild, and then that guild is whole only once it is rooted.
+- It has one way in. A sapling is not `wild` as well, and no find leads to it.
+- A sapling can drop saplings of its own.
+- Add saplings as new seeds. Never give `sapling_of` to a released seed, and never change it: the seed would be hidden on a farm that has already planted it. Taking `sapling_of` away is fine; the seed is then in the tree from the start.
 
 ## Edges
 
@@ -130,7 +147,7 @@ A find is a short fact the player forages in the wilderness. It is picked by wha
 
 Seed ids, find ids and pack ids are unique across all packs, and branch ids within a pack. Farms refer to all of them and are replayed against the current packs, so never rename or remove a released one. Never change a released seed's `needs` or whether it is `wild`, in either direction, and never lower a pack's `energy_cap`: on replay the game skips any event that is no longer allowed, and the farm quietly changes. To hold a released seed back, give it `earned` instead. Whether a pack is `perennial` may change too: a bar a farmer set before a pack lost its end stays in their log and is simply not used.
 
-`packs/lock.json` holds these promises, one line per id, and `npm test` fails when a change would break one: an id that is gone or has moved, a seed whose `needs` or `wild` changed, an artifact seed that now asks for a write-up, a find that leads somewhere else, a cap that was lowered or added, a guild that is gone or has gained a member, a seed whose `edge` is gone or names another pack. Even needing *less* counts: a farm that jumped the fence to that seed holds a jump the game would now refuse. Adding seeds, finds, branches, guilds and packs is always fine: run `npm run lock` and commit the file with your change. It will not write over a breaking change, and it will not replace a lock file it cannot read.
+`packs/lock.json` holds these promises, one line per id, and `npm test` fails when a change would break one: an id that is gone or has moved, a seed whose `needs` or `wild` changed, an artifact seed that now asks for a write-up, a find that leads somewhere else, a cap that was lowered or added, a guild that is gone or has gained a member, a seed whose `edge` is gone or names another pack, a released seed that became a sapling or changed the seed that drops it. Even needing *less* counts: a farm that jumped the fence to that seed holds a jump the game would now refuse. Adding seeds, finds, branches, guilds and packs is always fine: run `npm run lock` and commit the file with your change. It will not write over a breaking change, and it will not replace a lock file it cannot read.
 
 ## Rules the validator enforces
 
@@ -144,6 +161,7 @@ Seed ids, find ids and pack ids are unique across all packs, and branch ids with
 - A find's `near` ids and `seed` are seeds in its pack, and its `seed` is wild.
 - Every wild seed has a find that points at it.
 - Every guild member is a seed in the same pack, listed once. Guild ids are unique within a pack.
+- A seed's `sapling_of` is another seed in its pack, in a lower tier, and a sapling is not wild.
 - A seed's `edge` names a pack that exists and is not its own.
 - A seed's `earned` asks for one thing, `rooted` or `readiness`. A `readiness` names its pack. The pack exists, is not the seed's own, and for `readiness` has an end. It never asks for more seeds than there are to root.
 

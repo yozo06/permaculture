@@ -66,13 +66,19 @@ export const earningCatalog = buildCatalog(smallPacks.map((p) => (p.pack !== 'sh
 /**
  * The small farm with more to gather, set up so random play reaches it:
  * - guilds that are quick to make whole: corn alone, and corn with beans, beside the three sisters. Corn is in all three;
- * - beans on the edge of the shed, so their harvest pays double once a tool is rooted there.
+ * - beans on the edge of the shed, so their harvest pays double once a tool is rooted there;
+ * - saplings: harvesting corn drops popcorn (a herb), and harvesting popcorn drops the kernel (a root).
  */
-export const bountifulCatalog = buildCatalog(smallPacks.map((p) => (p.pack !== 'garden' ? p : {
+export const bountifulPacks: PackDef[] = smallPacks.map((p) => (p.pack !== 'garden' ? p : {
   ...p,
   guilds: [...(p.guilds ?? []), { id: 'tall', title: 'Tall', seeds: ['corn'] }, { id: 'pole', title: 'Pole and climber', seeds: ['corn', 'beans'] }],
-  seeds: p.seeds.map((s) => (s.id === 'beans' ? { ...s, edge: 'shed' } : s)),
-})))
+  seeds: [
+    ...p.seeds.map((s) => (s.id === 'beans' ? { ...s, edge: 'shed' } : s)),
+    { id: 'popcorn', name: 'Popcorn', layer: 'herb', branch: 'roots', tier: 1, sapling_of: 'corn', harvest: 'recall', questions: { water: [mcq('Popcorn?')] } },
+    { id: 'kernel', name: 'Kernel', layer: 'root', branch: 'roots', tier: 2, sapling_of: 'popcorn', harvest: 'recall', questions: { water: [mcq('Kernel?')] } },
+  ],
+}))
+export const bountifulCatalog = buildCatalog(bountifulPacks)
 
 /** Apply events in order; throws if one is refused, so a test that sets up a farm fails loudly. */
 export function run(catalog: ReturnType<typeof buildCatalog>, events: FarmEvent[], from: FarmState = initialState()): FarmState {

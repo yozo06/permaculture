@@ -116,7 +116,7 @@ describe('layer balance on a new farm', () => {
   for (const e of fieldsToOpen(farm, catalog)) farm = apply(farm, e, catalog)
 
   it.each(packs.map((p) => p.pack))('lets the %s field start, and from the ground', (id) => {
-    const could = catalog.seedsOf(id).filter((s) => !s.wild && available(s, farm) && isEarned(s, farm, catalog))
+    const could = catalog.seedsOf(id).filter((s) => !s.extra && available(s, farm) && isEarned(s, farm, catalog))
     const free = could.filter((s) => heldBy(s, farm, catalog) === null)
     expect(free.length).toBeGreaterThan(0)
     // Whatever waits on day one is waiting for a layer that has a free seed in it.

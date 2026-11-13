@@ -16,7 +16,7 @@ export interface LayerCount {
 
 export interface Readiness {
   pack: string
-  /** Seeds that count. Wild seeds are extras: finding one never lowers readiness, and rooting one never raises it. */
+  /** Seeds that count. Wild seeds and saplings are extras: finding one never lowers readiness, and rooting one never raises it. */
   total: number
   /** Trees standing today: rooted, and not wilted by a wrong check-in. */
   rooted: number
@@ -37,7 +37,7 @@ export function readiness(packId: string, s: Pick<FarmState, 'crops' | 'bars'>, 
   const pack = catalog.pack(packId)
   if (!pack || pack.perennial === true) return null
   const standing = new Set(s.crops.filter((c) => c.perennial && !c.wilted).map((c) => c.seed))
-  const seeds = catalog.seedsOf(packId).filter((seed) => !seed.wild)
+  const seeds = catalog.seedsOf(packId).filter((seed) => !seed.extra)
   const layers = LAYERS.flatMap((layer): LayerCount[] => {
     const mine = seeds.filter((seed) => seed.layer === layer)
     return mine.length ? [{ layer, total: mine.length, rooted: mine.filter((seed) => standing.has(seed.id)).length }] : []
@@ -60,7 +60,7 @@ export interface EarnedProgress {
 
 /**
  * How far the farm is towards what a seed asks to be earned by, or null for a seed that asks for nothing.
- * Trees count once rooted, wilted or not, and wild seeds never do. A readiness is today's, so it can be lost again.
+ * Trees count once rooted, wilted or not, and extras (wild seeds, saplings) never do. A readiness is today's, so it can be lost again.
  */
 export function earnedProgress(seed: Seed, s: Pick<FarmState, 'crops' | 'bars'>, catalog: Catalog): EarnedProgress | null {
   const e = seed.earned
@@ -71,7 +71,7 @@ export function earnedProgress(seed: Seed, s: Pick<FarmState, 'crops' | 'bars'>,
   }
   const counts = (id: string): boolean => {
     const grown = catalog.seed(id)
-    return grown !== undefined && !grown.wild && (e.pack === null ? grown.pack !== seed.pack : grown.pack === e.pack)
+    return grown !== undefined && !grown.extra && (e.pack === null ? grown.pack !== seed.pack : grown.pack === e.pack)
   }
   const have = s.crops.filter((c) => c.perennial && counts(c.seed)).length
   return { have, want: e.count, met: have >= e.count }
@@ -100,14 +100,14 @@ export const GROUND_UP: readonly Layer[] = LAYERS.filter((l) => l !== 'vine').re
  *
  * "Could be planted today" is what keeps a field from ever being stuck: a hollow layer whose seeds are all locked, not
  * earned or already in the ground holds nothing back, and the lowest layer that does hold something back is itself
- * held by nothing. Wild seeds are extras and never count: a found one neither holds a seed back nor, as a tree, fills a
- * layer. A field with no end has no hollow layers, so nothing waits.
+ * held by nothing. Extras (wild seeds, saplings) never count: a found one neither holds a seed back nor, as a tree,
+ * fills a layer. A field with no end has no hollow layers, so nothing waits.
  */
 export function heldBy(seed: Seed, s: Pick<FarmState, 'crops' | 'bars' | 'unlocked' | 'volunteers'>, catalog: Catalog): Layer | null {
   const height = GROUND_UP.indexOf(seed.layer)
   if (height < RULES.balance.below) return null
   const hollow = readiness(seed.pack, s, catalog)?.hollow ?? []
   if (hollow.length === 0) return null
-  const plantable = catalog.seedsOf(seed.pack).filter((x) => !x.wild && !cropOf(s, x.id) && available(x, s) && isEarned(x, s, catalog))
+  const plantable = catalog.seedsOf(seed.pack).filter((x) => !x.extra && !cropOf(s, x.id) && available(x, s) && isEarned(x, s, catalog))
   return GROUND_UP.slice(0, height - RULES.balance.below + 1).find((layer) => hollow.includes(layer) && plantable.some((x) => x.layer === layer)) ?? null
 }

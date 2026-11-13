@@ -54,6 +54,10 @@
           "tier": { "type": "integer", "minimum": 0, "maximum": 8, "description": "Depth in the learning tree. 0 = needs nothing rooted first. Layer balance may still make a seed in a high layer wait." },
           "needs": { "type": "array", "items": { "$ref": "#/$defs/slug" }, "description": "Seed ids that must be rooted first. Same pack only, for now." },
           "wild": { "type": "boolean", "description": "Hidden until foraged and domesticated. Needs a find that points at it." },
+          "sapling_of": {
+            "$ref": "#/$defs/slug",
+            "description": "A seed of this pack that drops this one when it is harvested. A sapling is hidden until then, and like a wild seed it is an extra: it never counts towards readiness. Never add this to a released seed, and never change it."
+          },
           "edge": {
             "$ref": "#/$defs/slug",
             "description": "The pack id of a second field this seed also belongs to. Its harvest pays double once a tree stands in that field. May be added to a released seed, never removed or changed."

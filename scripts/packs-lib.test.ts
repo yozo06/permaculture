@@ -124,7 +124,7 @@ describe('a seed that has to be earned', () => {
   it('never asks for more than there is to root', () => {
     expect(withEarned('{ pack: kannada, rooted: 10 }')).toContain('seed repo: earned asks for 10 rooted seeds, and kannada has 9')
     expect(withEarned('{ rooted: 100000 }')).toContain('/seeds/')
-    const every = collectPacks().filter((p) => p.pack !== 'workshop').reduce((n, p) => n + p.seeds.filter((x) => x.wild !== true).length, 0)
+    const every = collectPacks().filter((p) => p.pack !== 'workshop').reduce((n, p) => n + p.seeds.filter((x) => x.wild !== true && x.sapling_of === undefined).length, 0)
     expect(withEarned('{ rooted: ' + every + ' }')).toBe('')
     expect(withEarned('{ rooted: ' + (every + 1) + ' }')).toContain('seed repo: earned asks for ' + (every + 1) + ' rooted seeds, and the other packs have ' + every)
   })
@@ -166,6 +166,34 @@ describe('a seed on the edge of another field', () => {
     const dir = tempCopy()
     edit(dir, 'infra.yaml', (t) => t.replace('\nversion: 0\n', '\nversion: zero\n'))
     expect(withEdge('infra', dir)).not.toContain('unknown pack')
+  })
+})
+
+describe('a sapling', () => {
+  /** The errors after making Infra's `mesh` (tier 2, needs k8s and tls) this. */
+  const withMesh = (lines: string): string => {
+    const dir = tempCopy()
+    edit(dir, 'infra.yaml', (t) => t.replace('\n  - id: mesh\n', '\n  - id: mesh\n' + lines))
+    return errorsOf(dir).join('\n')
+  }
+
+  it('names a seed of its own pack, in a lower tier', () => {
+    expect(withMesh('    sapling_of: k8s\n')).toBe('')
+    expect(withMesh('    sapling_of: raft\n')).toContain('seed mesh: sapling of "raft", which is not a seed in this pack')
+    expect(withMesh('    sapling_of: mesh\n')).toContain('seed mesh: sapling of itself')
+    // gitops-platform is tier 4 and mesh is tier 2: a tree cannot drop something that comes before it.
+    expect(withMesh('    sapling_of: gitops-platform\n')).toContain('seed mesh: tier 2 is not above gitops-platform (tier 4), the seed that drops it')
+  })
+
+  it('has one way in: it is not wild as well', () => {
+    expect(withMesh('    sapling_of: k8s\n    wild: true\n')).toContain('seed mesh: a sapling is not wild as well: it is found by harvesting k8s')
+  })
+
+  it('is an extra: it is not counted among the seeds another pack can ask to be rooted', () => {
+    const dir = tempCopy()
+    edit(dir, 'kannada.yaml', (t) => t.replace('\n  - id: market\n', '\n  - id: market\n    sapling_of: num\n'))
+    edit(dir, 'workshop.yaml', (t) => t.replace('\n  - id: repo\n', '\n  - id: repo\n    earned: { pack: kannada, rooted: 9 }\n'))
+    expect(errorsOf(dir).join('\n')).toContain('seed repo: earned asks for 9 rooted seeds, and kannada has 8')
   })
 })
 

@@ -64,8 +64,12 @@ export const cropOf = (s: Pick<FarmState, 'crops'>, seedId: string): Crop | unde
 /** Seed ids of perennial crops: the ones that count as rooted. */
 export const rooted = (s: Pick<FarmState, 'crops'>): Set<string> => new Set(s.crops.filter((c) => c.perennial).map((c) => c.seed))
 
-/** Wild seeds stay hidden until they have been domesticated. */
-export const visible = (seed: Seed, s: Pick<FarmState, 'volunteers'>): boolean => !seed.wild || s.volunteers.includes(seed.id)
+/**
+ * Is this seed in the farmer's tree. A wild seed stays hidden until it has been domesticated, and a sapling until the
+ * tree it drops from is rooted. A sapling's place is worked out from the crops, never saved: a harvest is what drops it.
+ */
+export const visible = (seed: Seed, s: Pick<FarmState, 'crops' | 'volunteers'>): boolean =>
+  seed.saplingOf !== null ? rooted(s).has(seed.saplingOf) : !seed.wild || s.volunteers.includes(seed.id)
 
 /** Can this seed be planted now: it is visible and unlocked, or everything it needs is rooted. */
 export function available(seed: Seed, s: Pick<FarmState, 'crops' | 'unlocked' | 'volunteers'>): boolean {

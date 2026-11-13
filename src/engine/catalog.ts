@@ -28,10 +28,18 @@ export type Earned =
   | { kind: 'readiness'; pack: string; percent: number }
 
 /** A seed with its pack and every list filled in, so callers never check for undefined. */
-export interface Seed extends Omit<SeedDef, 'needs' | 'wild' | 'edge' | 'earned' | 'sources' | 'rubric' | 'questions' | 'prompts'> {
+export interface Seed extends Omit<SeedDef, 'needs' | 'wild' | 'sapling_of' | 'edge' | 'earned' | 'sources' | 'rubric' | 'questions' | 'prompts'> {
   pack: string
   needs: string[]
+  /** Found by foraging: hidden until a find leads to it and it is domesticated. */
   wild: boolean
+  /** The seed that drops this one when it is harvested, or null. A sapling is hidden until then. */
+  saplingOf: string | null
+  /**
+   * Not in the tree from the start: a wild seed or a sapling. An extra counts for nothing: it is left out of a field's
+   * readiness and its layers, of what earns a seed, and of what holds one back. So finding one can never cost anything.
+   */
+  extra: boolean
   /** The other field this seed sits on the edge of, or null. */
   edge: string | null
   /** Null when the seed asks for nothing. */
@@ -57,6 +65,8 @@ export interface Catalog {
   findsOf(packId: string): Find[]
   /** The guilds a seed is a member of, in the order its pack lists them. */
   guildsOf(seedId: string): readonly GuildDef[]
+  /** The saplings a seed drops when it is harvested, in pack order. */
+  saplingsOf(seedId: string): readonly Seed[]
   /** Most energy a field may use in a day: the pack's `energy_cap` percent of `energyMax`, or Infinity. */
   capOf(packId: string, energyMax: number): number
 }
@@ -74,6 +84,8 @@ function normalise(pack: string, s: SeedDef): Seed {
     pack,
     needs: s.needs ?? [],
     wild: s.wild === true,
+    saplingOf: s.sapling_of ?? null,
+    extra: s.wild === true || s.sapling_of !== undefined,
     edge: s.edge ?? null,
     earned: earnedOf(s.earned),
     sources: s.sources ?? [],
@@ -90,11 +102,15 @@ export function buildCatalog(packs: readonly PackDef[]): Catalog {
   const finds = new Map<string, Find>()
   const findsByPack = new Map<string, Find[]>()
   const guildsBySeed = new Map<string, GuildDef[]>()
+  const saplingsBySeed = new Map<string, Seed[]>()
   for (const p of packs) {
     byPack.set(p.pack, p)
     const mine = p.seeds.map((s) => normalise(p.pack, s))
     seedsByPack.set(p.pack, mine)
-    for (const s of mine) seeds.set(s.id, s)
+    for (const s of mine) {
+      seeds.set(s.id, s)
+      if (s.saplingOf !== null) saplingsBySeed.set(s.saplingOf, [...(saplingsBySeed.get(s.saplingOf) ?? []), s])
+    }
     const myFinds = (p.finds ?? []).map((f) => ({ ...f, pack: p.pack }))
     findsByPack.set(p.pack, myFinds)
     for (const f of myFinds) finds.set(f.id, f)
@@ -108,6 +124,7 @@ export function buildCatalog(packs: readonly PackDef[]): Catalog {
     seedsOf: (id) => seedsByPack.get(id) ?? [],
     findsOf: (id) => findsByPack.get(id) ?? [],
     guildsOf: (id) => guildsBySeed.get(id) ?? [],
+    saplingsOf: (id) => saplingsBySeed.get(id) ?? [],
     capOf: (id, energyMax) => {
       const pct = byPack.get(id)?.energy_cap
       return pct === undefined ? Infinity : Math.floor((energyMax * pct) / 100)
