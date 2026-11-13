@@ -11,7 +11,7 @@ import { fieldOf, fenceCost, isBuildingTile, neighbourFields, nextFreeSlot, terr
 import { earnedLine, heldBy, isEarned } from './readiness'
 import { RULES, available, capLeft, cropOf, interval, revivable, ripe, thirsty, visible } from './rules'
 import { fromV2 } from './v2'
-import { guildCoins } from './yields'
+import { guildCoins, harvestCoins } from './yields'
 import type { Crop, FarmEvent, FarmState } from './types'
 
 /** A farm with nothing in it: the state before `farm-started`. */
@@ -380,7 +380,8 @@ function harvest(s: FarmState, c: Crop, e: Extract<FarmEvent, { type: 'harvested
     c.best = RULES.maxStage
     c.due = s.day + RULES.perennialInterval
     // The guild's share is asked once the tree is rooted: the harvest that makes a guild whole is the first it pays for.
-    s.coins += RULES.harvest.coins + guildCoins(c.seed, s, catalog)
+    const seed = catalog.seed(c.seed)
+    s.coins += (seed ? harvestCoins(seed, s, catalog) : RULES.harvest.coins) + guildCoins(c.seed, s, catalog)
     uncompost(s, c.seed)
   } else {
     c.stage = RULES.maxStage - 1

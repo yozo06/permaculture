@@ -1,7 +1,8 @@
-// What a harvest or a check-in pays beyond its plain coins: a share from each whole guild the seed is in.
+// What a harvest or a check-in pays beyond its plain coins: a share from each whole guild the seed is in, and the
+// harvest over again for a seed on the edge of another field.
 // Unlike readiness, this is part of replaying a farm: the coins are in its state. So it only ever adds, and nothing
 // in the rules refuses a farm for having more. packs/lock.json guards the pack data read here.
-import type { Catalog } from './catalog'
+import type { Catalog, Seed } from './catalog'
 import { RULES, cropOf } from './rules'
 import type { FarmState, GuildDef } from './types'
 
@@ -31,3 +32,14 @@ export const wholeGuilds = (seedId: string, s: Crops, catalog: Catalog): GuildDe
 /** What the seed's guilds pay for a harvest or a check-in that leaves the farm as `s`: a share from each whole one. */
 export const guildCoins = (seedId: string, s: Crops, catalog: Catalog): number =>
   RULES.guild.coins * wholeGuilds(seedId, s, catalog).length
+
+/**
+ * The edge this seed sits on is live: a tree is rooted in the field it borders. An edge has two sides, so it pays
+ * only on a farm that has learned something on the other one. A wilted tree is rooted all the same.
+ */
+export const edgeLive = (seed: Seed, s: Crops, catalog: Catalog): boolean =>
+  seed.edge !== null && s.crops.some((c) => c.perennial && catalog.seed(c.seed)?.pack === seed.edge)
+
+/** What a premium harvest of this seed pays on the farm as it stands: the harvest, and again on a live edge. */
+export const harvestCoins = (seed: Seed, s: Crops, catalog: Catalog): number =>
+  RULES.harvest.coins * (edgeLive(seed, s, catalog) ? RULES.edge.times : 1)

@@ -92,6 +92,12 @@ describe('almanacHtml', () => {
     expect(html.split('<h3>Not here yet</h3>')[1] ?? '').not.toContain('guild')
   })
 
+  it('says what a seed on an edge pays, from the rules, and no longer lists edges as something to come', () => {
+    const html = almanacHtml(catalog, RULES.energyMax, '0.0.0')
+    expect(html).toContain('Its harvest pays ' + RULES.edge.times + ' times over, ' + RULES.edge.times * RULES.harvest.coins + ' coins, once you have a tree in that other field.')
+    expect(html.split('<h3>Not here yet</h3>')[1] ?? '').not.toContain('edge')
+  })
+
   it('says which version of the game it is, so a bug report can name it', () => {
     expect(almanacHtml(catalog, RULES.energyMax, '9.9.9 (abc1234)')).toContain('Version 9.9.9 (abc1234)')
   })

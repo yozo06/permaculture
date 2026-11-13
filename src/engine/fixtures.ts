@@ -64,14 +64,15 @@ export const earningCatalog = buildCatalog(smallPacks.map((p) => (p.pack !== 'sh
 ] })))
 
 /**
- * The small farm with guilds that are quick to make whole, so random play reaches what a guild pays: corn alone, and
- * corn with beans, beside the three sisters. Corn is in all three.
+ * The small farm with more to gather, set up so random play reaches it:
+ * - guilds that are quick to make whole: corn alone, and corn with beans, beside the three sisters. Corn is in all three;
+ * - beans on the edge of the shed, so their harvest pays double once a tool is rooted there.
  */
-export const bountifulCatalog = buildCatalog(smallPacks.map((p) => (p.pack !== 'garden' ? p : { ...p, guilds: [
-  ...(p.guilds ?? []),
-  { id: 'tall', title: 'Tall', seeds: ['corn'] },
-  { id: 'pole', title: 'Pole and climber', seeds: ['corn', 'beans'] },
-] })))
+export const bountifulCatalog = buildCatalog(smallPacks.map((p) => (p.pack !== 'garden' ? p : {
+  ...p,
+  guilds: [...(p.guilds ?? []), { id: 'tall', title: 'Tall', seeds: ['corn'] }, { id: 'pole', title: 'Pole and climber', seeds: ['corn', 'beans'] }],
+  seeds: p.seeds.map((s) => (s.id === 'beans' ? { ...s, edge: 'shed' } : s)),
+})))
 
 /** Apply events in order; throws if one is refused, so a test that sets up a farm fails loudly. */
 export function run(catalog: ReturnType<typeof buildCatalog>, events: FarmEvent[], from: FarmState = initialState()): FarmState {

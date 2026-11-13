@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { bountifulCatalog as rich, smallCatalog as cat, smallFarm } from './fixtures'
 import { RULES } from './rules'
 import type { Crop, FarmState } from './types'
-import { dragging, guildCoins, guildWhole, wholeGuilds } from './yields'
+import { dragging, edgeLive, guildCoins, guildWhole, harvestCoins, wholeGuilds } from './yields'
 
 const tree = (seed: string, patch: Partial<Crop> = {}): Crop =>
   ({ seed, x: 20, y: 20, stage: 4, best: 4, due: 99, wilted: false, perennial: true, notes: '', journal: [], ...patch })
@@ -51,5 +51,32 @@ describe('a guild', () => {
     expect(guildCoins('bees', whole, cat)).toBe(0)
     expect(guildCoins('saw', whole, cat)).toBe(0)
     expect(guildCoins('nope', whole, cat)).toBe(0)
+  })
+})
+
+describe('a seed on the edge of another field', () => {
+  // In `bountifulCatalog` the beans sit on the edge of the shed.
+  const beans = rich.seed('beans')!
+  const corn = rich.seed('corn')!
+
+  it('is on a live edge once a tree stands in the field it borders', () => {
+    expect(edgeLive(beans, farm(), rich)).toBe(false)
+    expect(edgeLive(beans, farm(tree('saw')), rich)).toBe(true)
+  })
+
+  it('needs a tree there, not a crop still growing, and a tree in its own field does not count', () => {
+    expect(edgeLive(beans, farm(tree('saw', { perennial: false })), rich)).toBe(false)
+    expect(edgeLive(beans, farm(tree('corn')), rich)).toBe(false)
+  })
+
+  it('stays live while the tree over there is wilted: it is rooted all the same', () => {
+    expect(edgeLive(beans, farm(tree('saw', { wilted: true })), rich)).toBe(true)
+  })
+
+  it('pays its harvest over again on a live edge, and a seed on no edge is paid the plain harvest', () => {
+    expect(harvestCoins(beans, farm(), rich)).toBe(RULES.harvest.coins)
+    expect(harvestCoins(beans, farm(tree('saw')), rich)).toBe(RULES.edge.times * RULES.harvest.coins)
+    expect(edgeLive(corn, farm(tree('saw')), rich)).toBe(false)
+    expect(harvestCoins(corn, farm(tree('saw')), rich)).toBe(RULES.harvest.coins)
   })
 })

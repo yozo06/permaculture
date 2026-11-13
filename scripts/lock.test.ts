@@ -20,7 +20,7 @@ const base: PackDef[] = [
     guilds: [{ id: 'pair', title: 'Pair', seeds: ['corn', 'squash'] }],
     seeds: [
       { id: 'corn', name: 'Corn', layer: 'canopy', branch: 'roots', tier: 0, harvest: 'recall' },
-      { id: 'squash', name: 'Squash', layer: 'herb', branch: 'leaves', tier: 1, needs: ['corn'], harvest: 'artifact' },
+      { id: 'squash', name: 'Squash', layer: 'herb', branch: 'leaves', tier: 1, needs: ['corn'], edge: 'shed', harvest: 'artifact' },
       { id: 'bees', name: 'Bees', layer: 'herb', branch: 'roots', tier: 1, wild: true, harvest: 'recall' },
     ],
   },
@@ -65,6 +65,9 @@ describe('lockProblems', () => {
     ['a seed that needs more', (p) => { seedOf(p, 'squash').needs = ['corn', 'bees'] }, /seed "squash" now needs "bees"/],
     // Loosening is not free either: a farm that jumped the fence to squash would have that jump refused as "not locked".
     ['a seed that needs less', (p) => { delete seedOf(p, 'squash').needs }, /seed "squash" no longer needs "corn"/],
+    // An edge pays double, and those coins are in the farm.
+    ['an edge that is taken away', (p) => { delete seedOf(p, 'squash').edge }, /seed "squash" no longer sits on the edge of shed/],
+    ['an edge that moves to another field', (p) => { seedOf(p, 'squash').edge = 'pond'; p.push({ pack: 'pond', version: 0, title: 'Pond', branches: [{ id: 'a', title: 'A' }], seeds: [] }) }, /seed "squash" no longer sits on the edge of shed/],
     ['a seed that becomes wild', (p) => { seedOf(p, 'corn').wild = true }, /seed "corn" became wild/],
     ['a seed that stops being wild', (p) => { seedOf(p, 'bees').wild = false }, /seed "bees" is no longer wild/],
     ['an artifact seed that asks for a longer write-up', (p) => { seedOf(p, 'squash').harvest = 'judged' }, /seed "squash" went from artifact to judged/],
@@ -80,6 +83,20 @@ describe('lockProblems', () => {
   ])('refuses %s', (_name, edit, message) => {
     const problems = lockProblems(locked, changed(edit))
     expect(problems.join('\n')).toMatch(message)
+  })
+})
+
+describe('an edge in the lock', () => {
+  it('may be given to a released seed: its harvests pay more, never less', () => {
+    const edged = changed((p) => { seedOf(p, 'corn').edge = 'shed' })
+    expect(lockProblems(locked, edged)).toEqual([])
+    expect(edged.seeds.corn).toEqual({ ...locked.seeds.corn, edge: 'shed' })
+  })
+
+  it('is written only on the seeds that have one, so the rest of the file stays as it was', () => {
+    expect(locked.seeds.squash?.edge).toBe('shed')
+    expect(Object.hasOwn(locked.seeds.corn ?? {}, 'edge')).toBe(false)
+    expect(lockText(locked)).toContain('"squash": {"pack":"garden","needs":["corn"],"harvest":"artifact","wild":false,"edge":"shed"}')
   })
 })
 

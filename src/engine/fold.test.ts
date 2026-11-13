@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import sampleFarm from '../game/sample-farm.json'
 import { allowed, apply, check, fieldsToOpen, fold, initialState, parseEvent, refusedCount } from './fold'
-import { EXPLANATION, NOTES, earningCatalog as earnCat, layeredCatalog as layerCat, run, smallCatalog as cat, smallFarm, started } from './fixtures'
+import { EXPLANATION, NOTES, bountifulCatalog as rich, earningCatalog as earnCat, layeredCatalog as layerCat, run, smallCatalog as cat, smallFarm, started } from './fixtures'
 import { fieldOf, terrain, wildKind, worldSize } from './land'
 import { RULES, available, ripe, thirsty } from './rules'
 import type { Crop, FarmEvent, FarmState } from './types'
@@ -390,6 +390,35 @@ describe('a guild', () => {
     const s = farm(tree('corn'), tree('beans'), tree('squash'), tree('saw'), tree('bees', { perennial: false, stage: 1 }))
     expect(run(cat, [checkIn('saw')], s).coins).toBe(s.coins)
     expect(run(cat, [checkIn('bees')], s).coins).toBe(s.coins)
+  })
+})
+
+describe('a seed on the edge of another field', () => {
+  // In `bountifulCatalog` the beans sit on the edge of the shed. Without corn they make no guild whole.
+  const tree = (seed: string, patch: Partial<Crop> = {}): Crop =>
+    ({ seed, x: 20, y: 20, stage: 4, best: 4, due: 9, wilted: false, perennial: true, notes: '', journal: [], ...patch })
+  const farm = (...crops: Crop[]): FarmState => ({ ...smallFarm(), crops })
+  const ripeBeans = tree('beans', { perennial: false })
+  const harvestBeans = (ok = true): FarmEvent => ({ type: 'harvested', seed: 'beans', ok })
+
+  it('is paid the plain harvest while nothing is rooted in the field it borders', () => {
+    const s = farm(ripeBeans, tree('saw', { perennial: false }))
+    expect(run(rich, [harvestBeans()], s).coins).toBe(s.coins + RULES.harvest.coins)
+  })
+
+  it('is paid double once a tree stands there', () => {
+    const s = farm(ripeBeans, tree('saw'))
+    expect(run(rich, [harvestBeans()], s).coins).toBe(s.coins + RULES.edge.times * RULES.harvest.coins)
+  })
+
+  it('is paid nothing for seconds, edge or no edge', () => {
+    const s = farm(ripeBeans, tree('saw'))
+    expect(run(rich, [harvestBeans(false)], s).coins).toBe(s.coins)
+  })
+
+  it('pays the same seed the plain harvest in a game whose pack puts it on no edge', () => {
+    const s = farm(ripeBeans, tree('saw'))
+    expect(run(cat, [harvestBeans()], s).coins).toBe(s.coins + RULES.harvest.coins)
   })
 })
 

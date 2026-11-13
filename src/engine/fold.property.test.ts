@@ -317,18 +317,19 @@ function properties(name: string, catalog: Catalog, runs: number): void {
 properties('the small test farm', smallCatalog, 150)
 properties('a farm whose seeds have to be earned', earningCatalog, 150)
 properties('a farm with layers to balance', layeredCatalog, 150)
-properties('a farm with guilds that pay', bountifulCatalog, 150)
+properties('a farm with guilds and an edge that pay', bountifulCatalog, 150)
 properties('the real packs', buildCatalog(collectPacks()), 60)
 
-describe('what a guild pays', () => {
-  /** The same packs as they were before anything paid extra: no guilds. */
-  const before = (catalog: Catalog): Catalog => buildCatalog(catalog.packs.map((p) => ({ ...p, guilds: [] })))
+describe('what guilds and edges pay', () => {
+  /** The same packs as they were before anything paid extra: no guilds, and no seed on an edge. */
+  const before = (catalog: Catalog): Catalog =>
+    buildCatalog(catalog.packs.map((p) => ({ ...p, guilds: [], seeds: p.seeds.map(({ edge: _edge, ...seed }) => seed) })))
   const coinless = (s: FarmState): FarmState => ({ ...s, coins: 0 })
 
-  // 14. What a guild pays only ever adds. A farm played before it paid anything replays event for event, and differs
-  // only in having at least the coins it had. So no saved farm can lose by it.
+  // 14. What a guild and an edge pay only ever adds. A farm played before they paid anything replays event for event,
+  // and differs only in having at least the coins it had. So no saved farm can lose by them.
   it.each<[string, Catalog, number]>([
-    ['the farm with guilds that pay', bountifulCatalog, 150],
+    ['the farm with guilds and an edge that pay', bountifulCatalog, 150],
     ['the real packs', buildCatalog(collectPacks()), 40],
   ])('only ever adds on %s: a farm played without it replays whole, with at least the coins it had', (_name, catalog, runs) => {
     const old = before(catalog)
@@ -349,7 +350,7 @@ describe('what a guild pays', () => {
       }),
       { numRuns: runs },
     )
-    // The play reaches a whole guild often enough for this to have been a test of something.
+    // The play reaches a whole guild or a live edge often enough for this to have been a test of something.
     if (catalog === bountifulCatalog) expect(paid).toBeGreaterThan(0)
   })
 })

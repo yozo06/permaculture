@@ -49,6 +49,7 @@ seeds:
     tier: 1                  # depth in the tree; 0 needs nothing rooted first (layer balance may still make it wait)
     needs: [con]             # seed ids that must be rooted first (same pack)
     wild: false              # true: hidden until foraged and domesticated; needs a find that points at it
+    edge: infra              # optional: a second field it also belongs to; its harvest pays double there. See "Edges"
     earned: { rooted: 1 }    # optional: learning that has to happen before it can be planted. See "Earned seeds"
     harvest: recall          # recall | solve | judged | artifact
     minutes: 30              # about how long planting takes: reading the source and writing notes
@@ -102,6 +103,19 @@ earned: { pack: infra, readiness: 60 }   # the Infra field's readiness at 60 or 
 - `readiness` is today's number, so it can be lost again until the seed is in the ground.
 - It is asked only of a planting done today. A saved farm replays without it, so a farm that planted the seed earlier keeps the crop, and `earned` can be added, changed or removed on a released seed. It is the one thing about a seed that is not in `packs/lock.json`.
 
+## Edges
+
+Some seeds belong to two fields at once: Kannada words for technology, the economics of a farm. Give such a seed `edge`, the pack id of the second field:
+
+```yaml
+  - id: tech-words
+    edge: infra              # also belongs to the Infra field
+```
+
+The seed still lives in its own pack and is planted in its own field. Its harvest pays double once the farm has a tree rooted in the field it borders. On a farm without that field it is an ordinary seed.
+
+Those coins are part of a saved farm, so `edge` may be added to a released seed but never removed or pointed at another pack.
+
 ## Guilds
 
 A guild is a named set of seeds from this pack that a practitioner would study together. It is **whole** while every member stands as a tree, and a whole guild pays a few coins each time one of its members is harvested or checked in on. A wilted member stops the pay until it is revived. A seed may be in more than one guild, and is paid by each that is whole. A guild may hold a wild seed: it is then whole only once the farmer has found and rooted it.
@@ -116,7 +130,7 @@ A find is a short fact the player forages in the wilderness. It is picked by wha
 
 Seed ids, find ids and pack ids are unique across all packs, and branch ids within a pack. Farms refer to all of them and are replayed against the current packs, so never rename or remove a released one. Never change a released seed's `needs` or whether it is `wild`, in either direction, and never lower a pack's `energy_cap`: on replay the game skips any event that is no longer allowed, and the farm quietly changes. To hold a released seed back, give it `earned` instead. Whether a pack is `perennial` may change too: a bar a farmer set before a pack lost its end stays in their log and is simply not used.
 
-`packs/lock.json` holds these promises, one line per id, and `npm test` fails when a change would break one: an id that is gone or has moved, a seed whose `needs` or `wild` changed, an artifact seed that now asks for a write-up, a find that leads somewhere else, a cap that was lowered or added, a guild that is gone or has gained a member. Even needing *less* counts: a farm that jumped the fence to that seed holds a jump the game would now refuse. Adding seeds, finds, branches, guilds and packs is always fine: run `npm run lock` and commit the file with your change. It will not write over a breaking change, and it will not replace a lock file it cannot read.
+`packs/lock.json` holds these promises, one line per id, and `npm test` fails when a change would break one: an id that is gone or has moved, a seed whose `needs` or `wild` changed, an artifact seed that now asks for a write-up, a find that leads somewhere else, a cap that was lowered or added, a guild that is gone or has gained a member, a seed whose `edge` is gone or names another pack. Even needing *less* counts: a farm that jumped the fence to that seed holds a jump the game would now refuse. Adding seeds, finds, branches, guilds and packs is always fine: run `npm run lock` and commit the file with your change. It will not write over a breaking change, and it will not replace a lock file it cannot read.
 
 ## Rules the validator enforces
 
@@ -130,6 +144,7 @@ Seed ids, find ids and pack ids are unique across all packs, and branch ids with
 - A find's `near` ids and `seed` are seeds in its pack, and its `seed` is wild.
 - Every wild seed has a find that points at it.
 - Every guild member is a seed in the same pack, listed once. Guild ids are unique within a pack.
+- A seed's `edge` names a pack that exists and is not its own.
 - A seed's `earned` asks for one thing, `rooted` or `readiness`. A `readiness` names its pack. The pack exists, is not the seed's own, and for `readiness` has an end. It never asks for more seeds than there are to root.
 
 ## Writing good seeds

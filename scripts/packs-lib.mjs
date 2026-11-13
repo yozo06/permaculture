@@ -2,7 +2,7 @@
 // The schema catches shape errors; this file checks what a schema can't: references between seeds,
 // branches, sources, guilds and finds; no prerequisite cycles; tiers above prerequisites; and ids
 // that are unique across every pack, because farms refer to seeds and finds by bare id; and what a seed asks to be
-// earned, which may name another pack.
+// earned and the edge it sits on, which may name another pack.
 import { readFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
@@ -57,7 +57,19 @@ export function loadPacks(dir = defaultPacksDir) {
     }
   }
   checkEarned(results);
+  checkEdges(results);
   return results;
+}
+
+// An edge names another pack, so like `earned` it is checked once every pack has been read, and a pack whose own shape
+// is wrong is still a pack that exists.
+function checkEdges(all) {
+  const known = new Set(all.filter(r => r.pack && typeof r.pack.pack === 'string').map(r => r.pack.pack));
+  for (const r of all.filter(r => r.shapeOk)) for (const s of r.pack.seeds) {
+    if (s.edge === undefined) continue;
+    if (s.edge === r.pack.pack) r.errors.push(`seed ${s.id}: edge names its own pack`);
+    else if (!known.has(s.edge)) r.errors.push(`seed ${s.id}: edge names an unknown pack "${s.edge}"`);
+  }
 }
 
 // What a seed asks to be earned names other packs, so it is checked once every pack has been read.

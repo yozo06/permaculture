@@ -45,6 +45,13 @@ describe('catalog', () => {
     expect(c.seed('empty')?.earned).toBeNull()
   })
 
+  it('says which field a seed is on the edge of, and null for a seed that is on none', () => {
+    const seed = (id: string, edge?: string) => ({ id, name: id, layer: 'herb' as const, branch: 'b', tier: 0, harvest: 'artifact' as const, prompts: ['p'], ...(edge ? { edge } : {}) })
+    const c = buildCatalog([{ pack: 'p', version: 0, title: 'P', branches: [{ id: 'b', title: 'B' }], seeds: [seed('inner'), seed('outer', 'q')] }])
+    expect(c.seed('inner')?.edge).toBeNull()
+    expect(c.seed('outer')?.edge).toBe('q')
+  })
+
   it('finds the guilds a seed is in, and none for a seed that is in none', () => {
     expect(catalog.guildsOf('raft').map((g) => g.id)).toEqual(['consensus-core'])
     expect(catalog.guildsOf('repo')).toEqual([])

@@ -145,6 +145,30 @@ describe('a seed that has to be earned', () => {
   })
 })
 
+describe('a seed on the edge of another field', () => {
+  /** The errors after putting the Workshop's first seed on this edge. */
+  const withEdge = (edge: string, dir = tempCopy()): string => {
+    edit(dir, 'workshop.yaml', (t) => t.replace('\n  - id: repo\n', '\n  - id: repo\n    edge: ' + edge + '\n'))
+    return errorsOf(dir).join('\n')
+  }
+
+  it('names the other field by its pack id', () => {
+    expect(withEdge('infra')).toBe('')
+  })
+
+  it('names a pack that exists and is not its own', () => {
+    expect(withEdge('nowhere')).toContain('seed repo: edge names an unknown pack "nowhere"')
+    expect(withEdge('workshop')).toContain('seed repo: edge names its own pack')
+    expect(withEdge('[infra, kannada]')).toContain('/seeds/')
+  })
+
+  it('does not blame a pack that exists for another file being broken', () => {
+    const dir = tempCopy()
+    edit(dir, 'infra.yaml', (t) => t.replace('\nversion: 0\n', '\nversion: zero\n'))
+    expect(withEdge('infra', dir)).not.toContain('unknown pack')
+  })
+})
+
 describe("a pack's own bar", () => {
   it('is one a farmer could have set: 1 to 100', () => {
     const withBar = (bar: string): string => {

@@ -23,7 +23,7 @@ The game must be useful with ugly tiles. Art is an unlock, never a prerequisite.
 | **Small and slow** | Hard cap on new seeds per day (two). |
 | **Obtain a yield** | Every planting leaves notes in your own words, and a judged or artifact harvest leaves a write-up or proof. No yield, no credit. |
 | **Observe and interact** | Zone 5 is for foraging **wild finds**, facts next to what is growing, which add nothing to readiness and can be **domesticated** into volunteer seeds. *(planned)* The Sunday walk: the game shows the map and asks three questions. No tasks. |
-| **Use edges** | *(planned)* Seeds on the boundary of two fields (farm economics, Kannada tech vocabulary) yield double. |
+| **Use edges** | A pack can put a seed on the **edge** of a second field it also belongs to (Kannada words for technology sit between Kannada and a technical field; farm economics would sit between two more). Its harvest pays double once a tree stands in that other field: an edge has two sides, so it pays on a farm that has learned something on both. |
 | **The problem is the solution** | A failed mock is not a loss; it is the next season's planting list. |
 
 ## 3. The loop
@@ -73,6 +73,7 @@ Two days past thirsty without water, a crop wilts overnight unless the barrel ha
 | Readiness bar | 80 unless the pack or the farmer sets another; the farmer may set 1 to 100 |
 | Layer balance | a seed waits while a layer 2 or more beneath its own is hollow and has a seed to plant |
 | A whole guild | pays 5 coins at each harvest or check-in of one of its members |
+| A seed on an edge | its harvest pays 2 times over once a tree stands in the field it borders |
 | Compost | everything in the heap is due again the next day |
 
 ### The depth ladder

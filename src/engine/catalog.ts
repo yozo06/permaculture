@@ -28,10 +28,12 @@ export type Earned =
   | { kind: 'readiness'; pack: string; percent: number }
 
 /** A seed with its pack and every list filled in, so callers never check for undefined. */
-export interface Seed extends Omit<SeedDef, 'needs' | 'wild' | 'earned' | 'sources' | 'rubric' | 'questions' | 'prompts'> {
+export interface Seed extends Omit<SeedDef, 'needs' | 'wild' | 'edge' | 'earned' | 'sources' | 'rubric' | 'questions' | 'prompts'> {
   pack: string
   needs: string[]
   wild: boolean
+  /** The other field this seed sits on the edge of, or null. */
+  edge: string | null
   /** Null when the seed asks for nothing. */
   earned: Earned | null
   sources: string[]
@@ -72,6 +74,7 @@ function normalise(pack: string, s: SeedDef): Seed {
     pack,
     needs: s.needs ?? [],
     wild: s.wild === true,
+    edge: s.edge ?? null,
     earned: earnedOf(s.earned),
     sources: s.sources ?? [],
     rubric: s.rubric ?? [],

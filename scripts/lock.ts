@@ -4,7 +4,8 @@ import type { HarvestType, PackDef } from '../src/engine/types'
 export interface Lock {
   /** pack id -> its energy cap (percent, or null for none) and its branch ids */
   packs: Record<string, { cap: number | null; branches: string[] }>
-  seeds: Record<string, { pack: string; needs: string[]; harvest: HarvestType; wild: boolean }>
+  /** `edge` is there only for a seed that has one, so a seed without keeps the line it always had. */
+  seeds: Record<string, { pack: string; needs: string[]; harvest: HarvestType; wild: boolean; edge?: string }>
   /** find id -> its pack and the wild seed it leads to, if any */
   finds: Record<string, { pack: string; seed: string | null }>
   /** "pack/guild" -> its members. A guild pays while it is whole, and those coins are part of the farm. */
@@ -18,7 +19,7 @@ export function lockOf(packs: readonly PackDef[]): Lock {
   const lock: Lock = { packs: {}, seeds: {}, finds: {}, guilds: {} }
   for (const p of packs) {
     lock.packs[p.pack] = { cap: p.energy_cap ?? null, branches: p.branches.map((b) => b.id) }
-    for (const s of p.seeds) lock.seeds[s.id] = { pack: p.pack, needs: s.needs ?? [], harvest: s.harvest, wild: s.wild === true }
+    for (const s of p.seeds) lock.seeds[s.id] = { pack: p.pack, needs: s.needs ?? [], harvest: s.harvest, wild: s.wild === true, ...(s.edge === undefined ? {} : { edge: s.edge }) }
     for (const f of p.finds ?? []) lock.finds[f.id] = { pack: p.pack, seed: f.seed ?? null }
     for (const g of p.guilds ?? []) lock.guilds[p.pack + '/' + g.id] = { seeds: g.seeds }
   }
@@ -48,6 +49,7 @@ export function readLock(text: string): Lock {
 /**
  * Changes between two locks that would make a saved farm replay differently. Empty when there are none.
  * Growing is free: new ids, a find that gains a seed, a write-up that becomes a proof, a cap raised or lifted.
+ * An edge pays double, so a seed may gain one but never lose or move it.
  * A guild pays while it is whole, so it may not go, and may lose members but not gain them: with one more to root it
  * is whole later, the farm is paid less, and something it bought with those coins may no longer replay.
  * What a seed needs and whether it is wild may not change in either direction: a farm that jumped the fence to a
@@ -71,6 +73,7 @@ export function lockProblems(old: Lock, now: Lock): string[] {
     for (const need of was.needs) if (!is.needs.includes(need)) problems.push('seed "' + id + '" no longer needs "' + need + '": a farm that jumped the fence to it would have that jump refused, and its energy that day would replay differently')
     if (is.wild && !was.wild) problems.push('seed "' + id + '" became wild: farms that planted it never foraged for it')
     if (was.wild && !is.wild) problems.push('seed "' + id + '" is no longer wild: a farm that domesticated it has an event that would be refused')
+    if (was.edge !== undefined && is.edge !== was.edge) problems.push('seed "' + id + '" no longer sits on the edge of ' + was.edge + ': its harvest paid double there, so farms would replay with fewer coins than they spent')
     if (was.harvest === 'artifact' && is.harvest !== 'artifact') {
       problems.push('seed "' + id + '" went from artifact to ' + is.harvest + ': a short proof already harvested would be too short for a write-up')
     }
