@@ -22,6 +22,7 @@ import { BOOK_KEY, ageText, bookText, readBook, receive, remove, tooOld, type Ar
 import { NEUTRAL_COLOR, cropHeight, cropSprite, paintKeys, sprite as spriteAt } from './art/sprites'
 import { createStore, defaultId, LOG_KEY, type StorageLike } from './store'
 import { esc, shuffle } from './util'
+import { REF, cameraAfter, defaultZoom, fitView, pinchZoom, shift, zoomRange, type View } from './view'
 import {
   arrivalSheetHtml, chipHtml, countText, cropSheetHtml, earnedSectionHtml, footHtml, heldSectionHtml, nameSheetHtml, neighbourCropSheetHtml, neighboursSheetHtml, noteHtml, NO_NOTES,
   pickerHtml, plantSheetHtml, readinessSheetHtml, shareSheetHtml, tickList, writingBox,
@@ -55,8 +56,14 @@ type Pick =
   | { kind: 'flag'; pack: string }
 
 /* ---------- page ---------- */
-const W = 480
-const H = 300
+/* ---------- the view: how much of the farm the canvas shows, and how big ---------- */
+/** Until the page has been measured, the view the farm was first drawn for. `layout` sets the real one. */
+let view: View = { zoom: 2, pw: REF.w * 2, ph: REF.h * 2, w: REF.w, h: REF.h }
+/** The canvas in pixels of art: everything is drawn in these, and the canvas scales them up by the zoom. */
+let W = view.w
+let H = view.h
+/** How far this view moves everything from where the reference view had it. The camera is kept as if the view were that size. */
+let SHIFT = shift(view)
 const TH = 16
 
 function byId(id: string): HTMLElement {
@@ -145,7 +152,7 @@ const D = (): FarmState => (visiting ? visiting.state : S)
 /* ---------- camera ---------- */
 /** World size in tiles, set from the fields by `buildStatics`. 20 for up to four fields, 27 for up to nine. */
 let N = worldSize(S.fields)
-const camHome = (): { x: number; y: number } => ({ x: W / 2, y: H / 2 - 8 * N - 8 })
+const camHome = (): { x: number; y: number } => ({ x: REF.w / 2, y: REF.h / 2 - 8 * N - 8 })
 /** The camera, centred on the homestead until the player moves it. A visit has a camera of its own, so yours is as you left it. */
 function camera(): { x: number; y: number } {
   if (visiting) return visiting.cam
@@ -225,7 +232,7 @@ function sheetLoaded(): void {
 }
 
 /* ---------- drawing ---------- */
-const iso = (x: number, y: number): { sx: number; sy: number } => { const cam = camera(); return { sx: (x - y) * 16 + cam.x, sy: (x + y) * 8 + cam.y } }
+const iso = (x: number, y: number): { sx: number; sy: number } => { const cam = camera(); return { sx: (x - y) * 16 + cam.x + SHIFT.x, sy: (x + y) * 8 + cam.y + SHIFT.y } }
 let g: CanvasRenderingContext2D = ctx
 function px(x: number, y: number, w: number, h: number, c: string): void {g.fillStyle=c;g.fillRect(Math.round(x),Math.round(y),w,h);}
 type Pt = [number, number]
@@ -403,11 +410,14 @@ let hover: { x: number; y: number } | null = null
 function frame(t: number): void {
   if (dirtyGround) buildGround()
   g = ctx
+  // Everything below is drawn in pixels of art; the canvas scales each one up to a whole number of screen pixels.
+  ctx.setTransform(view.zoom, 0, 0, view.zoom, 0, 0)
+  ctx.imageSmoothingEnabled = false
   ctx.fillStyle = '#8FC8E8'; ctx.fillRect(0, 0, W, H); ctx.fillStyle = '#A4D6F0'; ctx.fillRect(0, Math.round(H * 0.57), W, H)
   spr('sky/sun', W - 40, 30)
   for (const c of clouds) { c.x += c.v; if (c.x > W + 40) c.x = -40; spr('sky/cloud/' + c.n, c.x, c.y) }
   const cam = camera()
-  ctx.drawImage(gcv, Math.round(cam.x - groundOx), Math.round(cam.y - 8))
+  ctx.drawImage(gcv, Math.round(cam.x + SHIFT.x - groundOx), Math.round(cam.y + SHIFT.y - 8))
   if (hover) {
     const { sx, sy } = iso(hover.x, hover.y)
     ctx.fillStyle = 'rgba(255,255,255,.28)'
@@ -486,7 +496,15 @@ function softClose(): void { if (!hasDraft()) close() }
 let downOnVeil = false
 veil.addEventListener('pointerdown', (e) => { downOnVeil = e.target === veil })
 veil.addEventListener('click', (e) => { if (e.target === veil && downOnVeil) softClose() })
-document.addEventListener('keydown', (e) => { if (e.isComposing) return; if (e.key === 'Escape' && !veil.hidden) softClose() })
+document.addEventListener('keydown', (e) => {
+  if (e.isComposing) return
+  if (e.key === 'Escape' && !veil.hidden) return softClose()
+  // Plus and minus zoom the farm, when no sheet is open and nobody is typing.
+  const typing = e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement
+  if (!veil.hidden || typing || e.ctrlKey || e.metaKey || e.altKey) return
+  if (e.key === '+' || e.key === '=') zoomTo(view.zoom + 1)
+  else if (e.key === '-' || e.key === '_') zoomTo(view.zoom - 1)
+})
 const foot = footHtml
 const chip = (packId: string): string => chipHtml(packTitle(packId), colorOf(packId))
 /** Keep the count under a writing box, and the button it gates, in step with what has been typed. */
@@ -501,16 +519,66 @@ sheet.addEventListener('input', (e) => {
   if (gate instanceof HTMLButtonElement) gate.disabled = n < min
 })
 
-/* ---------- input: drag to pan, tap to act ---------- */
+/* ---------- the canvas on the page: its size, and the zoom ---------- */
+const bZoomIn = byIdAs('bZoomIn', HTMLButtonElement)
+const bZoomOut = byIdAs('bZoomOut', HTMLButtonElement)
+/** Measure the canvas and set the view: the screen's own resolution, at the farmer's zoom or the one their screen starts at. */
+function layout(): void {
+  const r = cv.getBoundingClientRect()
+  if (r.width < 1 || r.height < 1) return
+  const dpr = window.devicePixelRatio || 1
+  const next = fitView(r.width, r.height, dpr, store.ui.zoom ?? defaultZoom(Math.round(r.width * dpr), dpr))
+  if (next.pw !== view.pw || next.ph !== view.ph || next.zoom !== view.zoom) {
+    view = next
+    W = view.w
+    H = view.h
+    SHIFT = shift(view)
+    // Setting a canvas's size clears it, so only when it has changed.
+    if (cv.width !== view.pw) cv.width = view.pw
+    if (cv.height !== view.ph) cv.height = view.ph
+  }
+  const range = zoomRange(view.pw)
+  bZoomIn.disabled = view.zoom >= range.max
+  bZoomOut.disabled = view.zoom <= range.min
+}
+/** Zoom to `zoom`, keeping the point of the farm under (fx, fy) where it is: fractions of the canvas, its middle by default. */
+function zoomTo(zoom: number, fx = 0.5, fy = 0.5): void {
+  const r = cv.getBoundingClientRect()
+  const next = fitView(r.width, r.height, window.devicePixelRatio || 1, zoom)
+  if (next.zoom === view.zoom) return
+  const cam = camera()
+  Object.assign(cam, cameraAfter(cam, view, next, fx, fy))
+  store.ui.zoom = next.zoom
+  layout()
+  clampCam()
+  store.saveUi()
+}
+bZoomIn.addEventListener('click', () => zoomTo(view.zoom + 1))
+bZoomOut.addEventListener('click', () => zoomTo(view.zoom - 1))
+if (typeof ResizeObserver === 'function') new ResizeObserver(layout).observe(cv)
+window.addEventListener('resize', layout)
+layout()
+
+/* ---------- input: drag to pan, tap to act, pinch to zoom ---------- */
 let down: { x: number; y: number; cx: number; cy: number; k: number } | null = null
 let dragging = false
-function toInternal(e: PointerEvent): { ix: number; iy: number; k: number } {
+/** Fingers on the canvas, by pointer. Two of them are a pinch. */
+const fingers = new Map<number, { x: number; y: number }>()
+/** The pinch under way: how far apart the fingers began, and the zoom they began at. */
+let pinch: { dist: number; zoom: number } | null = null
+/** How far apart the first two fingers are, and the point half way between them. */
+function spread(): { dist: number; x: number; y: number } | null {
+  const [a, b] = [...fingers.values()]
+  return a && b ? { dist: Math.hypot(a.x - b.x, a.y - b.y), x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 } : null
+}
+/** A point of the page as a point of the canvas, in pixels of art. `k` is pixels of art to a point of the page. */
+function toInternal(e: { clientX: number; clientY: number }): { ix: number; iy: number; k: number } {
   const r = cv.getBoundingClientRect()
   return { ix: (e.clientX - r.left) * W / r.width, iy: (e.clientY - r.top) * H / r.height, k: W / r.width }
 }
 function tileAt(ix: number, iy: number): { x: number; y: number } | null {
   const cam = camera()
-  const dx = ix - cam.x, dy = iy - cam.y
+  const dx = ix - cam.x - SHIFT.x, dy = iy - cam.y - SHIFT.y
   const x = Math.floor((dx / 16 + dy / 8) / 2), y = Math.floor((dy / 8 - dx / 16) / 2)
   return (x >= 0 && y >= 0 && x < N && y < N) ? { x, y } : null
 }
@@ -528,32 +596,59 @@ function pick(ix: number, iy: number): Pick | null {
     return { kind: o.kind }
   }
   const t = tileAt(ix, iy)
-  return t ? { kind: 'tile', x: t.x, y: t.y } : null
+  if (!t) return null
+  // A sprout is a few pixels wide and a finger is not: a tap on the tile a crop stands on is a tap on the crop.
+  const here = D().crops.find((c) => c.x === t.x && c.y === t.y)
+  return here ? { kind: 'crop', crop: here } : { kind: 'tile', x: t.x, y: t.y }
 }
 /** Keep some of the world on screen: half its width either way, and its top edge above the bottom of the view. */
 function clampCam(): void {
   const cam = camera()
-  cam.x = Math.max(W / 2 - 16 * N, Math.min(W / 2 + 16 * N, cam.x))
-  cam.y = Math.max(100 - 16 * N, Math.min(H - 40, cam.y))
+  // The camera is kept as if the view were the reference size, so these limits hold at any zoom.
+  cam.x = Math.max(REF.w / 2 - 16 * N, Math.min(REF.w / 2 + 16 * N, cam.x))
+  cam.y = Math.max(100 - 16 * N, Math.min(REF.h - 40, cam.y))
 }
 cv.addEventListener('pointerdown', (e) => {
   e.preventDefault()
-  cv.setPointerCapture(e.pointerId)
+  // Holding the pointer keeps a drag alive when it leaves the canvas. A pointer that cannot be held is still a pointer.
+  try { cv.setPointerCapture(e.pointerId) } catch { /* nothing to hold */ }
+  fingers.set(e.pointerId, { x: e.clientX, y: e.clientY })
+  if (fingers.size >= 2) {
+    // A second finger makes it a pinch: whatever the first was doing, it is not a drag or a tap any more.
+    const s = spread()
+    pinch = s ? { dist: s.dist, zoom: view.zoom } : null
+    down = null
+    dragging = false
+    cv.classList.remove('drag')
+    return
+  }
   const p = toInternal(e)
   const cam = camera()
   down = { x: e.clientX, y: e.clientY, cx: cam.x, cy: cam.y, k: p.k }
   dragging = false
 })
 cv.addEventListener('pointermove', (e) => {
+  if (fingers.has(e.pointerId)) fingers.set(e.pointerId, { x: e.clientX, y: e.clientY })
+  if (pinch) {
+    const s = spread()
+    const r = cv.getBoundingClientRect()
+    // The farm stays put under the point between the fingers.
+    if (s) zoomTo(pinchZoom(pinch.zoom, pinch.dist, s.dist, view.pw), (s.x - r.left) / r.width, (s.y - r.top) / r.height)
+    return
+  }
   const p = toInternal(e)
   if (down) {
     const dx = (e.clientX - down.x) * down.k, dy = (e.clientY - down.y) * down.k
-    if (!dragging && Math.hypot(dx, dy) > 5) { dragging = true; cv.classList.add('drag') }
+    // A drag begins after 8 points of the page, whatever the zoom: a finger is as shaky zoomed in as out.
+    if (!dragging && Math.hypot(e.clientX - down.x, e.clientY - down.y) > 8) { dragging = true; cv.classList.add('drag') }
     if (dragging) { const cam = camera(); cam.x = down.cx + dx; cam.y = down.cy + dy; clampCam() }
   }
   hover = (e.pointerType === 'mouse' && !dragging) ? tileAt(p.ix, p.iy) : null
 })
 cv.addEventListener('pointerup', (e) => {
+  fingers.delete(e.pointerId)
+  if (fingers.size < 2) pinch = null
+  // After a pinch the last finger to lift finds nothing held: it is not a tap.
   if (!down) return
   const wasDrag = dragging
   down = null
@@ -579,7 +674,18 @@ cv.addEventListener('pointerup', (e) => {
   else if (p.kind === 'flag') openTree(p.pack)
   else onTile(p.x, p.y)
 })
-cv.addEventListener('pointercancel', () => { down = null; dragging = false; cv.classList.remove('drag') })
+cv.addEventListener('pointercancel', (e) => { fingers.delete(e.pointerId); if (fingers.size < 2) pinch = null; down = null; dragging = false; cv.classList.remove('drag') })
+/** A pinch on a trackpad arrives as a wheel with Ctrl held. A plain wheel is left alone: it scrolls the page. */
+let wheeled = 0
+cv.addEventListener('wheel', (e) => {
+  if (!e.ctrlKey && !e.metaKey) return
+  e.preventDefault()
+  wheeled += e.deltaY
+  if (Math.abs(wheeled) < 30) return
+  const r = cv.getBoundingClientRect()
+  zoomTo(view.zoom + (wheeled < 0 ? 1 : -1), (e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height)
+  wheeled = 0
+}, { passive: false })
 cv.addEventListener('pointerleave', () => { hover = null })
 function walkTo(x: number, y: number): void { const f = store.ui.farmer; f.tx = x; f.ty = y }
 $('bHome').addEventListener('click', () => {

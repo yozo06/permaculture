@@ -29,10 +29,12 @@ export interface UiState {
   treeTab: string | null
   /** How many skipped entries the player has already been told about, so the warning is not repeated on every load. */
   driftSeen: number
+  /** Screen pixels to one pixel of art, as the farmer left it. Null means the zoom their screen starts at. */
+  zoom: number | null
 }
 
 export const defaultFarmer = (): UiState['farmer'] => ({ x: 9, y: 8, tx: 9, ty: 8 })
-const freshUi = (): UiState => ({ cam: null, farmer: defaultFarmer(), seedSel: null, treeTab: null, driftSeen: 0 })
+const freshUi = (): UiState => ({ cam: null, farmer: defaultFarmer(), seedSel: null, treeTab: null, driftSeen: 0, zoom: null })
 
 export type NewFarm = 'fresh' | 'sample'
 
@@ -92,6 +94,8 @@ function readUi(raw: string | null): UiState {
     if (typeof v.seedSel === 'string') ui.seedSel = v.seedSel
     if (typeof v.treeTab === 'string') ui.treeTab = v.treeTab
     ui.driftSeen = Math.max(0, Math.round(num(v.driftSeen, 0)))
+    // Only a sane whole number is kept; the view fits it to the screen it finds itself on.
+    if (typeof v.zoom === 'number' && Number.isFinite(v.zoom)) ui.zoom = Math.min(32, Math.max(1, Math.round(v.zoom)))
   } catch { /* a fresh screen state is fine */ }
   return ui
 }

@@ -95,6 +95,7 @@ export function almanacHtml(catalog: Catalog, energyMax: number, version: string
       "Fruit in the field's colour means a crop is ripe. A tree keeps its fruit. A wilted crop turns brown and has none.",
       "Each field flies a <b>flag</b> in its colour, and its fence posts are capped in it. Tap a flag to open that field's learning tree.",
       'Water splashes when you water a crop, a ring spreads when it grows, and sparks rise from a harvest. They are only for show.',
+      '<b>Pinch</b> to zoom, or use the + and − buttons, or the same keys. Drag to look around. The picture is drawn to fit your screen, so it is as sharp on a phone as on a laptop.',
     ]) +
     '<h3>Wilderness (Zone 5)</h3>' +
     list([
