@@ -49,6 +49,9 @@ export function cropHeight(name: string): number {
   return s ? Math.max(0, s.ay + FOOT - s.top + 1) : 0
 }
 
+/** How far the mark over a crop (a droplet, a sparkle) is lifted to clear it, in pixels. A crop of 16 pixels or less needs none. */
+export const markRise = (name: string): number => Math.max(0, cropHeight(name) - 16)
+
 /* ---------- a field's colour ---------- */
 
 /** The colours on the sheet that stand for "the field's own": its light, itself, its shade. */

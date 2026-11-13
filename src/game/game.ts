@@ -19,8 +19,8 @@ import sampleFarm from './sample-farm.json'
 import { readLink } from './links'
 import { MOMENT_MS, momentDots, type DotTone, type MomentKind } from './moments'
 import { BOOK_KEY, ageText, bookText, readBook, receive, remove, tooOld, type Arrival, type Book } from './neighbours'
-import { NEUTRAL_COLOR, cropHeight, cropSprite, holds, paintKeys, sprite as spriteAt } from './art/sprites'
-import { drop, frontmost, idle, lift, move, press, rehold, wheelStep, type Hand, type Point, type Said, type Wheel } from './hand'
+import { NEUTRAL_COLOR, cropHeight, cropSprite, holds, markRise, paintKeys, sprite as spriteAt } from './art/sprites'
+import { drop, frontmost, idle, lift, move, press, rehold, wheelStep, type Hand, type Point, type Said, type Target, type Wheel } from './hand'
 import { createStore, defaultId, LOG_KEY, type StorageLike } from './store'
 import { esc, shuffle } from './util'
 import { REF, cameraAfter, defaultZoom, fitView, pinchZoom, shift, zoomRange, type View } from './view'
@@ -255,15 +255,20 @@ function drawCrop(c: Crop, sx: number, sy: number): void {
   const seed = catalog.seed(c.seed)
   if (seed) spr(cropSprite(seed.layer, c.stage, c.perennial, c.wilted), sx, sy, colorOf(seed.pack))
 }
-function drawMarker(c: Crop, sx: number, sy: number, t: number): void {
+/** The mark that floats over a crop, if it has one, and how far a tall crop lifts it. */
+function markOf(c: Crop): { sprite: 'mark/wilted' | 'mark/thirsty' | 'mark/ripe'; rise: number } | null {
   // Thirst, wilting and ripeness are the owner's business: a neighbour's farm shows none of them.
-  if (visiting) return
+  if (visiting) return null
+  const sprite = c.wilted ? 'mark/wilted' : thirsty(c) ? 'mark/thirsty' : ripe(c) ? 'mark/ripe' : null
   const layer = catalog.seed(c.seed)?.layer
-  // The marker floats over the crop, bobbing: a tall crop lifts it.
-  const y = sy - Math.max(0, (layer ? cropHeight(cropSprite(layer, c.stage, c.perennial)) : 0) - 16) + Math.round(Math.sin(t / 260) * 1.5)
-  if (c.wilted) spr('mark/wilted', sx, y)
-  else if (thirsty(c)) spr('mark/thirsty', sx, y)
-  else if (ripe(c)) spr('mark/ripe/' + (Math.floor(t / 350) % 2), sx, y)
+  return sprite ? { sprite, rise: layer ? markRise(cropSprite(layer, c.stage, c.perennial)) : 0 } : null
+}
+function drawMarker(c: Crop, sx: number, sy: number, t: number): void {
+  const mark = markOf(c)
+  if (!mark) return
+  // The mark bobs, and the sparkle twinkles between a small star and a big one.
+  const y = sy - mark.rise + Math.round(Math.sin(t / 260) * 1.5)
+  spr(mark.sprite === 'mark/ripe' ? 'mark/ripe/' + (Math.floor(t / 350) % 2) : mark.sprite, sx, y)
 }
 const drawFarmer = (sx: number, sy: number, walking: boolean, t: number): void => spr('farmer/' + (walking ? Math.floor(t / 120) % 2 : 0), sx, sy)
 const drawBarn = (): void => { const p = iso(BARN.x, BARN.y); spr('barn', p.sx, p.sy) }
@@ -596,9 +601,15 @@ function tileAt(ix: number, iy: number): { x: number; y: number } | null {
 function pick(ix: number, iy: number): Pick | null {
   // A flag is drawn over whatever stands behind it, so it takes the tap first: what you see is what you tap.
   for (const o of statics) if (o.kind === 'flag' && o.pack !== undefined && o.hit?.(ix, iy)) return { kind: 'flag', pack: o.pack }
-  const crop = frontmost(D().crops.map((c) => {
+  const crop = frontmost(D().crops.flatMap((c): Target<Crop>[] => {
     const seed = catalog.seed(c.seed)
-    return { what: c, ...iso(c.x, c.y), sprite: seed ? cropSprite(seed.layer, c.stage, c.perennial, c.wilted) : '', s: c.x + c.y }
+    const p = iso(c.x, c.y)
+    const mark = markOf(c)
+    // The mark over a crop is the crop's too: "tap a crop with a droplet" is as often a tap on the droplet.
+    return [
+      { what: c, ...p, sprite: seed ? cropSprite(seed.layer, c.stage, c.perennial, c.wilted) : '', s: c.x + c.y },
+      ...(mark ? [{ what: c, sx: p.sx, sy: p.sy - mark.rise, sprite: mark.sprite === 'mark/ripe' ? 'mark/ripe/1' : mark.sprite, s: c.x + c.y }] : []),
+    ]
   }), ix, iy)
   if (crop) return { kind: 'crop', crop }
   for (const o of statics) {

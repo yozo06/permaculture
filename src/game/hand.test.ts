@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { cropSprite } from './art/sprites'
+import { cropSprite, markRise } from './art/sprites'
 import { type Hand, type Said, drop, frontmost, idle, lift, move, press, rehold, wheelStep } from './hand'
 
 /** Feed a hand a run of steps and keep what it said at each. */
@@ -170,6 +170,16 @@ describe('what a tap lands on', () => {
     const things = [{ what: 'it', ...back, sprite: sprout, s: 2 }]
     expect(frontmost(things, 100 + 3, 50 + 10)).toBe('it')
     expect(frontmost(things, 100 + 6, 50 + 10)).toBeNull()
+  })
+
+  it('is the crop, when the tap is on the droplet floating over it and not on the crop behind', () => {
+    // The game says "tap a crop with a droplet", so the droplet is the crop's too. It floats over the tile behind.
+    const mark = (name: string, tile: { sx: number; sy: number }, s: number) => ({ what: name, sx: tile.sx, sy: tile.sy - markRise(sprout), sprite: 'mark/thirsty', s })
+    const things = [{ what: 'back', ...back, sprite: sprout, s: 2 }, { what: 'front', ...front, sprite: sprout, s: 4 }, mark('front', front, 4)]
+    expect(frontmost(things, 100, 66 - 9)).toBe('front')
+    // A tall crop lifts its mark clear of itself.
+    expect(markRise(sprout)).toBe(0)
+    expect(markRise(tree)).toBeGreaterThan(8)
   })
 
   it('is never a thing whose sprite the sheet does not have', () => {
