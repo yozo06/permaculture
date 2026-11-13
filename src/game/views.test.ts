@@ -224,8 +224,11 @@ describe('a guild on the farm', () => {
 
   it('tells which guilds a tree drags after a check-in that wilted it', () => {
     const s = on(tree('corn', { wilted: true }), tree('beans'))
-    expect(guildNews(seed('corn'), s, bountifulCatalog, false)).toEqual({ coins: 0, lines: ['The Tall guild and the Pole and climber guild pay nothing until Corn is revived.'] })
+    expect(guildNews(seed('corn'), s, bountifulCatalog, false)).toEqual({ coins: 0, lines: ['The Tall guild pays nothing until Corn is revived.', 'The Pole and climber guild pays nothing until Corn is revived.'] })
     expect(guildNews(seed('beans'), on(tree('corn'), tree('beans', { wilted: true })), bountifulCatalog, false).lines).toEqual(['The Pole and climber guild pays nothing until Beans is revived.'])
+    // Another member was wilted already: reviving this one alone will not bring the pay back, so both are named.
+    const both = on(tree('corn', { wilted: true }), tree('beans', { wilted: true }))
+    expect(guildNews(seed('beans'), both, bountifulCatalog, false).lines).toEqual(['The Pole and climber guild pays nothing until Corn and Beans are revived.'])
     // A crop that is not a tree yet drags nothing: its guild was not whole to begin with.
     expect(guildNews(seed('squash'), on(tree('corn'), tree('beans'), tree('squash', { perennial: false, wilted: true })), bountifulCatalog, false).lines).toEqual([])
   })

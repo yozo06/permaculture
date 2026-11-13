@@ -392,15 +392,17 @@ export interface GuildNews {
  * whole guild has paid; after a check-in that wilted a tree, the guilds it now drags are named.
  */
 export function guildNews(seed: Seed, state: Pick<FarmState, 'crops'>, catalog: Catalog, ok: boolean): GuildNews {
-  const named = (g: GuildDef): string => 'the ' + g.title + ' guild'
   if (ok) {
     const whole = wholeGuilds(seed.id, state, catalog)
     return { coins: whole.length * RULES.guild.coins, lines: whole.map((g) => 'The ' + g.title + ' guild is whole: +' + RULES.guild.coins + ' coins.') }
   }
-  const held = catalog.guildsOf(seed.id).filter((g) => dragging(g, state).includes(seed.id))
-  if (held.length === 0) return { coins: 0, lines: [] }
-  const guilds = andList(held.map(named))
-  return { coins: 0, lines: [guilds.charAt(0).toUpperCase() + guilds.slice(1) + (held.length === 1 ? ' pays' : ' pay') + ' nothing until ' + seed.name + ' is revived.'] }
+  // Every wilted member is named, not just this one: reviving one of two does not bring the pay back.
+  const lines = catalog.guildsOf(seed.id).flatMap((g) => {
+    const wilted = dragging(g, state)
+    if (!wilted.includes(seed.id)) return []
+    return ['The ' + g.title + ' guild pays nothing until ' + andList(wilted.map((id) => catalog.seed(id)?.name ?? id)) + (wilted.length === 1 ? ' is' : ' are') + ' revived.']
+  })
+  return { coins: 0, lines }
 }
 
 export interface TreeView {

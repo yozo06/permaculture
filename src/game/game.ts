@@ -813,7 +813,7 @@ function settle(seed: Seed, mode: Mode, ok: boolean, detail: Detail): string | n
     const pay = harvestPay(seed, S, catalog)
     const drops = saplingNews(seed, catalog)
     return ok
-      ? '<b>Premium grade.</b> +' + pay.coins + ' coins' + (pay.edge ? ' (double: it sits on the edge of the ' + esc(pay.edge) + ' field)' : '') + '. ' + name + ' is now a perennial: rooted, it only needs a check-in every ' + RULES.perennialInterval + ' days. Seeds that needed it are now unlocked.' + guilds + (drops ? ' ' + esc(drops) : '')
+      ? '<b>Premium grade.</b> +' + pay.coins + ' coins' + (pay.edge ? ' (' + timesOver(RULES.edge.times) + ': it sits on the edge of the ' + esc(pay.edge) + ' field)' : '') + '. ' + name + ' is now a perennial: rooted, it only needs a check-in every ' + RULES.perennialInterval + ' days. Seeds that needed it are now unlocked.' + guilds + (drops ? ' ' + esc(drops) : '')
       : '<b>Seconds.</b> Composted. ' + name + ' drops back to stage ' + (c.stage + 1) + ' and goes in the review heap.'
   }
   if (ok) {
@@ -1235,7 +1235,7 @@ function openTree(packId: string = treePack()): void {
   html += treeSvg(v)
   html += '<div class="branches">' + v.branches.map((b) => '<button type="button" data-act="focus" data-arg="' + esc(v.pack) + '|' + esc(b.id) + '"' + (b.focus ? ' class="pri"' : '') + '>' + (b.focus ? 'Focus: ' : 'Focus on ') + esc(b.title) + '</button>').join('') + '</div>'
   html += '<p class="sub">Solid box: rooted · outline: growing (bar = stage) · cream outline: ready to plant · cream dashes: waiting for a lower layer · dashed: locked · green dot: found in the wild · pale dot: a sapling a tree dropped.</p>'
-  if (v.drops.length) html += '<p class="sub">Saplings to come: ' + v.drops.map((d) => esc(d.name) + ' drops ' + d.count + ' when it is harvested').join(' · ') + '.</p>'
+  if (v.drops.length) html += '<p class="sub">To come: ' + v.drops.map((d) => esc(d.name) + ' drops ' + d.count + (d.count === 1 ? ' sapling' : ' saplings') + ' when it is harvested').join(' · ') + '.</p>'
   if (v.guilds.length) {
     html += '<h3>Guilds</h3><p class="sub">Seeds that grow well together. A guild is whole while every member stands as a tree, and a whole guild pays ' + RULES.guild.coins + ' coins each time you harvest or check in on one of its members. One wilted member and it pays nothing until you revive it.</p><div>' +
       v.guilds.map((g) => '<div class="row"><div class="n">' + esc(g.title) + '<small>' + g.members.map((m) => esc(m.name ?? (m.sapling ? 'a sapling' : 'a wild seed'))).join(', ') + '</small></div><span class="sub">' + esc(guildStatus(g, RULES.guild.coins)) + '</span></div>').join('') + '</div>'

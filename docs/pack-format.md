@@ -49,8 +49,7 @@ seeds:
     tier: 1                  # depth in the tree; 0 needs nothing rooted first (layer balance may still make it wait)
     needs: [con]             # seed ids that must be rooted first (same pack)
     wild: false              # true: hidden until foraged and domesticated; needs a find that points at it
-    sapling_of: con          # optional: hidden until that seed is harvested, which drops this one. See "Saplings"
-    edge: infra              # optional: a second field it also belongs to; its harvest pays double there. See "Edges"
+    edge: infra              # optional: a second field it borders; its harvest pays double once a tree stands there. See "Edges"
     earned: { rooted: 1 }    # optional: learning that has to happen before it can be planted. See "Earned seeds"
     harvest: recall          # recall | solve | judged | artifact
     minutes: 30              # about how long planting takes: reading the source and writing notes
