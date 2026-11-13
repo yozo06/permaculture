@@ -4,7 +4,7 @@ A farm game where the crops are the things you are learning. Forgetting is wilti
 
 **Play:** [yozo06.github.io/permaculture](https://yozo06.github.io/permaculture/). To play on your own machine, run `npm run dev` and open the address it prints; it ends in `/permaculture/`, like the live site.
 
-![The farm: fields around the barn, crops at different stages, the gate, the signpost and the market stall](docs/img/farm.jpg)
+![The farm: fields of crops at different stages around a red barn, each field with a flag in its colour, and forest all round](docs/img/farm.jpg)
 
 Topics are seeds. Plant one in its field with notes in your own words, water it by answering cards and then by explaining it, and it grows. Leave it thirsty for two days and it wilts, unless the rain barrel has a day to spend; a wrong answer wilts it at once. Harvest a stage-5 crop with a harder question, a write-up or proof, and it becomes a perennial tree: rooted, yours for good. The map is your retention, drawn as land.
 
@@ -22,7 +22,7 @@ A link shows only the fields you tick, with each crop at the furthest it has gro
 
 Phase 1 is done: the rules are an engine of their own (a farm is a fold over a log of what you did), the game is built from `packs/`, and a crop climbs a depth ladder — notes when you plant it, recall cards, explaining it in your own words, then a harder harvest. There are seven packs and 224 seeds: five full catalogues (Haskell backend, system design, infra, DSA patterns, leadership), everyday Kannada, and the Workshop, the game's own roadmap. The world pans and zooms, with a learning tree, wild finds and an almanac. Everything runs in your browser; your farm is saved there. Export it from the seed bag before clearing site data. Farms from the Phase 0 prototype still import.
 
-Phase 2, **Neighbours**, is half built (version 0.2.0): saved farms are guarded against later edits to the packs and rules, new farmers choose their fields, and farms can be shared and visited by link. Rain comes after a first week of beta. After that comes optional AI with your own key, then art.
+Phase 2, **Neighbours**, is half built (version 0.2.0): saved farms are guarded against later edits to the packs and rules, new farmers choose their fields, and farms can be shared and visited by link. Rain comes after a first week of beta. After that comes optional AI with your own key. The art was planned for last and did not wait: it is further down.
 
 The first step of the art plan is in (version 0.3.0): each of the seven layers has a shape of its own, so the map shows what kind of knowledge sits where; each field flies a flag in its colour; and the game carries its own fonts, so the page asks no other site for anything.
 

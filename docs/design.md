@@ -155,7 +155,7 @@ Each phase ends with something a friend can play.
 1. Engine split, pack loader, full catalogues, depth ladder. *(done)*
 2. Neighbours: safe saves, farm links, visiting, choosing your fields; then rain. See `neighbours.md`.
 3. BYOK AI: judged harvests, pack forge, wild finds.
-4. Art: sprite sheets, PixiJS, terraces, weather.
+4. Art: sprite sheets and zoom *(done)*, then a faster renderer, terraces, weather.
 5. The village server, when there are players who need it.
 
 The rules that need no AI and no server are built between these, the ones closest to the loop first. Readiness, earned unlocks, layer balance, guilds, edges, saplings, the market, the rival and the weekly walk are in; a planner and tools are marked *(planned)*.

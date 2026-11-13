@@ -92,7 +92,7 @@ export function almanacHtml(catalog: Catalog, energyMax: number, version: string
     '<p class="sub">Every seed belongs to one of seven layers, as in a forest garden, and each layer has a shape of its own. So the map shows what kind of knowledge sits where, and which kind a field is missing. These are the trees; a crop starts as a sprout of the same kind and gets bigger at each stage.</p>' +
     legend() +
     list([
-      "Fruit in the field's colour means a crop is ripe. A tree keeps its fruit. A wilted crop turns brown and has none.",
+      "Fruit in the field's colour means a crop is ripe. A tree keeps its fruit. A wilted crop turns brown, fruit and all.",
       "Each field flies a <b>flag</b> in its colour, and its fence posts are capped in it. Tap a flag to open that field's learning tree.",
       'Water splashes when you water a crop, a ring spreads when it grows, and sparks rise from a harvest. They are only for show.',
       '<b>Pinch</b> to zoom, or use the + and − buttons, or the same keys. Drag to look around. The picture is drawn to fit your screen, so it is as sharp on a phone as on a laptop.',

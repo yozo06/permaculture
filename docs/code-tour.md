@@ -58,6 +58,7 @@ When the page loads, the store reads the log and folds it. If the log cannot be 
 - `game/links.ts`, `game/neighbours.ts`, `game/visit.ts`: farm links (the picture rides in the address after the `#`), the list of neighbours kept in the browser beside the farm, and what the neighbours sheets show. All three are pure and tested; `game.ts` only wires them up. While you visit a neighbour, `game.ts` draws their farm through `D()` and routes every tap away from your own. `docs/neighbours.md` is the design.
 - `game/art/`: the sprite sheet (`sheet.png`), where each sprite is on it (`atlas.json`), and `sprites.ts`, which says which sprite a crop is and paints a field's colour into the sheet. The scripts that drew the sheet are in `art/` at the top of the repo; `npm run art` draws it again. `game/moments.ts` holds the small moments that play on a crop (a splash, a ring, sparks).
 - `game/view.ts`: how much of the farm the canvas shows and how big. The canvas is drawn at the screen's own resolution with a whole number of screen pixels to each pixel of art; that number is the zoom. Pure and tested.
+- `game/hand.ts`: what the pointers on the farm mean (one is a tap or a drag, two are a pinch), how much wheel makes a step of zoom, and which of the things on the screen a tap lands on. Pure and tested; `game.ts` feeds it the page's events and does what it says.
 - `game/util.ts`: `esc`, which every piece of player or pack text passes through, and `shuffle`.
 
 ## Tests
@@ -70,7 +71,7 @@ When the page loads, the store reads the log and folds it. If the log cannot be 
 - `scripts/lock.test.ts` and `src/engine/played-farm.test.ts`: saved farms keep replaying (see above).
 - `scripts/packs-lib.test.ts`: the validator catches what it should.
 - `scripts/page.test.ts`: the page loads nothing from another site (the game carries its own fonts).
-- `src/game/*.test.ts`: the views, the sheets, the store, the Almanac, the sprite sheet, the zoom and the moments.
+- `src/game/*.test.ts`: the views, the sheets, the store, the Almanac, the sprite sheet, the zoom, fingers and taps, and the moments.
 
 ## Where to change what
 

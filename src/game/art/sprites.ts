@@ -36,7 +36,7 @@ export const spriteNames = (): string[] => Object.keys(ENTRIES)
 export const cropLook = (stage: number, perennial: boolean): number =>
   perennial ? 5 : Number.isNaN(stage) ? 0 : Math.min(4, Math.max(0, Math.floor(stage)))
 
-/** The name of the sprite for a crop of this layer. A wilted crop has a sprite of its own: its leaves gone to straw, its fruit gone. */
+/** The name of the sprite for a crop of this layer. A wilted crop has a sprite of its own: leaves and fruit gone to straw, with nothing of the field's colour left. */
 export const cropSprite = (layer: Layer, stage: number, perennial: boolean, wilted = false): string =>
   'crop/' + layer + '/' + cropLook(stage, perennial) + (wilted ? '/wilted' : '')
 
