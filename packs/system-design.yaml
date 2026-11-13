@@ -443,7 +443,7 @@ seeds:
             follower so far behind, or so new, that the entries it lacks have been compacted away.
           source: raft
   - id: raft-membership
-    name: "Raft: membership changes"
+    name: "Raft: cluster membership"
     layer: root
     branch: distributed-data
     tier: 2
