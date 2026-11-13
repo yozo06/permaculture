@@ -67,27 +67,49 @@ export function move(h: Hand, id: number, at: Point): [Hand, Said] {
   return [{ ...h, fingers, hold: { ...h.hold, drag } }, drag ? { kind: 'pan', dx, dy } : null]
 }
 
+/** One finger of a pinch has gone, by a lift or by being lost. */
+function unpinch(h: Hand, id: number, fingers: Map<number, Point>): [Hand, Said] {
+  if (fingers.size >= 2) {
+    // A third finger was resting there. If the one that went was not one of the two being measured, nothing changes.
+    // If it was, the pinch begins again with the pair that is left, from where they are: no jump.
+    if (![...h.fingers.keys()].slice(0, 2).includes(id)) return [{ ...h, fingers }, null]
+    const s = spread(fingers)
+    return [{ fingers, hold: null, pinch: s ? { dist: s.dist } : null }, { kind: 'pinch-began' }]
+  }
+  // The finger that stays goes on to drag the farm from where it is. It began as half of a pinch, so its lift is no tap.
+  const [last] = [...fingers]
+  return last ? [{ fingers, hold: { id: last[0], from: last[1], drag: true }, pinch: null }, { kind: 'hold' }] : [idle(), null]
+}
+
 export function lift(h: Hand, id: number, at: Point): [Hand, Said] {
   if (!h.fingers.has(id)) return [h, null]
   const fingers = new Map(h.fingers)
   fingers.delete(id)
-  if (h.pinch) {
-    if (fingers.size >= 2) return [{ ...h, fingers }, null]
-    // The finger that stays goes on to drag the farm from where it is. It began as half of a pinch, so its lift is no tap.
-    const [last] = [...fingers]
-    return last ? [{ fingers, hold: { id: last[0], from: last[1], drag: true }, pinch: null }, { kind: 'hold' }] : [idle(), null]
-  }
+  if (h.pinch) return unpinch(h, id, fingers)
   if (!h.hold || h.hold.id !== id) return [{ ...h, fingers }, null]
   return [{ fingers, hold: null, pinch: null }, h.hold.drag ? { kind: 'dropped' } : { kind: 'tap', at }]
 }
 
-/** A pointer the page cancelled or lost, or (with no id) all of them. Whatever was under way ends, and nothing is tapped. */
-export function drop(h: Hand, id?: number): Hand {
-  if (id === undefined) return idle()
-  if (!h.fingers.has(id)) return h
+/**
+ * A pointer the page cancelled or lost, or (with no id) all of them. A tap or a drag under way ends, and nothing is
+ * tapped. A pinch that loses a finger goes on as it would after a lift.
+ */
+export function drop(h: Hand, id?: number): [Hand, Said] {
+  if (id === undefined) return [idle(), null]
+  if (!h.fingers.has(id)) return [h, null]
   const fingers = new Map(h.fingers)
   fingers.delete(id)
-  return { fingers, hold: null, pinch: fingers.size >= 2 ? h.pinch : null }
+  if (h.pinch) return unpinch(h, id, fingers)
+  return [{ fingers, hold: null, pinch: null }, null]
+}
+
+/**
+ * Begin the hold under way again from where its finger is now. For when the zoom changes under a finger that is
+ * down (a key, the wheel): what it has dragged so far stays, and what it drags next is measured at the new zoom.
+ */
+export function rehold(h: Hand): Hand {
+  const at = h.hold ? h.fingers.get(h.hold.id) : undefined
+  return h.hold && at ? { ...h, hold: { ...h.hold, from: at } } : h
 }
 
 /* ---------- the wheel ---------- */

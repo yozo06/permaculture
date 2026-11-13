@@ -20,7 +20,7 @@ import { readLink } from './links'
 import { MOMENT_MS, momentDots, type DotTone, type MomentKind } from './moments'
 import { BOOK_KEY, ageText, bookText, readBook, receive, remove, tooOld, type Arrival, type Book } from './neighbours'
 import { NEUTRAL_COLOR, cropHeight, cropSprite, holds, paintKeys, sprite as spriteAt } from './art/sprites'
-import { drop, frontmost, idle, lift, move, press, wheelStep, type Hand, type Point, type Said, type Wheel } from './hand'
+import { drop, frontmost, idle, lift, move, press, rehold, wheelStep, type Hand, type Point, type Said, type Wheel } from './hand'
 import { createStore, defaultId, LOG_KEY, type StorageLike } from './store'
 import { esc, shuffle } from './util'
 import { REF, cameraAfter, defaultZoom, fitView, pinchZoom, shift, zoomRange, type View } from './view'
@@ -565,6 +565,8 @@ function zoomTo(zoom: number, fx = 0.5, fy = 0.5): void {
   layout()
   clampCam()
   store.saveUi()
+  // A finger that is down while the zoom changes (a key, the wheel) goes on dragging from here, at the new zoom.
+  if (hand.hold) { hand = rehold(hand); heard({ kind: 'hold' }) }
 }
 bZoomIn.addEventListener('click', () => zoomTo(view.zoom + 1))
 bZoomOut.addEventListener('click', () => zoomTo(view.zoom - 1))
@@ -646,8 +648,10 @@ function endDrag(): void { dragging = false; cv.classList.remove('drag') }
 /** Forget a pointer the page cancelled or lost (or all of them): nothing is tapped, and a drag keeps what it had moved. */
 function letGo(id?: number): void {
   if (dragging) store.saveUi()
-  hand = drop(hand, id)
+  const [next, said] = drop(hand, id)
+  hand = next
   endDrag()
+  heard(said)
 }
 function tap(at: Point): void {
   const { ix, iy } = toInternal({ clientX: at.x, clientY: at.y })

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { cropSprite } from './art/sprites'
-import { type Hand, type Said, drop, frontmost, idle, lift, move, press, wheelStep } from './hand'
+import { type Hand, type Said, drop, frontmost, idle, lift, move, press, rehold, wheelStep } from './hand'
 
 /** Feed a hand a run of steps and keep what it said at each. */
 function run(steps: ((h: Hand) => [Hand, Said])[]): { hand: Hand; said: Said[] } {
@@ -60,6 +60,15 @@ describe('two fingers', () => {
     expect(hand.hold).toBeNull()
   })
 
+  it('begin the pinch again when one of them lifts and a third is still down: the new pair is measured from where it is', () => {
+    const { said } = run([
+      (h) => press(h, 1, at(100, 100)), (h) => press(h, 2, at(200, 100)), (h) => press(h, 3, at(200, 300)), (h) => lift(h, 1, at(100, 100)),
+      (h) => move(h, 2, at(200, 200)),
+    ])
+    // Fingers 2 and 3 were 200 apart when they became the pair, and are 100 apart now: half, not a jump.
+    expect(said.slice(3)).toEqual([{ kind: 'pinch-began' }, { kind: 'pinch', by: 0.5, at: at(200, 250) }])
+  })
+
   it('that start on the same point do not divide by nothing', () => {
     const { said } = run([(h) => press(h, 1, at(5, 5)), (h) => press(h, 2, at(5, 5)), (h) => move(h, 2, at(9, 5))])
     expect(said[2]).toEqual({ kind: 'pinch', by: 4, at: at(7, 5) })
@@ -68,7 +77,7 @@ describe('two fingers', () => {
 
 describe('a finger the page lost', () => {
   it('leaves nothing behind: the next tap is a tap, not half of a pinch', () => {
-    const { said, hand } = run([(h) => press(h, 1, at(10, 10)), (h) => [drop(h, 1), null], (h) => press(h, 2, at(40, 40)), (h) => lift(h, 2, at(40, 40))])
+    const { said, hand } = run([(h) => press(h, 1, at(10, 10)), (h) => drop(h, 1), (h) => press(h, 2, at(40, 40)), (h) => lift(h, 2, at(40, 40))])
     expect(said.slice(2)).toEqual([{ kind: 'hold' }, { kind: 'tap', at: at(40, 40) }])
     expect(hand.fingers.size).toBe(0)
   })
@@ -78,12 +87,30 @@ describe('a finger the page lost', () => {
     expect(said).toEqual([{ kind: 'hold' }, { kind: 'hold' }, { kind: 'tap', at: at(40, 40) }])
   })
 
+  it('out of a pinch leaves the one that stays able to drag, as a lift would', () => {
+    const { said } = run([(h) => press(h, 1, at(100, 100)), (h) => press(h, 2, at(200, 100)), (h) => drop(h, 1), (h) => move(h, 2, at(260, 100)), (h) => lift(h, 2, at(260, 100))])
+    expect(said.slice(2)).toEqual([{ kind: 'hold' }, { kind: 'pan', dx: 60, dy: 0 }, { kind: 'dropped' }])
+  })
+
   it('ends a drag without a tap, and ends a pinch', () => {
-    const dragged = run([(h) => press(h, 1, at(10, 10)), (h) => move(h, 1, at(60, 10)), (h) => [drop(h, 1), null], (h) => lift(h, 1, at(60, 10))])
+    const dragged = run([(h) => press(h, 1, at(10, 10)), (h) => move(h, 1, at(60, 10)), (h) => drop(h, 1), (h) => lift(h, 1, at(60, 10))])
     expect(dragged.said[3]).toBeNull()
     expect(dragged.hand).toEqual(idle())
-    const pinched = run([(h) => press(h, 1, at(10, 10)), (h) => press(h, 2, at(60, 10)), (h) => [drop(h), null]])
+    const pinched = run([(h) => press(h, 1, at(10, 10)), (h) => press(h, 2, at(60, 10)), (h) => drop(h)])
     expect(pinched.hand).toEqual(idle())
+  })
+})
+
+describe('a hold that the zoom changed under', () => {
+  it('begins again from where the finger is, and keeps being a drag if it was one', () => {
+    const { hand } = run([(h) => press(h, 1, at(10, 10)), (h) => move(h, 1, at(60, 10))])
+    const again = rehold(hand)
+    expect(again.hold).toEqual({ id: 1, from: at(60, 10), drag: true })
+    expect(move(again, 1, at(63, 14))[1]).toEqual({ kind: 'pan', dx: 3, dy: 4 })
+  })
+
+  it('is nothing to a hand that holds nothing', () => {
+    expect(rehold(idle())).toEqual(idle())
   })
 })
 
