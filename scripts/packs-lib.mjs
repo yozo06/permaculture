@@ -114,7 +114,16 @@ function checkPack(r) {
     if (!ids.has(n)) errors.push(`seed ${s.id}: needs unknown seed "${n}"`);
     if (n === s.id) errors.push(`seed ${s.id}: needs itself`);
   }
-  for (const g of pack.guilds || []) for (const n of g.seeds) if (!ids.has(n)) errors.push(`guild ${g.id}: unknown seed "${n}"`);
+  // A guild pays while it is whole, and the lock knows it by pack and id, so both its id and its members are checked.
+  const guildIds = new Set();
+  for (const g of pack.guilds || []) {
+    if (guildIds.has(g.id)) errors.push(`duplicate guild id ${g.id}`);
+    guildIds.add(g.id);
+    for (const [i, n] of g.seeds.entries()) {
+      if (!ids.has(n)) errors.push(`guild ${g.id}: unknown seed "${n}"`);
+      else if (g.seeds.indexOf(n) !== i) errors.push(`guild ${g.id}: lists "${n}" twice`);
+    }
+  }
   const findIds = new Set();
   const domesticable = new Set();
   for (const f of pack.finds || []) {

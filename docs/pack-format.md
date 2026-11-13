@@ -30,7 +30,7 @@ sources:                     # where seeds come from; cite, never paste
     title: In Search of an Understandable Consensus Algorithm
     url: https://raft.github.io/raft.pdf
 
-guilds:                      # optional companion sets
+guilds:                      # optional companion sets; a whole guild pays at each harvest and check-in
   - id: consensus
     title: Consensus
     seeds: [cap, replication, raft]
@@ -102,6 +102,12 @@ earned: { pack: infra, readiness: 60 }   # the Infra field's readiness at 60 or 
 - `readiness` is today's number, so it can be lost again until the seed is in the ground.
 - It is asked only of a planting done today. A saved farm replays without it, so a farm that planted the seed earlier keeps the crop, and `earned` can be added, changed or removed on a released seed. It is the one thing about a seed that is not in `packs/lock.json`.
 
+## Guilds
+
+A guild is a named set of seeds from this pack that a practitioner would study together. It is **whole** while every member stands as a tree, and a whole guild pays a few coins each time one of its members is harvested or checked in on. A wilted member stops the pay until it is revived. A seed may be in more than one guild, and is paid by each that is whole. A guild may hold a wild seed: it is then whole only once the farmer has found and rooted it.
+
+Those coins are part of a saved farm, so a released guild is a promise: it may not be removed, and it may lose members but never gain one. To group more seeds, add a new guild.
+
 ## Finds
 
 A find is a short fact the player forages in the wilderness. It is picked by what is growing, so `near` lists the seeds of this pack it grows next to. A find with a `seed` can be domesticated: that wild seed then joins the seed bag as a volunteer. A wild seed needs a find that points at it, or it could never be found.
@@ -110,7 +116,7 @@ A find is a short fact the player forages in the wilderness. It is picked by wha
 
 Seed ids, find ids and pack ids are unique across all packs, and branch ids within a pack. Farms refer to all of them and are replayed against the current packs, so never rename or remove a released one. Never change a released seed's `needs` or whether it is `wild`, in either direction, and never lower a pack's `energy_cap`: on replay the game skips any event that is no longer allowed, and the farm quietly changes. To hold a released seed back, give it `earned` instead. Whether a pack is `perennial` may change too: a bar a farmer set before a pack lost its end stays in their log and is simply not used.
 
-`packs/lock.json` holds these promises, one line per id, and `npm test` fails when a change would break one: an id that is gone or has moved, a seed whose `needs` or `wild` changed, an artifact seed that now asks for a write-up, a find that leads somewhere else, a cap that was lowered or added. Even needing *less* counts: a farm that jumped the fence to that seed holds a jump the game would now refuse. Adding seeds, finds, branches and packs is always fine: run `npm run lock` and commit the file with your change. It will not write over a breaking change, and it will not replace a lock file it cannot read.
+`packs/lock.json` holds these promises, one line per id, and `npm test` fails when a change would break one: an id that is gone or has moved, a seed whose `needs` or `wild` changed, an artifact seed that now asks for a write-up, a find that leads somewhere else, a cap that was lowered or added, a guild that is gone or has gained a member. Even needing *less* counts: a farm that jumped the fence to that seed holds a jump the game would now refuse. Adding seeds, finds, branches, guilds and packs is always fine: run `npm run lock` and commit the file with your change. It will not write over a breaking change, and it will not replace a lock file it cannot read.
 
 ## Rules the validator enforces
 
@@ -123,7 +129,7 @@ Seed ids, find ids and pack ids are unique across all packs, and branch ids with
 - Seed ids and find ids are unique across all packs.
 - A find's `near` ids and `seed` are seeds in its pack, and its `seed` is wild.
 - Every wild seed has a find that points at it.
-- Every guild member is a seed in the same pack.
+- Every guild member is a seed in the same pack, listed once. Guild ids are unique within a pack.
 - A seed's `earned` asks for one thing, `rooted` or `readiness`. A `readiness` names its pack. The pack exists, is not the seed's own, and for `readiness` has an end. It never asks for more seeds than there are to root.
 
 ## Writing good seeds

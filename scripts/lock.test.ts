@@ -17,6 +17,7 @@ const base: PackDef[] = [
     pack: 'garden', version: 0, title: 'Garden', energy_cap: 50,
     branches: [{ id: 'roots', title: 'Roots' }, { id: 'leaves', title: 'Leaves' }],
     finds: [{ id: 'bee-find', near: ['corn'], text: 'Bees.', seed: 'bees' }, { id: 'worm-find', near: ['corn'], text: 'Worms.' }],
+    guilds: [{ id: 'pair', title: 'Pair', seeds: ['corn', 'squash'] }],
     seeds: [
       { id: 'corn', name: 'Corn', layer: 'canopy', branch: 'roots', tier: 0, harvest: 'recall' },
       { id: 'squash', name: 'Squash', layer: 'herb', branch: 'leaves', tier: 1, needs: ['corn'], harvest: 'artifact' },
@@ -43,8 +44,9 @@ describe('lockProblems', () => {
     expect(lockProblems(locked, lockOf(base))).toEqual([])
   })
 
-  it('lets a pack grow: new seeds, finds, branches and packs, a find that gains a seed, a write-up that becomes a proof, a cap raised', () => {
+  it('lets a pack grow: new seeds, finds, branches, guilds and packs, a find that gains a seed, a write-up that becomes a proof, a cap raised', () => {
     const now = changed((p) => {
+      p[0]?.guilds?.push({ id: 'trio', title: 'Trio', seeds: ['corn', 'squash', 'bees'] })
       p[0]?.seeds.push({ id: 'peas', name: 'Peas', layer: 'vine', branch: 'new', tier: 0, harvest: 'recall' })
       p[0]?.branches.push({ id: 'new', title: 'New' })
       p[0]?.finds?.push({ id: 'ant-find', near: ['corn'], text: 'Ants.' })
@@ -68,6 +70,9 @@ describe('lockProblems', () => {
     ['an artifact seed that asks for a longer write-up', (p) => { seedOf(p, 'squash').harvest = 'judged' }, /seed "squash" went from artifact to judged/],
     ['a find that is removed', (p) => { p[0]?.finds?.splice(1, 1) }, /find "worm-find" is gone/],
     ['a find that leads somewhere else', (p) => { const f = p[0]?.finds?.[0]; if (f) delete f.seed }, /find "bee-find" no longer leads to "bees"/],
+    // A guild pays while it is whole, and those coins are in the farm. Fewer of them, and something bought later may not replay.
+    ['a guild that is removed', (p) => { p[0]?.guilds?.splice(0, 1) }, /guild "garden\/pair" is gone/],
+    ['a guild that gains a member', (p) => { p[0]?.guilds?.[0]?.seeds.push('bees') }, /guild "garden\/pair" gained "bees"/],
     ['a branch that is removed', (p) => { p[0]?.branches.splice(1, 1) }, /branch "leaves" of garden is gone/],
     ['a pack that is removed', (p) => { p.splice(1, 1) }, /pack "shed" is gone/],
     ['a cap that is lowered', (p) => { if (p[0]) p[0].energy_cap = 40 }, /garden.*cap.*50.*40/],
@@ -78,7 +83,25 @@ describe('lockProblems', () => {
   })
 })
 
+describe('a guild in the lock', () => {
+  it('may lose a member: it is whole sooner, so no farm is paid less', () => {
+    expect(lockProblems(locked, changed((p) => { p[0]?.guilds?.[0]?.seeds.pop() }))).toEqual([])
+  })
+
+  it('is told apart from a guild of the same name in another pack', () => {
+    const twin = changed((p) => { if (p[1]) p[1].guilds = [{ id: 'pair', title: 'Pair', seeds: ['saw'] }] })
+    expect(Object.keys(twin.guilds)).toEqual(['garden/pair', 'shed/pair'])
+    expect(lockProblems(twin, locked).join('\n')).toMatch(/guild "shed\/pair" is gone/)
+  })
+})
+
 describe('readLock', () => {
+  it('reads a lock written before guilds were locked as one that guards none', () => {
+    const { guilds: _guilds, ...older } = locked
+    expect(readLock(JSON.stringify(older))).toEqual({ ...older, guilds: {} })
+  })
+
+
   it('lets what a seed is earned by come, change and go: replay never asks it, so no saved farm can lose by it', () => {
     const earning = changed((p) => { seedOf(p, 'saw').earned = { rooted: 1 } })
     expect(lockProblems(locked, earning)).toEqual([])
@@ -92,7 +115,7 @@ describe('readLock', () => {
   })
 
   it('throws on a file that is not a lock, so a damaged one is never taken for a first run', () => {
-    for (const bad of ['', '<<<<<<< HEAD\n{}', '[]', '{"packs":{}}', '{"packs":{},"seeds":[],"finds":{}}']) expect(() => readLock(bad), bad).toThrow(/packs\/lock\.json/)
+    for (const bad of ['', '<<<<<<< HEAD\n{}', '[]', '{"packs":{}}', '{"packs":{},"seeds":[],"finds":{}}', '{"packs":{},"seeds":{},"finds":{},"guilds":[]}']) expect(() => readLock(bad), bad).toThrow(/packs\/lock\.json/)
   })
 })
 

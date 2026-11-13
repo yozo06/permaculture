@@ -74,6 +74,15 @@ describe('a broken pack', () => {
     expect(errorsOf(dir).join('\n')).toContain('find quic: seed "tcp" is not wild')
   })
 
+  it('names a guild id used twice in one pack, and a guild that lists a seed twice', () => {
+    const dir = tempCopy()
+    edit(dir, 'infra.yaml', (t) => t.replace('  - id: edge-and-names\n', '  - id: container-runtime\n'))
+    expect(errorsOf(dir).join('\n')).toContain('duplicate guild id container-runtime')
+    const twice = tempCopy()
+    edit(twice, 'infra.yaml', (t) => t.replace('seeds: [linux-namespaces, container-images, k8s-resources, k8s]', 'seeds: [linux-namespaces, container-images, k8s, k8s]'))
+    expect(errorsOf(twice).join('\n')).toContain('guild container-runtime: lists "k8s" twice')
+  })
+
   it('lists every problem in one Error from collectPacks', () => {
     const dir = tempCopy()
     edit(dir, 'infra.yaml', (t) => t.replace('branch: network-and-platform', 'branch: nowhere'))
