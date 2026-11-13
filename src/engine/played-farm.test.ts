@@ -105,8 +105,9 @@ describe('the edge farm', () => {
 // A third farm, for the coins a guild and an edge pay. Those coins are part of a farm, unlike anything readiness or
 // layer balance decides, and the two farms above happen to earn none of them. This one roots Raft and the three
 // saplings it drops, which makes the Raft in depth guild whole, checks in on them for a month, and harvests Golden
-// signals on a live edge. Then it spends every coin it has on fences and seeds, and ends with none. So if a guild or
-// an edge ever pays less, by a change to a number or to a pack, something this farm bought is refused.
+// signals on a live edge. Then it spends every coin it has on fences and seeds, and ends with none. So if that guild
+// or that edge ever pays less, by a change to a number or to a pack, something this farm bought is refused. (It stands
+// guard over the two numbers and over one guild and one edge. The other guilds and edges are held by packs/lock.json.)
 describe('the yield farm', () => {
   const file = parseFarmFile(JSON.stringify(yielding))
   const events = file.kind === 'log' ? file.events : []
@@ -140,7 +141,7 @@ describe('the yield farm', () => {
     // The same packs with the guilds and the edges taken out, and the saplings left in.
     const plain = buildCatalog(collectPacks().map((p) => ({ ...p, guilds: [], seeds: p.seeds.map(({ edge: _edge, ...seed }) => seed) })))
     expect(refusedCount(events, plain)).toBeGreaterThan(0)
-    // One coin less from the guild, or from the edge, and the last thing it bought is refused.
+    // Take away just the guild, or just the edge, and something it bought is refused.
     for (const lost of ['raft-in-depth', 'golden-signals']) {
       const less = buildCatalog(collectPacks().map((p) => ({
         ...p,

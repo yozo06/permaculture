@@ -41,8 +41,6 @@ export function readLock(text: string): Lock {
   const table = (v: unknown): boolean => typeof v === 'object' && v !== null && !Array.isArray(v)
   if (!table(raw)) return fail()
   const lock = raw as Record<string, unknown>
-  // A lock written before guilds paid anything has no guilds in it. It guards none: there was nothing to guard.
-  if (lock.guilds === undefined) lock.guilds = {}
   return SECTIONS.every((k) => table(lock[k])) ? (raw as Lock) : fail()
 }
 

@@ -115,11 +115,8 @@ describe('a pack that gains saplings', () => {
     expect(log.some((e) => e.type === 'harvested')).toBe(true)
     expect(fold(log, before).crops.map((c) => [c.seed, c.perennial])).toEqual([['corn', true]])
     expect(refusedCount(log, rich)).toBe(0)
-    // Corn is a guild of one in the new pack, so its harvest and check-ins now pay: the coins may only have grown.
-    const then = fold(log, before)
-    const now = fold(log, rich)
-    expect({ ...now, coins: 0 }).toEqual({ ...then, coins: 0 })
-    expect(now.coins).toBeGreaterThanOrEqual(then.coins)
+    // The pack before has the same guilds and the same edge: only the saplings are new. So not a coin moves.
+    expect(fold(log, rich)).toEqual(fold(log, before))
   })
 
   it('has dropped the new seed from the tree that farm already harvested', () => {

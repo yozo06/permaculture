@@ -76,6 +76,7 @@ describe('lockProblems', () => {
     ['a seed that stops being wild', (p) => { seedOf(p, 'bees').wild = false }, /seed "bees" is no longer wild/],
     ['an artifact seed that asks for a longer write-up', (p) => { seedOf(p, 'squash').harvest = 'judged' }, /seed "squash" went from artifact to judged/],
     ['a find that is removed', (p) => { p[0]?.finds?.splice(1, 1) }, /find "worm-find" is gone/],
+    ['a find that moves to another pack', (p) => { p[1]!.finds = p[0]?.finds?.splice(1, 1) ?? [] }, /find "worm-find" moved from garden to shed/],
     ['a find that leads somewhere else', (p) => { const f = p[0]?.finds?.[0]; if (f) delete f.seed }, /find "bee-find" no longer leads to "bees"/],
     // A guild pays while it is whole, and those coins are in the farm. Fewer of them, and something bought later may not replay.
     ['a guild that is removed', (p) => { p[0]?.guilds?.splice(0, 1) }, /guild "garden\/pair" is gone/],
@@ -139,9 +140,9 @@ describe('a guild in the lock', () => {
 })
 
 describe('readLock', () => {
-  it('reads a lock written before guilds were locked as one that guards none', () => {
-    const { guilds: _guilds, ...older } = locked
-    expect(readLock(JSON.stringify(older))).toEqual({ ...older, guilds: {} })
+  it('throws on a lock that has lost its guilds, so the promises about them cannot be dropped in silence', () => {
+    const { guilds: _guilds, ...without } = locked
+    expect(() => readLock(JSON.stringify(without))).toThrow(/packs\/lock\.json/)
   })
 
 
