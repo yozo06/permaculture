@@ -24,6 +24,11 @@ describe('the page', () => {
     expect(addresses(read('index.html'))).toEqual(['https://yozo06.github.io/permaculture/og.jpg'])
   })
 
+  it('shows one picture of its own, the sprite sheet, from among its own files', () => {
+    const pictures = [...read('index.html').matchAll(/<img\b[^>]*>/gi)].map((m) => m[0])
+    expect(pictures).toEqual(['<img id="sheetArt" src="/src/game/art/sheet.png" alt="" hidden>'])
+  })
+
   it('has no styles of its own in the page, where the check on the stylesheet would not see them', () => {
     const html = read('index.html')
     expect(html).not.toMatch(/<style\b/i)

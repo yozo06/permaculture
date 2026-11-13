@@ -19,7 +19,7 @@ import sampleFarm from './sample-farm.json'
 import { readLink } from './links'
 import { MOMENT_MS, momentDots, type DotTone, type MomentKind } from './moments'
 import { BOOK_KEY, ageText, bookText, readBook, receive, remove, tooOld, type Arrival, type Book } from './neighbours'
-import { cropShape, partColor, shapeHeight } from './shapes'
+import { NEUTRAL_COLOR, cropHeight, cropSprite, paintKeys, sprite as spriteAt } from './art/sprites'
 import { createStore, defaultId, LOG_KEY, type StorageLike } from './store'
 import { esc, shuffle } from './util'
 import {
@@ -194,102 +194,83 @@ function adopt(): void {
   hud()
 }
 
-/* ---------- pixel helpers ---------- */
+/* ---------- the sprite sheet ---------- */
+/** The sheet is a picture in the page itself (index.html), so the page loads it with its other files and the code fetches nothing. */
+const sheetImage = byIdAs('sheetArt', HTMLImageElement)
+let sheetReady = false
+/** The sheet with its key colours painted in one colour, made the first time that colour is asked for. */
+const painted = new Map<string, HTMLCanvasElement>()
+function paintedSheet(color: string): HTMLCanvasElement | null {
+  if (!sheetReady) return null
+  const had = painted.get(color)
+  if (had) return had
+  const c = document.createElement('canvas')
+  c.width = sheetImage.naturalWidth
+  c.height = sheetImage.naturalHeight
+  const x = context2d(c)
+  x.drawImage(sheetImage, 0, 0)
+  const data = x.getImageData(0, 0, c.width, c.height)
+  paintKeys(data.data, color)
+  x.putImageData(data, 0, 0)
+  painted.set(color, c)
+  return c
+}
+/** Once the sheet has arrived: draw the ground again with it, and hand the sheets of text their copy. */
+function sheetLoaded(): void {
+  sheetReady = true
+  dirtyGround = true
+  // The sheets of text show sprites too: they take them from this copy, with fruit in a colour that is no field's.
+  const neutral = paintedSheet(NEUTRAL_COLOR)
+  if (neutral) document.documentElement.style.setProperty('--sheet', 'url(' + neutral.toDataURL() + ')')
+}
+
+/* ---------- drawing ---------- */
 const iso = (x: number, y: number): { sx: number; sy: number } => { const cam = camera(); return { sx: (x - y) * 16 + cam.x, sy: (x + y) * 8 + cam.y } }
 let g: CanvasRenderingContext2D = ctx
 function px(x: number, y: number, w: number, h: number, c: string): void {g.fillStyle=c;g.fillRect(Math.round(x),Math.round(y),w,h);}
-function diamond(sx: number, sy: number, c: string): void {g.fillStyle=c;for(let r=0;r<TH;r++){const hw=r<8?(r+1)*2:(TH-r)*2;g.fillRect(sx-hw,sy+r,hw*2,1);}}
-function blob(cx: number, base: number, widths: number[], cols: string[]): void {for(let i=0;i<widths.length;i++){const w=widths[i]??0;px(cx-Math.floor(w/2),base-i,w,1,cols[Math.min(i,cols.length-1)]??'#000000');}}
-function rail(x1: number, y1: number, x2: number, y2: number, c: string): void {const sx=Math.sign(x2-x1),sy=Math.sign(y2-y1);for(let t=0;t<8;t++)px(x1+sx*2*t+(sx<0?-2:0),y1+sy*t,2,1,c);}
 type Pt = [number, number]
-function face(pts: Pt[], c: string): void {g.fillStyle=c;g.beginPath();pts.forEach(([x,y],i)=>{if(i===0)g.moveTo(x,y);else g.lineTo(x,y);});g.closePath();g.fill();}
+/** Draw a sprite with the top corner of its tile at (sx, sy). `color` paints its key colours: a field's own, or none. */
+function spr(name: string, sx: number, sy: number, color: string = NEUTRAL_COLOR): void {
+  const s = spriteAt(name)
+  const sheet = paintedSheet(color)
+  if (!s || !sheet) return
+  g.drawImage(sheet, s.x, s.y, s.w, s.h, Math.round(sx) - s.ax, Math.round(sy) - s.ay, s.w, s.h)
+}
 
-/* ---------- sprites ---------- */
-function drawTree(sx: number, sy: number, v: number): void {const cx=sx,cy=sy+12;const big=v>0.5;const g1=v>0.75?'#2F7A2C':'#3C8F35',g2=v>0.75?'#4FA347':'#5DB654',g3=v>0.75?'#79C46C':'#8AD47A';
-  px(cx-3,cy,6,1,'rgba(0,0,0,.18)');px(cx-1,cy-7,2,7,'#5E3F22');px(cx-2,cy-2,1,2,'#5E3F22');
-  if(big)blob(cx,cy-7,[8,12,14,14,12,10,6],[g1,g1,g2,g2,g3,g3,g3]);else blob(cx,cy-6,[6,10,12,10,6],[g1,g2,g2,g3,g3]);
-  if(v>0.6){px(cx+2,cy-10,1,1,'#F5E07A');px(cx-3,cy-9,1,1,'#F5E07A');}}
-function drawBush(sx: number, sy: number): void {blob(sx,sy+11,[6,8,8,6,3],['#3C8F35','#5DB654','#5DB654','#8AD47A','#8AD47A']);}
-function drawRock(sx: number, sy: number): void {blob(sx,sy+11,[6,8,6,3],['#6E6E7C','#8A8A99','#A0A0AE','#B8B8C4']);}
-function drawTuft(sx: number, sy: number, x: number, y: number): void {for(let i=0;i<3;i++){const ox=Math.floor(hash(x,y,i+30)*12)-6;px(sx+ox,sy+6+Math.floor(hash(x,y,i+40)*5),1,3,'#4E9A3A');}}
-function drawFlowers(sx: number, sy: number, x: number, y: number): void {for(let i=0;i<3;i++){const r=3+Math.floor(hash(x,y,i)*9),hw=r<8?(r+1)*2:(TH-r)*2;const fx=sx-hw+2+Math.floor(hash(x,y,i+7)*(hw*2-4));const c=['#F7D54A','#F2F2EC','#F08BB0'][Math.floor(hash(x,y,i+11)*3)]??'#F7D54A';if(hash(x,y,i+20)<0.35)px(fx,sy+r,1,1,c);}}
-function drawCrop(c: Crop, sx: number, sy: number, t: number): void {
+/* ---------- what stands on the land ---------- */
+/** A forest tree: one of two broadleaves or a pine, by `v`, a number from 0 to 1 that belongs to its tile. */
+const drawTree = (sx: number, sy: number, v: number): void => spr('wild/tree/' + (v > 0.72 ? 2 : v > 0.36 ? 1 : 0), sx, sy)
+const drawBush = (sx: number, sy: number): void => spr('wild/bush', sx, sy)
+const drawRock = (sx: number, sy: number): void => spr('wild/rock', sx, sy)
+const drawTuft = (sx: number, sy: number, x: number, y: number): void => spr('wild/tuft/' + Math.floor(hash(x, y, 30) * 3), sx, sy)
+function drawCrop(c: Crop, sx: number, sy: number): void {
   const seed = catalog.seed(c.seed)
-  if (!seed) return
-  const cx = sx, cy = sy + 12, w = c.wilted
-  const field = colorOf(seed.pack)
-  const sway = w ? 0 : Math.round(Math.sin(t / 900 + c.x * 1.7 + c.y) * 0.6)
-  // A wilted crop hangs its leaves; a wilted tree keeps its shape.
-  const droop = w && !c.perennial ? 2 : 0
-  px(cx - 3, cy, 6, 1, 'rgba(0,0,0,.15)')
-  for (const p of cropShape(seed.layer, c.stage, c.perennial)) {
-    const color = partColor(p.tone, field, w)
-    if (color !== null) px(cx + p.x + (p.sway ? sway : 0), cy + p.y + (p.sway ? droop : 0), p.w, p.h, color)
-  }
-  if (w) { px(cx + 3, cy - 1, 1, 1, '#B3924A'); px(cx - 4, cy, 1, 1, '#B3924A') }
+  if (seed) spr(cropSprite(seed.layer, c.stage, c.perennial, c.wilted), sx, sy, colorOf(seed.pack))
 }
 function drawMarker(c: Crop, sx: number, sy: number, t: number): void {
   // Thirst, wilting and ripeness are the owner's business: a neighbour's farm shows none of them.
   if (visiting) return
-  const cx=sx;const bob=Math.round(Math.sin(t/260)*1.5);
-  // The marker floats over the crop: a tall one lifts it.
-  const layer=catalog.seed(c.seed)?.layer;
-  sy-=Math.max(0,(layer?shapeHeight(cropShape(layer,c.stage,c.perennial)):0)-16);
-  if(c.wilted){const y=sy-10+bob;px(cx,y,1,4,'#E0893A');px(cx,y+5,1,1,'#E0893A');return;}
-  if(thirsty(c)){const y=sy-11+bob;px(cx,y-1,1,1,'#4FA3E8');px(cx-1,y,3,1,'#4FA3E8');px(cx-2,y+1,5,2,'#4FA3E8');px(cx-1,y+3,3,1,'#2F7FC4');px(cx-1,y+1,1,1,'#DFF2FF');return;}
-  if(ripe(c)){const y=sy-12+bob;const k=Math.floor(t/350)%2;px(cx,y,1,5,'#FFD95A');px(cx-2,y+2,5,1,'#FFD95A');if(k){px(cx-3,y-1,1,1,'#FFF4B0');px(cx+3,y+5,1,1,'#FFF4B0');}else{px(cx+3,y-1,1,1,'#FFF4B0');px(cx-3,y+5,1,1,'#FFF4B0');}}
+  const layer = catalog.seed(c.seed)?.layer
+  // The marker floats over the crop, bobbing: a tall crop lifts it.
+  const y = sy - Math.max(0, (layer ? cropHeight(cropSprite(layer, c.stage, c.perennial)) : 0) - 16) + Math.round(Math.sin(t / 260) * 1.5)
+  if (c.wilted) spr('mark/wilted', sx, y)
+  else if (thirsty(c)) spr('mark/thirsty', sx, y)
+  else if (ripe(c)) spr('mark/ripe/' + (Math.floor(t / 350) % 2), sx, y)
 }
-function drawFarmer(cx: number, cy: number, walking: boolean, t: number): void {
-  const step=walking?(Math.floor(t/120)%2):0;
-  px(cx-3,cy,6,1,'rgba(0,0,0,.25)');
-  px(cx-2,cy-4,2,4-step,'#2B2B3A');px(cx+1,cy-4,2,4-(walking?1-step:0),'#2B2B3A');
-  px(cx-3,cy-9,6,5,'#3E7CB1');px(cx-4,cy-9,1,4,'#E8B990');px(cx+3,cy-9,1,4,'#E8B990');
-  px(cx-2,cy-12,4,3,'#E8B990');px(cx-1,cy-11,1,1,'#222');px(cx+1,cy-11,1,1,'#222');
-  px(cx-4,cy-13,8,1,'#9A6A35');px(cx-2,cy-15,4,2,'#9A6A35');
-}
-function drawBarn(): void {const {sx,sy}=iso(BARN.x,BARN.y);const h=22;
-  const Lx=sx-32,Ly=sy+16,Bx=sx,By=sy+32,Rx=sx+32,Ry=sy+16;
-  face([[Lx,Ly],[Bx,By],[Bx,By-h],[Lx,Ly-h]],'#B5443A');
-  face([[Bx,By],[Rx,Ry],[Rx,Ry-h],[Bx,By-h]],'#8E3229');
-  face([[sx,sy-h],[Rx,Ry-h],[Bx,By-h],[Lx,Ly-h]],'#6E6E7C');
-  face([[sx,sy-h-6],[sx+16,sy+8-h-6],[Rx,Ry-h],[Bx,By-h],[Lx,Ly-h],[sx-16,sy+8-h-6]],'#5B5B66');
-  face([[sx-16,sy+8-h-6],[sx,sy-h-6],[sx+16,sy+8-h-6],[sx,sy+16-h-6]],'#7A7A88');
-  px(Lx+2,Ly-h+1,28,1,'#F0E2C8');px(Bx+2,By-h-7,28,1,'#F0E2C8');
-  face([[Bx-14,By-7],[Bx-4,By-2],[Bx-4,By-14],[Bx-14,By-19]],'#3C2316');
-  face([[Bx-13,By-8],[Bx-5,By-4],[Bx-5,By-13],[Bx-13,By-17]],'#4A2A1C');
-  px(Bx+10,By-22,8,5,'#F0E2C8');px(Bx+11,By-21,6,3,'#2A2A33');}
-function drawWell(): void {const {sx,sy}=iso(WELL.x,WELL.y);const cx=sx,cy=sy+12;
-  px(cx-5,cy,10,1,'rgba(0,0,0,.2)');blob(cx,cy-1,[10,12,12,12,10],['#6E6E7C','#8A8A99','#8A8A99','#A0A0AE','#A0A0AE']);
-  px(cx-3,cy-4,6,2,'#2F7FC4');px(cx-2,cy-4,2,1,'#6CB8F0');
-  px(cx-5,cy-14,2,10,'#6B4A2B');px(cx+3,cy-14,2,10,'#6B4A2B');
-  blob(cx,cy-14,[14,10,6,2],['#7A4A2A','#8E5A34','#8E5A34','#A26A40']);px(cx,cy-9,1,4,'#444');px(cx-1,cy-6,3,2,'#8A8A99');}
-function drawCompost(): void {const {sx,sy}=iso(COMPOST.x,COMPOST.y);const cx=sx,cy=sy+12;
-  blob(cx,cy-1,[12,14,14,12,8,4],['#4A3420','#5A4028','#6B4D30','#6B4D30','#7E5C3A','#7E5C3A']);
-  px(cx-3,cy-3,1,1,'#8AD47A');px(cx+2,cy-4,1,1,'#F7D54A');px(cx,cy-5,1,1,'#B3924A');px(cx+4,cy-2,1,1,'#8AD47A');}
-function drawSign(): void {const {sx,sy}=iso(SIGN.x,SIGN.y);const cx=sx,cy=sy+12;
-  px(cx-2,cy,4,1,'rgba(0,0,0,.2)');px(cx-1,cy-14,2,14,'#6B4A2B');px(cx-7,cy-15,14,6,'#A26A40');px(cx-7,cy-15,14,1,'#C98A52');px(cx-5,cy-13,10,1,'#3C2316');px(cx-5,cy-11,7,1,'#3C2316');}
+const drawFarmer = (sx: number, sy: number, walking: boolean, t: number): void => spr('farmer/' + (walking ? Math.floor(t / 120) % 2 : 0), sx, sy)
+const drawBarn = (): void => { const p = iso(BARN.x, BARN.y); spr('barn', p.sx, p.sy) }
+const drawWell = (): void => { const p = iso(WELL.x, WELL.y); spr('well', p.sx, p.sy) }
+const drawCompost = (): void => { const p = iso(COMPOST.x, COMPOST.y); spr('compost', p.sx, p.sy) }
+const drawSign = (): void => { const p = iso(SIGN.x, SIGN.y); spr('sign', p.sx, p.sy) }
 /** The gate spans the main path where it leaves the homestead to the west: two posts, a beam, a lantern. */
-function drawGate(): void {const {sx,sy}=iso(GATE.x,GATE.y);
-  const ax=sx,ay=sy+1,bx=sx-32,by=sy+17;
-  for(const [x,y] of [[ax,ay],[bx,by]] as Pt[]){px(x-1,y-20,3,21,'#6B4A2B');px(x-1,y-20,3,1,'#B8804A');px(x-2,y,5,1,'rgba(0,0,0,.2)');}
-  for(let t=0;t<16;t++){px(ax-2*t-1,ay-23+t,3,3,'#8E5A34');px(ax-2*t-1,ay-23+t,3,1,'#C98A52');}
-  px(sx-17,sy-9,3,4,'#3C2316');px(sx-16,sy-8,1,2,'#FFD95A');}
+const drawGate = (): void => { const p = iso(GATE.x, GATE.y); spr('gate', p.sx, p.sy) }
 /** The market stall: a counter under a striped awning. A lantern is lit on its ridge while a buyer is buying. */
 let marketLit = false
-function drawMarket(): void {const {sx,sy}=iso(MARKET.x,MARKET.y);const cx=sx,cy=sy+12;
-  px(cx-9,cy,18,1,'rgba(0,0,0,.2)');px(cx-8,cy-16,1,16,'#6B4A2B');px(cx+7,cy-16,1,16,'#6B4A2B');
-  px(cx-8,cy-6,16,6,'#8E5A34');px(cx-8,cy-6,16,1,'#C98A52');px(cx-8,cy-1,16,1,'#6B4A2B');
-  px(cx-6,cy-8,3,2,'#E9C46A');px(cx-2,cy-8,3,2,'#6DB24F');px(cx+3,cy-8,3,2,'#D8785A');
-  for(let k=0;k<9;k++){px(cx-9+k*2,cy-20,2,4,k%2?'#F4EAD0':'#C8553D');px(cx-9+k*2,cy-16,2,1,k%2?'#D9CDB0':'#9E3F2C');}
-  // The lantern tells of your own farm today, so it is dark on a neighbour's farm and on last month's.
-  px(cx-1,cy-23,3,3,marketLit&&!visiting?'#FFD95A':'#5C4A2E');px(cx,cy-24,1,1,'#3C2316');}
+// The lantern tells of your own farm today, so it is dark on a neighbour's farm and on last month's.
+const drawMarket = (): void => { const p = iso(MARKET.x, MARKET.y); spr(marketLit && !visiting ? 'stall/lit' : 'stall', p.sx, p.sy) }
 /** A field's flag, in the field's colour, on a tall pole at a corner of the field: it shows over any crop, from across the map. */
 const FLAG = { top: 27, w: 8, h: 5 }
-function drawFlag(sx: number, sy: number, color: string, t: number): void {
-  px(sx,sy-FLAG.top,1,FLAG.top-5,'#6B4A2B');px(sx-1,sy-FLAG.top-1,3,1,'#B8804A');
-  // The cloth ripples away from the pole, three columns at a time.
-  for(let k=0;k<FLAG.w;k++){const y=sy-FLAG.top+(Math.floor(t/320)+Math.floor(k/3))%2;px(sx+1+k,y,1,FLAG.h,color);px(sx+1+k,y+FLAG.h-1,1,1,'rgba(0,0,0,.22)');}
-}
+const drawFlag = (sx: number, sy: number, color: string, t: number): void => spr('flag/' + (Math.floor(t / 320) % 2), sx, sy, color)
 
 /* ---------- world objects (rebuilt when land changes) ---------- */
 let statics: Drawable[] = []
@@ -342,10 +323,10 @@ function buildStatics(): void {
         const a = V[e.charAt(0)]
         const b = V[e.charAt(1)]
         if (!a || !b) return
-        rail(a[0], a[1] - 5, b[0], b[1] - 5, '#A26A40')
-        rail(a[0], a[1] - 2, b[0], b[1] - 2, '#A26A40')
+        // An edge runs down to the right or down to the left from where it starts, and the rails follow it.
+        spr(b[0] > a[0] ? 'fence/right' : 'fence/left', a[0], a[1])
         // Each post is capped in its field's colour, so a field's outline says whose it is.
-        for (const v of [a, b]) { px(v[0] - 1, v[1] - 6, 2, 7, '#8E5A34'); px(v[0] - 1, v[1] - 7, 2, 2, colorOf(f)) }
+        for (const v of [a, b]) spr('fence/post', v[0], v[1], colorOf(f))
       } })
     }
   }
@@ -357,33 +338,26 @@ function buildGround(): void {
   gcv.height = N * 16 + 40
   const ox = N * 16 + 16, oy = 8
   groundOx = ox
+  const VARIANTS = { soil: 2, path: 3, wild: 3, grass: 3 }
+  const NAMES = { soil: 'tile/soil/', path: 'tile/path/', wild: 'tile/wild/', grass: 'tile/meadow/' }
   for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
-    const sx = (x - y) * 16 + ox, sy = (x + y) * 8 + oy
     const tr = terrain(x, y)
-    if (tr === 'soil') {
-      diamond(sx, sy, '#7A5230')
-      for (const r of [3, 6, 9, 12]) { const hw = r < 8 ? (r + 1) * 2 : (TH - r) * 2; for (let k = -hw + 3; k < hw - 2; k += 3) px(sx + k, sy + r, 1, 1, '#5E3C22') }
-    } else if (tr === 'path') {
-      diamond(sx, sy, '#C9A86A')
-      for (let i = 0; i < 3; i++) { const r = 3 + Math.floor(hash(x, y, i) * 9), hw = r < 8 ? (r + 1) * 2 : (TH - r) * 2; px(sx - hw + 2 + Math.floor(hash(x, y, i + 3) * (hw * 2 - 4)), sy + r, 1, 1, '#A98850') }
-    } else if (tr === 'wild') {
-      diamond(sx, sy, '#4F8F3C')
-      for (let i = 0; i < 4; i++) { const r = 2 + Math.floor(hash(x, y, i) * 11), hw = r < 8 ? (r + 1) * 2 : (TH - r) * 2; px(sx - hw + 1 + Math.floor(hash(x, y, i + 5) * (hw * 2 - 2)), sy + r, 1, 1, hash(x, y, i + 9) > 0.5 ? '#3F7A30' : '#62A84A') }
-    } else {
-      diamond(sx, sy, '#6DB24F')
-      for (let i = 0; i < 4; i++) { const r = 2 + Math.floor(hash(x, y, i) * 11), hw = r < 8 ? (r + 1) * 2 : (TH - r) * 2; px(sx - hw + 1 + Math.floor(hash(x, y, i + 5) * (hw * 2 - 2)), sy + r, 1, 1, hash(x, y, i + 9) > 0.5 ? '#5A9A3E' : '#83C464') }
-      drawFlowers(sx, sy, x, y)
-    }
+    // No two neighbours need match: each tile takes the variant its own place gives it.
+    const n = tr === 'soil' ? (x + y) % VARIANTS.soil : Math.floor(hash(x, y, 3) * VARIANTS[tr])
+    spr(NAMES[tr] + n, (x - y) * 16 + ox, (x + y) * 8 + oy)
   }
-  for (let x = 0; x < N; x++) { const sx = (x - (N - 1)) * 16 + ox, sy = (x + N - 1) * 8 + oy; for (let t2 = 0; t2 < 16; t2++) { px(sx - 16 + t2, sy + 8 + Math.floor(t2 / 2) + 1, 1, 10, '#6A4A2C'); px(sx - 16 + t2, sy + 8 + Math.floor(t2 / 2) + 9, 1, 3, '#4E361F') } }
-  for (let y = 0; y < N; y++) { const sx = ((N - 1) - y) * 16 + ox, sy = (N - 1 + y) * 8 + oy; for (let t2 = 0; t2 < 16; t2++) { px(sx + t2, sy + 16 - Math.ceil(t2 / 2) + 1, 1, 10, '#5C3F24'); px(sx + t2, sy + 16 - Math.ceil(t2 / 2) + 9, 1, 3, '#43301C') } }
+  // The island's two front edges show the earth under them.
+  for (let x = 0; x < N; x++) spr('cliff/left/' + (x % 2), (x - (N - 1)) * 16 + ox, (x + N - 1) * 8 + oy)
+  for (let y = 0; y < N; y++) spr('cliff/right/' + (y % 2), ((N - 1) - y) * 16 + ox, (N - 1 + y) * 8 + oy)
   g = ctx
   dirtyGround = false
 }
 buildStatics()
+if (sheetImage.complete && sheetImage.naturalWidth > 0) sheetLoaded()
+else sheetImage.addEventListener('load', sheetLoaded)
 
 /* ---------- clouds ---------- */
-const clouds = [{ x: 40, y: 22, w: [10, 18, 24, 22, 14], v: 0.035 }, { x: 260, y: 12, w: [8, 14, 20, 18, 10], v: 0.025 }, { x: 400, y: 34, w: [12, 20, 26, 22, 12], v: 0.03 }]
+const clouds = [{ x: 40, y: 18, n: 0, v: 0.035 }, { x: 260, y: 8, n: 1, v: 0.025 }, { x: 400, y: 30, n: 2, v: 0.03 }]
 
 /* ---------- small moments ---------- */
 /** Something that flies off a crop for a blink: a splash, a ring, a burst of sparks. It changes nothing on the farm. */
@@ -406,7 +380,7 @@ const stillLife = typeof window.matchMedia === 'function' ? window.matchMedia('(
 function celebrate(kind: MomentKind, c: Crop, wait = 0): void {
   const seed = catalog.seed(c.seed)
   if (!seed || stillLife?.matches) return
-  const lift = kind === 'splash' ? 0 : shapeHeight(cropShape(seed.layer, c.stage, c.perennial))
+  const lift = kind === 'splash' ? 0 : cropHeight(cropSprite(seed.layer, c.stage, c.perennial))
   moments.push({ kind, x: c.x, y: c.y, lift, field: colorOf(seed.pack), wait, at: null })
 }
 /** The moments still playing at time `t`, ready to be drawn in their place among the crops. */
@@ -429,9 +403,9 @@ let hover: { x: number; y: number } | null = null
 function frame(t: number): void {
   if (dirtyGround) buildGround()
   g = ctx
-  ctx.fillStyle = '#8FC8E8'; ctx.fillRect(0, 0, W, H); ctx.fillStyle = '#A4D6F0'; ctx.fillRect(0, 170, W, 130)
-  px(438, 24, 12, 12, '#FFE27A'); px(440, 22, 8, 16, '#FFE27A'); px(436, 26, 16, 8, '#FFE27A'); px(441, 25, 6, 6, '#FFF3B8')
-  for (const c of clouds) { c.x += c.v; if (c.x > W + 40) c.x = -40; blob(Math.round(c.x), c.y, c.w, ['#E6F2FA', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF']) }
+  ctx.fillStyle = '#8FC8E8'; ctx.fillRect(0, 0, W, H); ctx.fillStyle = '#A4D6F0'; ctx.fillRect(0, Math.round(H * 0.57), W, H)
+  spr('sky/sun', W - 40, 30)
+  for (const c of clouds) { c.x += c.v; if (c.x > W + 40) c.x = -40; spr('sky/cloud/' + c.n, c.x, c.y) }
   const cam = camera()
   ctx.drawImage(gcv, Math.round(cam.x - groundOx), Math.round(cam.y - 8))
   if (hover) {
@@ -445,9 +419,9 @@ function frame(t: number): void {
   const walking = dist > 0.02
   if (walking) { const sp = Math.min(0.07, dist); f.x += dx / dist * sp; f.y += dy / dist * sp }
   const list: Drawable[] = statics.slice()
-  for (const c of D().crops) list.push({ s: c.x + c.y, d: () => { const p = iso(c.x, c.y); drawCrop(c, p.sx, p.sy, t); drawMarker(c, p.sx, p.sy, t) } })
+  for (const c of D().crops) list.push({ s: c.x + c.y, d: () => { const p = iso(c.x, c.y); drawCrop(c, p.sx, p.sy); drawMarker(c, p.sx, p.sy, t) } })
   // Your farmer stays at home while you look at someone else's farm.
-  if (!visiting) list.push({ s: f.x + f.y + 0.01, d: () => { const p = iso(f.x, f.y); drawFarmer(Math.round(p.sx), Math.round(p.sy + 13), walking, t) } })
+  if (!visiting) list.push({ s: f.x + f.y + 0.01, d: () => { const p = iso(f.x, f.y); drawFarmer(p.sx, p.sy, walking, t) } })
   list.push(...momentDrawables(t))
   list.sort((a, b) => a.s - b.s)
   for (const o of list) o.d(t)

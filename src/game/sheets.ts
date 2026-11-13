@@ -1,6 +1,6 @@
 // HTML for the sheets of the depth ladder: plant with notes, explain, write up, and the crop sheet.
 // Pure strings in, strings out, so they can be tested without a browser. Everything that came from a player or a pack is escaped.
-import { cropShape, shapeSvg } from './shapes'
+import { cropSprite, iconHtml } from './art/sprites'
 import type { NeighbourCropView, NeighbourRow, ShareView } from './visit'
 import type { CropView, EarnedRow, HeldRow, PickerPack, ReadinessRow, ReadinessView, SourceLink } from './views'
 import { esc } from './util'
@@ -120,9 +120,9 @@ function readinessRowHtml(r: ReadinessRow, limits: { min: number; max: number })
   const ready = r.readiness
   if (!ready) return '<div class="ready">' + fieldHead(r) + '<div class="sub">This field has no end, so it has no number and no bar. ' + standing(r) + '.</div></div>'
   const id = 'bar-' + esc(r.pack)
-  // Each layer as the tree it grows into, in the field's colour, faded where nothing stands yet.
+  // Each layer as the tree it grows into, faded where nothing stands yet.
   const layers = ready.layers.map((l) =>
-    '<div class="lay' + (l.rooted === 0 ? ' hollow' : '') + '">' + shapeSvg(cropShape(l.layer, 4, true), hex(r.color), 2) + '<span>' + esc(l.name) + ' <b>' + l.rooted + '</b> of ' + l.total + '</span></div>').join('')
+    '<div class="lay' + (l.rooted === 0 ? ' hollow' : '') + '">' + iconHtml(cropSprite(l.layer, 4, true), 1) + '<span>' + esc(l.name) + ' <b>' + l.rooted + '</b> of ' + l.total + '</span></div>').join('')
   return (
     '<div class="ready">' + fieldHead(r, ready.atBar ? ' <span class="tag">at its bar</span>' : '') +
     '<div class="gauge" role="img" aria-label="Readiness ' + ready.percent + ', bar ' + ready.bar + '"><i style="width:' + ready.percent + '%;background:' + hex(r.color) + '"></i><b style="left:' + ready.bar + '%"></b></div>' +

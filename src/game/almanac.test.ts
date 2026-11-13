@@ -29,7 +29,7 @@ describe('almanacHtml', () => {
     const html = almanacHtml(catalog, RULES.energyMax, '0.0.0')
     const section = html.split('<h3>Reading the farm</h3>')[1]?.split('<h3>')[0] ?? ''
     for (const name of Object.values(LAYER_NAMES)) expect(section, name).toContain('<b>' + name + '</b>')
-    expect(section.split('<svg ').length - 1).toBe(Object.keys(LAYER_NAMES).length)
+    expect(section.split('<i class="spr"').length - 1).toBe(Object.keys(LAYER_NAMES).length)
     expect(section).toContain('flag')
     expect(section).toContain('ripe')
   })

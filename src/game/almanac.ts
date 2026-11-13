@@ -5,7 +5,7 @@ import { LADDER } from '../engine/ladder'
 import { GROUND_UP, earnedLine } from '../engine/readiness'
 import { RULES } from '../engine/rules'
 import type { Layer } from '../engine/types'
-import { cropShape, shapeSvg } from './shapes'
+import { cropSprite, iconHtml } from './art/sprites'
 import { esc } from './util'
 import { timesOver } from './views'
 
@@ -31,16 +31,15 @@ function zoneLines(): string[] {
 const LAYER_LINES: [Layer, string][] = [
   ['canopy', 'a tall tree with a wide crown. The big picture.'],
   ['understory', 'a small tree that comes to a point. Patterns.'],
-  ['vine', 'leaves climbing a pole, and a trellis once it is a tree. What runs through everything else.'],
+  ['vine', 'leaves climbing a pole, and an arbour once it is a tree. What runs through everything else.'],
   ['shrub', 'a round bush. Structures, and where things are kept.'],
-  ['herb', 'one stalk with leaves in pairs. Techniques.'],
+  ['herb', 'one stalk with leaves in pairs, and a flower once it is a tree. Techniques.'],
   ['ground-cover', 'a mat lying flat on the soil. Fundamentals.'],
   ['root', 'a mound of earth with a fan of leaves. What works underneath.'],
 ]
-/** The fruit in the legend: no field's colour, so it stands for any of them. */
-const LEGEND_FRUIT = '#F4EAD0'
+/** Each layer as the tree it grows into, from the sprite sheet. Its fruit is in no field's colour, so it stands for any of them. */
 const legend = (): string =>
-  '<div class="legend">' + LAYER_LINES.map(([layer, line]) => '<div>' + shapeSvg(cropShape(layer, RULES.maxStage, true), LEGEND_FRUIT) + '<span><b>' + LAYER_NAMES[layer] + '</b>: ' + line + '</span></div>').join('') + '</div>'
+  '<div class="legend">' + LAYER_LINES.map(([layer, line]) => '<div>' + iconHtml(cropSprite(layer, RULES.maxStage, true), 2) + '<span><b>' + LAYER_NAMES[layer] + '</b>: ' + line + '</span></div>').join('') + '</div>'
 
 /** `version` is what the build calls itself ("0.1.0 (a031b7a)"); it sits in the footer so a bug report can name it. */
 export function almanacHtml(catalog: Catalog, energyMax: number, version: string): string {

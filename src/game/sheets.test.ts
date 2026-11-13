@@ -245,7 +245,7 @@ describe('readinessSheetHtml', () => {
 
   it('draws each layer with its count, and marks and names the hollow ones', () => {
     const h = html()
-    expect(h.split('<svg ').length - 1).toBe(2)
+    expect(h.split('<i class="spr"').length - 1).toBe(2)
     expect(h).toContain('Canopy <b>2</b> of 5')
     expect(h).toContain('Root <b>0</b> of 4')
     expect(h.split('class="lay hollow"').length - 1).toBe(1)
