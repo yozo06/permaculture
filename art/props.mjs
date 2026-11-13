@@ -42,21 +42,22 @@ function barn() {
   line(b, ...pt(-32, 16 - h + 1), ...pt(-1, 32 - h), P.r3)
   line(b, ...pt(-32, 16 - h), ...pt(0, 32 - h), P.c2)
   line(b, ...pt(0, 32 - h), ...pt(16, 24 - h - r), P.c2)
-  line(b, ...pt(16, 24 - h - r), ...pt(32, 16 - h), P.c1)
+  line(b, ...pt(16, 24 - h - r), ...pt(31, 16 - h), P.c1)
   line(b, ...pt(-16, 8 - h - r), ...pt(16, 24 - h - r), P.k3)
   // the door and the loft, on the gable wall
   const gable = (u, z) => pt(32 * u, 32 - 16 * u - z)
   poly(b, [gable(0.26, 0), gable(0.66, 0), gable(0.66, 13), gable(0.26, 13)], P.c1)
   poly(b, [gable(0.31, 0), gable(0.61, 0), gable(0.61, 11.5), gable(0.31, 11.5)], (x) => (mod(x - ax, 3) === 0 ? P.w0 : P.w1))
-  poly(b, [gable(0.4, 17), gable(0.6, 17), gable(0.6, 22), gable(0.4, 22)], P.w0)
+  poly(b, [gable(0.36, 16), gable(0.64, 16), gable(0.64, 23), gable(0.36, 23)], P.c1)
+  poly(b, [gable(0.41, 17), gable(0.59, 17), gable(0.59, 22), gable(0.41, 22)], P.w0)
   // a window on the lit wall
   const wall = (u, z) => pt(-32 + 32 * u, 16 + 16 * u - z)
   poly(b, [wall(0.3, 5), wall(0.58, 5), wall(0.58, 13), wall(0.3, 13)], P.c2)
   poly(b, [wall(0.35, 6.5), wall(0.53, 6.5), wall(0.53, 11.5), wall(0.35, 11.5)], P.k0)
   b.set(...wall(0.38, 10.5), P.k3); b.set(...wall(0.41, 10.5), P.k2)
   b.outline(P.ink)
-  // its shadow on the ground along the front
-  for (let i = 0; i < 34; i++) { const [x, y] = pt(-32 + i, 17 + i / 2); if (!b.get(x, Math.round(y) + 1)) b.set(x, Math.round(y) + 1, SHADOW) }
+  // its shadow on the ground, under both front walls
+  for (let x = 2; x < W - 2; x++) { let y = H - 1; while (y > 0 && !b.get(x, y)) y--; for (const d of [1, 2]) if (y + d < H) b.set(x, y + d, SHADOW) }
   return at(b, ax, ay)
 }
 
@@ -212,7 +213,8 @@ const farmer = (n) => made([
 
 /** What floats over a crop: a droplet when it is thirsty, a sparkle when it is ripe, a mark when it has wilted. */
 const droplet = () => made(['..o..', '.oXo.', '.oWo.', 'oXWwo', 'oWWwo', 'oWwwo', '.ooo.'], 2, 12)
-const sparkle = (n) => made(n ? ['..o..', '.o2o.', 'oo1oo', 'o212o', 'oo1oo', '.o2o.', '..o..'] : ['o...o', 'o2.2o'.replace(/o/g, '.'), '..1..', '.212.', '..1..', '.2.2.', '.....'], 2, 13)
+// The sparkle twinkles between a small star and a big one, each with a line round it so it shows on leaves and on soil.
+const sparkle = (n) => made(n ? ['..o..', '.o2o.', 'oo1oo', 'o212o', 'oo1oo', '.o2o.', '..o..'] : ['.....', '..o..', '.o2o.', 'o212o', '.o2o.', '..o..', '.....'], 2, 13)
 const wiltMark = () => made(['.ooo.', '.o3o.', '.o3o.', '.o3o.', '.ooo.', '.o3o.', '.ooo.'], 2, 11)
 
 export function props() {

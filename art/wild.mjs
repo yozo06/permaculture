@@ -13,7 +13,7 @@ function shade(b, cx, y, w) { for (let x = cx - Math.floor(w / 2); x <= cx + Mat
 /** A broadleaf tree: a short trunk under a crown of three or four discs. */
 function broadleaf(discs) {
   const b = new Bitmap(24, 30)
-  b.blit(grid(['.ab.', 'abca', 'abca', 'abca', 'abca', 'abcda', '.aaa.'], WOOD), 10, 22)
+  b.blit(grid(['.bc.', 'abca', 'abca', 'abca', 'abca', 'abca', '.aa.'], WOOD), 10, 22)
   shade(b, 12, 29, 11)
   b.blit(foliage(24, 24, discs, GREEN), 0, 0)
   return at(b, 12, 17)
@@ -58,7 +58,7 @@ const rock = () => at(grid([
 const TUFT = { l: P.g3, G: P.g2, d: P.g1 }
 const tuft = (n) => at(grid([['.l...l..', 'l.G.l.G.', '.G.d.G..'], ['...l....', '.l.G.l..', '.G.d.G.l'], ['l....l..', 'G.l..G..', '.d.G..G.']][n], TUFT), 4, -7)
 
-const SKY = { o: P.y0, y: P.y1, Y: P.y2, w: '#FFFFFF', W: '#EAF4FB', b: '#CFE4F2' }
+const SKY = { o: P.y0, y: P.y1, Y: P.y2, w: P.a2, W: P.a1, b: P.a0 }
 const sun = () => at(grid([
   '.......Y........',
   '..Y....y.....Y..',
@@ -84,7 +84,7 @@ const cloud = (n) => at(grid([
 export function wild() {
   return {
     'wild/tree/0': broadleaf([[12, 9, 7], [7, 13, 5], [17, 13, 5], [12, 15, 5]]),
-    'wild/tree/1': broadleaf([[11, 8, 6], [15, 12, 6], [8, 14, 5]]),
+    'wild/tree/1': broadleaf([[11, 10, 6], [15, 14, 6], [8, 16, 5]]),
     'wild/tree/2': pine(),
     'wild/bush': bush(),
     'wild/rock': rock(),

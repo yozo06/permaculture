@@ -25,6 +25,8 @@ export const P = {
   y0: '#C98A1E', y1: '#F2C14E', y2: '#FFE08A',
   // skin, shirt
   h0: '#D49E78', h1: '#F0C29A', t0: '#2E5E8C', t1: '#3E7CB1', t2: '#6FA6D6',
+  // a petal in the meadow; a cloud, from its shade to its top
+  pink: '#F2A0C0', a0: '#CFE4F2', a1: '#EAF4FB', a2: '#FFFFFF',
   // straw: what leaves turn to when a crop wilts
   d0: '#33291A', d1: '#574527', d2: '#7F6630', d3: '#A68A45', d4: '#C6AE68',
   // the line round things

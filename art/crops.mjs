@@ -125,14 +125,15 @@ function groundCover(look) {
 /* ---------- root: a mound of earth with a fan of leaves ---------- */
 function root(look) {
   const b = new Bitmap(CW, CH)
-  // The mound: a dome of earth, lit from the left. The leaves fan out of its top.
+  // The mound: a dome of turned earth, paler than the soil it sits on, lit from the left, with a dark line down
+  // each side so it stands out from the tile. The leaves fan out of its top.
   const looks = [
-    ['.h.', '.m.', 'svs', 'sts'],
-    ['..h..', '.lml.', '..m..', '.svt.', 'svuts', 'sutts'],
-    ['.h.h.h.', '.l.m.l.', '..lml..', '..svt..', '.svuts.', 'svvutts', 'svuttts'],
-    ['h...h...h', '.l..m..l.', '..l.m.l..', '...lml...', '..ssvts..', '.svvuuts.', 'svvuuttts', 'svuuuttts'],
-    ['h...h...h', '.l..m..l.', '..l.m.l..', '...lml...', '..GFFFD..', '..sFFDs..', '.svvuuts.', 'svvuuttts', 'svuuuttts'],
-    ['.h..h.h..h.', '.l..l.m..l.', '..l.lhm.l..', '...l.m.l...', '....lml....', '..GGFFFFD..', '..GFFFFDD..', '...sFFDs...', '.ssvvuuts..', 'svvvuuttts.', 'svvuuutttts', 'svuuuttttts'],
+    ['.h.', '.m.', 'svus'],
+    ['..h..', '.lml.', '..m..', '.svu.', 'svuts'],
+    ['.h.h.h.', '.l.m.l.', '..lml..', '..svu..', '.svuts.', 'svvuuts'],
+    ['h...h...h', '.l..m..l.', '..l.m.l..', '...lml...', '..svvus..', '.svvuuts.', 'svvuuuuts'],
+    ['h...h...h', '.l..m..l.', '..l.m.l..', '...lml...', '..GFFFD..', '..sFFDs..', '.svvuuts.', 'svvuuuuts'],
+    ['.h..h.h..h.', '.l..l.m..l.', '..l.lhm.l..', '...l.m.l...', '....lml....', '..GGFFFFD..', '..GFFFFDD..', '...sFFDs...', '..svvuuts..', '.svvvuuuts.', 'svvvuuuuuts'],
   ]
   return shadowed(stand(b, looks[look]), 0)
 }
@@ -146,7 +147,7 @@ function vine(look) {
     ['..f...', '..e...', '.hel..', '.le...', '..e.lh', '..ell.', 'hle...', '.le...', '..ehl.', '..e.l.', '..c...', '..c...'],
     ['...f...', '..hel..', '..le...', '...e.lh', '...ell.', '.hle...', '..le...', '...ehl.', '...e.ll', 'hlle...', '.l.e...', '...elh.', '...el..', '...c...', '...c...'],
     ['..lhl.f.lhl..', '.lmmmfefmmml.', '..dFDfefdmd..', '...G..e......', '....hle......', '....le.......', '.....e.lh....', '.....ell.....', '...hle..G....', '....le.FD....', '.....ehl.....', '.....e.ll....', '..hlle.......', '...l.e.......', '.....elh.....', '.....c.......', '.....c.......'],
-    ['...lhhhhhhhl...', '.lhmmlmmmlmmhl.', 'lmmGmmmdmmmFmml', 'dmFDmdmmmdmDmmd', '.ffeeeeeeeeeff.', '.e.dmd...dmd.e.', '.ehl.......hle.', 'lle.........ell', '.e.lh.....hl.e.', '.ell...G...lle.', 'hle...FD....elh', '.e.........l.e.', '.ehl.......hle.', '.c...........c.', '.c...........c.', '.b...........b.'],
+    ['...lhhhhhhhl...', '.lhmmlmmmlmmhl.', 'lmmGmmmdmmmFmml', 'dmFDmdmmmdmDmmd', '.ffeeeeeeeeeff.', '.e.dmd.d.dmd.e.', '.ehl...G...hle.', 'lle...FD....ell', '.e.lh.....hl.e.', '.ell.......lle.', 'hle.........elh', '.e.........l.e.', '.ehl.......hle.', '.e...........e.', '.c...........c.', '.c...........c.', '.b...........b.'],
   ]
   return shadowed(stand(b, looks[look]), [3, 3, 3, 5, 7, 15][look])
 }
@@ -158,7 +159,7 @@ const LAYERS = { canopy, understory, shrub, herb, 'ground-cover': groundCover, r
 const hexOf = (c) => '#' + [c[0], c[1], c[2]].map((v) => v.toString(16).padStart(2, '0')).join('').toUpperCase()
 const STRAW = new Map([[P.g0, P.d0], [P.g1, P.d1], [P.g2, P.d2], [P.g3, P.d3], [P.g4, P.d4], [P.key, P.d2], [P.keyLight, P.d3], [P.keyDark, P.d1]])
 
-/** The same sprite gone dry: its greens turned to straw, and its fruit gone. */
+/** The same sprite gone dry: its greens turned to straw, and its fruit dried to the same brown, so nothing of the field's colour is left on it. */
 export function wilted(b) {
   const o = new Bitmap(b.w, b.h)
   for (let y = 0; y < b.h; y++) for (let x = 0; x < b.w; x++) {

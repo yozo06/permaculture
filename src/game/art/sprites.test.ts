@@ -69,6 +69,8 @@ describe('the sprite for a crop', () => {
       expect(heights, layer).toEqual([...heights].sort((a, b) => a - b))
       expect(new Set(heights).size, layer).toBe(4)
     }
+    // Whatever its layer, a crop does not shrink on becoming a tree.
+    for (const layer of LAYERS) expect(cropHeight('crop/' + layer + '/5'), layer).toBeGreaterThanOrEqual(cropHeight('crop/' + layer + '/4'))
     const trees = LAYERS.map((layer) => cropHeight('crop/' + layer + '/5'))
     expect(Math.max(...trees)).toBe(cropHeight('crop/canopy/5'))
     expect(cropHeight('crop/canopy/5')).toBeGreaterThan(20)

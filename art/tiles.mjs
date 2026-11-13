@@ -23,7 +23,7 @@ function diamond(base, dark, light, n, { flecks = 10, furrows = false } = {}) {
 
 /** A few flowers on a meadow tile. */
 function flowers(b, n) {
-  const petals = [P.y1, P.c2, '#F2A0C0']
+  const petals = [P.y1, P.c2, P.pink]
   for (let i = 0; i < 3; i++) {
     const r = 3 + Math.floor(hash(i, n, 7) * 10)
     const x = 16 - half(r) + 2 + Math.floor(hash(i, n, 8) * (half(r) * 2 - 5))
