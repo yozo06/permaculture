@@ -699,6 +699,20 @@ cv.addEventListener('wheel', (e) => {
   const r = cv.getBoundingClientRect()
   zoomTo(view.zoom + turned.step, (e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height)
 }, { passive: false })
+// Safari on a Mac tells of a trackpad pinch in events of its own, and zooms the whole page unless they are refused.
+// On an iPhone the same events come beside the fingers' own, which have already done the zooming.
+let gestureFrom = 1
+const gestureScale = (e: Event): number | null => ('scale' in e && typeof e.scale === 'number' && e.scale > 0 ? e.scale : null)
+cv.addEventListener('gesturestart', (e) => { e.preventDefault(); gestureFrom = view.zoom })
+cv.addEventListener('gesturechange', (e) => {
+  e.preventDefault()
+  const scale = gestureScale(e)
+  if (scale === null || hand.fingers.size > 0) return
+  const r = cv.getBoundingClientRect()
+  const at = 'clientX' in e && typeof e.clientX === 'number' && 'clientY' in e && typeof e.clientY === 'number' ? { x: e.clientX, y: e.clientY } : { x: r.left + r.width / 2, y: r.top + r.height / 2 }
+  zoomTo(pinchZoom(gestureFrom, 1, scale, view.pw), (at.x - r.left) / r.width, (at.y - r.top) / r.height)
+})
+cv.addEventListener('gestureend', (e) => e.preventDefault())
 cv.addEventListener('pointerleave', () => { hover = null })
 function walkTo(x: number, y: number): void { const f = store.ui.farmer; f.tx = x; f.ty = y }
 $('bHome').addEventListener('click', () => {
