@@ -8,6 +8,7 @@ import {
 } from '../engine/land'
 import { farmFileName, farmFileText, parseFarmFile } from '../engine/log'
 import { buyersFor, standing } from '../engine/market'
+import { farmOn } from '../engine/past'
 import { farmCode, layOut, momentOf, readPicture, type Picture } from '../engine/picture'
 import { explainChecklist, explainPasses, harvestWork, pickPrompt, recallBank, waterWork, writePasses } from '../engine/ladder'
 import { RULES, cropOf, revivable as isRevivable, ripe as isRipe, thirsty as isThirsty, zone } from '../engine/rules'
@@ -25,7 +26,7 @@ import {
   pickerHtml, plantSheetHtml, readinessSheetHtml, shareSheetHtml, tickList, writingBox,
 } from './sheets'
 import { arrivalText, neighbourCropView, neighbourRows, shareView, type ShareView } from './visit'
-import { marketSheetHtml, marketView, saleSheetHtml } from './standing'
+import { marketSheetHtml, marketView, rivalSheetHtml, rivalView, saleSheetHtml, thenAndNow } from './standing'
 import { afterJump, bagView, cropView, driftText, edgeLine, guildNews, guildStatus, harvestPay, needsText, saplingNews, timesOver, packColor, pickerView, readinessView, sourceLinks, splitName, tending, treeView, type TreeView } from './views'
 
 /* ---------- types ---------- */
@@ -133,6 +134,8 @@ interface Visit {
   cam: { x: number; y: number }
   /** The fields the picture shows, to tick for someone who goes on to start a farm of their own. */
   packs: string[]
+  /** The farm is your own, on an earlier day: a tap on a crop says how it stood then and how it stands now. */
+  past: boolean
 }
 let visiting: Visit | null = null
 /** The farm on screen: the neighbour's while visiting, else your own. Everything that draws or picks reads this. */
@@ -277,7 +280,7 @@ function drawMarket(): void {const {sx,sy}=iso(MARKET.x,MARKET.y);const cx=sx,cy
   px(cx-8,cy-6,16,6,'#8E5A34');px(cx-8,cy-6,16,1,'#C98A52');px(cx-8,cy-1,16,1,'#6B4A2B');
   px(cx-6,cy-8,3,2,'#E9C46A');px(cx-2,cy-8,3,2,'#6DB24F');px(cx+3,cy-8,3,2,'#D8785A');
   for(let k=0;k<9;k++){px(cx-9+k*2,cy-20,2,4,k%2?'#F4EAD0':'#C8553D');px(cx-9+k*2,cy-16,2,1,k%2?'#D9CDB0':'#9E3F2C');}
-  // The lantern tells of your own farm today, so it is dark on a neighbour's farm.
+  // The lantern tells of your own farm today, so it is dark on a neighbour's farm and on last month's.
   px(cx-1,cy-23,3,3,marketLit&&!visiting?'#FFD95A':'#5C4A2E');px(cx,cy-24,1,1,'#3C2316');}
 /** A field's flag, in the field's colour, on a tall pole at a corner of the field: it shows over any crop, from across the map. */
 const FLAG = { top: 27, w: 8, h: 5 }
@@ -587,7 +590,7 @@ cv.addEventListener('pointerup', (e) => {
   if (!p) return
   // On a neighbour's farm a tap can only look.
   if (visiting) {
-    if (p.kind === 'crop') openNeighbourCrop(p.crop)
+    if (p.kind === 'crop') { if (visiting.past) toast(thenAndNow(p.crop, S, catalog) ?? ''); else openNeighbourCrop(p.crop) }
     else if (p.kind === 'flag') toast('The ' + packTitle(p.pack) + ' field.')
     return
   }
@@ -1042,9 +1045,9 @@ const visitDetail = (p: Picture): string => 'day ' + p.day + ', picture ' + ageT
 const packsOf = (p: Picture): string[] => p.fields.map((f) => f.pack)
 
 /** Show another farm on the canvas, read-only, with a camera of its own. */
-function enterVisit(state: FarmState, who: string, label: string, detail: string, packs: string[]): void {
+function enterVisit(state: FarmState, who: string, label: string, detail: string, packs: string[], past = false): void {
   if (!visiting) homeHint = $('hint').innerHTML
-  visiting = { state, who, label, cam: { x: 0, y: 0 }, packs }
+  visiting = { state, who, label, cam: { x: 0, y: 0 }, packs, past }
   // A moment belongs to your own farm: it does not follow you through the gate.
   moments = []
   buildStatics()
@@ -1053,10 +1056,12 @@ function enterVisit(state: FarmState, who: string, label: string, detail: string
   // Whose farm, its day, and how old the picture is: always on screen while you are there.
   $('visitName').textContent = label.charAt(0).toUpperCase() + label.slice(1)
   $('visitDetail').textContent = detail
-  $('bBack').textContent = needsSetup() ? 'Start my own farm' : 'Back to my farm'
+  $('bBack').textContent = past ? 'Back to today' : needsSetup() ? 'Start my own farm' : 'Back to my farm'
   $('visit').hidden = false
   for (const id of BAR_BUTTONS) byIdAs(id, HTMLButtonElement).disabled = true
-  hint('You are looking at <b>' + esc(label) + '</b>' + (detail ? ' (' + esc(detail) + ')' : '') + '. Drag to look around, and tap a crop to see what it is. Nothing you do here changes either farm.')
+  hint(past
+    ? 'You are looking at <b>' + esc(label) + '</b> (' + esc(detail) + '). Drag to look around, and tap a crop to see how it stood then and how it stands today. Nothing here can be changed: it has already happened.'
+    : 'You are looking at <b>' + esc(label) + '</b>' + (detail ? ' (' + esc(detail) + ')' : '') + '. Drag to look around, and tap a crop to see what it is. Nothing you do here changes either farm.')
 }
 /** Back to your own farm, with your camera where you left it. `quiet` is for when another sheet is about to open. */
 function leaveVisit(quiet = false): void {
@@ -1282,7 +1287,7 @@ function setBar(pack: string): void {
   toast('The bar for ' + packTitle(pack) + ' is ' + S.bars[pack] + '.')
 }
 
-/* ---------- the market ---------- */
+/* ---------- the market and last month's farm ---------- */
 function openMarket(): void { open(marketSheetHtml(marketView(S, catalog))) }
 function openSale(buyerId: string): void {
   const buyer = catalog.buyer(buyerId)
@@ -1294,6 +1299,15 @@ function sell(buyerId: string): void {
   if (!act({ type: 'sold', buyer: buyerId, text: byIdAs('sale', HTMLTextAreaElement).value })) return
   toast('Sold. It is kept at the market.')
   openMarket()
+}
+/** The farm of `ago` days back, from the log, or null if the log holds no such morning. */
+const farmAgo = (ago: number): FarmState | null => farmOn(store.events(), S.day - ago, catalog)
+function openRival(): void { open(rivalSheetHtml(rivalView(S, farmAgo(RULES.rival.days), catalog))) }
+function visitPast(): void {
+  const then = farmAgo(RULES.rival.days)
+  if (!then) return
+  close()
+  enterVisit(then, 'you', 'your farm on day ' + then.day, RULES.rival.days + ' days ago', Object.keys(then.fields), true)
 }
 
 /* ---------- almanac ---------- */
@@ -1386,6 +1400,8 @@ sheet.addEventListener('click', (e) => {
   else if (what === 'market') openMarket()
   else if (what === 'sell') openSale(arg)
   else if (what === 'sellGo') sell(arg)
+  else if (what === 'rival') openRival()
+  else if (what === 'visitPast') visitPast()
   else if (what === 'setBar') setBar(arg)
   else if (what === 'expand') expand(arg)
   else if (what === 'forage') forage(arg)

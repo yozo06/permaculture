@@ -1,9 +1,11 @@
-// Where the farm stands at the market. What each sheet shows is worked
+// Where the farm stands: at the market, and against its own past. What each sheet shows is worked
 // out here from the farm and the packs, and drawn here as strings, so both can be tested without a browser.
 import { LAYER_NAMES, type Catalog } from '../engine/catalog'
 import { buyersFor, standing } from '../engine/market'
+import { readiness } from '../engine/readiness'
 import { RULES } from '../engine/rules'
-import type { FarmState } from '../engine/types'
+import type { Crop, FarmState } from '../engine/types'
+import { guildWhole } from '../engine/yields'
 import { footHtml, noteHtml, writingBox } from './sheets'
 import { esc } from './util'
 import { packColor } from './views'
@@ -96,4 +98,110 @@ export function saleSheetHtml(buyer: { id: string; name: string }, min: number, 
     writingBox({ id: 'sale', label: 'What happened', min, max, gate: 'saleGo', rows: 3 }) +
     '<div class="foot"><button type="button" data-act="market">Not yet</button><button type="button" class="pri" id="saleGo" data-act="sellGo" data-arg="' + esc(buyer.id) + '" disabled>Keep this sale</button></div>'
   )
+}
+
+/* ---------- two farms side by side ---------- */
+
+export interface Measure {
+  /** Trees standing: rooted, and not wilted. */
+  trees: number
+  /** Crops in the ground that are not trees yet. */
+  growing: number
+  wilted: number
+  compost: number
+  /** Guilds that are whole. */
+  guilds: number
+  /** Fields at the farmer's bar. */
+  atBar: number
+  /** The farm's fields in pack order. `percent` is null for a field with no end. */
+  fields: { pack: string; title: string; color: string; percent: number | null }[]
+}
+
+export function measure(s: FarmState, catalog: Catalog): Measure {
+  const packs = catalog.packs.filter((p) => Object.hasOwn(s.fields, p.pack))
+  const ready = packs.map((p) => readiness(p.pack, s, catalog))
+  return {
+    trees: s.crops.filter((c) => c.perennial && !c.wilted).length,
+    growing: s.crops.filter((c) => !c.perennial).length,
+    wilted: s.crops.filter((c) => c.wilted).length,
+    compost: s.compost.length,
+    guilds: packs.reduce((n, p) => n + (p.guilds ?? []).filter((g) => guildWhole(g, s)).length, 0),
+    atBar: ready.filter((r) => r?.atBar).length,
+    fields: packs.map((p, i) => ({ pack: p.pack, title: p.title, color: packColor(p), percent: ready[i]?.percent ?? null })),
+  }
+}
+
+export interface Compared {
+  rows: { label: string; then: number; now: number; better: 'more' | 'less' }[]
+  /** Readiness of each field that has one today. `then` is null for a field the farm did not have. */
+  fields: { title: string; color: string; then: number | null; now: number }[]
+}
+
+/** An earlier farm beside today's. No line is a score: they are the same counts the farm shows elsewhere. */
+export function compare(then: FarmState, now: FarmState, catalog: Catalog): Compared {
+  const a = measure(then, catalog)
+  const b = measure(now, catalog)
+  const row = (label: string, key: 'trees' | 'growing' | 'guilds' | 'atBar' | 'wilted' | 'compost', better: 'more' | 'less') => ({ label, then: a[key], now: b[key], better })
+  return {
+    rows: [
+      row('Trees standing', 'trees', 'more'), row('Crops growing', 'growing', 'more'), row('Whole guilds', 'guilds', 'more'),
+      row('Fields at their bar', 'atBar', 'more'), row('Wilted', 'wilted', 'less'), row('In the compost heap', 'compost', 'less'),
+    ],
+    fields: b.fields.flatMap((f) => (f.percent === null ? [] : [{ title: f.title, color: f.color, then: a.fields.find((x) => x.pack === f.pack)?.percent ?? null, now: f.percent }])),
+  }
+}
+
+/** Two farms as rows: "then → now" for each count, and each field's readiness. */
+function comparedHtml(c: Compared): string {
+  return (
+    '<div>' + c.rows.map((r) => '<div class="row slim"><div class="n">' + esc(r.label) + '</div><span class="sub">' + r.then + ' → <b>' + r.now + '</b></span></div>').join('') + '</div>' +
+    (c.fields.length
+      ? '<h3>Readiness</h3><div>' + c.fields.map((f) => '<div class="row slim"><div class="n"><i class="dot" style="background:' + hex(f.color) + '"></i>' + esc(f.title) + '</div><span class="sub">' + (f.then === null ? 'no field' : f.then) + ' → <b>' + f.now + '</b></span></div>').join('') + '</div>'
+      : '')
+  )
+}
+
+/* ---------- the rival: your own farm, a month ago ---------- */
+
+export interface RivalView {
+  today: number
+  /** The day the rival is the farm of. */
+  day: number
+  /** The two farms side by side, or null when there is no rival to show. */
+  then: Compared | null
+  /** Why there is no rival, in a sentence. */
+  why: string | null
+}
+
+/** `then` is the farm of `RULES.rival.days` days ago (`farmOn`), or null if the log holds no such morning. */
+export function rivalView(now: FarmState, then: FarmState | null, catalog: Catalog): RivalView {
+  const day = now.day - RULES.rival.days
+  if (then) return { today: now.day, day, then: compare(then, now, catalog), why: null }
+  const why = day < 1
+    ? 'Your farm is ' + now.day + (now.day === 1 ? ' day' : ' days') + ' old. Your rival is the farm you had ' + RULES.rival.days + ' days ago, so it first appears on day ' + (RULES.rival.days + 1) + '.'
+    : 'This farm has no record of day ' + day + ': it was brought here later than that.'
+  return { today: now.day, day, then: null, why }
+}
+
+export function rivalSheetHtml(v: RivalView): string {
+  const head = '<h2>Last month\'s farm</h2><p class="sub">Your only rival is the farm you had ' + RULES.rival.days + ' days ago. There is nobody else to be compared with, and nothing here is a score.</p>'
+  if (!v.then) return head + '<p>' + esc(v.why ?? '') + '</p>' + footHtml()
+  return (
+    head + '<p>Day ' + v.day + ' beside today, day ' + v.today + '.</p>' + comparedHtml(v.then) +
+    '<div class="foot"><button type="button" data-act="visitPast">Walk round it</button><button type="button" class="pri" data-act="close">Close</button></div>'
+  )
+}
+
+const STAGES = RULES.maxStage + 1
+const stood = (c: Pick<Crop, 'perennial' | 'stage'>): string => (c.perennial ? 'a rooted tree' : 'at stage ' + (c.stage + 1) + ' of ' + STAGES)
+
+/** A crop on the old farm: how it stood then and how the same seed stands today. Null for a seed no pack has. */
+export function thenAndNow(then: Crop, now: Pick<FarmState, 'crops'>, catalog: Catalog): string | null {
+  const seed = catalog.seed(then.seed)
+  if (!seed) return null
+  const was = seed.name + ' was ' + stood(then) + ' then'
+  const today = now.crops.find((c) => c.seed === then.seed)
+  if (!today) return was + '. It is not on your farm today.'
+  if (stood(today) === stood(then) && !today.wilted) return was + ', and still is.'
+  return was + '. Today it is ' + stood(today) + (today.wilted ? ', and wilted' : '') + '.'
 }
