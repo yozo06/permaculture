@@ -106,8 +106,9 @@ export function saleSheetHtml(buyer: { id: string; name: string }, min: number, 
 export interface Measure {
   /** Trees standing: rooted, and not wilted. */
   trees: number
-  /** Crops in the ground that are not trees yet. */
+  /** Crops that are not trees yet, and not wilted. */
   growing: number
+  /** Crops and trees that are wilted. */
   wilted: number
   compost: number
   /** Guilds that are whole. */
@@ -123,7 +124,7 @@ export function measure(s: FarmState, catalog: Catalog): Measure {
   const ready = packs.map((p) => readiness(p.pack, s, catalog))
   return {
     trees: s.crops.filter((c) => c.perennial && !c.wilted).length,
-    growing: s.crops.filter((c) => !c.perennial).length,
+    growing: s.crops.filter((c) => !c.perennial && !c.wilted).length,
     wilted: s.crops.filter((c) => c.wilted).length,
     compost: s.compost.length,
     guilds: packs.reduce((n, p) => n + (p.guilds ?? []).filter((g) => guildWhole(g, s)).length, 0),
@@ -194,7 +195,8 @@ export function rivalSheetHtml(v: RivalView): string {
 }
 
 const STAGES = RULES.maxStage + 1
-const stood = (c: Pick<Crop, 'perennial' | 'stage'>): string => (c.perennial ? 'a rooted tree' : 'at stage ' + (c.stage + 1) + ' of ' + STAGES)
+const stood = (c: Pick<Crop, 'perennial' | 'stage' | 'wilted'>): string =>
+  (c.perennial ? 'a rooted tree' : 'at stage ' + (c.stage + 1) + ' of ' + STAGES) + (c.wilted ? ', and wilted' : '')
 
 /** A crop on the old farm: how it stood then and how the same seed stands today. Null for a seed no pack has. */
 export function thenAndNow(then: Crop, now: Pick<FarmState, 'crops'>, catalog: Catalog): string | null {
@@ -203,8 +205,8 @@ export function thenAndNow(then: Crop, now: Pick<FarmState, 'crops'>, catalog: C
   const was = seed.name + ' was ' + stood(then) + ' then'
   const today = now.crops.find((c) => c.seed === then.seed)
   if (!today) return was + '. It is not on your farm today.'
-  if (stood(today) === stood(then) && !today.wilted) return was + ', and still is.'
-  return was + '. Today it is ' + stood(today) + (today.wilted ? ', and wilted' : '') + '.'
+  if (stood(today) === stood(then)) return was + ', and still is.'
+  return was + '. Today it is ' + stood(today) + '.'
 }
 
 /* ---------- the weekly walk ---------- */

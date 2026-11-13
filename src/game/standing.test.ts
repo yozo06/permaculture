@@ -59,7 +59,7 @@ describe('the market', () => {
 describe('measuring a farm', () => {
   it('counts trees standing, crops growing, what is wilted or in the compost, whole guilds and fields at their bar', () => {
     const s = farm({ compost: ['ivy'] }, tree('corn'), tree('beans'), tree('squash'), tree('oak', { wilted: true }), tree('ivy', { perennial: false, stage: 1, wilted: true }), tree('clover', { perennial: false, stage: 2 }))
-    expect(measure(s, cat)).toMatchObject({ trees: 3, growing: 2, wilted: 2, compost: 1, guilds: 1, atBar: 0 })
+    expect(measure(s, cat)).toMatchObject({ trees: 3, growing: 1, wilted: 2, compost: 1, guilds: 1, atBar: 0 })
     expect(measure(s, cat).fields).toEqual([{ pack: 'garden', title: 'Garden', color: '#6DB24F', percent: 50 }, { pack: 'shed', title: 'Shed', color: '#A9A692', percent: null }])
   })
 
@@ -117,6 +117,8 @@ describe('the rival', () => {
     expect(thenAndNow(tree('corn'), now, cat)).toBe('Corn was a rooted tree then, and still is.')
     // The same tree, wilted since by a wrong check-in, is not "still" as it was. Nor is one that was wilted then and stands now.
     expect(thenAndNow(tree('corn'), farm({}, tree('corn', { wilted: true })), cat)).toBe('Corn was a rooted tree then. Today it is a rooted tree, and wilted.')
+    expect(thenAndNow(tree('corn', { wilted: true }), now, cat)).toBe('Corn was a rooted tree, and wilted then. Today it is a rooted tree.')
+    expect(thenAndNow(tree('corn', { wilted: true }), farm({}, tree('corn', { wilted: true })), cat)).toBe('Corn was a rooted tree, and wilted then, and still is.')
     expect(thenAndNow(tree('beans', { perennial: false, stage: 3 }), now, cat)).toBe('Beans was at stage 4 of 5 then, and still is.')
     expect(thenAndNow(tree('squash', { perennial: false, stage: 2 }), now, cat)).toBe('Squash was at stage 3 of 5 then. Today it is at stage 2 of 5, and wilted.')
     expect(thenAndNow(tree('oak'), now, cat)).toBe('Oak was a rooted tree then. It is not on your farm today.')
