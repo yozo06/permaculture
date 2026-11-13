@@ -16,6 +16,8 @@ import edge from './edge-farm.json'
 import played from './played-farm.json'
 import { RULES } from './rules'
 import type { FarmEvent, FarmState } from './types'
+import yielding from './yield-farm.json'
+import { guildCoins, harvestCoins } from './yields'
 
 const catalog = buildCatalog(collectPacks())
 const file = parseFarmFile(JSON.stringify(played))
@@ -97,6 +99,56 @@ describe('the edge farm', () => {
     const s = fold(events, catalog)
     expect(s).toMatchObject({ name: 'Edge farm at every limit', day: 14, coins: 183, energy: 90, barrel: 5, unlocked: ['market'], foraged: ['pandi-curry'], compost: [] })
     expect(s.crops.map((c) => [c.seed, c.perennial, c.journal.length])).toEqual([['repo', true, 5], ['incident-roles', true, 2]])
+  })
+})
+
+// A third farm, for the coins a guild and an edge pay. Those coins are part of a farm, unlike anything readiness or
+// layer balance decides, and the two farms above happen to earn none of them. This one roots Raft and the three
+// saplings it drops, which makes the Raft in depth guild whole, checks in on them for a month, and harvests Golden
+// signals on a live edge. Then it spends every coin it has on fences and seeds, and ends with none. So if a guild or
+// an edge ever pays less, by a change to a number or to a pack, something this farm bought is refused.
+describe('the yield farm', () => {
+  const file = parseFarmFile(JSON.stringify(yielding))
+  const events = file.kind === 'log' ? file.events : []
+
+  it('replays with nothing refused, and ends with no coins to spare', () => {
+    expect(events).toHaveLength(165)
+    expect(refusedCount(events, catalog)).toBe(0)
+    const s = fold(events, catalog)
+    expect(s).toMatchObject({ name: 'Yield farm', day: 65, coins: 0, compost: [] })
+    expect(s.crops.filter((c) => c.perennial).map((c) => c.seed)).toEqual(['con', 'latency-numbers', 'linux-namespaces', 'raft', 'golden-signals', 'raft-log-compaction', 'raft-membership', 'raft-read-index'])
+    expect(Object.keys(s.cleared)).toHaveLength(15)
+  })
+
+  it('was paid by a whole guild thirteen times and by a live edge once', () => {
+    let s: FarmState = initialState()
+    const paid = { guild: 0, times: 0, edge: 0 }
+    for (const e of events) {
+      s = apply(s, e, catalog)
+      if ((e.type !== 'harvested' && e.type !== 'watered') || !e.ok) continue
+      const share = guildCoins(e.seed, s, catalog)
+      paid.guild += share
+      if (share > 0) paid.times++
+      const seed = catalog.seed(e.seed)
+      if (e.type === 'harvested' && seed) paid.edge += harvestCoins(seed, s, catalog) - RULES.harvest.coins
+    }
+    expect(paid).toEqual({ guild: 13 * RULES.guild.coins, times: 13, edge: (RULES.edge.times - 1) * RULES.harvest.coins })
+    expect(paid).toEqual({ guild: 65, times: 13, edge: 30 })
+  })
+
+  it('could not have bought what it bought without that pay', () => {
+    // The same packs with the guilds and the edges taken out, and the saplings left in.
+    const plain = buildCatalog(collectPacks().map((p) => ({ ...p, guilds: [], seeds: p.seeds.map(({ edge: _edge, ...seed }) => seed) })))
+    expect(refusedCount(events, plain)).toBeGreaterThan(0)
+    // One coin less from the guild, or from the edge, and the last thing it bought is refused.
+    for (const lost of ['raft-in-depth', 'golden-signals']) {
+      const less = buildCatalog(collectPacks().map((p) => ({
+        ...p,
+        guilds: (p.guilds ?? []).filter((g) => g.id !== lost),
+        seeds: p.seeds.map((seed) => (seed.id === lost ? (({ edge: _edge, ...rest }) => rest)(seed) : seed)),
+      })))
+      expect(refusedCount(events, less), lost).toBeGreaterThan(0)
+    }
   })
 })
 

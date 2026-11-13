@@ -356,7 +356,10 @@ describe('what guilds, edges and saplings add', () => {
       }),
       { numRuns: runs },
     )
-    // The play reaches a whole guild or a live edge often enough for this to have been a test of something.
+    // On the small farm the play reaches a whole guild or a live edge often enough for this to have been a test of
+    // something. On the real packs random play almost never roots a whole guild, so that run shows only that guilds
+    // nobody completed and saplings nobody was dropped change nothing. The pay itself is shown safe on the real packs
+    // by the yield farm in played-farm.test.ts, which earns it and spends every coin.
     if (catalog === bountifulCatalog) expect(paid).toBeGreaterThan(0)
   })
 })
