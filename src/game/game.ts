@@ -426,7 +426,9 @@ function frame(t: number): void {
   const cam = camera()
   ctx.drawImage(gcv, Math.round(cam.x + SHIFT.x - groundOx), Math.round(cam.y + SHIFT.y - 8))
   if (hover) {
-    const { sx, sy } = iso(hover.x, hover.y)
+    const p = iso(hover.x, hover.y)
+    // On whole pixels of art, like everything else: between two, its rows would smear.
+    const sx = Math.round(p.sx), sy = Math.round(p.sy)
     ctx.fillStyle = 'rgba(255,255,255,.28)'
     for (let r = 0; r < TH; r++) { const hw = r < 8 ? (r + 1) * 2 : (TH - r) * 2; ctx.fillRect(sx - hw, sy + r, hw * 2, 1) }
   }
