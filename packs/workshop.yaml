@@ -288,6 +288,16 @@ seeds:
     minutes: 120
     summary: Replace procedural pixels with a consistent tileset (CC0 or generated and touched up). Growth animations, day and night.
     prompts: [Crops, trees and buildings drawn from a sheet.]
+  - id: sharp-zoom
+    name: Sharp at any size
+    layer: root
+    branch: world
+    tier: 2
+    needs: [sprites]
+    harvest: artifact
+    minutes: 90
+    summary: The farm is drawn at the screen's own resolution, with a whole number of screen pixels to each pixel of art, so it is as sharp on a phone as on a laptop. That number is the zoom, and a pinch, the + and − buttons or the keys change it. A tap goes to whatever is drawn under it.
+    prompts: [On a phone and on a laptop, a pinch zooms the farm and a tap on a sprout opens that sprout.]
   - id: renderer
     name: PixiJS renderer
     layer: shrub
