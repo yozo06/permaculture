@@ -43,6 +43,7 @@ const numbersRows = [
   `| Layer balance | a seed waits while a layer ${RULES.balance.below} or more beneath its own is hollow and has a seed to plant |`,
   `| A whole guild | pays ${RULES.guild.coins} coins at each harvest or check-in of one of its members |`,
   `| A seed on an edge | its harvest pays ${RULES.edge.times} times over once a tree is rooted in the field it borders |`,
+  `| The rival | your own farm ${RULES.rival.days} days ago |`,
   '| Compost | everything in the heap is due again the next day |',
 ]
 

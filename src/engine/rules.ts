@@ -39,6 +39,8 @@ export const RULES = {
   guild: { coins: 5 },
   /** A seed on the edge of another field is paid its harvest this many times over, once a tree is rooted in that field. */
   edge: { times: 2 },
+  /** The rival is your own farm this many days ago. */
+  rival: { days: 30 },
   defaultRubric: [
     "Says what it is in plain words, not the source's",
     'Says why it matters: the problem it solves or the mistake it prevents',
