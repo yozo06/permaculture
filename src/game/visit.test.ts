@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { NOTES, earningCatalog, layeredCatalog, run, smallCatalog as cat, started } from '../engine/fixtures'
+import { NOTES, bountifulCatalog, earningCatalog, layeredCatalog, run, smallCatalog as cat, started } from '../engine/fixtures'
 import { layOut, readPicture } from '../engine/picture'
 import type { Crop, FarmEvent, FarmState } from '../engine/types'
 import { readLink } from './links'
@@ -66,6 +66,17 @@ describe('neighbourCropView', () => {
     const shedOnly = run(cat, [started, { type: 'field-opened', pack: 'shed', slot: 0 }])
     expect(yours('corn', shedOnly)).toMatch(/You do not have the Garden field/)
     expect(yours('corn', run(cat, [started]))).toBe('Start a farm of your own and you can grow this too.')
+  })
+
+  it('says of a sapling you have not been dropped yet which tree to harvest for it', () => {
+    const c = bountifulCatalog
+    const yours = (seed: string, s: FarmState): string => neighbourCropView(theirs(seed), s, c)?.yours ?? ''
+    const mineNow = run(c, base)
+    expect(yours('popcorn', mineNow)).toBe('A sapling of Corn. Harvest Corn on your farm and it drops into your seed bag.')
+    const rooted: FarmState = { ...mineNow, crops: [{ ...theirs('corn'), stage: 4, best: 4, perennial: true }] }
+    expect(yours('popcorn', rooted)).toMatch(/In your seed bag/)
+    // A sapling of a sapling names its own parent, which may itself be out of sight.
+    expect(yours('kernel', rooted)).toBe('A sapling of Popcorn. Harvest Popcorn on your farm and it drops into your seed bag.')
   })
 
   it('does not call a seed ready to plant while layer balance holds it back', () => {

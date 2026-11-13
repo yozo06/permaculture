@@ -24,7 +24,7 @@ import {
   pickerHtml, plantSheetHtml, readinessSheetHtml, shareSheetHtml, tickList, writingBox,
 } from './sheets'
 import { arrivalText, neighbourCropView, neighbourRows, shareView, type ShareView } from './visit'
-import { afterJump, bagView, cropView, driftText, edgeLine, guildNews, guildStatus, harvestPay, needsText, packColor, pickerView, readinessView, sourceLinks, splitName, tending, treeView, type TreeView } from './views'
+import { afterJump, bagView, cropView, driftText, edgeLine, guildNews, guildStatus, harvestPay, needsText, saplingNews, packColor, pickerView, readinessView, sourceLinks, splitName, tending, treeView, type TreeView } from './views'
 
 /* ---------- types ---------- */
 type Mode = 'water' | 'harvest' | 'testout'
@@ -811,8 +811,9 @@ function settle(seed: Seed, mode: Mode, ok: boolean, detail: Detail): string | n
   const guilds = guildNews(seed, S, catalog, ok).lines.map((l) => ' ' + esc(l)).join('')
   if (mode === 'harvest') {
     const pay = harvestPay(seed, S, catalog)
+    const drops = saplingNews(seed, catalog)
     return ok
-      ? '<b>Premium grade.</b> +' + pay.coins + ' coins' + (pay.edge ? ' (double: it sits on the edge of the ' + esc(pay.edge) + ' field)' : '') + '. ' + name + ' is now a perennial: rooted, it only needs a check-in every ' + RULES.perennialInterval + ' days. Seeds that needed it are now unlocked.' + guilds
+      ? '<b>Premium grade.</b> +' + pay.coins + ' coins' + (pay.edge ? ' (double: it sits on the edge of the ' + esc(pay.edge) + ' field)' : '') + '. ' + name + ' is now a perennial: rooted, it only needs a check-in every ' + RULES.perennialInterval + ' days. Seeds that needed it are now unlocked.' + guilds + (drops ? ' ' + esc(drops) : '')
       : '<b>Seconds.</b> Composted. ' + name + ' drops back to stage ' + (c.stage + 1) + ' and goes in the review heap.'
   }
   if (ok) {
@@ -868,7 +869,7 @@ function openBag(): void {
     html += '<div class="fh"><i style="background:' + sec.color + '"></i>' + esc(sec.title) + '</div>' + (labels.length ? '<div class="sub">' + labels.join(' · ') + '</div>' : '') + '<div>'
     for (const sd of sec.seeds) {
       const tag = '<span class="tag">' + esc(sd.harvest) + '</span>'
-      const edge = sd.edge ? ' · edge of ' + esc(sd.edge) : ''
+      const edge = (sd.sapling ? ' · sapling of ' + esc(sd.sapling) : '') + (sd.edge ? ' · edge of ' + esc(sd.edge) : '')
       if (sd.status === 'held') html += '<div class="row"><div class="n">' + esc(sd.name) + '<small>' + esc(sd.layer) + ' ' + tag + edge + ' · plant in the ' + esc(sd.below ?? '') + ' layer first</small></div><span class="sub">waiting</span></div>'
       else if (sd.status !== 'ready') html += '<div class="row slim"><div class="n">' + esc(sd.name) + '<small>' + esc(sd.layer) + ' · in the ground ' + tag + ' ' + sd.status + edge + '</small></div><button type="button" data-act="cropSheet" data-arg="' + esc(sd.id) + '">Notes</button></div>'
       else html += '<div class="row"><div class="n">' + esc(sd.name) + '<small>' + esc(sd.layer) + ' ' + tag + edge + (sd.focus ? ' · focus' : '') + '</small></div><button type="button" data-act="seed" data-arg="' + sd.id + '"' + (sd.selected ? ' class="pri"' : '') + '>' + (sd.selected ? 'Selected' : 'Select') + '</button></div>'
@@ -1214,6 +1215,7 @@ function treeSvg(v: TreeView): string {
     n.lines.forEach((l, i) => { s += '<text x="' + n.x + '" y="' + (n.y + (n.lines.length === 1 ? 4 : (i === 0 ? -1 : 11))) + '" text-anchor="middle" fill="' + tc + '" font-size="10.5" font-weight="600" ' + SVG_FONT + '>' + esc(l) + '</text>' })
     if (n.progress !== null) s += '<rect x="' + (n.x - n.width / 2) + '" y="' + (n.y + 14) + '" width="' + (n.width * n.progress) + '" height="4" rx="2" fill="' + v.color + '"/>'
     if (n.wild) s += '<circle cx="' + (n.x + n.width / 2 - 6) + '" cy="' + (n.y - 12) + '" r="4" fill="#4F8F3C"/>'
+    if (n.sapling) s += '<circle cx="' + (n.x + n.width / 2 - 6) + '" cy="' + (n.y - 12) + '" r="4" fill="#E9C46A"/>'
   }
   return s + '</svg>'
 }
@@ -1232,10 +1234,11 @@ function openTree(packId: string = treePack()): void {
   if (v.readiness) html += '<p class="sub">Readiness <b>' + v.readiness.percent + '</b> · bar ' + v.readiness.bar + (v.readiness.atBar ? ' · at its bar' : '') + (v.readiness.hollow.length ? ' · hollow: ' + esc(v.readiness.hollow.join(', ')) : '') + '</p>'
   html += treeSvg(v)
   html += '<div class="branches">' + v.branches.map((b) => '<button type="button" data-act="focus" data-arg="' + esc(v.pack) + '|' + esc(b.id) + '"' + (b.focus ? ' class="pri"' : '') + '>' + (b.focus ? 'Focus: ' : 'Focus on ') + esc(b.title) + '</button>').join('') + '</div>'
-  html += '<p class="sub">Solid box: rooted · outline: growing (bar = stage) · cream outline: ready to plant · cream dashes: waiting for a lower layer · dashed: locked · green dot: found in the wild.</p>'
+  html += '<p class="sub">Solid box: rooted · outline: growing (bar = stage) · cream outline: ready to plant · cream dashes: waiting for a lower layer · dashed: locked · green dot: found in the wild · yellow dot: a sapling a tree dropped.</p>'
+  if (v.drops.length) html += '<p class="sub">Saplings to come: ' + v.drops.map((d) => esc(d.name) + ' drops ' + d.count + ' when it is harvested').join(' · ') + '.</p>'
   if (v.guilds.length) {
     html += '<h3>Guilds</h3><p class="sub">Seeds that grow well together. A guild is whole while every member stands as a tree, and a whole guild pays ' + RULES.guild.coins + ' coins each time you harvest or check in on one of its members. One wilted member and it pays nothing until you revive it.</p><div>' +
-      v.guilds.map((g) => '<div class="row"><div class="n">' + esc(g.title) + '<small>' + g.members.map((m) => esc(m.name ?? 'a wild seed')).join(', ') + '</small></div><span class="sub">' + esc(guildStatus(g, RULES.guild.coins)) + '</span></div>').join('') + '</div>'
+      v.guilds.map((g) => '<div class="row"><div class="n">' + esc(g.title) + '<small>' + g.members.map((m) => esc(m.name ?? (m.sapling ? 'a sapling' : 'a wild seed'))).join(', ') + '</small></div><span class="sub">' + esc(guildStatus(g, RULES.guild.coins)) + '</span></div>').join('') + '</div>'
   }
   if (v.borders.length) {
     html += '<h3>On an edge</h3><p class="sub">These seeds also belong to a second field. Their harvest pays ' + RULES.edge.times + ' times over once you have a tree in that field.</p><div>' +

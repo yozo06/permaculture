@@ -89,7 +89,7 @@ A seed with no cards explains at every stage. A perennial check-in is a card too
 
 The AI phase adds **Apply** (a problem, a design, a debugging session) and judged grading with the player's own key.
 
-*(planned)* Trees spawn saplings: harvesting Raft drops log compaction, membership change and read-index as new seeds. Depth is a tree that keeps seeding its own understory.
+Trees drop **saplings**: harvesting Raft drops log compaction, membership changes and linearizable reads as new seeds. A sapling is hidden until its tree is harvested; the learning tree says how many are to come, never which. Like a wild find it is an extra, never counted in readiness, so a harvest can never lower the number. Depth is a tree that keeps seeding its own understory.
 
 ### Harvest types
 

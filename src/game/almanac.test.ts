@@ -80,7 +80,7 @@ describe('almanacHtml', () => {
 
   it('lists under Not here yet the rules the design marks as planned', () => {
     const later = almanacHtml(catalog, RULES.energyMax, '0.0.0').split('<h3>Not here yet</h3>')[1] ?? ''
-    for (const planned of ['the Sunday walk', 'saplings', 'tools', 'recruiter visits', 'orchard and research fields', 'replanting annuals', 'a planner', 'trading seeds']) {
+    for (const planned of ['the Sunday walk', 'tools', 'recruiter visits', 'orchard and research fields', 'replanting annuals', 'a planner', 'trading seeds']) {
       expect(later, planned).toContain(planned)
     }
   })
@@ -96,6 +96,15 @@ describe('almanacHtml', () => {
     const html = almanacHtml(catalog, RULES.energyMax, '0.0.0')
     expect(html).toContain('Its harvest pays ' + RULES.edge.times + ' times over, ' + RULES.edge.times * RULES.harvest.coins + ' coins, once you have a tree in that other field.')
     expect(html.split('<h3>Not here yet</h3>')[1] ?? '').not.toContain('edge')
+  })
+
+  it('says what a sapling is, that it is an extra, and no longer lists saplings as something to come', () => {
+    const html = almanacHtml(catalog, RULES.energyMax, '0.0.0')
+    expect(html).toContain('Some trees drop <b>saplings</b> when you harvest them')
+    const readiness = html.split('<h3>Readiness</h3>')[1]?.split('<h3>')[0] ?? ''
+    expect(readiness).toContain('saplings a tree dropped are extras and are never counted, so neither foraging nor a harvest can lower the number.')
+    expect(readiness).toContain('Neither does a sapling.')
+    expect(html.split('<h3>Not here yet</h3>')[1] ?? '').not.toContain('sapling')
   })
 
   it('says which version of the game it is, so a bug report can name it', () => {

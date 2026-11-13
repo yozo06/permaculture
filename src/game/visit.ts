@@ -7,7 +7,7 @@ import { RULES, available, cropOf, visible } from '../engine/rules'
 import type { Crop, FarmState } from '../engine/types'
 import { linkHash } from './links'
 import { ageText, tooOld, type Arrival, type Book } from './neighbours'
-import { needsText } from './views'
+import { needsText, parentName } from './views'
 
 /* ---------- sharing ---------- */
 
@@ -74,7 +74,12 @@ export function neighbourCropView(crop: Crop, mine: FarmState, catalog: Catalog)
   if (own) yours = own.perennial ? 'You have rooted this too.' : 'You grow this too.'
   else if (Object.keys(mine.fields).length === 0) yours = 'Start a farm of your own and you can grow this too.'
   else if (!Object.hasOwn(mine.fields, seed.pack)) yours = 'You do not have the ' + packTitle + ' field. Open it from the learning tree to grow this.'
-  else if (!visible(seed, mine)) yours = 'A wild seed. You have not found it yet: forage in the forest near what you grow.'
+  else if (!visible(seed, mine)) {
+    const parent = parentName(seed, catalog)
+    yours = parent === null
+      ? 'A wild seed. You have not found it yet: forage in the forest near what you grow.'
+      : 'A sapling of ' + parent + '. Harvest ' + parent + ' on your farm and it drops into your seed bag.'
+  }
   else if (!available(seed, mine)) yours = 'Locked for you: it needs ' + needsText(seed, catalog) + '.'
   else if (seed.earned && !isEarned(seed, mine, catalog)) yours = 'Locked for you: you have not earned it yet. It takes ' + earnedLine(seed.earned, catalog) + '.'
   else yours = heldLine(seed, mine, catalog, packTitle) ?? 'In your seed bag, ready to plant.'

@@ -7,7 +7,7 @@ import { apply, fieldsToOpen, fold } from '../engine/fold'
 import { RULES } from '../engine/rules'
 import type { FarmState } from '../engine/types'
 import sampleFarm from './sample-farm.json'
-import { afterJump, bagView, cropView, edgeOf, guildNews, guildStatus, harvestPay, readinessView, seedStatus, sourceLinks, splitName, tending, treeView, driftText, pickerView } from './views'
+import { afterJump, bagView, cropView, edgeOf, guildNews, guildStatus, harvestPay, saplingNews, readinessView, seedStatus, sourceLinks, splitName, tending, treeView, driftText, pickerView } from './views'
 
 const catalog = buildCatalog(collectPacks())
 
@@ -60,7 +60,7 @@ describe('bagView', () => {
     const hs = section('haskell-backend')
     expect(hs.seeds.some((s) => s.id === 'nonmoving')).toBe(false)
     const shown = hs.seeds.length + hs.lockedCount
-    expect(shown).toBe(catalog.seedsOf('haskell-backend').filter((s) => !s.wild).length)
+    expect(shown).toBe(catalog.seedsOf('haskell-backend').filter((s) => !s.extra).length)
     expect(hs.lockedCount).toBeGreaterThan(0)
   })
 
@@ -99,7 +99,7 @@ describe('treeView', () => {
   it('has a column per branch and a node per visible seed', () => {
     const v = treeView('haskell-backend', farm(), catalog)
     expect(v?.branches.map((b) => b.id)).toEqual(['runtime-and-performance', 'types-and-effects'])
-    expect(v?.nodes).toHaveLength(catalog.seedsOf('haskell-backend').filter((s) => !s.wild).length)
+    expect(v?.nodes).toHaveLength(catalog.seedsOf('haskell-backend').filter((s) => !s.extra).length)
     expect(v?.width).toBe(480)
   })
 
@@ -182,7 +182,7 @@ describe('treeView with wrapped tiers', () => {
 
   it('counts how many of a guild are rooted', () => {
     expect(v?.guilds).toEqual([{ id: 'g', title: 'G', members: [
-      { id: 'a1', name: 'a1', status: 'ready' }, { id: 'b1', name: 'b1', status: 'ready' }, { id: 'c1', name: 'c1', status: 'locked' },
+      { id: 'a1', name: 'a1', status: 'ready', sapling: false }, { id: 'b1', name: 'b1', status: 'ready', sapling: false }, { id: 'c1', name: 'c1', status: 'locked', sapling: false },
     ], rooted: 0, total: 3, whole: false, dragged: [] }])
   })
 })
@@ -271,6 +271,74 @@ describe('a seed on the edge of another field', () => {
     expect(harvestPay(seed('beans'), on(tree('beans')), rich)).toEqual({ coins: RULES.harvest.coins, edge: null })
     expect(harvestPay(seed('beans'), on(tree('beans'), tree('saw')), rich)).toEqual({ coins: RULES.edge.times * RULES.harvest.coins, edge: 'Shed' })
     expect(harvestPay(seed('corn'), on(tree('corn'), tree('saw')), rich)).toEqual({ coins: RULES.harvest.coins, edge: null })
+  })
+})
+
+describe('saplings', () => {
+  // In `bountifulCatalog` corn drops popcorn when it is harvested, and popcorn drops the kernel.
+  const rich = bountifulCatalog
+  const tree = (seed: string, patch: Partial<Crop> = {}): Crop =>
+    ({ seed, x: 20, y: 20, stage: 4, best: 4, due: 99, wilted: false, perennial: true, notes: '', journal: [], ...patch })
+  const on = (...crops: Crop[]): FarmState => ({ ...smallFarm(), crops })
+  const seed = (id: string) => { const x = rich.seed(id); if (!x) throw new Error('no seed ' + id); return x }
+  const bagged = (s: FarmState, id: string) => bagView(s, rich).flatMap((sec) => sec.seeds).find((x) => x.id === id)
+  const growingCorn = tree('corn', { perennial: false })
+
+  it('are out of sight until their tree is harvested, then in the seed bag with where they came from', () => {
+    expect(bagged(on(growingCorn), 'popcorn')).toBeUndefined()
+    expect(bagged(on(tree('corn')), 'popcorn')).toMatchObject({ status: 'ready', sapling: 'Corn' })
+    expect(bagged(on(tree('corn')), 'kernel')).toBeUndefined()
+    expect(bagged(on(tree('corn')), 'corn')?.sapling).toBeNull()
+  })
+
+  it('join the learning tree when they drop, marked as saplings and tied to the tree they came from', () => {
+    const before = treeView('garden', on(growingCorn), rich)
+    expect(before?.nodes.map((n) => n.id)).toEqual(['corn', 'beans', 'squash'])
+    const after = treeView('garden', on(tree('corn')), rich)
+    const corn = after?.nodes.find((n) => n.id === 'corn')
+    const popcorn = after?.nodes.find((n) => n.id === 'popcorn')
+    expect(popcorn).toMatchObject({ sapling: true, wild: false, status: 'ready' })
+    expect(corn?.sapling).toBe(false)
+    expect(after?.edges).toContainEqual({ from: { x: corn!.x, y: corn!.y }, to: { x: popcorn!.x, y: popcorn!.y }, rooted: true })
+  })
+
+  it('are promised by the tree before they drop: how many, never which', () => {
+    expect(treeView('garden', on(), rich)?.drops).toEqual([{ id: 'corn', name: 'Corn', count: 1 }])
+    // Corn has dropped its one; the popcorn it dropped now promises one of its own.
+    expect(treeView('garden', on(tree('corn')), rich)?.drops).toEqual([{ id: 'popcorn', name: 'Popcorn', count: 1 }])
+    expect(treeView('garden', on(tree('corn'), tree('popcorn')), rich)?.drops).toEqual([])
+    expect(treeView('shed', on(), rich)?.drops).toEqual([])
+  })
+
+  it('say on the crop sheet what a harvest will drop, what it dropped, and where a sapling came from', () => {
+    expect(cropView(growingCorn, on(growingCorn), rich)?.saplings).toEqual(['Harvesting it drops 1 sapling: a new seed that grows from this one.'])
+    expect(cropView(tree('corn'), on(tree('corn')), rich)?.saplings).toEqual(['It dropped a sapling: Popcorn.'])
+    const popcorn = tree('popcorn', { perennial: false })
+    expect(cropView(popcorn, on(tree('corn'), popcorn), rich)?.saplings).toEqual(['A sapling of Corn.', 'Harvesting it drops 1 sapling: a new seed that grows from this one.'])
+    expect(cropView(tree('beans'), on(tree('beans')), rich)?.saplings).toEqual([])
+  })
+
+  it('are announced by the harvest that drops them', () => {
+    expect(saplingNews(seed('corn'), rich)).toBe('It dropped a sapling: Popcorn. Find it in your seed bag.')
+    expect(saplingNews(seed('beans'), rich)).toBeNull()
+    const three = buildCatalog([{ pack: 'p', version: 0, title: 'P', branches: [{ id: 'b', title: 'B' }], seeds: [
+      { id: 'oak', name: 'Oak', layer: 'canopy', branch: 'b', tier: 0, harvest: 'artifact', prompts: ['p'] },
+      ...['Acorn', 'Gall', 'Leaf'].map((name) => ({ id: name.toLowerCase(), name, layer: 'herb' as const, branch: 'b', tier: 1, sapling_of: 'oak', harvest: 'artifact' as const, prompts: ['p'] })),
+    ] }])
+    expect(saplingNews(three.seed('oak')!, three)).toBe('It dropped 3 saplings: Acorn, Gall and Leaf. Find them in your seed bag.')
+  })
+
+  it('are left out of the count of seeds a field holds, like wild seeds', () => {
+    expect(pickerView(rich, on(), []).find((p) => p.pack === 'garden')?.seeds).toBe(3)
+    expect(readinessView(on(tree('corn'), tree('popcorn')), rich).rows.find((r) => r.pack === 'garden')).toMatchObject({ rooted: 1, total: 3 })
+  })
+
+  it('show in a guild as a sapling, not by name, until they drop', () => {
+    const guilded = buildCatalog(bountifulCatalog.packs.map((p) => (p.pack !== 'garden' ? p : { ...p, guilds: [{ id: 'cob', title: 'Cob', seeds: ['corn', 'popcorn'] }] })))
+    expect(treeView('garden', on(), guilded)?.guilds[0]?.members).toEqual([
+      { id: 'corn', name: 'Corn', status: 'ready', sapling: false }, { id: 'popcorn', name: null, status: 'locked', sapling: true },
+    ])
+    expect(treeView('garden', on(tree('corn')), guilded)?.guilds[0]?.members[1]).toMatchObject({ name: 'Popcorn', status: 'ready' })
   })
 })
 

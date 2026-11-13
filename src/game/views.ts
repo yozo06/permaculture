@@ -36,6 +36,35 @@ export function afterJump(seed: Seed, state: FarmState, catalog: Catalog): strin
 export const needsText = (seed: Seed, catalog: Catalog): string =>
   seed.needs.map((id) => catalog.seed(id)?.name ?? id).join(' + ')
 
+/* ---------- saplings ---------- */
+
+/** The name of the tree that drops this seed, or null for a seed that is not a sapling. */
+export const parentName = (seed: Seed, catalog: Catalog): string | null =>
+  seed.saplingOf === null ? null : (catalog.seed(seed.saplingOf)?.name ?? seed.saplingOf)
+
+/** "a sapling" or "3 saplings". */
+const saplingCount = (n: number): string => (n === 1 ? 'a sapling' : n + ' saplings')
+
+/** What to say after a harvest of the saplings it dropped, or null if the seed drops none. */
+export function saplingNews(seed: Seed, catalog: Catalog): string | null {
+  const dropped = catalog.saplingsOf(seed.id)
+  if (dropped.length === 0) return null
+  return 'It dropped ' + saplingCount(dropped.length) + ': ' + andList(dropped.map((s) => s.name)) + '. Find ' + (dropped.length === 1 ? 'it' : 'them') + ' in your seed bag.'
+}
+
+/** What a crop's sheet says about saplings: where the crop came from, and what a harvest of it drops or dropped. */
+function saplingLines(crop: Crop, seed: Seed, catalog: Catalog): string[] {
+  const lines: string[] = []
+  const parent = parentName(seed, catalog)
+  if (parent !== null) lines.push('A sapling of ' + parent + '.')
+  const drops = catalog.saplingsOf(seed.id)
+  if (drops.length === 0) return lines
+  // Before the harvest they are a number and no more: what a tree drops is part of what the harvest gives.
+  if (crop.perennial) lines.push('It dropped ' + saplingCount(drops.length) + ': ' + andList(drops.map((s) => s.name)) + '.')
+  else lines.push('Harvesting it drops ' + drops.length + (drops.length === 1 ? ' sapling: a new seed that grows' : ' saplings: new seeds that grow') + ' from this one.')
+  return lines
+}
+
 /* ---------- edges ---------- */
 
 export interface EdgeView {
@@ -101,7 +130,7 @@ export interface PickerPack {
   title: string
   color: string
   description: string
-  /** How many seeds the pack holds, wild ones left out. */
+  /** How many seeds the pack holds, extras (wild seeds and saplings) left out. */
   seeds: number
   /** The farm already has this field. */
   open: boolean
@@ -112,7 +141,7 @@ export interface PickerPack {
 export function pickerView(catalog: Catalog, state: Pick<FarmState, 'fields'>, ticked: readonly string[]): PickerPack[] {
   return catalog.packs.map((p) => ({
     pack: p.pack, title: p.title, color: packColor(p), description: p.description ?? '',
-    seeds: catalog.seedsOf(p.pack).filter((s) => !s.wild).length,
+    seeds: catalog.seedsOf(p.pack).filter((s) => !s.extra).length,
     open: Object.hasOwn(state.fields, p.pack), ticked: ticked.includes(p.pack),
   }))
 }
@@ -130,6 +159,8 @@ export interface BagSeed {
   below: string | null
   /** The title of the field it sits on the edge of, if it sits on one. */
   edge: string | null
+  /** For a sapling, the name of the tree that dropped it. */
+  sapling: string | null
   focus: boolean
   /** In the player's hand. Never true of a held seed: it cannot be planted, so it cannot be picked up. */
   selected: boolean
@@ -165,7 +196,7 @@ export function bagView(state: FarmState, catalog: Catalog, selected: string | n
       const below = status === 'held' ? heldBy(seed, state, catalog) : null
       seeds.push({
         id: seed.id, name: seed.name, layer: LAYER_NAMES[seed.layer], harvest: HARVEST_NAMES[seed.harvest], status,
-        below: below && LAYER_NAMES[below], edge: edgeOf(seed, state, catalog)?.field ?? null,
+        below: below && LAYER_NAMES[below], edge: edgeOf(seed, state, catalog)?.field ?? null, sapling: parentName(seed, catalog),
         focus: focusTitle !== null && seed.branch === focusId, selected: status === 'ready' && selected === seed.id,
       })
     }
@@ -221,7 +252,7 @@ export interface ReadinessRow {
   pack: string
   title: string
   color: string
-  /** Trees standing today, of the seeds that count (wild ones do not). */
+  /** Trees standing today, of the seeds that count (wild seeds and saplings do not). */
   rooted: number
   total: number
   /** Crops in the ground that are not trees yet. */
@@ -250,7 +281,7 @@ export interface ReadinessView {
 export function readinessView(state: FarmState, catalog: Catalog): ReadinessView {
   const packs = catalog.packs.filter((p) => Object.hasOwn(state.fields, p.pack))
   const rows = packs.map((p): ReadinessRow => {
-    const counts = new Set(catalog.seedsOf(p.pack).filter((s) => !s.wild).map((s) => s.id))
+    const counts = new Set(catalog.seedsOf(p.pack).filter((s) => !s.extra).map((s) => s.id))
     const crops = state.crops.filter((c) => counts.has(c.seed))
     const r = readiness(p.pack, state, catalog)
     return {
@@ -286,6 +317,8 @@ export interface TreeNode {
   lines: string[]
   status: SeedStatus
   wild: boolean
+  /** Dropped by a tree at its harvest. */
+  sapling: boolean
   /** Stage progress for a growing crop, 0 to 1; null otherwise. */
   progress: number | null
   x: number
@@ -321,8 +354,8 @@ export interface GuildStanding {
 export interface TreeGuild extends GuildStanding {
   id: string
   title: string
-  /** `name` is null for a wild seed that has not been found yet. */
-  members: { id: string; name: string | null; status: SeedStatus }[]
+  /** `name` is null for a wild seed that has not been found yet, and for a sapling that has not dropped. */
+  members: { id: string; name: string | null; status: SeedStatus; sapling: boolean }[]
 }
 
 /** "A", "A and B", "A, B and C". */
@@ -378,6 +411,8 @@ export interface TreeView {
   nodes: TreeNode[]
   edges: TreeEdge[]
   guilds: TreeGuild[]
+  /** Seeds in the tree that will drop saplings when they are harvested, and how many: a number, never which. */
+  drops: { id: string; name: string; count: number }[]
   /** Seeds of this field that sit on the edge of another, and how each edge stands. */
   borders: { id: string; name: string; field: string; status: 'pays double' | 'no tree there yet' | 'harvested' }[]
   /**
@@ -425,7 +460,7 @@ export function treeView(packId: string, state: FarmState, catalog: Catalog): Tr
         const crop = cropOf(state, seed.id)
         const status = seedStatus(seed, state, catalog)
         const node: TreeNode = {
-          id: seed.id, name: seed.name, lines: splitName(seed.name), status, wild: seed.wild,
+          id: seed.id, name: seed.name, lines: splitName(seed.name), status, wild: seed.wild, sapling: seed.saplingOf !== null,
           progress: status === 'growing' && crop ? (crop.stage + 1) / 5 : null,
           x: b * columnWidth + ((i % perRow) + 0.5) * (columnWidth / inRow), y: y + row * ROW_GAP, width,
         }
@@ -440,7 +475,9 @@ export function treeView(packId: string, state: FarmState, catalog: Catalog): Tr
   const edges: TreeEdge[] = []
   for (const seed of seeds) {
     const to = at.get(seed.id)
-    for (const need of seed.needs) {
+    // A sapling is tied to the tree that dropped it, whether or not it also needs it.
+    const from = seed.saplingOf !== null && !seed.needs.includes(seed.saplingOf) ? [...seed.needs, seed.saplingOf] : seed.needs
+    for (const need of from) {
       const from = at.get(need)
       if (from && to) edges.push({ from: { x: from.x, y: from.y }, to: { x: to.x, y: to.y }, rooted: have.has(need) })
     }
@@ -450,7 +487,7 @@ export function treeView(packId: string, state: FarmState, catalog: Catalog): Tr
     const members = g.seeds.flatMap((id) => {
       const seed = catalog.seed(id)
       if (!seed) return []
-      return [{ id, name: visible(seed, state) ? seed.name : null, status: seedStatus(seed, state, catalog) }]
+      return [{ id, name: visible(seed, state) ? seed.name : null, status: seedStatus(seed, state, catalog), sapling: seed.saplingOf !== null }]
     })
     return { id: g.id, title: g.title, members, ...guildStanding(g, state, catalog) }
   })
@@ -468,6 +505,10 @@ export function treeView(packId: string, state: FarmState, catalog: Catalog): Tr
     pack: packId, title: pack.title, color: packColor(pack), width: TREE_WIDTH, height: y, columnWidth,
     branches: pack.branches.map((b, i) => ({ id: b.id, title: b.title, focus: state.focus[packId] === b.id, x: (i + 0.5) * columnWidth })),
     nodes, edges, guilds, locked, earned: earnedRows(seeds, state, catalog),
+    drops: seeds.flatMap((s) => {
+      const count = catalog.saplingsOf(s.id).length
+      return count > 0 && !have.has(s.id) ? [{ id: s.id, name: s.name, count }] : []
+    }),
     borders: seeds.flatMap((s) => {
       const edge = edgeOf(s, state, catalog)
       return edge ? [{ id: s.id, name: s.name, field: edge.field, status: cropOf(state, s.id)?.perennial ? 'harvested' as const : edge.live ? 'pays double' as const : 'no tree there yet' as const }] : []
@@ -525,6 +566,8 @@ export interface CropView {
   guilds: string[]
   /** The edge it sits on and what that pays, in a sentence, or null. */
   edge: string | null
+  /** Where a sapling came from, and what a harvest of this crop drops or dropped. */
+  saplings: string[]
 }
 
 const WATER_WORK: Record<WaterKind, string> = { recall: 'a recall card', explain: 'an explanation in your own words' }
@@ -555,5 +598,6 @@ export function cropView(crop: Crop, state: Pick<FarmState, 'day' | 'crops'>, ca
     sources: sourceLinks(seed, catalog),
     guilds: catalog.guildsOf(seed.id).map((g) => g.title + ' guild: ' + guildStatus(guildStanding(g, state, catalog), RULES.guild.coins)),
     edge: edgeLine(seed, state, catalog),
+    saplings: saplingLines(crop, seed, catalog),
   }
 }
