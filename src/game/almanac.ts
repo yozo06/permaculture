@@ -7,6 +7,7 @@ import { RULES } from '../engine/rules'
 import type { Layer } from '../engine/types'
 import { cropShape, shapeSvg } from './shapes'
 import { esc } from './util'
+import { timesOver } from './views'
 
 const days = (n: number): string => n + (n === 1 ? ' day' : ' days')
 const stageNo = (stage: number): number => stage + 1
@@ -83,7 +84,7 @@ export function almanacHtml(catalog: Catalog, energyMax: number, version: string
     list([
       'Each pack you chose is a field. They sit on a grid around the barn, and the world grows to fit them. Open another from its tab in the learning tree; it is free. Drag to pan; everything beyond the homestead is wilderness.',
       'Tap land next to a field to fence it in: ' + RULES.fence.open + ' coins for open ground, ' + RULES.fence.forest + ' to clear forest. Fields grow one tile at a time, any shape.',
-      'A seed can sit on the <b>edge</b> of a second field it also belongs to. Its harvest pays ' + RULES.edge.times + ' times over, ' + RULES.edge.times * RULES.harvest.coins + ' coins, once you have a tree in that other field.',
+      'A seed can sit on the <b>edge</b> of a second field it also belongs to. Its harvest pays ' + timesOver(RULES.edge.times) + ', ' + RULES.edge.times * RULES.harvest.coins + ' coins, once you have a tree in that other field.',
       "Some seeds are not questions. The Workshop's are days of work on the game itself: you explain what moved forward, and you harvest when it ships, with a link as proof.",
     ]) +
     '<h3>Reading the farm</h3>' +

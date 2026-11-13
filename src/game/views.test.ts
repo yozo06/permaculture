@@ -7,7 +7,7 @@ import { apply, fieldsToOpen, fold } from '../engine/fold'
 import { RULES } from '../engine/rules'
 import type { FarmState } from '../engine/types'
 import sampleFarm from './sample-farm.json'
-import { afterJump, bagView, cropView, edgeOf, guildNews, guildStatus, harvestPay, saplingNews, readinessView, seedStatus, sourceLinks, splitName, tending, treeView, driftText, pickerView } from './views'
+import { afterJump, bagView, cropView, edgeOf, guildNews, guildStatus, harvestPay, saplingNews, timesOver, readinessView, seedStatus, sourceLinks, splitName, tending, treeView, driftText, pickerView } from './views'
 
 const catalog = buildCatalog(collectPacks())
 
@@ -265,6 +265,10 @@ describe('a seed on the edge of another field', () => {
     expect(treeView('garden', on(tree('saw')), rich)?.borders[0]?.status).toBe('pays double')
     expect(treeView('garden', on(tree('saw'), tree('beans')), rich)?.borders[0]?.status).toBe('harvested')
     expect(treeView('shed', on(), rich)?.borders).toEqual([])
+  })
+
+  it('says how much more an edge pays in words', () => {
+    expect([2, 3, 4].map(timesOver)).toEqual(['double', 'triple', '4 times over'])
   })
 
   it('says what a harvest paid, and names the field when it paid double', () => {

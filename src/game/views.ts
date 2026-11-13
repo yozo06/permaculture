@@ -80,13 +80,16 @@ export function edgeOf(seed: Seed, state: Pick<FarmState, 'crops'>, catalog: Cat
   return { field: catalog.pack(seed.edge)?.title ?? seed.edge, live: edgeLive(seed, state, catalog) }
 }
 
+/** "double" for 2, "triple" for 3, else "4 times over": how much more an edge pays, in words. */
+export const timesOver = (n: number): string => (n === 2 ? 'double' : n === 3 ? 'triple' : n + ' times over')
+
 /** A seed's edge in a sentence: what it will pay, what it pays, or just where it sits once the seed is a tree. */
 export function edgeLine(seed: Seed, state: Pick<FarmState, 'crops'>, catalog: Catalog): string | null {
   const edge = edgeOf(seed, state, catalog)
   if (!edge) return null
   const where = 'On the edge of the ' + edge.field + ' field'
   if (cropOf(state, seed.id)?.perennial) return where + '.'
-  return where + ': its harvest pays double' + (edge.live ? '.' : ' once you have a tree there.')
+  return where + ': its harvest pays ' + timesOver(RULES.edge.times) + (edge.live ? '.' : ' once you have a tree there.')
 }
 
 /** What a premium harvest of this seed pays on this farm, and the field it borders if that made it double. */

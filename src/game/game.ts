@@ -24,7 +24,7 @@ import {
   pickerHtml, plantSheetHtml, readinessSheetHtml, shareSheetHtml, tickList, writingBox,
 } from './sheets'
 import { arrivalText, neighbourCropView, neighbourRows, shareView, type ShareView } from './visit'
-import { afterJump, bagView, cropView, driftText, edgeLine, guildNews, guildStatus, harvestPay, needsText, saplingNews, packColor, pickerView, readinessView, sourceLinks, splitName, tending, treeView, type TreeView } from './views'
+import { afterJump, bagView, cropView, driftText, edgeLine, guildNews, guildStatus, harvestPay, needsText, saplingNews, timesOver, packColor, pickerView, readinessView, sourceLinks, splitName, tending, treeView, type TreeView } from './views'
 
 /* ---------- types ---------- */
 type Mode = 'water' | 'harvest' | 'testout'
@@ -1214,8 +1214,8 @@ function treeSvg(v: TreeView): string {
     s += '<rect x="' + (n.x - n.width / 2) + '" y="' + (n.y - 18) + '" width="' + n.width + '" height="36" rx="6" fill="' + fill + '" stroke="' + stroke + '" stroke-width="2"' + (n.status === 'locked' ? ' stroke-dasharray="4 3"' : n.status === 'held' ? ' stroke-dasharray="8 4"' : '') + '/>'
     n.lines.forEach((l, i) => { s += '<text x="' + n.x + '" y="' + (n.y + (n.lines.length === 1 ? 4 : (i === 0 ? -1 : 11))) + '" text-anchor="middle" fill="' + tc + '" font-size="10.5" font-weight="600" ' + SVG_FONT + '>' + esc(l) + '</text>' })
     if (n.progress !== null) s += '<rect x="' + (n.x - n.width / 2) + '" y="' + (n.y + 14) + '" width="' + (n.width * n.progress) + '" height="4" rx="2" fill="' + v.color + '"/>'
-    if (n.wild) s += '<circle cx="' + (n.x + n.width / 2 - 6) + '" cy="' + (n.y - 12) + '" r="4" fill="#4F8F3C"/>'
-    if (n.sapling) s += '<circle cx="' + (n.x + n.width / 2 - 6) + '" cy="' + (n.y - 12) + '" r="4" fill="#E9C46A"/>'
+    // An extra carries a dot: green for a wild find, pale for a sapling. The dark ring keeps it clear of a field's own colour.
+    if (n.wild || n.sapling) s += '<circle cx="' + (n.x + n.width / 2 - 6) + '" cy="' + (n.y - 12) + '" r="4" fill="' + (n.wild ? '#4F8F3C' : '#F4EAD0') + '" stroke="#1B140A" stroke-width="1.5"/>'
   }
   return s + '</svg>'
 }
@@ -1234,14 +1234,14 @@ function openTree(packId: string = treePack()): void {
   if (v.readiness) html += '<p class="sub">Readiness <b>' + v.readiness.percent + '</b> · bar ' + v.readiness.bar + (v.readiness.atBar ? ' · at its bar' : '') + (v.readiness.hollow.length ? ' · hollow: ' + esc(v.readiness.hollow.join(', ')) : '') + '</p>'
   html += treeSvg(v)
   html += '<div class="branches">' + v.branches.map((b) => '<button type="button" data-act="focus" data-arg="' + esc(v.pack) + '|' + esc(b.id) + '"' + (b.focus ? ' class="pri"' : '') + '>' + (b.focus ? 'Focus: ' : 'Focus on ') + esc(b.title) + '</button>').join('') + '</div>'
-  html += '<p class="sub">Solid box: rooted · outline: growing (bar = stage) · cream outline: ready to plant · cream dashes: waiting for a lower layer · dashed: locked · green dot: found in the wild · yellow dot: a sapling a tree dropped.</p>'
+  html += '<p class="sub">Solid box: rooted · outline: growing (bar = stage) · cream outline: ready to plant · cream dashes: waiting for a lower layer · dashed: locked · green dot: found in the wild · pale dot: a sapling a tree dropped.</p>'
   if (v.drops.length) html += '<p class="sub">Saplings to come: ' + v.drops.map((d) => esc(d.name) + ' drops ' + d.count + ' when it is harvested').join(' · ') + '.</p>'
   if (v.guilds.length) {
     html += '<h3>Guilds</h3><p class="sub">Seeds that grow well together. A guild is whole while every member stands as a tree, and a whole guild pays ' + RULES.guild.coins + ' coins each time you harvest or check in on one of its members. One wilted member and it pays nothing until you revive it.</p><div>' +
       v.guilds.map((g) => '<div class="row"><div class="n">' + esc(g.title) + '<small>' + g.members.map((m) => esc(m.name ?? (m.sapling ? 'a sapling' : 'a wild seed'))).join(', ') + '</small></div><span class="sub">' + esc(guildStatus(g, RULES.guild.coins)) + '</span></div>').join('') + '</div>'
   }
   if (v.borders.length) {
-    html += '<h3>On an edge</h3><p class="sub">These seeds also belong to a second field. Their harvest pays ' + RULES.edge.times + ' times over once you have a tree in that field.</p><div>' +
+    html += '<h3>On an edge</h3><p class="sub">These seeds also belong to a second field. Their harvest pays ' + timesOver(RULES.edge.times) + ' once you have a tree in that field.</p><div>' +
       v.borders.map((b) => '<div class="row slim"><div class="n">' + esc(b.name) + '<small>edge of the ' + esc(b.field) + ' field</small></div><span class="sub">' + b.status + '</span></div>').join('') + '</div>'
   }
   if (v.locked.length) html += '<h3>Jump the fence</h3><p class="sub">Already know one of these? Prove it on a harvest-grade question (10 energy) and it unlocks without its prerequisites.</p><div>' + v.locked.map((t) => '<div class="row"><div class="n">' + esc(t.name) + '<small>needs ' + esc(t.needs) + (t.earned ? ' · a jump will not earn it: that takes ' + esc(t.earned) : '') + (t.held ? ' · after a jump it will still wait for the ' + esc(t.held) + ' layer' : '') + '</small></div><button type="button" data-act="testout" data-arg="' + esc(t.id) + '">Test out</button></div>').join('') + '</div>'
