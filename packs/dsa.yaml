@@ -114,6 +114,11 @@ sources:
     title: cp-algorithms, Deleting from a data structure in O(T(n) log n)
     url: https://cp-algorithms.com/data_structures/deleting_in_log_n.html
     note: Offline deletion by divide and conquer over time, with a union-find that supports rollbacks.
+buyers:
+  - id: big-tech-backend
+    name: Big-tech backend
+    note: Asks for patterns at the whiteboard, a design at scale, and how you lead.
+    bars: { dsa: 80, system-design: 75, leadership: 60 }
 guilds:
   - id: window-and-pointers
     title: Windows and pointers

@@ -114,6 +114,11 @@ sources:
   - id: argo-cd-docs
     title: "Argo CD documentation: Automated sync policy"
     url: https://argo-cd.readthedocs.io/en/stable/user-guide/auto_sync/
+buyers:
+  - id: fintech-infra
+    name: Fintech infrastructure
+    note: Money moves on it, so it must not fall over, and someone has to run the incident.
+    bars: { infra: 80, system-design: 70, leadership: 50 }
 guilds:
   - id: container-runtime
     title: What a container is

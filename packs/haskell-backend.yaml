@@ -1987,6 +1987,11 @@ seeds:
             When main returns, other Haskell threads are simply abandoned without running cleanup. Graceful shutdown means
             draining the server, then letting bracket release the pools in reverse order of acquisition.
           source: base-pkg
+buyers:
+  - id: haskell-shop
+    name: A Haskell-first shop
+    note: Wants the language deep, and a system you can reason about.
+    bars: { haskell-backend: 80, system-design: 60 }
 guilds:
   - id: laziness-and-space
     title: Laziness and space

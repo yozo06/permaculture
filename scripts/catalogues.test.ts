@@ -83,6 +83,17 @@ describe('the Workshop', () => {
   })
 })
 
+describe('the market', () => {
+  it('has three buyers, each standing in one field and naming bars on the fields they care about', () => {
+    expect(catalog.buyers.map((b) => [b.pack, b.id, b.name, Object.fromEntries(b.bars.map((x) => [x.pack, x.want]))])).toEqual([
+      ['dsa', 'big-tech-backend', 'Big-tech backend', { dsa: 80, 'system-design': 75, leadership: 60 }],
+      ['haskell-backend', 'haskell-shop', 'A Haskell-first shop', { 'haskell-backend': 80, 'system-design': 60 }],
+      ['infra', 'fintech-infra', 'Fintech infrastructure', { infra: 80, 'system-design': 70, leadership: 50 }],
+    ])
+    for (const b of catalog.buyers) expect(b.note.length, b.id).toBeGreaterThan(20)
+  })
+})
+
 describe('saplings', () => {
   it('drop from Raft when it is harvested: the three places its paper goes deeper', () => {
     expect(catalog.saplingsOf('raft').map((s) => s.id)).toEqual(['raft-log-compaction', 'raft-membership', 'raft-read-index'])

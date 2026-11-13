@@ -198,44 +198,43 @@ describe('a sapling', () => {
 })
 
 describe('a buyer at the market', () => {
-  /** The errors after giving Infra these buyers. */
+  /** The errors after giving Leadership, which has no buyers of its own, these. */
   const withBuyers = (yaml: string, dir = tempCopy()): string => {
-    edit(dir, 'infra.yaml', (t) => t.replace('\nguilds:\n', '\nbuyers:\n' + yaml + 'guilds:\n'))
+    edit(dir, 'leadership.yaml', (t) => t.replace('\nguilds:\n', '\nbuyers:\n' + yaml + 'guilds:\n'))
     return errorsOf(dir).join('\n')
   }
   const buyer = (bars: string, id = 'test-buyer') => `  - id: ${id}\n    name: A test buyer\n    bars: ${bars}\n`
 
   it('names bars for its own field and, if it likes, for others', () => {
-    expect(withBuyers(buyer('{ infra: 80 }'))).toBe('')
-    expect(withBuyers(buyer('{ infra: 80, system-design: 60, leadership: 50 }'))).toBe('')
+    expect(withBuyers(buyer('{ leadership: 80 }'))).toBe('')
+    expect(withBuyers(buyer('{ leadership: 80, system-design: 60, infra: 50 }'))).toBe('')
   })
 
   it('names a bar for the field it stands in', () => {
-    expect(withBuyers(buyer('{ system-design: 60 }'))).toContain('buyer test-buyer: names no bar for its own field, infra')
+    expect(withBuyers(buyer('{ system-design: 60 }'))).toContain('buyer test-buyer: names no bar for its own field, leadership')
   })
 
   it('names fields that exist and have an end', () => {
-    expect(withBuyers(buyer('{ infra: 80, nowhere: 60 }'))).toContain('buyer test-buyer: names an unknown pack "nowhere"')
-    expect(withBuyers(buyer('{ infra: 80, kannada: 60 }'))).toContain('buyer test-buyer: names kannada, which has no end and so no readiness')
+    expect(withBuyers(buyer('{ leadership: 80, nowhere: 60 }'))).toContain('buyer test-buyer: names an unknown pack "nowhere"')
+    expect(withBuyers(buyer('{ leadership: 80, kannada: 60 }'))).toContain('buyer test-buyer: names kannada, which has no end and so no readiness')
   })
 
   it('has an id no other buyer has, in this pack or another', () => {
-    expect(withBuyers(buyer('{ infra: 80 }') + buyer('{ infra: 70 }'))).toContain('buyer id "test-buyer" is used twice')
-    const dir = tempCopy()
-    edit(dir, 'dsa.yaml', (t) => t.replace('\nguilds:\n', '\nbuyers:\n' + buyer('{ dsa: 80 }') + 'guilds:\n'))
-    expect(withBuyers(buyer('{ infra: 80 }'), dir)).toContain('buyer id "test-buyer" is used twice')
+    expect(withBuyers(buyer('{ leadership: 80 }') + buyer('{ leadership: 70 }'))).toContain('buyer id "test-buyer" is used twice')
+    // Infra's own buyer is fintech-infra.
+    expect(withBuyers(buyer('{ leadership: 80 }', 'fintech-infra'))).toContain('buyer id "fintech-infra" is used twice')
   })
 
   it('takes whole bars from 1 to 100, a name, and no other keys', () => {
-    for (const bad of [buyer('{ infra: 0 }'), buyer('{ infra: 101 }'), buyer('{ infra: 62.5 }'), buyer('{}'), buyer('[infra]'), '  - id: x\n    bars: { infra: 80 }\n', buyer('{ infra: 80 }') + '    pays: 100\n']) {
+    for (const bad of [buyer('{ leadership: 0 }'), buyer('{ leadership: 101 }'), buyer('{ leadership: 62.5 }'), buyer('{}'), buyer('[leadership]'), '  - id: x\n    bars: { leadership: 80 }\n', buyer('{ leadership: 80 }') + '    pays: 100\n']) {
       expect(withBuyers(bad), bad).toContain('/buyers/')
     }
   })
 
   it('does not blame a pack that exists for another file being broken', () => {
     const dir = tempCopy()
-    edit(dir, 'leadership.yaml', (t) => t.replace('\nversion: 0\n', '\nversion: zero\n'))
-    expect(withBuyers(buyer('{ infra: 80, leadership: 50 }'), dir)).not.toContain('unknown pack')
+    edit(dir, 'infra.yaml', (t) => t.replace('\nversion: 0\n', '\nversion: zero\n'))
+    expect(withBuyers(buyer('{ leadership: 80, infra: 50 }'), dir)).not.toContain('unknown pack')
   })
 })
 
