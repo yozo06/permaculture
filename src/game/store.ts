@@ -135,7 +135,8 @@ export function createStore(deps: StoreDeps): Store {
   function begin(events: LoggedEvent[]): void {
     log = events
     state = fold(log, catalog)
-    ui = freshUi()
+    // The camera and the farmer go home. The zoom stays: it belongs to the screen, not to the farm.
+    ui = { ...freshUi(), zoom: ui.zoom }
     saveLog()
     saveUi()
   }

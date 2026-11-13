@@ -178,6 +178,15 @@ describe('new farms and imports', () => {
     expect(store.state()).toMatchObject({ day: 1, crops: [], fields: {} })
   })
 
+  it('a new farm starts with the camera and the farmer at home, but keeps the zoom: that belongs to the screen, not to the farm', () => {
+    const store = make(memory())
+    store.ui.zoom = 5
+    store.ui.cam = { x: 1, y: 2 }
+    store.newFarm('sample')
+    expect(store.ui.zoom).toBe(5)
+    expect(store.ui.cam).toBeNull()
+  })
+
   it('imports a v3 log, and refuses one that does not start a farm', () => {
     const a = make(memory())
     a.dispatch({ type: 'slept' })
