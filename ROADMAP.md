@@ -35,7 +35,7 @@ These hold in every phase. A change that breaks one is the wrong change.
 | 1 | The rules as their own tested engine; packs loaded from files; seven packs and 200+ seeds; the depth ladder (notes → recall → explain → harvest) | Done — version 0.1.0 |
 | 2 | **Neighbours**: farms you can see and rain you can send, with no server | Seeing is built (version 0.2.0); rain is next |
 | 3 | **Your own AI key** (optional): judged harvests, a pack forge, fresh wild finds | Next |
-| 4 | **Art**: a farm you can read at a glance, then sprite sheets, a faster renderer, terraces, weather | First step built (version 0.3.0); sprite sheets wait for an art direction |
+| 4 | **Art**: a farm you can read at a glance, then sprite sheets, a faster renderer, terraces, weather | First two steps built (versions 0.3.0 and 0.8.0): each layer has its own shape, and the farm is drawn from a sprite sheet, sharp and zoomable on phone and laptop |
 | 5 | **The village server**: pictures that can be withdrawn, rain that arrives by itself | When players need it |
 | any | **The rest of the rules**, which need no AI and no server: readiness, earned unlocks, then layer balance, guilds, edges, saplings, the market | Readiness and earned unlocks (version 0.4.0), layer balance (0.5.0), guilds, edges and saplings (0.6.0) and the market, the rival and the weekly walk (0.7.0) are built; a planner is next |
 
@@ -68,12 +68,12 @@ The key is yours, kept only in your browser, and calls go straight from your bro
 
 ### Phase 4 — Art
 
-Every tile, crop and building is drawn by code, as small rectangles on a 480×300 canvas. That keeps the game tiny and fast, but there is no zoom, one season, and the art is as good as rectangles get.
+Every tile, crop and building was first drawn by code, as small rectangles on a 480×300 canvas, with no zoom. Steps 1 and 2 below have replaced that.
 
 In order, each step shipping by itself:
 
 1. **Readable at a glance** *(done, version 0.3.0; no new technology)*. Crops are drawn by their **layer**: a canopy seed grows into a tall tree, an understory seed into a small pointed one, a shrub is a round bush, a herb a stalk, ground cover a flat mat, a root a mound of earth, and a vine climbs a pole. The map now says what *kind* of knowledge sits where. Each field flies a flag in its colour. Small moments: a splash when you water, a ring when a crop grows, sparks from a harvest. The game carries its own fonts, so the page asks no other site for anything. Still to come here: rain falling when a neighbour sends it, which arrives with rain itself.
-2. **Sprite sheets** *(next; needs a choice of art first)*. One consistent pixel-art tileset replaces the code-drawn shapes: growth animations, day and night, seasons. Two sources are on the table: Kenney's isometric set, which is free for any use (CC0), or art that is generated and then touched up by hand in Aseprite. Art becomes a file anyone can contribute, the way a pack is.
+2. **Sprite sheets** *(done, version 0.8.0)*. One pixel-art sheet, made for this game, replaces the code-drawn shapes: one palette, one direction of light, every crop of every layer at every stage, and a wilted look for each. Art is now a file anyone can change, the way a pack is: open the sheet in a pixel editor, or change the scripts in `art/` that drew it. The farm is drawn at the screen's own resolution, so it is sharp on a phone and on a laptop, and it zooms: pinch, or use the + and − buttons. Still to come here: growth as animation, day and night, seasons.
 3. **A faster renderer** (PixiJS or Phaser): a camera, zoom, smooth panning, particles, and worlds much larger than one screen at 60 frames a second on a phone.
 4. **Layers as terraces.** A field's seven layers drawn up a hillside, so a hollow layer is visible from across the map.
 5. **Weather, sound and tools.** Real weather from Coorg drives the sky. The farm has sound. Tools you have earned stand on the farm as things you can see.
@@ -117,7 +117,7 @@ These are in the design, marked *(planned)* until they are built. They serve pla
 |---|---|---|
 | want to learn something | Play for a week and tell us what felt like a game and what felt like a quiz wearing a hat | the README, then an Issue or a Discussion |
 | know a subject well | Write a pack for a goal of your own, or sharpen the questions in one that exists. No code | [`docs/pack-format.md`](docs/pack-format.md) |
-| can draw pixel art | Improve a crop's shape (each is a short list of rectangles in `src/game/shapes.ts`), or sketch a tileset for Phase 4 step 2 | open a Discussion with a sketch first |
+| can draw pixel art | Improve a sprite: open `src/game/art/sheet.png` in a pixel editor, or change the script in `art/` that drew it (see `art/README.md`) | open a Discussion with a sketch first |
 | write TypeScript | A seed from the roadmap pack, a bug, or one of the rest of the rules above | [`docs/code-tour.md`](docs/code-tour.md), [`CONTRIBUTING.md`](CONTRIBUTING.md) |
 | care about accessibility | The game has had no full accessibility pass yet: contrast, keyboard play, screen readers | an Issue |
 
