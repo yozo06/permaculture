@@ -1222,7 +1222,7 @@ function treeSvg(v: TreeView): string {
 function openTree(packId: string = treePack()): void {
   const v = treeView(packId, S, catalog)
   if (!v) return
-  let html = '<h2>Learning tree</h2><p class="sub">Everything you could grow, including what you cannot reach yet. A seed unlocks when the seeds it needs are <b>rooted</b> (harvested to perennial). Pick a branch to focus; the seed bag puts it first.</p>'
+  let html = '<h2>Learning tree</h2><p class="sub">What you could grow, including what you cannot reach yet. Wild finds and saplings join it as they turn up. A seed unlocks when the seeds it needs are <b>rooted</b> (harvested to perennial). Pick a branch to focus; the seed bag puts it first.</p>'
   html += '<div class="tabs">' + catalog.packs.map((p) => '<button type="button" data-act="treeTab" data-arg="' + esc(p.pack) + '"' + (p.pack === v.pack ? ' class="on"' : '') + '><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:' + packColor(p) + ';margin-right:6px;vertical-align:-1px"></span>' + esc(p.title) + '</button>').join('') + '</div>'
   if (!Object.hasOwn(S.fields, v.pack)) {
     // A pack this farm does not grow yet: say what it is and offer the field.

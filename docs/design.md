@@ -103,7 +103,7 @@ Declared per seed in the pack. **recall** (auto-graded cards) · **solve** (time
 
 ## 4. The learning tree
 
-Every seed in a pack, locked or not, is on the tree. One to four branches per field (the shipped packs have two). A seed unlocks when the seeds it **needs** are rooted (harvested to perennial), never by points. The player picks a focus branch; the seed bag puts it first and the other branches stay open. **Jump the fence**: any locked seed can be tested out of with a harvest-grade question. A jump clears what a seed needs and nothing else: it does not earn a seed, and it does not put one ahead of a hollow layer. A tree that makes a senior engineer replant basics is a tree nobody uses.
+Every seed in a pack, locked or not, is on the tree, except the extras: a wild seed until it is found, and a sapling until its tree drops it. One to four branches per field (the shipped packs have two). A seed unlocks when the seeds it **needs** are rooted (harvested to perennial), never by points. The player picks a focus branch; the seed bag puts it first and the other branches stay open. **Jump the fence**: any locked seed can be tested out of with a harvest-grade question. A jump clears what a seed needs and nothing else: it does not earn a seed, and it does not put one ahead of a hollow layer. A tree that makes a senior engineer replant basics is a tree nobody uses.
 
 ## 5. Readiness, not deadlines
 

@@ -101,6 +101,7 @@ describe('almanacHtml', () => {
   it('says what a sapling is, that it is an extra, and no longer lists saplings as something to come', () => {
     const html = almanacHtml(catalog, RULES.energyMax, '0.0.0')
     expect(html).toContain('Some trees drop <b>saplings</b> when you harvest them')
+    expect(html).toContain('is on the tree, except the extras: a wild seed until you find it, and a sapling until its tree drops it.')
     const readiness = html.split('<h3>Readiness</h3>')[1]?.split('<h3>')[0] ?? ''
     expect(readiness).toContain('saplings a tree dropped are extras and are never counted, so neither foraging nor a harvest can lower the number.')
     expect(readiness).toContain('Neither does a sapling.')

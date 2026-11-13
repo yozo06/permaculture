@@ -102,7 +102,7 @@ export function almanacHtml(catalog: Catalog, energyMax: number, version: string
     ]) +
     '<h3>Learning tree</h3>' +
     list([
-      'Every seed of every field, including locked ones, is on the tree. A seed unlocks when what it needs is rooted.',
+      'Every seed of every field, including locked ones, is on the tree, except the extras: a wild seed until you find it, and a sapling until its tree drops it. A seed unlocks when what it needs is rooted.',
       'Pick a branch to focus; the seed bag puts it first. Or jump the fence: pass a harvest-grade question to unlock a seed early (' + RULES.testOut.energy + ' energy). A jump clears what a seed needs and nothing else: it does not earn a seed, and it does not put one ahead of a hollow layer.',
       'A <b>guild</b> is a set of seeds that belong together, and it is whole while every member stands as a tree. A whole guild pays ' + RULES.guild.coins + ' coins each time you harvest or check in on one of its members. One wilted member and the guild pays nothing until you revive it. The tree shows how far each guild has come.',
       'Some trees drop <b>saplings</b> when you harvest them: new seeds that grow from that one and go deeper. A sapling stays out of sight until then, and the tree says how many are to come, never which. Like a wild find it is an extra.',
