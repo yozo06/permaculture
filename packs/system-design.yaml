@@ -18,6 +18,10 @@ sources:
   - id: raft
     title: In Search of an Understandable Consensus Algorithm (Ongaro & Ousterhout)
     url: https://raft.github.io/raft.pdf
+  - id: raft-thesis
+    title: "Consensus: Bridging Theory and Practice (Diego Ongaro's dissertation)"
+    url: https://web.stanford.edu/~ouster/cgi-bin/papers/OngaroPhD.pdf
+    note: Chapter 4 cluster membership changes (one server at a time), chapter 5 log compaction, section 6.4 read-only queries.
   - id: dynamo
     title: "Dynamo: Amazon's Highly Available Key-value Store"
     url: https://www.allthingsdistributed.com/files/amazon-dynamo-sosp2007.pdf
@@ -103,6 +107,9 @@ guilds:
   - id: consensus-core
     title: Consensus core
     seeds: [raft, quorum-math, leases-fencing, fpaxos]
+  - id: raft-in-depth
+    title: Raft in depth
+    seeds: [raft, raft-log-compaction, raft-membership, raft-read-index]
   - id: time-and-order
     title: Time and order
     seeds: [cap, consistency-models, logical-clocks, truetime-hlc]
@@ -379,6 +386,174 @@ seeds:
             Commit needs a majority of the full configuration (3 of 5), not of the nodes that happen to be
             alive. The cluster stays safe and stops making progress.
           source: raft
+  - id: raft-log-compaction
+    name: "Raft: snapshots & log compaction"
+    layer: root
+    branch: distributed-data
+    tier: 2
+    sapling_of: raft
+    harvest: judged
+    minutes: 40
+    sources: [raft, raft-thesis]
+    summary: >-
+      Read section 7 of the Raft paper (log compaction) and skim chapter 5 of the dissertation. Notes: why the
+      log cannot grow for ever, what a snapshot records besides the state (the last included index and term,
+      the configuration), why each server snapshots on its own, and when the leader has to send a follower a
+      whole snapshot.
+    rubric:
+      - Says why a replicated log has to be compacted at all
+      - Names what a snapshot stores besides the state machine's state, and why
+      - Explains why followers snapshot on their own instead of waiting for the leader
+      - Describes when InstallSnapshot is needed and what the follower does with its log
+    prompts:
+      - >-
+        A follower has been down for a day. When it returns, the leader no longer has the log entries it is
+        missing. Walk through what happens next, message by message, until the follower has caught up, and say
+        what the follower keeps and what it discards.
+    questions:
+      water:
+        - q: Besides the state machine's state, a Raft snapshot records…
+          answer: The index and term of the last entry it covers, and the latest configuration
+          distractors:
+            - The leader's identity and the election timeout it was using at the time
+            - Every client request that was still waiting for a reply
+            - The commit index of each follower as the leader last saw it
+          why: >-
+            The first AppendEntries after the snapshot must still pass the consistency check, which compares the
+            index and term of the preceding entry. That entry is gone, so the snapshot has to remember them.
+          source: raft
+        - q: In Raft, who decides when a server takes a snapshot?
+          answer: Each server, on its own, for the entries it knows are committed
+          distractors:
+            - The leader, which snapshots and ships the result to every follower
+            - A majority, by committing a special snapshot entry through the log
+            - The client, which asks for one after a fixed number of writes
+          why: >-
+            A follower already holds everything a snapshot needs, so shipping one from the leader would only
+            waste bandwidth. The leader's role is not weakened: followers just reorganise data it already sent.
+          source: raft
+        - q: When does a Raft leader send InstallSnapshot instead of AppendEntries?
+          answer: When it has already discarded the next entry that follower needs
+          distractors:
+            - Whenever a follower's log disagrees with its own at any index
+            - At the start of every term, to bring all followers to a known state
+            - When a follower has not answered for longer than one election timeout
+          why: >-
+            A log mismatch is repaired by backing up and resending entries. A snapshot is needed only for a
+            follower so far behind, or so new, that the entries it lacks have been compacted away.
+          source: raft
+  - id: raft-membership
+    name: "Raft: membership changes"
+    layer: root
+    branch: distributed-data
+    tier: 2
+    sapling_of: raft
+    harvest: judged
+    minutes: 45
+    sources: [raft, raft-thesis]
+    summary: >-
+      Read section 6 of the Raft paper (joint consensus) and chapter 4 of the dissertation up to 4.3 (one
+      server at a time). Notes: why servers cannot all switch configuration at once, what joint consensus
+      asks of elections and commits, how single-server changes reach the same safety more simply, and why a
+      new server first catches up without a vote.
+    rubric:
+      - Shows how switching straight from the old configuration to the new can elect two leaders
+      - States what agreement requires during joint consensus
+      - Explains why adding or removing one server at a time is safe without a joint phase
+      - Says why a new server catches up before it counts towards a majority
+    prompts:
+      - >-
+        A three-server cluster is to grow to five. Describe a way of doing it that is unsafe, with the exact
+        moment two leaders could be elected in one term, and then a way that is safe. Say what each server
+        believes the configuration to be at each step.
+    questions:
+      water:
+        - q: Why can a Raft cluster not switch every server from the old configuration to the new at one instant?
+          answer: Servers switch at different times, so an old majority and a new one could each elect a leader
+          distractors:
+            - The log would have to be truncated on every server before the new set could accept entries
+            - Terms are tied to a configuration, so the term counter would restart from zero
+            - The leader must stop taking client requests for one full election timeout
+          why: >-
+            For a moment some servers count majorities in the old set and others in the new. If those two
+            majorities share no server, both can win an election in the same term.
+          source: raft
+        - q: During Raft's joint consensus, an entry is committed once it is stored on…
+          answer: A majority of the old configuration and a majority of the new one, separately
+          distractors:
+            - A majority of all the servers in either configuration, counted together
+            - Every server of the new configuration, whatever the old one holds
+            - A majority of the old configuration only, until the change is finished
+          why: >-
+            Requiring both majorities means neither the old set nor the new set can decide alone during the
+            change, so no two leaders can arise whichever way the change ends.
+          source: raft
+        - q: Adding or removing one server at a time needs no joint phase because…
+          answer: Any majority of the old set and any majority of the new set must share a server
+          distractors:
+            - Only the leader's vote is counted for as long as the change is still in progress
+            - A change of one server is applied directly and never has to pass through the replicated log
+            - The new server starts with an empty log, so it can never be chosen as leader
+          why: >-
+            With sets that differ by one member, two majorities always overlap, and the shared server cannot
+            vote for two leaders in a term. Bigger jumps lose that overlap, which is what joint consensus repairs.
+          source: raft-thesis
+  - id: raft-read-index
+    name: "Raft: linearizable reads"
+    layer: root
+    branch: distributed-data
+    tier: 2
+    sapling_of: raft
+    harvest: judged
+    minutes: 40
+    sources: [raft, raft-thesis]
+    summary: >-
+      Read section 8 of the Raft paper (client interaction) and section 6.4 of the dissertation (read-only
+      queries). Notes: why a leader cannot simply answer a read from its own state, the two things it must
+      know first, how ReadIndex confirms them with one round of heartbeats and no log write, and what a
+      lease-based read assumes about clocks.
+    rubric:
+      - Gives a sequence in which a leader answering from local state returns stale data
+      - Names the two things a leader must establish before serving a read
+      - Describes the ReadIndex steps and why they avoid writing to the log
+      - Says what lease-based reads assume and how that assumption can fail
+    prompts:
+      - >-
+        A leader is cut off from the rest of its cluster but can still reach a client. Show how a read served
+        from its local state breaks linearizability, then describe ReadIndex step by step and say at which
+        step this leader is stopped.
+    questions:
+      water:
+        - q: Why can a Raft leader not answer a read straight from its own state machine?
+          answer: It may have been replaced without knowing, so its state can be out of date
+          distractors:
+            - Reads change the state machine, so they have to be replicated just like writes
+            - Its state machine only holds entries that were written in earlier terms
+            - Followers apply entries first, so the leader is always one entry behind
+          why: >-
+            A partitioned leader goes on believing it leads until it hears of a higher term. Meanwhile a new
+            leader may have committed writes the old one has never seen.
+          source: raft
+        - q: What does a newly elected Raft leader do so that it knows which entries are committed?
+          answer: Commits a no-op entry of its own term
+          distractors:
+            - Asks each follower for its commit index and takes the highest
+            - Waits one election timeout before serving any request
+            - Replays its whole log through the state machine again
+          why: >-
+            A leader holds every committed entry but cannot tell which of the older ones are committed until
+            an entry of its own term commits. A no-op gets it there without waiting for a client write.
+          source: raft
+        - q: Under ReadIndex, after noting its commit index the leader must, before answering…
+          answer: Hear from a majority in a round of heartbeats, and apply entries up to that index
+          distractors:
+            - Append the read to its log and wait for the entry to be committed by a majority
+            - Wait until its clock shows that the previous leader's lease has run out
+            - Forward the read to the follower whose log is the most up to date
+          why: >-
+            The heartbeat round proves no newer leader existed when the read arrived, and applying up to the
+            noted index makes the answer reflect every write committed before it. Nothing is written to the log.
+          source: raft-thesis
   - id: jump
     name: Jump hash
     layer: ground-cover

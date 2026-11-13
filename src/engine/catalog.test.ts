@@ -53,7 +53,7 @@ describe('catalog', () => {
   })
 
   it('finds the guilds a seed is in, and none for a seed that is in none', () => {
-    expect(catalog.guildsOf('raft').map((g) => g.id)).toEqual(['consensus-core'])
+    expect(catalog.guildsOf('raft').map((g) => g.id)).toContain('consensus-core')
     expect(catalog.guildsOf('repo')).toEqual([])
     expect(catalog.guildsOf('nope')).toEqual([])
   })

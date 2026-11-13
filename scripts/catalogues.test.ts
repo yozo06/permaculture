@@ -73,9 +73,30 @@ describe('the Workshop', () => {
     expect(asking.sort()).toEqual(['workshop/seed-trading', 'workshop/sprites', 'workshop/weather'])
   })
 
+  it('has a seed for each of guild yields, edges and saplings', () => {
+    for (const id of ['guild-yields', 'edge-seeds', 'saplings']) expect(catalog.seed(id), id).toMatchObject({ pack: 'workshop', harvest: 'artifact', earned: null })
+  })
+
   it('has a seed for readiness and one for earned unlocks', () => {
     expect(catalog.seed('readiness')).toMatchObject({ pack: 'workshop', harvest: 'artifact' })
     expect(catalog.seed('earned-unlocks')).toMatchObject({ pack: 'workshop', needs: ['readiness'] })
+  })
+})
+
+describe('saplings', () => {
+  it('drop from Raft when it is harvested: the three places its paper goes deeper', () => {
+    expect(catalog.saplingsOf('raft').map((s) => s.id)).toEqual(['raft-log-compaction', 'raft-membership', 'raft-read-index'])
+    for (const s of catalog.saplingsOf('raft')) expect(s).toMatchObject({ pack: 'system-design', extra: true, wild: false, harvest: 'judged' })
+  })
+
+  it('are the only ones so far, and none of them was a seed before', () => {
+    const all = catalog.packs.flatMap((p) => catalog.seedsOf(p.pack)).filter((s) => s.saplingOf !== null).map((s) => s.id)
+    expect(all).toEqual(['raft-log-compaction', 'raft-membership', 'raft-read-index'])
+  })
+
+  it('make a guild with their tree, so going deep into Raft pays', () => {
+    expect(catalog.guildsOf('raft').map((g) => g.id)).toEqual(['consensus-core', 'raft-in-depth'])
+    expect(catalog.guildsOf('raft-membership').map((g) => g.seeds)).toEqual([['raft', 'raft-log-compaction', 'raft-membership', 'raft-read-index']])
   })
 })
 
