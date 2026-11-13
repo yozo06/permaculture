@@ -122,7 +122,7 @@ describe('a seed that has to be earned', () => {
   })
 
   it('never asks for more than there is to root', () => {
-    expect(withEarned('{ pack: kannada, rooted: 9 }')).toContain('seed repo: earned asks for 9 rooted seeds, and kannada has 8')
+    expect(withEarned('{ pack: kannada, rooted: 10 }')).toContain('seed repo: earned asks for 10 rooted seeds, and kannada has 9')
     expect(withEarned('{ rooted: 100000 }')).toContain('/seeds/')
     const every = collectPacks().filter((p) => p.pack !== 'workshop').reduce((n, p) => n + p.seeds.filter((x) => x.wild !== true).length, 0)
     expect(withEarned('{ rooted: ' + every + ' }')).toBe('')

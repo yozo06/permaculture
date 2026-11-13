@@ -600,6 +600,7 @@ seeds:
     tier: 1
     needs:
       - latency-numbers
+    edge: dsa
     harvest: recall
     minutes: 45
     sources: [ddia]
@@ -1372,6 +1373,7 @@ seeds:
     tier: 1
     needs:
       - latency-numbers
+    edge: infra
     harvest: recall
     minutes: 35
     sources: [sre-book]
@@ -1572,6 +1574,7 @@ seeds:
     tier: 2
     needs:
       - golden-signals
+    edge: leadership
     harvest: judged
     minutes: 45
     sources: [sre-book]

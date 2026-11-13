@@ -840,6 +840,7 @@ seeds:
     layer: shrub
     branch: runtime-and-performance
     tier: 0
+    edge: dsa
     harvest: recall
     minutes: 40
     sources: [containers-pkg]
@@ -1640,6 +1641,7 @@ seeds:
     needs:
       - profiling-eventlog
       - rts
+    edge: infra
     harvest: judged
     minutes: 50
     sources: [ghc-rts, base-pkg, pcph]
@@ -1691,6 +1693,7 @@ seeds:
     needs:
       - type-driven-design
       - gadts
+    edge: system-design
     harvest: judged
     minutes: 60
     sources: [servant-docs]

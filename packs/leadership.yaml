@@ -594,6 +594,7 @@ seeds:
     branch: incidents-and-ownership
     tier: 3
     needs: [oncall-health]
+    edge: infra
     harvest: judged
     minutes: 45
     sources: [sre-error-budget]
@@ -878,6 +879,7 @@ seeds:
     layer: shrub
     branch: people-and-decisions
     tier: 0
+    edge: system-design
     harvest: artifact
     minutes: 60
     sources: [design-docs-google, staffeng-strategy]

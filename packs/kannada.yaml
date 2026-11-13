@@ -102,6 +102,44 @@ seeds:
             - near / far
             - fast / slow
           why: ಎಡಕ್ಕೆ ತಿರುಗಿ (edakke tirugi) — turn left.
+  - id: tech-words
+    name: Tech words
+    layer: herb
+    branch: words
+    tier: 0
+    edge: infra
+    harvest: recall
+    questions:
+      water:
+        - q: ಗಣಕಯಂತ್ರ (ganakayantra) means…
+          answer: computer
+          distractors:
+            - telephone
+            - television
+            - printer
+          why: ಗಣಕ = one that counts; ಯಂತ್ರ = machine. The counting machine.
+        - q: ತಂತ್ರಾಂಶ (tantraamsha) means…
+          answer: software
+          distractors:
+            - hardware
+            - keyboard
+            - password
+          why: ತಂತ್ರ = technique; ಅಂಶ = part. Hardware is ಯಂತ್ರಾಂಶ (yantraamsha), the machine part.
+        - q: ಜಾಲತಾಣ (jaalataana) means…
+          answer: website
+          distractors:
+            - email
+            - download
+            - network cable
+          why: ಜಾಲ = net or web; ತಾಣ = place. A place on the web.
+      harvest:
+        - q: "'ಅಂತರ್ಜಾಲ ಇಲ್ಲ' (antarjaala illa) means…"
+          answer: There is no internet
+          distractors:
+            - The internet is slow
+            - The website is new
+            - I have no computer
+          why: ಅಂತರ್ಜಾಲ = internet (ಅಂತರ್ = between, ಜಾಲ = net); ಇಲ್ಲ = there is none.
   - id: script
     name: "Script: vowels"
     layer: ground-cover

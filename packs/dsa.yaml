@@ -991,6 +991,7 @@ seeds:
     branch: linear-and-search
     tier: 2
     needs: [hash-sets-maps, dynamic-array-growth]
+    edge: system-design
     harvest: judged
     minutes: 45
     sources: [clrs, algs4, pytc]

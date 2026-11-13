@@ -422,6 +422,7 @@ seeds:
     needs:
       - tcp
       - dns-ttl
+    edge: system-design
     harvest: recall
     minutes: 45
     sources: [sre-book]
@@ -1467,6 +1468,7 @@ seeds:
     needs:
       - kafka
       - pgidx
+    edge: leadership
     harvest: recall
     minutes: 50
     sources: [sre-book, sre-workbook]
@@ -1522,6 +1524,7 @@ seeds:
     tier: 2
     needs:
       - pg-wal
+    edge: system-design
     harvest: judged
     minutes: 50
     sources: [pg-docs]

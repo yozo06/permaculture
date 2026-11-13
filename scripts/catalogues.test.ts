@@ -79,6 +79,38 @@ describe('the Workshop', () => {
   })
 })
 
+describe('the edges between fields', () => {
+  const edged = catalog.packs.flatMap((p) => catalog.seedsOf(p.pack)).filter((s) => s.edge !== null)
+
+  it('are the seeds that belong to two fields at once', () => {
+    expect(edged.map((s) => s.pack + '/' + s.id + ' -> ' + s.edge).sort()).toEqual([
+      'dsa/hash-table-internals -> system-design',
+      'haskell-backend/containers -> dsa',
+      'haskell-backend/observability -> infra',
+      'haskell-backend/servant-api -> system-design',
+      'infra/load-balancing -> system-design',
+      'infra/pg-replication -> system-design',
+      'infra/slo -> leadership',
+      'kannada/tech-words -> infra',
+      'leadership/design-docs -> system-design',
+      'leadership/error-budget-talk -> infra',
+      'system-design/golden-signals -> infra',
+      'system-design/lsm-vs-btree -> dsa',
+      'system-design/slo-error-budgets -> leadership',
+    ])
+  })
+
+  it('give every field but the Workshop a seed on an edge', () => {
+    for (const p of catalog.packs.filter((x) => x.pack !== 'workshop')) {
+      expect(edged.some((s) => s.pack === p.pack), p.pack + ' has an edge seed').toBe(true)
+    }
+  })
+
+  it('include Kannada words for technology, on the edge of a technical field', () => {
+    expect(catalog.seed('tech-words')).toMatchObject({ pack: 'kannada', edge: 'infra', harvest: 'recall', wild: false })
+  })
+})
+
 describe('layer balance on a new farm', () => {
   let farm = apply(initialState(), { type: 'farm-started', ...RULES.start, energy: RULES.energyMax }, catalog)
   for (const e of fieldsToOpen(farm, catalog)) farm = apply(farm, e, catalog)
