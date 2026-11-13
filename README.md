@@ -4,7 +4,7 @@ A farm game where the crops are the things you are learning. Forgetting is wilti
 
 **Play:** [yozo06.github.io/permaculture](https://yozo06.github.io/permaculture/). To play on your own machine, run `npm run dev` and open the address it prints; it ends in `/permaculture/`, like the live site.
 
-![The farm: fields of crops at different stages around a red barn, each field with a flag in its colour, and forest all round](docs/img/farm.jpg)
+![The farm: two fields full of crops beside a red barn, each with a flag in its colour, a gate, a signpost and a market stall on the path, and forest all round](docs/img/farm.jpg)
 
 Topics are seeds. Plant one in its field with notes in your own words, water it by answering cards and then by explaining it, and it grows. Leave it thirsty for two days and it wilts, unless the rain barrel has a day to spend; a wrong answer wilts it at once. Harvest a stage-5 crop with a harder question, a write-up or proof, and it becomes a perennial tree: rooted, yours for good. The map is your retention, drawn as land.
 
