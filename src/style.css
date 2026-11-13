@@ -39,7 +39,8 @@ canvas.drag{cursor:grabbing}
 .hint{flex:1 1 240px;min-width:0;font-size:13px;color:var(--muted);line-height:1.4}
 .hint b{color:var(--cream);font-weight:600}
 .acts{display:flex;flex-wrap:wrap;gap:8px;margin-left:auto}
-button{font-family:var(--font-body);font-size:14px;font-weight:600;min-height:44px;padding:0 16px;border-radius:6px;border:2px solid var(--line-2);background:var(--panel-2);color:var(--cream);cursor:pointer}
+/* touch-action: two quick taps on a button are two presses, never a phone's double-tap zoom of the page. */
+button{font-family:var(--font-body);font-size:14px;font-weight:600;min-height:44px;padding:0 16px;border-radius:6px;border:2px solid var(--line-2);background:var(--panel-2);color:var(--cream);cursor:pointer;touch-action:manipulation}
 button:hover{border-color:var(--muted)}
 button:focus-visible{outline:2px solid var(--green);outline-offset:2px}
 button.pri{background:var(--green);border-color:#4C8A36;color:#10200C}
