@@ -415,6 +415,9 @@ let hover: { x: number; y: number } | null = null
 function frame(t: number): void {
   // Asked for first, so that one frame that fails to draw does not stop every frame after it.
   requestAnimationFrame(frame)
+  // The flags, the marks over a crop and the farmer's steps stand still for someone who has asked their device for less motion.
+  const still = stillLife?.matches === true
+  const beat = still ? 0 : t
   if (dirtyGround) buildGround()
   g = ctx
   // Everything below is drawn in pixels of art; the canvas scales each one up to a whole number of screen pixels.
@@ -422,7 +425,7 @@ function frame(t: number): void {
   ctx.imageSmoothingEnabled = false
   ctx.fillStyle = '#8FC8E8'; ctx.fillRect(0, 0, W, H); ctx.fillStyle = '#A4D6F0'; ctx.fillRect(0, Math.round(H * 0.57), W, H)
   spr('sky/sun', W - 40, 30)
-  for (const c of clouds) { c.x += c.v; if (c.x > W + 40) c.x = -40; spr('sky/cloud/' + c.n, c.x, c.y) }
+  for (const c of clouds) { if (!still) c.x += c.v; if (c.x > W + 40) c.x = -40; spr('sky/cloud/' + c.n, c.x, c.y) }
   const cam = camera()
   ctx.drawImage(gcv, Math.round(cam.x + SHIFT.x - groundOx), Math.round(cam.y + SHIFT.y - 8))
   if (hover) {
@@ -436,14 +439,15 @@ function frame(t: number): void {
   const dx = f.tx - f.x, dy = f.ty - f.y
   const dist = Math.hypot(dx, dy)
   const walking = dist > 0.02
-  if (walking) { const sp = Math.min(0.07, dist); f.x += dx / dist * sp; f.y += dy / dist * sp }
+  // With less motion the farmer is simply there, not seen walking over.
+  if (walking) { const sp = still ? dist : Math.min(0.07, dist); f.x += dx / dist * sp; f.y += dy / dist * sp }
   const list: Drawable[] = statics.slice()
-  for (const c of D().crops) list.push({ s: c.x + c.y, d: () => { const p = iso(c.x, c.y); drawCrop(c, p.sx, p.sy); drawMarker(c, p.sx, p.sy, t) } })
+  for (const c of D().crops) list.push({ s: c.x + c.y, d: () => { const p = iso(c.x, c.y); drawCrop(c, p.sx, p.sy); drawMarker(c, p.sx, p.sy, beat) } })
   // Your farmer stays at home while you look at someone else's farm.
-  if (!visiting) list.push({ s: f.x + f.y + 0.01, d: () => { const p = iso(f.x, f.y); drawFarmer(p.sx, p.sy, walking, t) } })
+  if (!visiting) list.push({ s: f.x + f.y + 0.01, d: () => { const p = iso(f.x, f.y); drawFarmer(p.sx, p.sy, walking && !still, beat) } })
   list.push(...momentDrawables(t))
   list.sort((a, b) => a.s - b.s)
-  for (const o of list) o.d(t)
+  for (const o of list) o.d(beat)
 }
 requestAnimationFrame(frame)
 
