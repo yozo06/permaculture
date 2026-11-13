@@ -48,6 +48,7 @@ button.pri:disabled:hover{background:var(--panel-2)}
 .veil{position:fixed;inset:0;background:rgba(10,8,5,.6);display:flex;align-items:center;justify-content:center;padding:16px;z-index:20}
 .veil[hidden]{display:none}
 .sheet{width:100%;max-width:480px;max-height:90vh;overflow:auto;background:var(--panel);border:2px solid var(--line-2);border-radius:10px;padding:18px 20px;display:flex;flex-direction:column;gap:14px}
+.logo,.stat .v,.sheet h2,.sheet h3,.res b,.fh,.ticks legend{font-variant-ligatures:none}
 .sheet h2{font-family:var(--font-display);font-size:22px;margin:0;font-weight:600;text-wrap:balance}
 .sheet h3{font-family:var(--font-display);font-size:16px;margin:8px 0 0;font-weight:400;color:var(--green)}
 .sheet p{margin:0;line-height:1.5}
