@@ -8,7 +8,7 @@ import {
 } from '../engine/land'
 import { farmFileName, farmFileText, parseFarmFile } from '../engine/log'
 import { buyersFor, standing } from '../engine/market'
-import { farmOn } from '../engine/past'
+import { farmAtEndOf } from '../engine/past'
 import { WALK_QUESTIONS, isWalkDay, walkedToday } from '../engine/walk'
 import { farmCode, layOut, momentOf, readPicture, type Picture } from '../engine/picture'
 import { explainChecklist, explainPasses, harvestWork, pickPrompt, recallBank, waterWork, writePasses } from '../engine/ladder'
@@ -1301,8 +1301,8 @@ function sell(buyerId: string): void {
   toast('Sold. It is kept at the market.')
   openMarket()
 }
-/** The farm of `ago` days back, from the log, or null if the log holds no such morning. */
-const farmAgo = (ago: number): FarmState | null => farmOn(store.events(), S.day - ago, catalog)
+/** The farm as the day `ago` days back ended, from the log, or null if the farm had no such day. */
+const farmAgo = (ago: number): FarmState | null => farmAtEndOf(store.events(), S.day - ago, catalog)
 function openRival(): void { open(rivalSheetHtml(rivalView(S, farmAgo(RULES.rival.days), catalog))) }
 function visitPast(): void {
   const then = farmAgo(RULES.rival.days)
@@ -1310,7 +1310,8 @@ function visitPast(): void {
   close()
   enterVisit(then, 'you', 'your farm on day ' + then.day, RULES.rival.days + ' days ago', Object.keys(then.fields), true)
 }
-function openWalk(): void { open(walkSheetHtml(walkView(S, farmAgo(RULES.walk.every), catalog), RULES.textMax)) }
+/** A walk looks back a walk's length, or on a farm younger than that, to its first day. */
+function openWalk(): void { open(walkSheetHtml(walkView(S, farmAgo(Math.min(RULES.walk.every, S.day - 1)), catalog), RULES.textMax)) }
 function walk(): void {
   const answers = WALK_QUESTIONS.map((_, i) => byIdAs('walk' + i, HTMLTextAreaElement).value)
   if (!act({ type: 'walked', asked: [...WALK_QUESTIONS], answers })) return

@@ -174,7 +174,7 @@ export interface RivalView {
   why: string | null
 }
 
-/** `then` is the farm of `RULES.rival.days` days ago (`farmOn`), or null if the log holds no such morning. */
+/** `then` is the farm as the day `RULES.rival.days` days ago ended (`farmAtEndOf`), or null if the log holds no such day. */
 export function rivalView(now: FarmState, then: FarmState | null, catalog: Catalog): RivalView {
   const day = now.day - RULES.rival.days
   if (then) return { today: now.day, day, then: compare(then, now, catalog), why: null }
@@ -221,13 +221,15 @@ export interface WalkView {
   week: Compared | null
   /** Walks already taken, newest first. */
   past: Walk[]
+  /** The day `week` looks back to. */
+  since: number | null
 }
 
-/** `weekAgo` is the farm of `RULES.walk.every` days ago (`farmOn`), or null. */
+/** `weekAgo` is the farm as an earlier day ended (`farmAtEndOf`): a walk's length back, or the farm's first day. Null if there is none. */
 export function walkView(now: FarmState, weekAgo: FarmState | null, catalog: Catalog): WalkView {
   return {
     day: now.day, walkDay: isWalkDay(now.day), taken: walkedToday(now), next: nextWalkDay(now.day), questions: [...WALK_QUESTIONS],
-    week: weekAgo ? compare(weekAgo, now, catalog) : null, past: now.walks.slice().reverse(),
+    week: weekAgo ? compare(weekAgo, now, catalog) : null, since: weekAgo ? weekAgo.day : null, past: now.walks.slice().reverse(),
   }
 }
 
@@ -244,7 +246,7 @@ export function walkSheetHtml(v: WalkView, max: number): string {
   }
   return (
     head +
-    (v.week ? '<h3>This week</h3><p class="sub">A week ago beside today.</p>' + comparedHtml(v.week) : '') +
+    (v.week ? '<h3>Since day ' + v.since + '</h3><p class="sub">The end of day ' + v.since + ' beside today.</p>' + comparedHtml(v.week) : '') +
     '<h3>Three questions</h3><p class="sub">Answer the ones you have something to say to. One is enough.</p>' +
     v.questions.map((q, i) => '<label for="walk' + i + '" class="sub">' + esc(q) + '</label><textarea id="walk' + i + '" class="write" rows="3" maxlength="' + max + '" autocomplete="off" spellcheck="true"></textarea>').join('') +
     '<div class="foot"><button type="button" data-act="close">Not now</button><button type="button" class="pri" data-act="walkGo">Keep these</button></div>' +

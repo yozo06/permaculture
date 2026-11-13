@@ -115,7 +115,7 @@ describe('the rival', () => {
     const now = farm({}, tree('corn'), tree('beans', { perennial: false, stage: 3 }), tree('squash', { perennial: false, stage: 1, wilted: true }))
     expect(thenAndNow(tree('corn', { perennial: false, stage: 1 }), now, cat)).toBe('Corn was at stage 2 of 5 then. Today it is a rooted tree.')
     expect(thenAndNow(tree('corn'), now, cat)).toBe('Corn was a rooted tree then, and still is.')
-    // The same tree, wilted since by a wrong check-in, is not "still" as it was.
+    // The same tree, wilted since by a wrong check-in, is not "still" as it was. Nor is one that was wilted then and stands now.
     expect(thenAndNow(tree('corn'), farm({}, tree('corn', { wilted: true })), cat)).toBe('Corn was a rooted tree then. Today it is a rooted tree, and wilted.')
     expect(thenAndNow(tree('beans', { perennial: false, stage: 3 }), now, cat)).toBe('Beans was at stage 4 of 5 then, and still is.')
     expect(thenAndNow(tree('squash', { perennial: false, stage: 2 }), now, cat)).toBe('Squash was at stage 3 of 5 then. Today it is at stage 2 of 5, and wilted.')
@@ -129,12 +129,12 @@ describe('the weekly walk', () => {
 
   it('offers the walk on a walk day, with the three questions and the week that was', () => {
     const v = walkView(half({ day: 14 }), farm({ day: 7 }, tree('corn')), cat)
-    expect(v).toMatchObject({ day: 14, walkDay: true, taken: false, next: 21, questions: [...WALK_QUESTIONS] })
+    expect(v).toMatchObject({ day: 14, walkDay: true, taken: false, next: 21, since: 7, questions: [...WALK_QUESTIONS] })
     expect(v.week?.rows[0]).toMatchObject({ then: 1, now: 3 })
   })
 
   it('says when the next walk is on any other day, and that today\'s is done once it is', () => {
-    expect(walkView(half({ day: 9 }), null, cat)).toMatchObject({ walkDay: false, taken: false, next: 14, week: null })
+    expect(walkView(half({ day: 9 }), null, cat)).toMatchObject({ walkDay: false, taken: false, next: 14, week: null, since: null })
     expect(walkView(half({ day: 14, walks: [{ ...walked, day: 14 }] }), null, cat)).toMatchObject({ walkDay: true, taken: true })
   })
 
@@ -153,6 +153,7 @@ describe('the weekly walk', () => {
     expect(open).toContain('Trees standing')
     expect(open).toContain('The &lt;corn&gt; is tall.')
     expect(open).not.toContain('<corn>')
+    expect(open).toContain('The end of day 7 beside today.')
     // An answer left empty is not printed as a question with nothing under it.
     expect(open).not.toContain('Another?')
     const shut = walkSheetHtml(walkView(half({ day: 9, walks: [walked] }), null, cat), RULES.textMax)
