@@ -115,6 +115,8 @@ describe('the rival', () => {
     const now = farm({}, tree('corn'), tree('beans', { perennial: false, stage: 3 }), tree('squash', { perennial: false, stage: 1, wilted: true }))
     expect(thenAndNow(tree('corn', { perennial: false, stage: 1 }), now, cat)).toBe('Corn was at stage 2 of 5 then. Today it is a rooted tree.')
     expect(thenAndNow(tree('corn'), now, cat)).toBe('Corn was a rooted tree then, and still is.')
+    // The same tree, wilted since by a wrong check-in, is not "still" as it was.
+    expect(thenAndNow(tree('corn'), farm({}, tree('corn', { wilted: true })), cat)).toBe('Corn was a rooted tree then. Today it is a rooted tree, and wilted.')
     expect(thenAndNow(tree('beans', { perennial: false, stage: 3 }), now, cat)).toBe('Beans was at stage 4 of 5 then, and still is.')
     expect(thenAndNow(tree('squash', { perennial: false, stage: 2 }), now, cat)).toBe('Squash was at stage 3 of 5 then. Today it is at stage 2 of 5, and wilted.')
     expect(thenAndNow(tree('oak'), now, cat)).toBe('Oak was a rooted tree then. It is not on your farm today.')
