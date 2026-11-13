@@ -3,10 +3,11 @@ import { buildCatalog, LAYER_NAMES, type Seed } from '../engine/catalog'
 import { findCandidates, pickFind } from '../engine/finds'
 import { check, fieldsToOpen, refusedCount } from '../engine/fold'
 import {
-  BARN, COMPOST, GATE, SIGN, WELL, fenceCost, fieldOf as landFieldOf, flagTile, hash, homestead, inHomestead, isBuildingTile,
+  BARN, COMPOST, GATE, MARKET, SIGN, WELL, fenceCost, fieldOf as landFieldOf, flagTile, hash, homestead, inHomestead, isBuildingTile,
   neighbourFields, terrain as landTerrain, tileKey, wildKind, worldSize, type Terrain,
 } from '../engine/land'
 import { farmFileName, farmFileText, parseFarmFile } from '../engine/log'
+import { buyersFor, standing } from '../engine/market'
 import { farmCode, layOut, momentOf, readPicture, type Picture } from '../engine/picture'
 import { explainChecklist, explainPasses, harvestWork, pickPrompt, recallBank, waterWork, writePasses } from '../engine/ladder'
 import { RULES, cropOf, revivable as isRevivable, ripe as isRipe, thirsty as isThirsty, zone } from '../engine/rules'
@@ -24,11 +25,12 @@ import {
   pickerHtml, plantSheetHtml, readinessSheetHtml, shareSheetHtml, tickList, writingBox,
 } from './sheets'
 import { arrivalText, neighbourCropView, neighbourRows, shareView, type ShareView } from './visit'
+import { marketSheetHtml, marketView, saleSheetHtml } from './standing'
 import { afterJump, bagView, cropView, driftText, edgeLine, guildNews, guildStatus, harvestPay, needsText, saplingNews, timesOver, packColor, pickerView, readinessView, sourceLinks, splitName, tending, treeView, type TreeView } from './views'
 
 /* ---------- types ---------- */
 type Mode = 'water' | 'harvest' | 'testout'
-type StaticKind = 'forest' | 'barn' | 'well' | 'compost' | 'sign' | 'gate' | 'flag'
+type StaticKind = 'forest' | 'barn' | 'well' | 'compost' | 'sign' | 'gate' | 'market' | 'flag'
 
 interface Drawable {
   s: number
@@ -47,6 +49,7 @@ type Pick =
   | { kind: 'compost' }
   | { kind: 'sign' }
   | { kind: 'gate' }
+  | { kind: 'market' }
   | { kind: 'flag'; pack: string }
 
 /* ---------- page ---------- */
@@ -267,6 +270,15 @@ function drawGate(): void {const {sx,sy}=iso(GATE.x,GATE.y);
   for(const [x,y] of [[ax,ay],[bx,by]] as Pt[]){px(x-1,y-20,3,21,'#6B4A2B');px(x-1,y-20,3,1,'#B8804A');px(x-2,y,5,1,'rgba(0,0,0,.2)');}
   for(let t=0;t<16;t++){px(ax-2*t-1,ay-23+t,3,3,'#8E5A34');px(ax-2*t-1,ay-23+t,3,1,'#C98A52');}
   px(sx-17,sy-9,3,4,'#3C2316');px(sx-16,sy-8,1,2,'#FFD95A');}
+/** The market stall: a counter under a striped awning. A lantern is lit on its ridge while a buyer is buying. */
+let marketLit = false
+function drawMarket(): void {const {sx,sy}=iso(MARKET.x,MARKET.y);const cx=sx,cy=sy+12;
+  px(cx-9,cy,18,1,'rgba(0,0,0,.2)');px(cx-8,cy-16,1,16,'#6B4A2B');px(cx+7,cy-16,1,16,'#6B4A2B');
+  px(cx-8,cy-6,16,6,'#8E5A34');px(cx-8,cy-6,16,1,'#C98A52');px(cx-8,cy-1,16,1,'#6B4A2B');
+  px(cx-6,cy-8,3,2,'#E9C46A');px(cx-2,cy-8,3,2,'#6DB24F');px(cx+3,cy-8,3,2,'#D8785A');
+  for(let k=0;k<9;k++){px(cx-9+k*2,cy-20,2,4,k%2?'#F4EAD0':'#C8553D');px(cx-9+k*2,cy-16,2,1,k%2?'#D9CDB0':'#9E3F2C');}
+  // The lantern tells of your own farm today, so it is dark on a neighbour's farm.
+  px(cx-1,cy-23,3,3,marketLit&&!visiting?'#FFD95A':'#5C4A2E');px(cx,cy-24,1,1,'#3C2316');}
 /** A field's flag, in the field's colour, on a tall pole at a corner of the field: it shows over any crop, from across the map. */
 const FLAG = { top: 27, w: 8, h: 5 }
 function drawFlag(sx: number, sy: number, color: string, t: number): void {
@@ -302,6 +314,7 @@ function buildStatics(): void {
   statics.push({ s: WELL.x + WELL.y, d: drawWell, kind: 'well', hit: (ix, iy) => { const p = iso(WELL.x, WELL.y); return Math.abs(ix - p.sx) <= 8 && iy >= p.sy - 4 && iy <= p.sy + 14 } })
   statics.push({ s: COMPOST.x + COMPOST.y, d: drawCompost, kind: 'compost', hit: (ix, iy) => { const p = iso(COMPOST.x, COMPOST.y); return Math.abs(ix - p.sx) <= 8 && iy >= p.sy + 2 && iy <= p.sy + 14 } })
   statics.push({ s: GATE.x + GATE.y + 1.5, d: drawGate, kind: 'gate', hit: (ix, iy) => { const p = iso(GATE.x, GATE.y); return Math.abs(ix - (p.sx - 16)) <= 20 && iy >= p.sy - 24 && iy <= p.sy + 20 } })
+  statics.push({ s: MARKET.x + MARKET.y, d: drawMarket, kind: 'market', hit: (ix, iy) => { const p = iso(MARKET.x, MARKET.y); return Math.abs(ix - p.sx) <= 10 && iy >= p.sy - 12 && iy <= p.sy + 14 } })
   statics.push({ s: SIGN.x + SIGN.y, d: drawSign, kind: 'sign', hit: (ix, iy) => { const p = iso(SIGN.x, SIGN.y); return Math.abs(ix - p.sx) <= 8 && iy >= p.sy - 4 && iy <= p.sy + 14 } })
   for (const [pack, slot] of Object.entries(D().fields)) {
     const at = flagTile(slot)
@@ -447,6 +460,7 @@ function hud(): void {
   $('hCoins').textContent = String(S.coins)
   $('hBarrel').textContent = String(S.barrel)
   $('hSave').hidden = !store.saveFailed()
+  marketLit = buyersFor(S, catalog).some((b) => standing(b, S, catalog).buying)
   store.saveUi()
 }
 let toastT: number | undefined
@@ -583,6 +597,7 @@ cv.addEventListener('pointerup', (e) => {
   else if (p.kind === 'compost') { walkTo(14, 10); openCompost() }
   else if (p.kind === 'sign') { walkTo(9, 8); openAlmanac() }
   else if (p.kind === 'gate') { walkTo(5, 9); openNeighbours() }
+  else if (p.kind === 'market') { walkTo(MARKET.x, MARKET.y - 1); openMarket() }
   else if (p.kind === 'flag') openTree(p.pack)
   else onTile(p.x, p.y)
 })
@@ -1267,6 +1282,20 @@ function setBar(pack: string): void {
   toast('The bar for ' + packTitle(pack) + ' is ' + S.bars[pack] + '.')
 }
 
+/* ---------- the market ---------- */
+function openMarket(): void { open(marketSheetHtml(marketView(S, catalog))) }
+function openSale(buyerId: string): void {
+  const buyer = catalog.buyer(buyerId)
+  // Refuse before the farmer writes anything, with the reason the farm would give.
+  if (!buyer || refused({ type: 'sold', buyer: buyer.id, text: 'x'.repeat(RULES.proofMin) })) return
+  open(saleSheetHtml(buyer, RULES.proofMin, RULES.textMax))
+}
+function sell(buyerId: string): void {
+  if (!act({ type: 'sold', buyer: buyerId, text: byIdAs('sale', HTMLTextAreaElement).value })) return
+  toast('Sold. It is kept at the market.')
+  openMarket()
+}
+
 /* ---------- almanac ---------- */
 function openAlmanac(): void { open(almanacHtml(catalog, S.energyMax, __APP_VERSION__)) }
 
@@ -1354,6 +1383,9 @@ sheet.addEventListener('click', (e) => {
   else if (what === 'justLook') { const a = ARRIVAL; if (a) { enterVisit(a.state, a.picture.name, visitLabel(a.picture), visitDetail(a.picture), packsOf(a.picture)); close() } }
   else if (what === 'startFromVisit') startFromVisit()
   else if (what === 'readiness') openReadiness()
+  else if (what === 'market') openMarket()
+  else if (what === 'sell') openSale(arg)
+  else if (what === 'sellGo') sell(arg)
   else if (what === 'setBar') setBar(arg)
   else if (what === 'expand') expand(arg)
   else if (what === 'forage') forage(arg)

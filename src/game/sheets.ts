@@ -162,6 +162,8 @@ export function readinessSheetHtml(v: ReadinessView, limits: { min: number; max:
     (v.withBar ? '<p><b>' + v.atBar + ' of ' + v.withBar + '</b> ' + (v.withBar === 1 ? 'field is' : 'fields are') + ' at the bar.</p>' : '') +
     v.rows.map((r) => readinessRowHtml(r, limits)).join('') +
     earnedSectionHtml(v.earned, title) +
+    '<h3>Where it leads</h3><p class="sub">Who would buy what you grow.</p>' +
+    '<div class="branches"><button type="button" data-act="market">Market</button></div>' +
     footHtml()
   )
 }

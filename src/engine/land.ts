@@ -18,7 +18,9 @@ export const COMPOST = { x: 15, y: 10 }
 export const SIGN = { x: 8, y: 8 }
 /** Where the main path meets the west edge of the homestead. A path tile, so no farm has ever had anything there. */
 export const GATE = { x: 4, y: 9 }
-const BLOCKED = new Set(['9,4', '10,4', '9,5', '10,5', '15,9', '15,10', '8,8', '4,9'])
+/** The market stall, on the path that runs south from the barn. A path tile too, for the same reason. */
+export const MARKET = { x: 10, y: 15 }
+const BLOCKED = new Set(['9,4', '10,4', '9,5', '10,5', '15,9', '15,10', '8,8', '4,9', '10,15'])
 
 export type Terrain = 'soil' | 'path' | 'grass' | 'wild'
 export type WildKind = 'tree' | 'bush' | 'rock' | 'grass'

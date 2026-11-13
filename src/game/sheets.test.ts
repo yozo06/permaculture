@@ -126,6 +126,13 @@ describe('cropSheetHtml', () => {
   })
 })
 
+describe('the readiness sheet', () => {
+  it('leads on to the market', () => {
+    const html = readinessSheetHtml({ rows: [], atBar: 0, withBar: 0, earned: [] }, { min: 1, max: 100 })
+    expect(html).toContain('data-act="market"')
+  })
+})
+
 describe('pickerHtml', () => {
   const pack = { pack: 'p<1>', title: '<b>Bold</b>', color: '#fff', description: 'About <i>it</i>', seeds: 3, open: false, ticked: true }
 
