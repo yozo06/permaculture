@@ -1240,9 +1240,10 @@ function openTree(packId: string = treePack()): void {
     html += '<h3>Guilds</h3><p class="sub">Seeds that grow well together. A guild is whole while every member stands as a tree, and a whole guild pays ' + RULES.guild.coins + ' coins each time you harvest or check in on one of its members. One wilted member and it pays nothing until you revive it.</p><div>' +
       v.guilds.map((g) => '<div class="row"><div class="n">' + esc(g.title) + '<small>' + g.members.map((m) => esc(m.name ?? (m.sapling ? 'a sapling' : 'a wild seed'))).join(', ') + '</small></div><span class="sub">' + esc(guildStatus(g, RULES.guild.coins)) + '</span></div>').join('') + '</div>'
   }
-  if (v.borders.length) {
-    html += '<h3>On an edge</h3><p class="sub">These seeds also belong to a second field. Their harvest pays ' + timesOver(RULES.edge.times) + ' once you have a tree in that field.</p><div>' +
-      v.borders.map((b) => '<div class="row slim"><div class="n">' + esc(b.name) + '<small>edge of the ' + esc(b.field) + ' field</small></div><span class="sub">' + b.status + '</span></div>').join('') + '</div>'
+  if (v.borders.length || v.bordered.length) {
+    html += '<h3>On an edge</h3><p class="sub">A seed on an edge grows in its own field and borders a second. Its harvest pays ' + timesOver(RULES.edge.times) + ' once you have a tree in the field it borders.</p><div>' +
+      v.borders.map((b) => '<div class="row slim"><div class="n">' + esc(b.name) + '<small>borders the ' + esc(b.field) + ' field</small></div><span class="sub">' + esc(b.status) + '</span></div>').join('') +
+      v.bordered.map((b) => '<div class="row slim"><div class="n">' + esc(b.name) + '<small>in the ' + esc(b.field) + ' field · borders this one</small></div><span class="sub">' + esc(b.status) + '</span></div>').join('') + '</div>'
   }
   if (v.locked.length) html += '<h3>Jump the fence</h3><p class="sub">Already know one of these? Prove it on a harvest-grade question (10 energy) and it unlocks without its prerequisites.</p><div>' + v.locked.map((t) => '<div class="row"><div class="n">' + esc(t.name) + '<small>needs ' + esc(t.needs) + (t.earned ? ' · a jump will not earn it: that takes ' + esc(t.earned) : '') + (t.held ? ' · after a jump it will still wait for the ' + esc(t.held) + ' layer' : '') + '</small></div><button type="button" data-act="testout" data-arg="' + esc(t.id) + '">Test out</button></div>').join('') + '</div>'
   html += heldSectionHtml(v.held, RULES.balance.below)

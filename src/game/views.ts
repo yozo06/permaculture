@@ -92,6 +92,10 @@ export function edgeLine(seed: Seed, state: Pick<FarmState, 'crops'>, catalog: C
   return where + ': its harvest pays ' + timesOver(RULES.edge.times) + (edge.live ? '.' : ' once you have a tree there.')
 }
 
+/** How a seed's edge stands, in a few words. `waiting` is what to say while no tree stands in the field it borders. */
+const edgeStatus = (seed: Seed, edge: EdgeView, state: Pick<FarmState, 'crops'>, waiting: string): string =>
+  cropOf(state, seed.id)?.perennial ? 'harvested' : edge.live ? 'pays ' + timesOver(RULES.edge.times) : waiting
+
 /** What a premium harvest of this seed pays on this farm, and the field it borders if that made it double. */
 export function harvestPay(seed: Seed, state: Pick<FarmState, 'crops'>, catalog: Catalog): { coins: number; edge: string | null } {
   const edge = edgeOf(seed, state, catalog)
@@ -418,8 +422,10 @@ export interface TreeView {
   guilds: TreeGuild[]
   /** Seeds in the tree that will drop saplings when they are harvested, and how many: a number, never which. */
   drops: { id: string; name: string; count: number }[]
-  /** Seeds of this field that sit on the edge of another, and how each edge stands. */
-  borders: { id: string; name: string; field: string; status: 'pays double' | 'no tree there yet' | 'harvested' }[]
+  /** Seeds of this field that sit on the edge of another (`field`), and how each edge stands: "pays double", "no tree there yet" or "harvested". */
+  borders: { id: string; name: string; field: string; status: string }[]
+  /** Seeds of the farm's other fields (`field`) that sit on the edge of this one: "pays double", "needs a tree here" or "harvested". */
+  bordered: { id: string; name: string; field: string; status: string }[]
   /**
    * Seeds you could jump the fence to: visible, not planted, and missing something they need. A jump clears only that:
    * `earned` is what the seed must also be earned by, if it is not yet, and `held` is the name of the hollow layer it
@@ -516,8 +522,13 @@ export function treeView(packId: string, state: FarmState, catalog: Catalog): Tr
     }),
     borders: seeds.flatMap((s) => {
       const edge = edgeOf(s, state, catalog)
-      return edge ? [{ id: s.id, name: s.name, field: edge.field, status: cropOf(state, s.id)?.perennial ? 'harvested' as const : edge.live ? 'pays double' as const : 'no tree there yet' as const }] : []
+      return edge ? [{ id: s.id, name: s.name, field: edge.field, status: edgeStatus(s, edge, state, 'no tree there yet') }] : []
     }),
+    bordered: catalog.packs.filter((p) => p.pack !== packId && Object.hasOwn(state.fields, p.pack)).flatMap((p) =>
+      catalog.seedsOf(p.pack).filter((s) => s.edge === packId && visible(s, state)).flatMap((s) => {
+        const edge = edgeOf(s, state, catalog)
+        return edge ? [{ id: s.id, name: s.name, field: p.title, status: edgeStatus(s, edge, state, 'needs a tree here') }] : []
+      })),
     held: seeds.flatMap((s): HeldRow[] => {
       const below = seedStatus(s, state, catalog) === 'held' ? heldBy(s, state, catalog) : null
       return below ? [{ id: s.id, name: s.name, layer: LAYER_NAMES[s.layer], below: LAYER_NAMES[below] }] : []

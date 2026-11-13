@@ -270,6 +270,16 @@ describe('a seed on the edge of another field', () => {
     expect(treeView('shed', on(), rich)?.borders).toEqual([])
   })
 
+  it('is listed under the tree of the field it borders too, so a farmer there knows what a tree is worth', () => {
+    expect(treeView('shed', on(), rich)?.bordered).toEqual([{ id: 'beans', name: 'Beans', field: 'Garden', status: 'needs a tree here' }])
+    expect(treeView('shed', on(tree('saw')), rich)?.bordered[0]?.status).toBe('pays double')
+    expect(treeView('shed', on(tree('saw'), tree('beans')), rich)?.bordered[0]?.status).toBe('harvested')
+    expect(treeView('garden', on(), rich)?.bordered).toEqual([])
+    // Not from a field the farm does not have: there is nothing there to harvest.
+    const shedOnly: FarmState = { ...on(), fields: { shed: 0 } }
+    expect(treeView('shed', shedOnly, rich)?.bordered).toEqual([])
+  })
+
   it('says how much more an edge pays in words', () => {
     expect([2, 3, 4].map(timesOver)).toEqual(['double', 'triple', '4 times over'])
   })
