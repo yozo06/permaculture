@@ -107,7 +107,7 @@ Every seed in a pack, locked or not, is on the tree. One to four branches per fi
 
 ## 5. Readiness, not deadlines
 
-A field's **readiness** is the share of its catalogue that stands as trees today, rounded down. A tree counts while it is rooted and not wilted by a wrong check-in. A seed found in the wild is an extra and is never counted, so foraging cannot lower the number. A layer of the catalogue with none of its seeds standing as a tree is **hollow**; a tree grown from a wild find does not fill it.
+A field's **readiness** is the share of its catalogue that stands as trees today, rounded down. A tree counts while it is rooted and not wilted by a wrong check-in. A seed found in the wild and a sapling dropped by a tree are **extras** and are never counted, so neither foraging nor a harvest can lower the number. A layer of the catalogue with none of its seeds standing as a tree is **hollow**; a tree grown from an extra does not fill it.
 
 The player sets the **bar** (80 unless the pack says otherwise). A field is at its bar when its readiness has reached the bar and none of its layers is hollow. There are no dates.
 
@@ -134,7 +134,7 @@ A seed can be **earned**: it asks for learning before it can be planted, either 
 ## 8. Architecture
 
 - **Local-first.** A farm is an append-only event log in the player's browser. Farm state is a pure fold over the log. Export is the log. Multi-device merge is a later, easy step because events have ids and the fold is deterministic.
-- **Saved farms are protected.** A farm is replayed against today's packs and rules, so a careless edit could quietly drop part of someone's history. Ids are locked (`packs/lock.json`), a played farm must always replay, a farm's first event is never refused over one number, and the game says so when a farm's history no longer fits. A rule that only holds back what a player starts today (a seed that has to be earned, a seed two layers ahead of a hollow one, a bar for a field with no end) is asked of the player and never of the log, so a pack can add or change it without touching a saved farm.
+- **Saved farms are protected.** A farm is replayed against today's packs and rules, so a careless edit could quietly drop part of someone's history. Ids are locked (`packs/lock.json`), a played farm must always replay, a farm's first event is never refused over one number, and the game says so when a farm's history no longer fits. A rule that only holds back what a player starts today (a seed that has to be earned, a seed two layers ahead of a hollow one, a bar for a field with no end) is asked of the player and never of the log, so a pack can add or change it without touching a saved farm. A rule that changes what a farm *has* (what a whole guild pays, the double on an edge) cannot be kept out of replay, so it is built to only ever add: nothing in the game refuses a farm for having more coins, and the pack data it reads is locked so that a later edit cannot make a farm replay with fewer.
 - **Static hosting.** The game is files on GitHub Pages. No server until the village needs one.
 - **Engine / game / packs.** `src/engine/`: pure rules with property tests. `src/game/`: renderer and UI. `packs/`: data, validated in CI.
 - **AI is optional and bring-your-own-key.** Authoring (catalogues, questions, the pack forge) is offline work committed as data. Runtime AI (judged harvests, wild finds, gap audits) uses the player's own key, stored only in their browser, with calls made browser-to-provider. A local model works. The no-AI game is complete.
@@ -154,7 +154,7 @@ Each phase ends with something a friend can play.
 4. Art: sprite sheets, PixiJS, terraces, weather.
 5. The village server, when there are players who need it.
 
-The rules that need no AI and no server are built between these, the ones closest to the loop first. Readiness, earned unlocks and layer balance are in; guilds, edges, saplings and the market are marked *(planned)*.
+The rules that need no AI and no server are built between these, the ones closest to the loop first. Readiness, earned unlocks, layer balance, guilds, edges and saplings are in; the market, the rival and the Sunday walk are marked *(planned)*.
 
 The plan in full, with what is done and how to help, is `../ROADMAP.md`.
 

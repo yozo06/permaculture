@@ -26,7 +26,8 @@ The player's farm is not saved as a picture of the farm. It is saved as the list
 - `fold.ts` is the heart. `check(state, event)` says whether a player may do something now and, if not, gives a reason they can read. `apply(state, event)` returns the next state, or the very same state if a log may not hold the event there. `fold(events)` replays a whole log from nothing. `parseEvent` reads an event that could be anything, because a log comes from storage or from a file.
 - `fold.ts` keeps two questions apart. `allowed` is what a log may hold, and it is all that replay asks. `check` asks that and a little more of what is done today: that a seed has been earned, and that it does not run two layers ahead of a hollow one. A rule that only holds back what a player starts belongs in the second, where it cannot change a saved farm.
 - `readiness.ts` works out how ready a field is (its number, its hollow layers, its bar), what a seed is earned by, and which layer holds a seed back under layer balance. None of it is saved: it is worked out from the crops each time.
-- `rules.ts` has `RULES`, every number the game plays by, and the small questions asked of a crop: `thirsty`, `ripe`, `available`.
+- `yields.ts` works out what a harvest or a check-in pays beyond its plain coins: a share from each whole guild the seed is in, and the harvest over again for a seed on a live edge. Unlike readiness this is part of replaying a farm, so it only ever adds, and `packs/lock.json` guards the pack data it reads.
+- `rules.ts` has `RULES`, every number the game plays by, and the small questions asked of a crop: `thirsty`, `ripe`, `available`. `visible` says whether a seed is in the farmer's tree yet: a wild seed once it is domesticated, a sapling once the tree that drops it is rooted.
 - `ladder.ts` decides which kind of work a crop asks for at each stage: a recall card, an explanation, or a harvest.
 - `land.ts` is the geometry: where fields sit, what kind of ground a tile is.
 - `finds.ts` picks the wild find a tile gives on a day.
@@ -60,7 +61,7 @@ When the page loads, the store reads the log and folds it. If the log cannot be 
 
 `npm test` runs all of them.
 
-- `src/engine/*.test.ts`: each event's allowed path and each refusal. `fold.property.test.ts` plays long random games (80 to 300 moves each) and checks after every move that replaying the log gives the same farm and that energy and coins never go negative. It also feeds the engine events of any shape and checks that nothing throws.
+- `src/engine/*.test.ts`: each event's allowed path and each refusal. `fold.property.test.ts` plays long random games (80 to 300 moves each) and checks after every move that replaying the log gives the same farm and that energy and coins never go negative. It also plays farms on the packs with their guilds, edges and saplings taken out and replays each with them back, to show those rules only ever add. It also feeds the engine events of any shape and checks that nothing throws.
 - `src/engine/design-doc.test.ts`: the two tables in `docs/design.md` match `RULES` exactly.
 - `scripts/catalogues.test.ts`: what the catalogues promise, such as every seed id from the Phase 0 farm still existing.
 - `scripts/lock.test.ts` and `src/engine/played-farm.test.ts`: saved farms keep replaying (see above).
@@ -76,6 +77,7 @@ When the page loads, the store reads the log and folds it. If the log cannot be 
 | change a number | `RULES` in `src/engine/rules.ts`, and the same row in `docs/design.md`. A test fails until they agree. The Almanac follows by itself. |
 | add a rule | a new event in `types.ts`; its shape in `parseEvent`, its check and its effect in `fold.ts`; tests in `fold.test.ts`; and teach `fold.property.test.ts` to play it. |
 | hold back something a player may start, without touching saved farms | `whyToday` in `fold.ts`, which only `check` asks. Replay never does. |
+| make something pay more | `engine/yields.ts`, called from `fold.ts`. It is part of replay, so it may only ever add; `fold.property.test.ts` replays farms played without it and checks nothing is refused. Put the pack data it reads into `scripts/lock.ts`. |
 | add something to the farm's state | `FarmState` in `types.ts`, then `initialState` and `copy` in `fold.ts`, and `fromV2` in `v2.ts`. |
 | change what a sheet says | `game/sheets.ts` if it is built there, else `game/game.ts`. Put text from a player or a pack through `esc`. |
 | show something worked out from the farm | a pure function in `game/views.ts`, with a test. |
