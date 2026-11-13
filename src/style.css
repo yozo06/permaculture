@@ -33,8 +33,8 @@ canvas.drag{cursor:grabbing}
 .toast.on{opacity:1}
 .corner{position:absolute;right:8px;top:8px;display:flex;gap:6px}
 .corner button{min-height:32px;min-width:32px;padding:0 10px;font-size:12px;background:rgba(26,22,16,.8)}
-.corner button:disabled{opacity:.45}
-@media (max-width:640px){.stage{aspect-ratio:4/5}.visit{right:8px;top:48px}}
+.corner button[aria-disabled="true"]{opacity:.45}
+@media (max-width:640px){.stage{aspect-ratio:4/5}.corner button{min-height:44px;min-width:44px}}
 .bar{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;background:var(--panel);border:2px solid var(--line);border-radius:8px;padding:8px 14px}
 .hint{flex:1 1 240px;min-width:0;font-size:13px;color:var(--muted);line-height:1.4}
 .hint b{color:var(--cream);font-weight:600}
@@ -106,6 +106,8 @@ button.pri:disabled:hover{background:var(--panel-2)}
 
 /* Neighbours */
 .visit{position:absolute;left:8px;top:8px;right:168px;display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:8px;background:rgba(26,22,16,.9);border:1px solid var(--line-2);font-size:12px;line-height:1.3;color:var(--cream)}
+/* On a phone the banner goes under the corner buttons, the full width of the farm. */
+@media (max-width:640px){.visit{right:8px;top:60px}}
 .visit[hidden]{display:none}
 .visit span{flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:1px}
 .visit b,.visit small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}

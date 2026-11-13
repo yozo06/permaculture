@@ -550,8 +550,9 @@ function layout(): void {
     if (cv.height !== view.ph) cv.height = view.ph
   }
   const range = zoomRange(view.pw)
-  bZoomIn.disabled = view.zoom >= range.max
-  bZoomOut.disabled = view.zoom <= range.min
+  // Dimmed at the end of the range, but not disabled: a disabled button drops the keyboard's place on the page.
+  bZoomIn.setAttribute('aria-disabled', String(view.zoom >= range.max))
+  bZoomOut.setAttribute('aria-disabled', String(view.zoom <= range.min))
 }
 /** Zoom to `zoom`, keeping the point of the farm under (fx, fy) where it is: fractions of the canvas, its middle by default. */
 function zoomTo(zoom: number, fx = 0.5, fy = 0.5): void {
