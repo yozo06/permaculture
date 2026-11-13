@@ -12,7 +12,8 @@
     "test": "vitest run",
     "typecheck": "tsc -p tsconfig.json && tsc -p src/engine/tsconfig.json && tsc -p tsconfig.node.json",
     "validate": "node scripts/validate-packs.mjs",
-    "lock": "vitest run scripts/lock.test.ts -u"
+    "lock": "vitest run scripts/lock.test.ts -u",
+    "art": "node art/build.mjs"
   },
   "keywords": [],
   "author": "",
