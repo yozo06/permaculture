@@ -1,7 +1,7 @@
 // Saplings: seeds a tree drops when it is harvested. In `bountifulCatalog` corn drops popcorn, and popcorn the kernel.
 import { describe, expect, it } from 'vitest'
 import { buildCatalog } from './catalog'
-import { bountifulCatalog as rich, bountifulPacks, NOTES, run, smallFarm } from './fixtures'
+import { bountifulCatalog as rich, bountifulPacks, harvestEvent, NOTES, run, smallFarm, waterEvent } from './fixtures'
 import { allowed, check, fold, refusedCount } from './fold'
 import { earnedProgress, heldBy, readiness } from './readiness'
 import { available, visible } from './rules'
@@ -93,16 +93,39 @@ describe('a sapling is an extra', () => {
 })
 
 describe('a pack that gains saplings', () => {
-  it('leaves a saved farm as it was: nothing in its log is refused, and the farm is the same', () => {
-    const before = buildCatalog(bountifulPacks.map((p) => ({ ...p, seeds: p.seeds.filter((s) => s.sapling_of === undefined) })))
+  const before = buildCatalog(bountifulPacks.map((p) => ({ ...p, seeds: p.seeds.filter((s) => s.sapling_of === undefined) })))
+  /** A farm played before the pack had saplings: corn is planted, watered up the ladder and harvested. */
+  function played(): FarmEvent[] {
     const log: FarmEvent[] = [
       { type: 'farm-started', day: 1, energy: 90, coins: 140, barrel: 0 },
       { type: 'field-opened', pack: 'garden', slot: 0 }, { type: 'field-opened', pack: 'shed', slot: 1 },
       plant('corn'),
     ]
-    expect(refusedCount(log, before)).toBe(0)
+    let s = fold(log, before)
+    for (let day = 0; day < 30 && !s.crops.some((c) => c.perennial); day++) {
+      for (const e of [harvestEvent(before, 'corn'), waterEvent(before, s, 'corn'), { type: 'slept' } as FarmEvent]) {
+        if (e && check(s, e, before) === null) { log.push(e); s = fold(log, before) }
+      }
+    }
+    return log
+  }
+
+  it('leaves a saved farm that harvested the tree as it was: nothing in its log is refused, and the farm is the same', () => {
+    const log = played()
+    expect(log.some((e) => e.type === 'harvested')).toBe(true)
+    expect(fold(log, before).crops.map((c) => [c.seed, c.perennial])).toEqual([['corn', true]])
     expect(refusedCount(log, rich)).toBe(0)
-    expect(fold(log, rich)).toEqual(fold(log, before))
-    expect(allowed(fold(log, rich), plant('popcorn', 6, 5), rich)).toBe('Popcorn is still locked.')
+    // Corn is a guild of one in the new pack, so its harvest and check-ins now pay: the coins may only have grown.
+    const then = fold(log, before)
+    const now = fold(log, rich)
+    expect({ ...now, coins: 0 }).toEqual({ ...then, coins: 0 })
+    expect(now.coins).toBeGreaterThanOrEqual(then.coins)
+  })
+
+  it('has dropped the new seed from the tree that farm already harvested', () => {
+    const s = fold(played(), rich)
+    expect(visible(seed('popcorn'), s)).toBe(true)
+    expect(allowed(s, plant('popcorn', 6, 5), rich)).toBeNull()
+    expect(visible(seed('kernel'), s)).toBe(false)
   })
 })

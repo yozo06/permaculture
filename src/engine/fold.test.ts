@@ -386,10 +386,17 @@ describe('a guild', () => {
     expect(revived.coins).toBe(s.coins + RULES.guild.coins)
   })
 
-  it('pays nothing for a seed that is in no guild, or for watering a crop that is not a tree yet', () => {
-    const s = farm(tree('corn'), tree('beans'), tree('squash'), tree('saw'), tree('bees', { perennial: false, stage: 1 }))
+  it('pays nothing for a seed that is in no guild', () => {
+    const s = farm(tree('corn'), tree('beans'), tree('squash'), tree('saw'))
     expect(run(cat, [checkIn('saw')], s).coins).toBe(s.coins)
-    expect(run(cat, [checkIn('bees')], s).coins).toBe(s.coins)
+  })
+
+  it('pays nothing for watering a member that is not a tree yet, even in a guild of one', () => {
+    // In `bountifulCatalog` corn is a guild by itself. Growing, it is not whole; rooted, it is.
+    const growing = farm(tree('corn', { perennial: false, stage: 1 }))
+    expect(run(rich, [checkIn('corn')], growing).coins).toBe(growing.coins)
+    const rooted = farm(tree('corn'))
+    expect(run(rich, [checkIn('corn')], rooted).coins).toBe(rooted.coins + RULES.guild.coins)
   })
 })
 
