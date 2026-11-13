@@ -7,7 +7,7 @@ import { apply, fieldsToOpen, fold } from '../engine/fold'
 import { RULES } from '../engine/rules'
 import type { FarmState } from '../engine/types'
 import sampleFarm from './sample-farm.json'
-import { afterJump, bagView, cropView, guildNews, guildStatus, readinessView, seedStatus, sourceLinks, splitName, tending, treeView, driftText, pickerView } from './views'
+import { afterJump, bagView, cropView, edgeOf, guildNews, guildStatus, harvestPay, readinessView, seedStatus, sourceLinks, splitName, tending, treeView, driftText, pickerView } from './views'
 
 const catalog = buildCatalog(collectPacks())
 
@@ -228,6 +228,49 @@ describe('a guild on the farm', () => {
     expect(guildNews(seed('beans'), on(tree('corn'), tree('beans', { wilted: true })), bountifulCatalog, false).lines).toEqual(['The Pole and climber guild pays nothing until Beans is revived.'])
     // A crop that is not a tree yet drags nothing: its guild was not whole to begin with.
     expect(guildNews(seed('squash'), on(tree('corn'), tree('beans'), tree('squash', { perennial: false, wilted: true })), bountifulCatalog, false).lines).toEqual([])
+  })
+})
+
+describe('a seed on the edge of another field', () => {
+  // In `bountifulCatalog` the beans sit on the edge of the shed.
+  const rich = bountifulCatalog
+  const tree = (seed: string, patch: Partial<Crop> = {}): Crop =>
+    ({ seed, x: 20, y: 20, stage: 4, best: 4, due: 99, wilted: false, perennial: true, notes: '', journal: [], ...patch })
+  const on = (...crops: Crop[]): FarmState => ({ ...smallFarm(), crops })
+  const seed = (id: string) => { const x = rich.seed(id); if (!x) throw new Error('no seed ' + id); return x }
+  const bagged = (s: FarmState, id: string) => bagView(s, rich).flatMap((sec) => sec.seeds).find((x) => x.id === id)
+
+  it('names the field it borders, and whether a harvest would pay double today', () => {
+    expect(edgeOf(seed('beans'), on(), rich)).toEqual({ field: 'Shed', live: false })
+    expect(edgeOf(seed('beans'), on(tree('saw')), rich)).toEqual({ field: 'Shed', live: true })
+    expect(edgeOf(seed('corn'), on(tree('saw')), rich)).toBeNull()
+  })
+
+  it('is marked in the seed bag, whether it is waiting to be planted or in the ground', () => {
+    expect(bagged(on(), 'beans')?.edge).toBe('Shed')
+    expect(bagged(on(tree('beans', { perennial: false })), 'beans')?.edge).toBe('Shed')
+    expect(bagged(on(), 'corn')?.edge).toBeNull()
+  })
+
+  it('says on its crop sheet what the edge will pay, what it pays, or just where it sits once it is a tree', () => {
+    const growing = tree('beans', { perennial: false })
+    expect(cropView(growing, on(growing), rich)?.edge).toBe('On the edge of the Shed field: its harvest pays double once you have a tree there.')
+    expect(cropView(growing, on(growing, tree('saw')), rich)?.edge).toBe('On the edge of the Shed field: its harvest pays double.')
+    expect(cropView(tree('beans'), on(tree('beans'), tree('saw')), rich)?.edge).toBe('On the edge of the Shed field.')
+    expect(cropView(tree('corn'), on(tree('corn')), rich)?.edge).toBeNull()
+  })
+
+  it('is listed under the learning tree with how its edge stands', () => {
+    expect(treeView('garden', on(), rich)?.borders).toEqual([{ id: 'beans', name: 'Beans', field: 'Shed', status: 'no tree there yet' }])
+    expect(treeView('garden', on(tree('saw')), rich)?.borders[0]?.status).toBe('pays double')
+    expect(treeView('garden', on(tree('saw'), tree('beans')), rich)?.borders[0]?.status).toBe('harvested')
+    expect(treeView('shed', on(), rich)?.borders).toEqual([])
+  })
+
+  it('says what a harvest paid, and names the field when it paid double', () => {
+    expect(harvestPay(seed('beans'), on(tree('beans')), rich)).toEqual({ coins: RULES.harvest.coins, edge: null })
+    expect(harvestPay(seed('beans'), on(tree('beans'), tree('saw')), rich)).toEqual({ coins: RULES.edge.times * RULES.harvest.coins, edge: 'Shed' })
+    expect(harvestPay(seed('corn'), on(tree('corn'), tree('saw')), rich)).toEqual({ coins: RULES.harvest.coins, edge: null })
   })
 })
 

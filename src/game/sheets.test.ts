@@ -5,7 +5,7 @@ import type { CropView, EarnedRow, ReadinessRow, ReadinessView } from './views'
 
 const view = (patch: Partial<CropView> = {}): CropView => ({
   seed: 'raft', name: 'Raft', pack: 'system-design', layer: 'Root', stageLine: 'Stage 2 of 5 · Z2 · Recall', statusLine: 'Growing.', nextWork: null,
-  notes: '', journal: [], sources: [], guilds: [], ...patch,
+  notes: '', journal: [], sources: [], guilds: [], edge: null, ...patch,
 })
 
 describe('countText', () => {
@@ -76,6 +76,12 @@ describe('plantSheetHtml', () => {
     const bare = plantSheetHtml({ chip: '', name: 'X', layer: 'Herb', harvest: 'artifact', sources: [], notesMin: 40, textMax: 5000, energy: 10, coins: 10 })
     expect(bare).not.toContain('minutes of reading')
     expect(bare).not.toContain('Sources')
+    expect(bare).not.toContain('edge')
+  })
+
+  it('says which edge the seed sits on, escaped', () => {
+    const edged = plantSheetHtml({ chip: '', name: 'X', layer: 'Herb', harvest: 'artifact', sources: [], notesMin: 40, textMax: 5000, energy: 10, coins: 10, edge: 'On the edge of the <Shed> field.' })
+    expect(edged).toContain('<p class="sub">On the edge of the &lt;Shed&gt; field.</p>')
   })
 })
 
@@ -96,6 +102,11 @@ describe('cropSheetHtml', () => {
     expect(html.indexOf('later')).toBeLessThan(html.indexOf('earlier'))
     expect(html).toContain('Day 9 · Explained · passed')
     expect(html).toContain('Day 4 · Explained · not yet')
+  })
+
+  it('says which edge the crop sits on, escaped, and nothing for a crop on none', () => {
+    expect(cropSheetHtml('', view({ edge: 'On the edge of the <Shed> field.' }))).toContain('<p class="sub">On the edge of the &lt;Shed&gt; field.</p>')
+    expect(cropSheetHtml('', view())).not.toContain('edge')
   })
 
   it('says which guilds the crop is in and how each stands, escaped, and nothing for a crop in none', () => {

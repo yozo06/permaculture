@@ -3,7 +3,7 @@ import { HARVEST_NAMES, LAYER_NAMES, type Catalog, type Seed } from '../engine/c
 import { harvestWork, rungName, waterWork, type WaterKind } from '../engine/ladder'
 import { earnedLine, earnedProgress, heldBy, isEarned, readiness } from '../engine/readiness'
 import { RULES, available, cropOf, revivable, ripe, rooted, thirsty, visible, zone } from '../engine/rules'
-import { dragging, guildWhole, wholeGuilds } from '../engine/yields'
+import { dragging, edgeLive, guildWhole, harvestCoins, wholeGuilds } from '../engine/yields'
 import type { Crop, FarmState, GuildDef, Layer, PackDef } from '../engine/types'
 
 export const DEFAULT_COLOR = '#6DB24F'
@@ -35,6 +35,36 @@ export function afterJump(seed: Seed, state: FarmState, catalog: Catalog): strin
 
 export const needsText = (seed: Seed, catalog: Catalog): string =>
   seed.needs.map((id) => catalog.seed(id)?.name ?? id).join(' + ')
+
+/* ---------- edges ---------- */
+
+export interface EdgeView {
+  /** The title of the field the seed borders. */
+  field: string
+  /** A tree stands there, so a harvest pays double today. */
+  live: boolean
+}
+
+/** The edge a seed sits on, or null for a seed on none. */
+export function edgeOf(seed: Seed, state: Pick<FarmState, 'crops'>, catalog: Catalog): EdgeView | null {
+  if (seed.edge === null) return null
+  return { field: catalog.pack(seed.edge)?.title ?? seed.edge, live: edgeLive(seed, state, catalog) }
+}
+
+/** A seed's edge in a sentence: what it will pay, what it pays, or just where it sits once the seed is a tree. */
+export function edgeLine(seed: Seed, state: Pick<FarmState, 'crops'>, catalog: Catalog): string | null {
+  const edge = edgeOf(seed, state, catalog)
+  if (!edge) return null
+  const where = 'On the edge of the ' + edge.field + ' field'
+  if (cropOf(state, seed.id)?.perennial) return where + '.'
+  return where + ': its harvest pays double' + (edge.live ? '.' : ' once you have a tree there.')
+}
+
+/** What a premium harvest of this seed pays on this farm, and the field it borders if that made it double. */
+export function harvestPay(seed: Seed, state: Pick<FarmState, 'crops'>, catalog: Catalog): { coins: number; edge: string | null } {
+  const edge = edgeOf(seed, state, catalog)
+  return { coins: harvestCoins(seed, state, catalog), edge: edge?.live ? edge.field : null }
+}
 
 /* ---------- the morning's to-do ---------- */
 
@@ -98,6 +128,8 @@ export interface BagSeed {
   status: 'ready' | 'held' | 'growing' | 'rooted'
   /** For a held seed, the name of the layer to plant in first. */
   below: string | null
+  /** The title of the field it sits on the edge of, if it sits on one. */
+  edge: string | null
   focus: boolean
   /** In the player's hand. Never true of a held seed: it cannot be planted, so it cannot be picked up. */
   selected: boolean
@@ -133,7 +165,7 @@ export function bagView(state: FarmState, catalog: Catalog, selected: string | n
       const below = status === 'held' ? heldBy(seed, state, catalog) : null
       seeds.push({
         id: seed.id, name: seed.name, layer: LAYER_NAMES[seed.layer], harvest: HARVEST_NAMES[seed.harvest], status,
-        below: below && LAYER_NAMES[below],
+        below: below && LAYER_NAMES[below], edge: edgeOf(seed, state, catalog)?.field ?? null,
         focus: focusTitle !== null && seed.branch === focusId, selected: status === 'ready' && selected === seed.id,
       })
     }
@@ -346,6 +378,8 @@ export interface TreeView {
   nodes: TreeNode[]
   edges: TreeEdge[]
   guilds: TreeGuild[]
+  /** Seeds of this field that sit on the edge of another, and how each edge stands. */
+  borders: { id: string; name: string; field: string; status: 'pays double' | 'no tree there yet' | 'harvested' }[]
   /**
    * Seeds you could jump the fence to: visible, not planted, and missing something they need. A jump clears only that:
    * `earned` is what the seed must also be earned by, if it is not yet, and `held` is the name of the hollow layer it
@@ -434,6 +468,10 @@ export function treeView(packId: string, state: FarmState, catalog: Catalog): Tr
     pack: packId, title: pack.title, color: packColor(pack), width: TREE_WIDTH, height: y, columnWidth,
     branches: pack.branches.map((b, i) => ({ id: b.id, title: b.title, focus: state.focus[packId] === b.id, x: (i + 0.5) * columnWidth })),
     nodes, edges, guilds, locked, earned: earnedRows(seeds, state, catalog),
+    borders: seeds.flatMap((s) => {
+      const edge = edgeOf(s, state, catalog)
+      return edge ? [{ id: s.id, name: s.name, field: edge.field, status: cropOf(state, s.id)?.perennial ? 'harvested' as const : edge.live ? 'pays double' as const : 'no tree there yet' as const }] : []
+    }),
     held: seeds.flatMap((s): HeldRow[] => {
       const below = seedStatus(s, state, catalog) === 'held' ? heldBy(s, state, catalog) : null
       return below ? [{ id: s.id, name: s.name, layer: LAYER_NAMES[s.layer], below: LAYER_NAMES[below] }] : []
@@ -485,6 +523,8 @@ export interface CropView {
   sources: SourceLink[]
   /** The guilds it is in and how each stands: "Consensus core guild: 2 of 4 rooted". */
   guilds: string[]
+  /** The edge it sits on and what that pays, in a sentence, or null. */
+  edge: string | null
 }
 
 const WATER_WORK: Record<WaterKind, string> = { recall: 'a recall card', explain: 'an explanation in your own words' }
@@ -514,5 +554,6 @@ export function cropView(crop: Crop, state: Pick<FarmState, 'day' | 'crops'>, ca
     notes: crop.notes, journal: crop.journal.map((j) => ({ day: j.day, label: j.kind === 'explain' ? 'Explained' : 'Harvest write-up', text: j.text, ok: j.ok })).reverse(),
     sources: sourceLinks(seed, catalog),
     guilds: catalog.guildsOf(seed.id).map((g) => g.title + ' guild: ' + guildStatus(guildStanding(g, state, catalog), RULES.guild.coins)),
+    edge: edgeLine(seed, state, catalog),
   }
 }

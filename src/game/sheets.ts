@@ -57,6 +57,8 @@ export interface PlantSheet {
   textMax: number
   energy: number
   coins: number
+  /** The edge the seed sits on and what that pays, in a sentence. */
+  edge?: string
 }
 
 /** Tapping soil with a seed in hand: read, then write your notes before the seed goes in. */
@@ -66,6 +68,7 @@ export function plantSheetHtml(p: PlantSheet): string {
     '<p class="sub">' + esc(p.layer) + ' layer · <span class="tag">' + esc(p.harvest) + '</span></p>' +
     (p.summary ? '<p>' + esc(p.summary) + '</p>' : '') +
     (p.minutes ? '<p class="sub">About ' + p.minutes + ' minutes of reading.</p>' : '') +
+    (p.edge ? '<p class="sub">' + esc(p.edge) + '</p>' : '') +
     sourcesHtml(p.sources) +
     writingBox({ id: 'notes', label: 'Your notes, in your own words', min: p.notesMin, max: p.textMax, gate: 'plantGo', rows: 6, placeholder: 'What is it, why does it matter, and how would you explain it to a friend?' }) +
     '<div class="foot"><button type="button" data-act="close">Not now</button><button type="button" class="pri" id="plantGo" data-act="plantGo" disabled>Plant · ' + p.energy + ' energy · ' + p.coins + ' coins</button></div>'
@@ -83,6 +86,7 @@ export function cropSheetHtml(chip: string, v: CropView): string {
     chip + '<h2>' + esc(v.name) + '</h2>' +
     '<p class="sub">' + esc(v.layer) + ' layer · ' + esc(v.stageLine) + '</p>' +
     '<p>' + esc(v.statusLine) + (v.nextWork ? ' ' + esc(v.nextWork) : '') + '</p>' +
+    (v.edge ? '<p class="sub">' + esc(v.edge) + '</p>' : '') +
     v.guilds.map((g) => '<p class="sub">' + esc(g) + '</p>').join('') +
     '<h3>Your notes</h3>' + (v.notes ? noteHtml(v.notes) : '<p class="sub">' + NO_NOTES + '</p>') +
     '<h3>Journal</h3>' +
