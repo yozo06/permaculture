@@ -92,6 +92,12 @@ describe('sold', () => {
     expect(check(half(), sold('cook', 'yes'), cat)).toMatch(/at least 8 characters to say what happened/)
     expect(check(half(), sold('cook', 'x'.repeat(RULES.textMax + 1)), cat)).toMatch(/under 5000/)
     expect(check(initialState(), sold('cook'), cat)).toBe('There is no farm to sell from.')
+    expect(check(half(), sold('  '), cat)).toBe('That is not a buyer.')
+    expect(check(half(), sold('b'.repeat(61)), cat)).toBe('That is not a buyer.')
+    expect(allowed(half(), sold('b'.repeat(60)), cat)).toBeNull()
+    // What a log holds is the event as it came, so padding counts against the limit.
+    expect(check(half(), sold('cook', ' '.repeat(RULES.textMax) + SALE), cat)).toMatch(/under 5000/)
+    expect(check(half(), sold('cook' + ' '.repeat(60)), cat)).toBe('That is not a buyer.')
     expect(parseEvent({ type: 'sold', buyer: 'cook' })).toBeNull()
     expect(parseEvent({ type: 'sold', buyer: 7, text: SALE })).toBeNull()
   })

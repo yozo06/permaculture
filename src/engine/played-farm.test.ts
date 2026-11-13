@@ -62,7 +62,10 @@ describe('the played farm', () => {
 // A second, small farm that stands exactly on each limit the played farm clears by a wide margin: a name of 24
 // characters, notes of exactly 40 and of exactly 5000, an explanation of exactly 80, a write-up of exactly 80, a proof
 // of exactly 8, a night that ends on exactly 30 energy and one that ends on 29, and a jump over the fence taken with
-// exactly the 10 energy it costs. Real farms sit on these limits too. Tighten any of them and this farm loses something.
+// exactly the 10 energy it costs. On its last day, a walk day, it also holds a sale of exactly 8 characters to a buyer
+// whose id is exactly 60, and a walk with as many questions as a walk may ask, each as long as a question may be, and
+// an answer of exactly 5000. (The sale is to a buyer who is not buying: a log may hold that, since a buyer's bars can
+// rise after a sale.) Real farms sit on these limits too. Tighten any of them and this farm loses something.
 describe('the edge farm', () => {
   const file = parseFarmFile(JSON.stringify(edge))
   const events = file.kind === 'log' ? file.events : []
@@ -70,8 +73,11 @@ describe('the edge farm', () => {
     [...new Set(events.flatMap((e) => { const t = pick(e); return t === undefined ? [] : [t.trim().length] }))].sort((a, b) => a - b)
 
   it('really stands on the limits, so nobody mends it by padding', () => {
-    expect(events).toHaveLength(49)
+    expect(events).toHaveLength(51)
     expect(lengths((e) => (e.type === 'farm-named' ? e.name : undefined))).toEqual([24])
+    expect(events.flatMap((e) => (e.type === 'sold' ? [[e.buyer.length, e.text.length]] : []))).toEqual([[60, RULES.proofMin]])
+    const walk = events.find((e) => e.type === 'walked')
+    expect(walk?.type === 'walked' && [walk.asked.length, ...new Set(walk.asked.map((q) => q.length)), walk.answers[0]?.length]).toEqual([RULES.walk.most, RULES.walk.asked, RULES.textMax])
     expect(lengths((e) => (e.type === 'planted' ? e.notes : undefined))).toEqual([40, 5000])
     expect(lengths((e) => (e.type === 'watered' ? e.text : undefined))).toEqual([80])
     expect(lengths((e) => (e.type === 'harvested' ? e.text : undefined))).toEqual([8, 80])
@@ -99,6 +105,8 @@ describe('the edge farm', () => {
     const s = fold(events, catalog)
     expect(s).toMatchObject({ name: 'Edge farm at every limit', day: 14, coins: 183, energy: 90, barrel: 5, unlocked: ['market'], foraged: ['pandi-curry'], compost: [] })
     expect(s.crops.map((c) => [c.seed, c.perennial, c.journal.length])).toEqual([['repo', true, 5], ['incident-roles', true, 2]])
+    expect(s.sales.map((x) => [x.day, x.text])).toEqual([[14, 'An offer']])
+    expect(s.walks.map((w) => [w.day, w.asked.length, w.answers[0]?.length])).toEqual([[14, 6, 5000]])
   })
 })
 

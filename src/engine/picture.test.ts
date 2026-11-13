@@ -90,13 +90,22 @@ describe('what never crosses the fence', () => {
   const secret = (): FarmState => {
     const s = farm()
     const crops: Crop[] = s.crops.map((c) => ({ ...c, notes: MARK + ' notes', journal: [{ day: 1, kind: 'explain', text: MARK + ' explanation', ok: false }] }))
-    return { ...s, crops, compost: ['corn'], coins: 77777, energy: 33, barrel: 3, foraged: ['bee-find'], focus: { garden: 'roots' } }
+    return {
+      ...s, crops, compost: ['corn'], coins: 77777, energy: 33, barrel: 3, foraged: ['bee-find'], focus: { garden: 'roots' },
+      sales: [{ buyer: 'cook', day: 2, text: MARK + ' an offer' }], walks: [{ day: 7, asked: [MARK + ' a question?'], answers: [MARK + ' an answer'] }],
+    }
   }
 
   it('is notes, explanations, the compost heap, coins, energy, the barrel, finds and focus', () => {
     const text = JSON.stringify(shot(secret()))
     expect(text).not.toContain(MARK)
     expect(text).not.toMatch(/77777|bee-find|roots|compost|notes|journal/)
+  })
+
+  it('is what was sold at the market and what was written on a walk', () => {
+    const text = JSON.stringify(shot(secret()))
+    expect(text).not.toContain(MARK)
+    expect(text).not.toMatch(/sales|walks|cook|asked|answers/)
   })
 
   it('is whether a crop is wilted, when it is due, and where it stands today', () => {

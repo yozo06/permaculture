@@ -41,6 +41,9 @@ describe('walked', () => {
     expect(check(onDay(7), walk(['', '  ', '']), cat)).toBe('Write an answer to at least one of the questions.')
     expect(check(onDay(7), walk(['', '', 'One.']), cat)).toBeNull()
     expect(check(onDay(7), walk(['x'.repeat(RULES.textMax + 1), '', '']), cat)).toBe('Keep each answer under 5000 characters.')
+    // What a log holds is the event as it came, so padding counts against the limit.
+    expect(check(onDay(7), walk(['x' + ' '.repeat(RULES.textMax), '', '']), cat)).toBe('Keep each answer under 5000 characters.')
+    expect(check(onDay(7), walk(['x'.repeat(RULES.textMax), '', '']), cat)).toBeNull()
   })
 
   it('is offered on a walk day, once', () => {

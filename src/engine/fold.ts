@@ -256,15 +256,16 @@ function whyBar(s: FarmState, e: Extract<FarmEvent, { type: 'bar-set' }>, catalo
 
 function whySold(s: FarmState, e: Extract<FarmEvent, { type: 'sold' }>): string | null {
   if (s.day < 1) return 'There is no farm to sell from.'
-  const id = e.buyer.trim().length
-  if (id < 1 || id > 60) return 'That is not a buyer.'
+  // Measured as written, not trimmed: what the log holds is the event as it came, padding and all.
+  if (e.buyer.trim().length < 1 || e.buyer.length > 60) return 'That is not a buyer.'
+  if (e.text.length > RULES.textMax) return 'Keep it under ' + RULES.textMax + ' characters.'
   return whyText(e.text, RULES.proofMin, 'to say what happened')
 }
 
 function whyWalked(s: FarmState, e: Extract<FarmEvent, { type: 'walked' }>): string | null {
   if (s.day < 1) return 'There is no farm to walk round.'
   if (e.asked.some((q) => q.trim().length < 1 || q.length > RULES.walk.asked)) return 'A walk asks short questions.'
-  if (e.answers.some((a) => a.trim().length > RULES.textMax)) return 'Keep each answer under ' + RULES.textMax + ' characters.'
+  if (e.answers.some((a) => a.length > RULES.textMax)) return 'Keep each answer under ' + RULES.textMax + ' characters.'
   return e.answers.some((a) => a.trim().length > 0) ? null : 'Write an answer to at least one of the questions.'
 }
 
