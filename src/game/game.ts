@@ -20,7 +20,7 @@ import { readLink } from './links'
 import { MOMENT_MS, momentDots, type DotTone, type MomentKind } from './moments'
 import { BOOK_KEY, ageText, bookText, readBook, receive, remove, tooOld, type Arrival, type Book } from './neighbours'
 import { NEUTRAL_COLOR, cropHeight, cropSprite, holds, paintKeys, sprite as spriteAt } from './art/sprites'
-import { frontmost } from './hand'
+import { drop, frontmost, idle, lift, move, press, wheelStep, type Hand, type Point, type Said, type Wheel } from './hand'
 import { createStore, defaultId, LOG_KEY, type StorageLike } from './store'
 import { esc, shuffle } from './util'
 import { REF, cameraAfter, defaultZoom, fitView, pinchZoom, shift, zoomRange, type View } from './view'
@@ -563,17 +563,13 @@ window.addEventListener('resize', layout)
 layout()
 
 /* ---------- input: drag to pan, tap to act, pinch to zoom ---------- */
-let down: { x: number; y: number; cx: number; cy: number; k: number } | null = null
+/** What the pointers on the canvas are doing. The rules are in hand.ts; this is where they meet the farm. */
+let hand: Hand = idle()
+/** The camera when the hold under way began, and how many pixels of art a point of the page was then. */
+let held: { cx: number; cy: number; k: number } | null = null
+/** The zoom the pinch under way began at. */
+let pinchedFrom = 1
 let dragging = false
-/** Fingers on the canvas, by pointer. Two of them are a pinch. */
-const fingers = new Map<number, { x: number; y: number }>()
-/** The pinch under way: how far apart the fingers began, and the zoom they began at. */
-let pinch: { dist: number; zoom: number } | null = null
-/** How far apart the first two fingers are, and the point half way between them. */
-function spread(): { dist: number; x: number; y: number } | null {
-  const [a, b] = [...fingers.values()]
-  return a && b ? { dist: Math.hypot(a.x - b.x, a.y - b.y), x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 } : null
-}
 /** A point of the page as a point of the canvas, in pixels of art. `k` is pixels of art to a point of the page. */
 function toInternal(e: { clientX: number; clientY: number }): { ix: number; iy: number; k: number } {
   const r = cv.getBoundingClientRect()
@@ -610,54 +606,41 @@ function clampCam(): void {
   cam.x = Math.max(REF.w / 2 - 16 * N, Math.min(REF.w / 2 + 16 * N, cam.x))
   cam.y = Math.max(100 - 16 * N, Math.min(REF.h - 40, cam.y))
 }
-cv.addEventListener('pointerdown', (e) => {
-  e.preventDefault()
-  // Holding the pointer keeps a drag alive when it leaves the canvas. A pointer that cannot be held is still a pointer.
-  try { cv.setPointerCapture(e.pointerId) } catch { /* nothing to hold */ }
-  fingers.set(e.pointerId, { x: e.clientX, y: e.clientY })
-  if (fingers.size >= 2) {
-    // A second finger makes it a pinch: whatever the first was doing, it is not a drag or a tap any more.
-    const s = spread()
-    pinch = s ? { dist: s.dist, zoom: view.zoom } : null
-    down = null
-    dragging = false
-    cv.classList.remove('drag')
-    return
-  }
-  const p = toInternal(e)
-  const cam = camera()
-  down = { x: e.clientX, y: e.clientY, cx: cam.x, cy: cam.y, k: p.k }
-  dragging = false
-})
-cv.addEventListener('pointermove', (e) => {
-  if (fingers.has(e.pointerId)) fingers.set(e.pointerId, { x: e.clientX, y: e.clientY })
-  if (pinch) {
-    const s = spread()
+/** Do what the hand says. */
+function heard(said: Said): void {
+  if (!said) return
+  if (said.kind === 'hold') {
+    const cam = camera()
+    held = { cx: cam.x, cy: cam.y, k: W / cv.getBoundingClientRect().width }
+  } else if (said.kind === 'pan') {
+    if (!held) return
+    dragging = true
+    cv.classList.add('drag')
+    const cam = camera()
+    cam.x = held.cx + said.dx * held.k
+    cam.y = held.cy + said.dy * held.k
+    clampCam()
+  } else if (said.kind === 'dropped') {
+    endDrag()
+    store.saveUi()
+  } else if (said.kind === 'pinch-began') {
+    endDrag()
+    pinchedFrom = view.zoom
+  } else if (said.kind === 'pinch') {
     const r = cv.getBoundingClientRect()
     // The farm stays put under the point between the fingers.
-    if (s) zoomTo(pinchZoom(pinch.zoom, pinch.dist, s.dist, view.pw), (s.x - r.left) / r.width, (s.y - r.top) / r.height)
-    return
-  }
-  const p = toInternal(e)
-  if (down) {
-    const dx = (e.clientX - down.x) * down.k, dy = (e.clientY - down.y) * down.k
-    // A drag begins after 8 points of the page, whatever the zoom: a finger is as shaky zoomed in as out.
-    if (!dragging && Math.hypot(e.clientX - down.x, e.clientY - down.y) > 8) { dragging = true; cv.classList.add('drag') }
-    if (dragging) { const cam = camera(); cam.x = down.cx + dx; cam.y = down.cy + dy; clampCam() }
-  }
-  hover = (e.pointerType === 'mouse' && !dragging) ? tileAt(p.ix, p.iy) : null
-})
-cv.addEventListener('pointerup', (e) => {
-  fingers.delete(e.pointerId)
-  if (fingers.size < 2) pinch = null
-  // After a pinch the last finger to lift finds nothing held: it is not a tap.
-  if (!down) return
-  const wasDrag = dragging
-  down = null
-  dragging = false
-  cv.classList.remove('drag')
-  if (wasDrag) { store.saveUi(); return }
-  const { ix, iy } = toInternal(e)
+    zoomTo(pinchZoom(pinchedFrom, 1, said.by, view.pw), (said.at.x - r.left) / r.width, (said.at.y - r.top) / r.height)
+  } else tap(said.at)
+}
+function endDrag(): void { dragging = false; cv.classList.remove('drag') }
+/** Forget a pointer the page cancelled or lost (or all of them): nothing is tapped, and a drag keeps what it had moved. */
+function letGo(id?: number): void {
+  if (dragging) store.saveUi()
+  hand = drop(hand, id)
+  endDrag()
+}
+function tap(at: Point): void {
+  const { ix, iy } = toInternal({ clientX: at.x, clientY: at.y })
   const p = pick(ix, iy)
   if (!p) return
   // On a neighbour's farm a tap can only look.
@@ -675,18 +658,46 @@ cv.addEventListener('pointerup', (e) => {
   else if (p.kind === 'market') { walkTo(MARKET.x, MARKET.y - 1); openMarket() }
   else if (p.kind === 'flag') openTree(p.pack)
   else onTile(p.x, p.y)
+}
+const pointOf = (e: PointerEvent): Point => ({ x: e.clientX, y: e.clientY })
+cv.addEventListener('pointerdown', (e) => {
+  // Only the main button: a right click is the browser's, for its own menu.
+  if (e.button !== 0) return
+  e.preventDefault()
+  // Holding the pointer keeps a drag alive when it leaves the canvas. A pointer that cannot be held is still a pointer.
+  try { cv.setPointerCapture(e.pointerId) } catch { /* nothing to hold */ }
+  const [next, said] = press(hand, e.pointerId, pointOf(e), e.isPrimary)
+  hand = next
+  heard(said)
 })
-cv.addEventListener('pointercancel', (e) => { fingers.delete(e.pointerId); if (fingers.size < 2) pinch = null; down = null; dragging = false; cv.classList.remove('drag') })
+cv.addEventListener('pointermove', (e) => {
+  const [next, said] = move(hand, e.pointerId, pointOf(e))
+  hand = next
+  heard(said)
+  const p = toInternal(e)
+  hover = (e.pointerType === 'mouse' && !dragging && !hand.pinch) ? tileAt(p.ix, p.iy) : null
+})
+cv.addEventListener('pointerup', (e) => {
+  const [next, said] = lift(hand, e.pointerId, pointOf(e))
+  hand = next
+  heard(said)
+})
+// A pointer can leave without lifting: the page cancels it, or it is let go of outside the window. Left listed, it
+// would make the next tap the second finger of a pinch.
+cv.addEventListener('pointercancel', (e) => letGo(e.pointerId))
+// (After an ordinary lift this finds nothing to forget: the lift came first.)
+cv.addEventListener('lostpointercapture', (e) => { if (hand.fingers.has(e.pointerId)) letGo(e.pointerId) })
+window.addEventListener('blur', () => letGo())
 /** A pinch on a trackpad arrives as a wheel with Ctrl held. A plain wheel is left alone: it scrolls the page. */
-let wheeled = 0
+let wheel: Wheel = { sum: 0, at: 0 }
 cv.addEventListener('wheel', (e) => {
   if (!e.ctrlKey && !e.metaKey) return
   e.preventDefault()
-  wheeled += e.deltaY
-  if (Math.abs(wheeled) < 30) return
+  const turned = wheelStep(wheel, e.deltaY, e.deltaMode, e.timeStamp)
+  wheel = turned.wheel
+  if (turned.step === 0) return
   const r = cv.getBoundingClientRect()
-  zoomTo(view.zoom + (wheeled < 0 ? 1 : -1), (e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height)
-  wheeled = 0
+  zoomTo(view.zoom + turned.step, (e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height)
 }, { passive: false })
 cv.addEventListener('pointerleave', () => { hover = null })
 function walkTo(x: number, y: number): void { const f = store.ui.farmer; f.tx = x; f.ty = y }

@@ -1,6 +1,119 @@
 import { describe, expect, it } from 'vitest'
 import { cropSprite } from './art/sprites'
-import { frontmost } from './hand'
+import { type Hand, type Said, drop, frontmost, idle, lift, move, press, wheelStep } from './hand'
+
+/** Feed a hand a run of steps and keep what it said at each. */
+function run(steps: ((h: Hand) => [Hand, Said])[]): { hand: Hand; said: Said[] } {
+  let hand = idle()
+  const said: Said[] = []
+  for (const step of steps) { const [next, s] = step(hand); hand = next; said.push(s) }
+  return { hand, said }
+}
+const at = (x: number, y: number) => ({ x, y })
+
+describe('one finger', () => {
+  it('that lifts where it came down is a tap, there', () => {
+    const { said } = run([(h) => press(h, 1, at(50, 60)), (h) => lift(h, 1, at(51, 60))])
+    expect(said).toEqual([{ kind: 'hold' }, { kind: 'tap', at: at(51, 60) }])
+  })
+
+  it('that shakes a little is still a tap', () => {
+    const { said } = run([(h) => press(h, 1, at(50, 60)), (h) => move(h, 1, at(55, 64)), (h) => lift(h, 1, at(55, 64))])
+    expect(said).toEqual([{ kind: 'hold' }, null, { kind: 'tap', at: at(55, 64) }])
+  })
+
+  it('that moves more than eight points is a drag, measured from where it came down, and its lift is no tap', () => {
+    const { said } = run([(h) => press(h, 1, at(50, 60)), (h) => move(h, 1, at(59, 60)), (h) => move(h, 1, at(30, 70)), (h) => lift(h, 1, at(30, 70))])
+    expect(said).toEqual([{ kind: 'hold' }, { kind: 'pan', dx: 9, dy: 0 }, { kind: 'pan', dx: -20, dy: 10 }, { kind: 'dropped' }])
+  })
+
+  it('that was never seen to come down says nothing', () => {
+    expect(run([(h) => move(h, 7, at(1, 1)), (h) => lift(h, 7, at(1, 1))]).said).toEqual([null, null])
+  })
+})
+
+describe('two fingers', () => {
+  it('are a pinch: how far apart they are now against how far they began, about the point between them', () => {
+    const { said } = run([(h) => press(h, 1, at(100, 100)), (h) => press(h, 2, at(200, 100)), (h) => move(h, 2, at(300, 100))])
+    expect(said).toEqual([{ kind: 'hold' }, { kind: 'pinch-began' }, { kind: 'pinch', by: 2, at: at(200, 100) }])
+  })
+
+  it('leave the one that stays able to drag the farm, and its lift is no tap', () => {
+    const { said } = run([
+      (h) => press(h, 1, at(100, 100)), (h) => press(h, 2, at(200, 100)), (h) => lift(h, 1, at(100, 100)),
+      (h) => move(h, 2, at(203, 104)), (h) => lift(h, 2, at(203, 104)),
+    ])
+    expect(said).toEqual([{ kind: 'hold' }, { kind: 'pinch-began' }, { kind: 'hold' }, { kind: 'pan', dx: 3, dy: 4 }, { kind: 'dropped' }])
+  })
+
+  it('are not disturbed by a third', () => {
+    const { said } = run([(h) => press(h, 1, at(100, 100)), (h) => press(h, 2, at(200, 100)), (h) => press(h, 3, at(0, 0)), (h) => move(h, 2, at(150, 100))])
+    expect(said.slice(2)).toEqual([null, { kind: 'pinch', by: 0.5, at: at(125, 100) }])
+  })
+
+  it('stay a pinch when a third comes and goes', () => {
+    const { said, hand } = run([
+      (h) => press(h, 1, at(100, 100)), (h) => press(h, 2, at(200, 100)), (h) => press(h, 3, at(0, 0)), (h) => lift(h, 3, at(0, 0)),
+      (h) => move(h, 2, at(300, 100)),
+    ])
+    expect(said.slice(3)).toEqual([null, { kind: 'pinch', by: 2, at: at(200, 100) }])
+    expect(hand.hold).toBeNull()
+  })
+
+  it('that start on the same point do not divide by nothing', () => {
+    const { said } = run([(h) => press(h, 1, at(5, 5)), (h) => press(h, 2, at(5, 5)), (h) => move(h, 2, at(9, 5))])
+    expect(said[2]).toEqual({ kind: 'pinch', by: 4, at: at(7, 5) })
+  })
+})
+
+describe('a finger the page lost', () => {
+  it('leaves nothing behind: the next tap is a tap, not half of a pinch', () => {
+    const { said, hand } = run([(h) => press(h, 1, at(10, 10)), (h) => [drop(h, 1), null], (h) => press(h, 2, at(40, 40)), (h) => lift(h, 2, at(40, 40))])
+    expect(said.slice(2)).toEqual([{ kind: 'hold' }, { kind: 'tap', at: at(40, 40) }])
+    expect(hand.fingers.size).toBe(0)
+  })
+
+  it('is forgotten when a first finger comes down, even if the page never said it left', () => {
+    const { said } = run([(h) => press(h, 1, at(10, 10)), (h) => press(h, 2, at(40, 40), true), (h) => lift(h, 2, at(40, 40))])
+    expect(said).toEqual([{ kind: 'hold' }, { kind: 'hold' }, { kind: 'tap', at: at(40, 40) }])
+  })
+
+  it('ends a drag without a tap, and ends a pinch', () => {
+    const dragged = run([(h) => press(h, 1, at(10, 10)), (h) => move(h, 1, at(60, 10)), (h) => [drop(h, 1), null], (h) => lift(h, 1, at(60, 10))])
+    expect(dragged.said[3]).toBeNull()
+    expect(dragged.hand).toEqual(idle())
+    const pinched = run([(h) => press(h, 1, at(10, 10)), (h) => press(h, 2, at(60, 10)), (h) => [drop(h), null]])
+    expect(pinched.hand).toEqual(idle())
+  })
+})
+
+describe('the wheel, with Ctrl held', () => {
+  const start = { sum: 0, at: 0 }
+  it('zooms in one step for a notch away from you and out for a notch towards you', () => {
+    expect(wheelStep(start, -100, 0, 1000).step).toBe(1)
+    expect(wheelStep(start, 100, 0, 1000).step).toBe(-1)
+  })
+
+  it('counts a wheel that speaks in lines as one that speaks in pixels', () => {
+    // Firefox: three lines to a notch.
+    expect(wheelStep(start, -3, 1, 1000).step).toBe(1)
+  })
+
+  it('adds up the small movements of a pinch on a trackpad until they make a step', () => {
+    const a = wheelStep(start, -12, 0, 1000)
+    const b = wheelStep(a.wheel, -12, 0, 1016)
+    const c = wheelStep(b.wheel, -12, 0, 1032)
+    expect([a.step, b.step, c.step]).toEqual([0, 0, 1])
+    expect(c.wheel.sum).toBe(0)
+  })
+
+  it('forgets what was left of an old movement after a pause, or when the wheel turns the other way', () => {
+    const a = wheelStep(start, -25, 0, 1000)
+    expect(wheelStep(a.wheel, -10, 0, 1100).step).toBe(1)
+    expect(wheelStep(a.wheel, -10, 0, 2000).step).toBe(0)
+    expect(wheelStep(a.wheel, 10, 0, 1100)).toEqual({ wheel: { sum: 10, at: 1100 }, step: 0 })
+  })
+})
 
 describe('what a tap lands on', () => {
   // Two tiles, one straight in front of the other: the front one's top corner is 16 pixels lower on the screen.

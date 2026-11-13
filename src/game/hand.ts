@@ -1,5 +1,114 @@
-// Which of the things on the screen a tap lands on. Pure.
+// What the fingers on the farm (or the mouse) are doing: one is a tap or a drag, two are a pinch. Pure: the game feeds
+// it what the page says about each pointer and does what it says back. Also here: the wheel, and which of the things
+// on the screen a tap lands on.
 import { holds } from './art/sprites'
+
+export interface Point { x: number; y: number }
+
+export interface Hand {
+  /** Every pointer that is down, by its id, where it was last seen. The first two are the ones a pinch goes by. */
+  fingers: ReadonlyMap<number, Point>
+  /** The one pointer that is down: where its hold began, and whether it has moved far enough to be a drag. */
+  hold: { id: number; from: Point; drag: boolean } | null
+  /** Two pointers down: how far apart they began. */
+  pinch: { dist: number } | null
+}
+
+/** What a hand says has happened. Points and distances are the page's own, as they came in. */
+export type Said =
+  /** A hold began: a later `pan` is measured from here. */
+  | { kind: 'hold' }
+  /** The held pointer is this far from where its hold began. */
+  | { kind: 'pan'; dx: number; dy: number }
+  /** A drag ended. */
+  | { kind: 'dropped' }
+  | { kind: 'tap'; at: Point }
+  /** A second pointer came down: a later `pinch` is measured from now. */
+  | { kind: 'pinch-began' }
+  /** The two pointers are `by` times as far apart as they began, about the point `at`. */
+  | { kind: 'pinch'; by: number; at: Point }
+  | null
+
+/** A pointer becomes a drag once it is more than this many points of the page from where it came down: a finger is shaky. */
+export const DRAG_AFTER = 8
+
+export const idle = (): Hand => ({ fingers: new Map(), hold: null, pinch: null })
+
+function spread(fingers: ReadonlyMap<number, Point>): { dist: number; at: Point } | null {
+  const [a, b] = [...fingers.values()]
+  return a && b ? { dist: Math.hypot(a.x - b.x, a.y - b.y), at: { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 } } : null
+}
+
+/**
+ * A pointer came down. `first` says the page calls it the only one down (a mouse, or the first finger of a touch):
+ * any other still listed was lost without a word, and is forgotten.
+ */
+export function press(h: Hand, id: number, at: Point, first = false): [Hand, Said] {
+  const fingers = new Map(first ? [] : h.fingers)
+  fingers.set(id, at)
+  if (fingers.size === 1) return [{ fingers, hold: { id, from: at, drag: false }, pinch: null }, { kind: 'hold' }]
+  // A second finger makes it a pinch: whatever the first was doing, it is not a drag or a tap any more. A third changes nothing.
+  if (h.pinch) return [{ ...h, fingers }, null]
+  const s = spread(fingers)
+  return [{ fingers, hold: null, pinch: s ? { dist: s.dist } : null }, { kind: 'pinch-began' }]
+}
+
+export function move(h: Hand, id: number, at: Point): [Hand, Said] {
+  if (!h.fingers.has(id)) return [h, null]
+  const fingers = new Map(h.fingers).set(id, at)
+  if (h.pinch) {
+    const s = spread(fingers)
+    // Two fingers that began on one point were no distance apart: count that as one point, so nothing divides by zero.
+    return [{ ...h, fingers }, s ? { kind: 'pinch', by: s.dist / Math.max(1, h.pinch.dist), at: s.at } : null]
+  }
+  if (!h.hold || h.hold.id !== id) return [{ ...h, fingers }, null]
+  const dx = at.x - h.hold.from.x, dy = at.y - h.hold.from.y
+  const drag = h.hold.drag || Math.hypot(dx, dy) > DRAG_AFTER
+  return [{ ...h, fingers, hold: { ...h.hold, drag } }, drag ? { kind: 'pan', dx, dy } : null]
+}
+
+export function lift(h: Hand, id: number, at: Point): [Hand, Said] {
+  if (!h.fingers.has(id)) return [h, null]
+  const fingers = new Map(h.fingers)
+  fingers.delete(id)
+  if (h.pinch) {
+    if (fingers.size >= 2) return [{ ...h, fingers }, null]
+    // The finger that stays goes on to drag the farm from where it is. It began as half of a pinch, so its lift is no tap.
+    const [last] = [...fingers]
+    return last ? [{ fingers, hold: { id: last[0], from: last[1], drag: true }, pinch: null }, { kind: 'hold' }] : [idle(), null]
+  }
+  if (!h.hold || h.hold.id !== id) return [{ ...h, fingers }, null]
+  return [{ fingers, hold: null, pinch: null }, h.hold.drag ? { kind: 'dropped' } : { kind: 'tap', at }]
+}
+
+/** A pointer the page cancelled or lost, or (with no id) all of them. Whatever was under way ends, and nothing is tapped. */
+export function drop(h: Hand, id?: number): Hand {
+  if (id === undefined) return idle()
+  if (!h.fingers.has(id)) return h
+  const fingers = new Map(h.fingers)
+  fingers.delete(id)
+  return { fingers, hold: null, pinch: fingers.size >= 2 ? h.pinch : null }
+}
+
+/* ---------- the wheel ---------- */
+
+/** What the wheel has turned since its last step, in pixels, and when it last turned. */
+export interface Wheel { sum: number; at: number }
+/** A step of zoom takes this much wheel: under one notch of a mouse wheel, and a short pinch on a trackpad. */
+const WHEEL_STEP = 30
+/** A wheel that has been still this long has stopped: what was left of its turning is forgotten. */
+const WHEEL_REST_MS = 250
+/** A wheel may speak in pixels (0), lines (1) or pages (2). */
+const WHEEL_UNIT = [1, 16, 100]
+
+/** Add a turn of the wheel. `step` is 1 to zoom in (the wheel turned away from you), -1 to zoom out, 0 for not yet. */
+export function wheelStep(w: Wheel, deltaY: number, mode: number, now: number): { wheel: Wheel; step: -1 | 0 | 1 } {
+  const turned = deltaY * (WHEEL_UNIT[mode] ?? 1)
+  const stale = now - w.at > WHEEL_REST_MS || Math.sign(turned) !== Math.sign(w.sum)
+  const sum = (stale ? 0 : w.sum) + turned
+  if (Math.abs(sum) < WHEEL_STEP) return { wheel: { sum, at: now }, step: 0 }
+  return { wheel: { sum: 0, at: now }, step: sum < 0 ? 1 : -1 }
+}
 
 /* ---------- what a tap lands on ---------- */
 
