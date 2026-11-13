@@ -115,9 +115,15 @@ describe("a field's colour", () => {
 
   it('replaces the key colours and nothing else', () => {
     const px = (c: readonly number[], a = 255) => [c[0] ?? 0, c[1] ?? 0, c[2] ?? 0, a]
-    const data = new Uint8ClampedArray([...px(KEYS.base), ...px(KEYS.light), ...px(KEYS.dark), ...px([10, 200, 30]), ...px(KEYS.base, 0), ...px([255, 0, 254])])
+    const data = new Uint8ClampedArray([...px(KEYS.base), ...px(KEYS.light), ...px(KEYS.dark), ...px([10, 200, 30]), ...px(KEYS.base, 0), ...px([255, 0, 250])])
     paintKeys(data, '#808080')
-    expect([...data]).toEqual([...px([128, 128, 128]), ...px([185, 185, 185]), ...px([87, 87, 87]), ...px([10, 200, 30]), ...px(KEYS.base, 0), ...px([255, 0, 254])])
+    expect([...data]).toEqual([...px([128, 128, 128]), ...px([185, 185, 185]), ...px([87, 87, 87]), ...px([10, 200, 30]), ...px(KEYS.base, 0), ...px([255, 0, 250])])
+  })
+
+  it('still knows a key colour that a browser has nudged by a hair on reading it back', () => {
+    const data = new Uint8ClampedArray([254, 1, 255, 255, 255, 151, 253, 255, 155, 2, 152, 255])
+    paintKeys(data, '#808080')
+    expect([...data]).toEqual([128, 128, 128, 255, 185, 185, 185, 255, 87, 87, 87, 255])
   })
 })
 

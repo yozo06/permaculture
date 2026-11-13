@@ -73,10 +73,18 @@ export function tones(color: string): { light: [number, number, number]; base: [
   return { light: mix(base, 255, 0.45), base, dark: mix(base, 0, 0.32) }
 }
 
+/**
+ * How far from a key colour a pixel may be and still be one. Some browsers add a little noise to what a page reads
+ * back from a canvas, so that it cannot be used to tell one visitor from another; a key colour must survive that.
+ * Nothing else on the sheet is anywhere near as close.
+ */
+const KEY_SLACK = 2
+
 /** Repaint every key-coloured pixel of some image data (RGBA, four bytes a pixel) with a field's colour. Changes `data` in place. */
 export function paintKeys(data: Uint8ClampedArray | Uint8Array, color: string): void {
   const t = tones(color)
-  const same = (i: number, k: readonly number[]): boolean => data[i] === k[0] && data[i + 1] === k[1] && data[i + 2] === k[2]
+  const near = (v: number | undefined, k: number | undefined): boolean => Math.abs((v ?? 0) - (k ?? 0)) <= KEY_SLACK
+  const same = (i: number, k: readonly number[]): boolean => near(data[i], k[0]) && near(data[i + 1], k[1]) && near(data[i + 2], k[2])
   for (let i = 0; i + 3 < data.length; i += 4) {
     if (data[i + 3] === 0) continue
     const to = same(i, KEYS.base) ? t.base : same(i, KEYS.light) ? t.light : same(i, KEYS.dark) ? t.dark : null
