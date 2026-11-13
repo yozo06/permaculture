@@ -154,6 +154,8 @@ describe('the weekly walk', () => {
     expect(open).toContain('The &lt;corn&gt; is tall.')
     expect(open).not.toContain('<corn>')
     expect(open).toContain('The end of day 7 beside today.')
+    // The boxes count as writing in progress, so a tap outside does not throw the answers away.
+    expect(open.match(/<textarea id="walk\d" class="write" rows="3" data-min="0"/g)).toHaveLength(3)
     // An answer left empty is not printed as a question with nothing under it.
     expect(open).not.toContain('Another?')
     const shut = walkSheetHtml(walkView(half({ day: 9, walks: [walked] }), null, cat), RULES.textMax)

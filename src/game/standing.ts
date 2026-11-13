@@ -248,7 +248,7 @@ export function walkSheetHtml(v: WalkView, max: number): string {
     head +
     (v.week ? '<h3>Since day ' + v.since + '</h3><p class="sub">The end of day ' + v.since + ' beside today.</p>' + comparedHtml(v.week) : '') +
     '<h3>Three questions</h3><p class="sub">Answer the ones you have something to say to. One is enough.</p>' +
-    v.questions.map((q, i) => '<label for="walk' + i + '" class="sub">' + esc(q) + '</label><textarea id="walk' + i + '" class="write" rows="3" maxlength="' + max + '" autocomplete="off" spellcheck="true"></textarea>').join('') +
+    v.questions.map((q, i) => '<label for="walk' + i + '" class="sub">' + esc(q) + '</label><textarea id="walk' + i + '" class="write" rows="3" data-min="0" maxlength="' + max + '" autocomplete="off" spellcheck="true"></textarea>').join('') +
     '<div class="foot"><button type="button" data-act="close">Not now</button><button type="button" class="pri" data-act="walkGo">Keep these</button></div>' +
     journal
   )
