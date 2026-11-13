@@ -363,8 +363,10 @@ function buildGround(): void {
   dirtyGround = false
 }
 buildStatics()
-if (sheetImage.complete && sheetImage.naturalWidth > 0) sheetLoaded()
-else sheetImage.addEventListener('load', sheetLoaded)
+/** Without the sheet there is nothing to draw the farm with. Say so: the farm itself is safe, and its sheets still open. */
+const sheetMissing = (): void => { $('hint').textContent = 'The farm\'s pictures did not load, so the land is blank. Your farm is safe. Reload the page to try again.' }
+if (sheetImage.complete) { if (sheetImage.naturalWidth > 0) sheetLoaded(); else sheetMissing() }
+else { sheetImage.addEventListener('load', sheetLoaded); sheetImage.addEventListener('error', sheetMissing) }
 
 /* ---------- clouds ---------- */
 const clouds = [{ x: 40, y: 18, n: 0, v: 0.035 }, { x: 260, y: 8, n: 1, v: 0.025 }, { x: 400, y: 30, n: 2, v: 0.03 }]
@@ -411,6 +413,8 @@ function momentDrawables(t: number): Drawable[] {
 /* ---------- render ---------- */
 let hover: { x: number; y: number } | null = null
 function frame(t: number): void {
+  // Asked for first, so that one frame that fails to draw does not stop every frame after it.
+  requestAnimationFrame(frame)
   if (dirtyGround) buildGround()
   g = ctx
   // Everything below is drawn in pixels of art; the canvas scales each one up to a whole number of screen pixels.
@@ -438,7 +442,6 @@ function frame(t: number): void {
   list.push(...momentDrawables(t))
   list.sort((a, b) => a.s - b.s)
   for (const o of list) o.d(t)
-  requestAnimationFrame(frame)
 }
 requestAnimationFrame(frame)
 
