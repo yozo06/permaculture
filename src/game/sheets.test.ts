@@ -127,9 +127,9 @@ describe('cropSheetHtml', () => {
 })
 
 describe('the readiness sheet', () => {
-  it('leads on to the market and last month\'s farm', () => {
+  it('leads on to the market, last month\'s farm and the weekly walk', () => {
     const html = readinessSheetHtml({ rows: [], atBar: 0, withBar: 0, earned: [] }, { min: 1, max: 100 })
-    for (const act of ['market', 'rival']) expect(html).toContain('data-act="' + act + '"')
+    for (const act of ['market', 'rival', 'walk']) expect(html).toContain('data-act="' + act + '"')
   })
 })
 

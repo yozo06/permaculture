@@ -1,10 +1,11 @@
-// Where the farm stands: at the market, and against its own past. What each sheet shows is worked
+// Where the farm stands: at the market, against its own past, and on the weekly walk. What each sheet shows is worked
 // out here from the farm and the packs, and drawn here as strings, so both can be tested without a browser.
 import { LAYER_NAMES, type Catalog } from '../engine/catalog'
 import { buyersFor, standing } from '../engine/market'
 import { readiness } from '../engine/readiness'
 import { RULES } from '../engine/rules'
-import type { Crop, FarmState } from '../engine/types'
+import type { Crop, FarmState, Walk } from '../engine/types'
+import { WALK_QUESTIONS, isWalkDay, nextWalkDay, walkedToday } from '../engine/walk'
 import { guildWhole } from '../engine/yields'
 import { footHtml, noteHtml, writingBox } from './sheets'
 import { esc } from './util'
@@ -204,4 +205,49 @@ export function thenAndNow(then: Crop, now: Pick<FarmState, 'crops'>, catalog: C
   if (!today) return was + '. It is not on your farm today.'
   if (stood(today) === stood(then) && !today.wilted) return was + ', and still is.'
   return was + '. Today it is ' + stood(today) + (today.wilted ? ', and wilted' : '') + '.'
+}
+
+/* ---------- the weekly walk ---------- */
+
+export interface WalkView {
+  day: number
+  walkDay: boolean
+  /** Today's walk has been taken. */
+  taken: boolean
+  /** The next walk day after today. */
+  next: number
+  questions: string[]
+  /** The farm of a week ago beside today's, if the log holds that morning. */
+  week: Compared | null
+  /** Walks already taken, newest first. */
+  past: Walk[]
+}
+
+/** `weekAgo` is the farm of `RULES.walk.every` days ago (`farmOn`), or null. */
+export function walkView(now: FarmState, weekAgo: FarmState | null, catalog: Catalog): WalkView {
+  return {
+    day: now.day, walkDay: isWalkDay(now.day), taken: walkedToday(now), next: nextWalkDay(now.day), questions: [...WALK_QUESTIONS],
+    week: weekAgo ? compare(weekAgo, now, catalog) : null, past: now.walks.slice().reverse(),
+  }
+}
+
+export function walkSheetHtml(v: WalkView, max: number): string {
+  const open = v.walkDay && !v.taken
+  const journal = v.past.length
+    ? '<h3>Walks you have taken</h3>' + v.past.map((w) =>
+      '<div class="entry"><p class="sub">Day ' + w.day + '</p>' +
+      w.asked.map((q, i) => (w.answers[i] ? '<p class="sub">' + esc(q) + '</p>' + noteHtml(w.answers[i] ?? '') : '')).join('') + '</div>').join('')
+    : ''
+  const head = '<h2>The weekly walk</h2><p class="sub">Observe and interact. Every ' + RULES.walk.every + ' days the farm asks for no work: look it over, and answer three questions in your own words. It costs nothing and pays nothing. What you write is kept here.</p>'
+  if (!open) {
+    return head + '<p>' + (v.taken ? 'You have taken today\'s walk. ' : '') + 'The next walk is on day ' + v.next + '.</p>' + journal + footHtml()
+  }
+  return (
+    head +
+    (v.week ? '<h3>This week</h3><p class="sub">A week ago beside today.</p>' + comparedHtml(v.week) : '') +
+    '<h3>Three questions</h3><p class="sub">Answer the ones you have something to say to. One is enough.</p>' +
+    v.questions.map((q, i) => '<label for="walk' + i + '" class="sub">' + esc(q) + '</label><textarea id="walk' + i + '" class="write" rows="3" maxlength="' + max + '" autocomplete="off" spellcheck="true"></textarea>').join('') +
+    '<div class="foot"><button type="button" data-act="close">Not now</button><button type="button" class="pri" data-act="walkGo">Keep these</button></div>' +
+    journal
+  )
 }

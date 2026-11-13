@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest'
 import { marketCatalog as cat, smallFarm } from '../engine/fixtures'
 import { RULES } from '../engine/rules'
 import type { Crop, FarmState } from '../engine/types'
-import { compare, marketSheetHtml, marketView, measure, rivalSheetHtml, rivalView, saleSheetHtml, thenAndNow } from './standing'
+import { WALK_QUESTIONS } from '../engine/walk'
+import { compare, marketSheetHtml, marketView, measure, rivalSheetHtml, rivalView, saleSheetHtml, thenAndNow, walkSheetHtml, walkView } from './standing'
 
 const tree = (seed: string, patch: Partial<Crop> = {}): Crop =>
   ({ seed, x: 20, y: 20, stage: 4, best: 4, due: 99, wilted: false, perennial: true, notes: '', journal: [], ...patch })
@@ -118,5 +119,46 @@ describe('the rival', () => {
     expect(thenAndNow(tree('squash', { perennial: false, stage: 2 }), now, cat)).toBe('Squash was at stage 3 of 5 then. Today it is at stage 2 of 5, and wilted.')
     expect(thenAndNow(tree('oak'), now, cat)).toBe('Oak was a rooted tree then. It is not on your farm today.')
     expect(thenAndNow(tree('no-such-seed'), now, cat)).toBeNull()
+  })
+})
+
+describe('the weekly walk', () => {
+  const walked = { day: 7, asked: ['An older question?', 'Another?'], answers: ['The <corn> is tall.', ''] }
+
+  it('offers the walk on a walk day, with the three questions and the week that was', () => {
+    const v = walkView(half({ day: 14 }), farm({ day: 7 }, tree('corn')), cat)
+    expect(v).toMatchObject({ day: 14, walkDay: true, taken: false, next: 21, questions: [...WALK_QUESTIONS] })
+    expect(v.week?.rows[0]).toMatchObject({ then: 1, now: 3 })
+  })
+
+  it('says when the next walk is on any other day, and that today\'s is done once it is', () => {
+    expect(walkView(half({ day: 9 }), null, cat)).toMatchObject({ walkDay: false, taken: false, next: 14, week: null })
+    expect(walkView(half({ day: 14, walks: [{ ...walked, day: 14 }] }), null, cat)).toMatchObject({ walkDay: true, taken: true })
+  })
+
+  it('keeps the walks already taken, newest first, each with the questions it was asked', () => {
+    const v = walkView(half({ day: 20, walks: [walked, { day: 14, asked: [...WALK_QUESTIONS], answers: ['a', 'b', 'c'] }] }), null, cat)
+    expect(v.past.map((w) => w.day)).toEqual([14, 7])
+  })
+
+  it('draws three boxes to write in on a walk day, and only the journal on other days, escaped', () => {
+    const open = walkSheetHtml(walkView(half({ day: 14, walks: [walked] }), farm({ day: 7 }, tree('corn')), cat), RULES.textMax)
+    for (const [i, q] of WALK_QUESTIONS.entries()) {
+      expect(open).toContain('<label for="walk' + i + '"')
+      expect(open).toContain(q)
+    }
+    expect(open).toContain('data-act="walkGo"')
+    expect(open).toContain('Trees standing')
+    expect(open).toContain('The &lt;corn&gt; is tall.')
+    expect(open).not.toContain('<corn>')
+    // An answer left empty is not printed as a question with nothing under it.
+    expect(open).not.toContain('Another?')
+    const shut = walkSheetHtml(walkView(half({ day: 9, walks: [walked] }), null, cat), RULES.textMax)
+    expect(shut).not.toContain('data-act="walkGo"')
+    expect(shut).toContain('The next walk is on day 14')
+    expect(shut).toContain('An older question?')
+    const done = walkSheetHtml(walkView(half({ day: 14, walks: [{ ...walked, day: 14 }] }), null, cat), RULES.textMax)
+    expect(done).not.toContain('data-act="walkGo"')
+    expect(done).toContain('You have taken today')
   })
 })

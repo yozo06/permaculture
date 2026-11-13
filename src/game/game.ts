@@ -9,6 +9,7 @@ import {
 import { farmFileName, farmFileText, parseFarmFile } from '../engine/log'
 import { buyersFor, standing } from '../engine/market'
 import { farmOn } from '../engine/past'
+import { WALK_QUESTIONS, isWalkDay, walkedToday } from '../engine/walk'
 import { farmCode, layOut, momentOf, readPicture, type Picture } from '../engine/picture'
 import { explainChecklist, explainPasses, harvestWork, pickPrompt, recallBank, waterWork, writePasses } from '../engine/ladder'
 import { RULES, cropOf, revivable as isRevivable, ripe as isRipe, thirsty as isThirsty, zone } from '../engine/rules'
@@ -26,7 +27,7 @@ import {
   pickerHtml, plantSheetHtml, readinessSheetHtml, shareSheetHtml, tickList, writingBox,
 } from './sheets'
 import { arrivalText, neighbourCropView, neighbourRows, shareView, type ShareView } from './visit'
-import { marketSheetHtml, marketView, rivalSheetHtml, rivalView, saleSheetHtml, thenAndNow } from './standing'
+import { marketSheetHtml, marketView, rivalSheetHtml, rivalView, saleSheetHtml, thenAndNow, walkSheetHtml, walkView } from './standing'
 import { afterJump, bagView, cropView, driftText, edgeLine, guildNews, guildStatus, harvestPay, needsText, saplingNews, timesOver, packColor, pickerView, readinessView, sourceLinks, splitName, tending, treeView, type TreeView } from './views'
 
 /* ---------- types ---------- */
@@ -1287,7 +1288,7 @@ function setBar(pack: string): void {
   toast('The bar for ' + packTitle(pack) + ' is ' + S.bars[pack] + '.')
 }
 
-/* ---------- the market and last month's farm ---------- */
+/* ---------- the market, last month's farm, the weekly walk ---------- */
 function openMarket(): void { open(marketSheetHtml(marketView(S, catalog))) }
 function openSale(buyerId: string): void {
   const buyer = catalog.buyer(buyerId)
@@ -1309,6 +1310,13 @@ function visitPast(): void {
   close()
   enterVisit(then, 'you', 'your farm on day ' + then.day, RULES.rival.days + ' days ago', Object.keys(then.fields), true)
 }
+function openWalk(): void { open(walkSheetHtml(walkView(S, farmAgo(RULES.walk.every), catalog), RULES.textMax)) }
+function walk(): void {
+  const answers = WALK_QUESTIONS.map((_, i) => byIdAs('walk' + i, HTMLTextAreaElement).value)
+  if (!act({ type: 'walked', asked: [...WALK_QUESTIONS], answers })) return
+  toast('Kept. The next walk is in ' + RULES.walk.every + ' days.')
+  openWalk()
+}
 
 /* ---------- almanac ---------- */
 function openAlmanac(): void { open(almanacHtml(catalog, S.energyMax, __APP_VERSION__)) }
@@ -1316,6 +1324,7 @@ function openAlmanac(): void { open(almanacHtml(catalog, S.energyMax, __APP_VERS
 /* ---------- sleep ---------- */
 function morningReport(night: Night): string {
   const names = (ids: string[]): string => esc(ids.map(nameOf).join(', '))
+  const walkDue = isWalkDay(S.day) && !walkedToday(S)
   const t = tending(S)
   // Crops that wilted this very night get their own line below; don't list them twice.
   const revive = t.revive.filter((id) => !night.wilted.includes(id))
@@ -1327,7 +1336,8 @@ function morningReport(night: Night): string {
     (todo || '<p>Nothing needs tending. Plant something, or forage.</p>') +
     (night.saved.length ? '<p><b>Rain barrel saved:</b> ' + names(night.saved) + '.</p>' : '') +
     (night.wilted.length ? '<p><b>Wilted overnight:</b> ' + names(night.wilted) + '. Revive them today.</p>' : '') +
-    '<p class="sub">New wild finds have grown in the forest.</p>' + foot('Start the day')
+    (walkDue ? '<p><b>A walk day.</b> No tasks: look the farm over and answer three questions, in your own time today.</p>' : '') +
+    '<p class="sub">New wild finds have grown in the forest.</p>' + foot('Start the day', walkDue ? '<button type="button" data-act="walk">Take the walk</button>' : undefined)
 }
 function sleep(): void {
   const night = $('night')
@@ -1402,6 +1412,8 @@ sheet.addEventListener('click', (e) => {
   else if (what === 'sellGo') sell(arg)
   else if (what === 'rival') openRival()
   else if (what === 'visitPast') visitPast()
+  else if (what === 'walk') openWalk()
+  else if (what === 'walkGo') walk()
   else if (what === 'setBar') setBar(arg)
   else if (what === 'expand') expand(arg)
   else if (what === 'forage') forage(arg)
