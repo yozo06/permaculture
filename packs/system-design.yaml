@@ -21,7 +21,7 @@ sources:
   - id: raft-thesis
     title: "Consensus: Bridging Theory and Practice (Diego Ongaro's dissertation)"
     url: https://web.stanford.edu/~ouster/cgi-bin/papers/OngaroPhD.pdf
-    note: Chapter 4 cluster membership changes (one server at a time), chapter 5 log compaction, section 6.4 read-only queries.
+    note: Sections 4.1 and 4.2 membership changes one server at a time, chapter 5 log compaction, section 6.4 read-only queries.
   - id: dynamo
     title: "Dynamo: Amazon's Highly Available Key-value Store"
     url: https://www.allthingsdistributed.com/files/amazon-dynamo-sosp2007.pdf
@@ -430,7 +430,8 @@ seeds:
             - The client, which asks for one after a fixed number of writes
           why: >-
             A follower already holds everything a snapshot needs, so shipping one from the leader would only
-            waste bandwidth. The leader's role is not weakened: followers just reorganise data it already sent.
+            waste bandwidth. It is a step away from Raft's strong-leader rule, and a safe one: the entries are
+            already committed, so there is nothing left to disagree about.
           source: raft
         - q: When does a Raft leader send InstallSnapshot instead of AppendEntries?
           answer: When it has already discarded the next entry that follower needs
@@ -452,8 +453,8 @@ seeds:
     minutes: 45
     sources: [raft, raft-thesis]
     summary: >-
-      Read section 6 of the Raft paper (joint consensus) and chapter 4 of the dissertation up to 4.3 (one
-      server at a time). Notes: why servers cannot all switch configuration at once, what joint consensus
+      Read section 6 of the Raft paper (joint consensus) and sections 4.1 and 4.2 of the dissertation (one
+      server at a time, and catching a new server up). Notes: why servers cannot all switch configuration at once, what joint consensus
       asks of elections and commits, how single-server changes reach the same safety more simply, and why a
       new server first catches up without a vote.
     rubric:
