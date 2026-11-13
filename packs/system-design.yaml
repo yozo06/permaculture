@@ -511,8 +511,8 @@ seeds:
     summary: >-
       Read section 8 of the Raft paper (client interaction) and section 6.4 of the dissertation (read-only
       queries). Notes: why a leader cannot simply answer a read from its own state, the two things it must
-      know first, how ReadIndex confirms them with one round of heartbeats and no log write, and what a
-      lease-based read assumes about clocks.
+      know first, how ReadIndex checks the second with one round of heartbeats and no log write, and what
+      a lease-based read assumes about clocks.
     rubric:
       - Gives a sequence in which a leader answering from local state returns stale data
       - Names the two things a leader must establish before serving a read
