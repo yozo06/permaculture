@@ -204,8 +204,24 @@ describe('the sheets', () => {
     expect(cardsFromText(cardsText(had), had)).toEqual({ cards: had, unread: 0 })
     // One line changed, the others untouched.
     expect(cardsFromText(cardsText(had).replace('x = y = z', 'x = why'), had).cards).toEqual([{ q: '2 + 2 = ?', a: '4' }, { q: 'x', a: 'why' }, { q: 'a = b', a: 'c = d' }])
-    // A new line with two equals signs is a sum and its answer.
+    // A new line with two equals signs is a sum and its answer when its first part is a question...
     expect(cardsFromText('3 + 3 = ? = 6').cards).toEqual([{ q: '3 + 3 = ?', a: '6' }])
+    // ...and otherwise a name and a formula, as the reader reads it.
+    expect(cardsFromText('Force = F = ma').cards).toEqual([{ q: 'Force', a: 'F = ma' }])
+  })
+
+  it('keeps the question of a card whose answer is changed, wherever its equals signs are', () => {
+    const had = [{ q: 'Force', a: 'F = ma' }, { q: '2 + 2 = ?', a: '4' }]
+    expect(cardsFromText('Force = F = m a\n2 + 2 = ? = four', had).cards).toEqual([{ q: 'Force', a: 'F = m a' }, { q: '2 + 2 = ?', a: 'four' }])
+  })
+
+  it('hands out two cards that read as the same line one each, in their order', () => {
+    const had = [{ q: 'a', a: 'b = c' }, { q: 'a = b', a: 'c' }, { q: 'x', a: 'y' }]
+    expect(cardsFromText(cardsText(had), had).cards).toEqual(had)
+  })
+
+  it('reads a line with a tab at its end or its start', () => {
+    expect(cardsFromText('q = a\t\n\tr = b')).toEqual({ cards: [{ q: 'q', a: 'a' }, { q: 'r', a: 'b' }], unread: 0 })
   })
 
   it('never lets what a farmer typed become markup, on any of its sheets', () => {

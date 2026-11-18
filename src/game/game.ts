@@ -24,7 +24,7 @@ import { BOOK_KEY, ageText, bookText, readBook, receive, remove, tooOld, type Ar
 import { NEUTRAL_COLOR, cropHeight, cropSprite, holds, markRise, paintKeys, sprite as spriteAt } from './art/sprites'
 import { drop, frontmost, idle, lift, move, press, rehold, wheelStep, type Hand, type Point, type Said, type Target, type Wheel } from './hand'
 import { addSheetHtml, aiPrompt, cardsFromText, explainAsk, fieldSheetHtml, harvestTag, layerText, nameFieldSheetHtml, newFieldId, newSeedId, pickColor, readingHtml, toAdd, topicSheetHtml, type Adding } from './own'
-import { createStore, defaultId, LOG_KEY, type StorageLike } from './store'
+import { createStore, defaultFarmer, defaultId, LOG_KEY, type StorageLike } from './store'
 import { esc, shuffle } from './util'
 import { REF, cameraAfter, defaultZoom, fitView, pinchZoom, shift, zoomRange, type View } from './view'
 import {
@@ -511,7 +511,11 @@ function close(): void {
   veil.hidden = true
   // A farm link that arrived while the player was writing has waited for them to finish.
   const waiting = PENDING.shift()
-  if (waiting !== undefined) return handleLink(waiting)
+  if (waiting !== undefined) {
+    handleLink(waiting)
+    // A link that could not be read leaves nothing on screen. A farm with no field still needs its welcome then.
+    if (!veil.hidden || visiting) return
+  }
   // Until the farm has a field there is nothing to do on it, so the welcome comes back (unless they are looking at a friend's farm first).
   if (needsSetup() && !visiting) openWelcome(visitedPacks)
 }
@@ -524,7 +528,8 @@ const primary = (): HTMLButtonElement | null => sheet.querySelector<HTMLButtonEl
 const hasDraft = (): boolean =>
   [...sheet.querySelectorAll<HTMLTextAreaElement>('textarea[data-min]')].some((t) => t.value.trim().length > 0) ||
   // A box that came filled in (a topic's name, its cards) holds a draft once it no longer says what it came with.
-  [...sheet.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>('[data-keep]')].some((t) => t.value !== t.defaultValue) ||
+  [...sheet.querySelectorAll<HTMLElement>('[data-keep]')].some((t) =>
+    t instanceof HTMLSelectElement ? [...t.options].some((o) => o.selected !== o.defaultSelected) : (t instanceof HTMLInputElement || t instanceof HTMLTextAreaElement) && t.value !== t.defaultValue) ||
   sheet.querySelector('[data-act="submitExplain"]') !== null
 /** Dismiss by tapping away or Escape, but never while the player is mid-writing. The sheet's own buttons always close. */
 function softClose(): void { if (!hasDraft()) close() }
@@ -1582,13 +1587,16 @@ function openDropField(fieldId: string): void {
   if (!field) return
   const n = field.seeds.length
   open(chip(fieldId) + '<h2>Remove this field?</h2><p>The <b>' + esc(field.title) + '</b> field goes, with ' + (n === 0 ? 'no topics in it' : n === 1 ? 'its 1 topic' : 'its ' + n + ' topics') + ', and its land goes back to the wild. Nothing is planted in it, so no crop is lost.</p>' +
-    '<div class="foot"><button type="button" data-act="ownBack" data-arg="' + esc(fieldId) + '">Keep it</button><button type="button" class="pri" data-act="ownDropGo" data-arg="' + esc(fieldId) + '">Remove it</button></div>')
+    // The sheet opens on its main button, so the main button is the one that changes nothing.
+    '<div class="foot"><button type="button" data-act="ownDropGo" data-arg="' + esc(fieldId) + '">Remove it</button><button type="button" class="pri" data-act="ownBack" data-arg="' + esc(fieldId) + '">Keep it</button></div>')
 }
 function dropField(fieldId: string): void {
   if (!act({ type: 'own-field-removed', field: fieldId })) return
   if (store.ui.seedSel && fieldOfSeed(store.ui.seedSel) === fieldId) store.ui.seedSel = null
   store.ui.treeTab = null
+  // The world may have shrunk: the camera and the farmer go home, so neither is left out past its edge.
   store.ui.cam = camHome()
+  store.ui.farmer = defaultFarmer()
   store.saveUi()
   toast('Field removed.')
   // A farm with no field left goes back to the welcome.

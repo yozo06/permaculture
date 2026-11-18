@@ -204,21 +204,33 @@ export function fieldSheetHtml(field: OwnField, state: Pick<FarmState, 'crops' |
 export const cardsText = (cards: readonly Card[]): string => cards.map((c) => c.q + ' = ' + c.a).join('\n')
 
 /**
- * Cards from the lines of that box: "question = answer", or the two with a tab between. A line that still reads as one
- * of the cards the topic had (`known`) is that card, untouched, so that saving a topic never rewrites a card whose
- * question has an equals sign in it. A new line is parted at its last " = ": "2 + 2 = ? = 4" asks "2 + 2 = ?".
+ * Cards from the lines of that box: "question = answer", or the two with a tab between. `known` are the cards the
+ * topic had. A line that still says one of them is that card, untouched, and a line that still begins with one's
+ * question keeps that question, so that saving a topic never moves the place where a card is parted. A line that is
+ * new is parted at its first " = ", as the reader parts it ("Force = F = ma"), unless what comes before its last one
+ * is a question ("2 + 2 = ? = 4").
  */
 export function cardsFromText(text: string, known: readonly Card[] = []): { cards: Card[]; unread: number } {
   const cards: Card[] = []
-  const was = new Map(known.map((c) => [c.q + ' = ' + c.a, c]))
+  const left = known.slice()
   let unread = 0
-  for (const line of text.split('\n')) {
-    if (line.trim() === '') continue
-    const same = was.get(line.trim())
-    if (same) { cards.push({ ...same }); continue }
-    const tab = line.indexOf('\t'), eq = line.lastIndexOf(' = ')
-    const at = tab >= 0 ? tab : eq
-    const q = at >= 0 ? line.slice(0, at).trim() : '', a = at >= 0 ? line.slice(at + (tab >= 0 ? 1 : 3)).trim() : ''
+  for (const raw of text.split('\n')) {
+    const line = raw.trim()
+    if (line === '') continue
+    const same = left.findIndex((c) => c.q + ' = ' + c.a === line)
+    const was = left[same]
+    if (was) { cards.push({ ...was }); left.splice(same, 1); continue }
+    let q = '', a = ''
+    const tab = line.indexOf('\t')
+    const kept = left.findIndex((c) => line.startsWith(c.q + ' = '))
+    const keeps = left[kept]
+    if (tab >= 0) { q = line.slice(0, tab).trim(); a = line.slice(tab + 1).trim() }
+    else if (keeps) { q = keeps.q; a = line.slice(keeps.q.length + 3).trim(); left.splice(kept, 1) }
+    else {
+      const first = line.indexOf(' = '), last = line.lastIndexOf(' = ')
+      const at = last > first && /[?？]\s*$/.test(line.slice(0, last)) ? last : first
+      if (at >= 0) { q = line.slice(0, at).trim(); a = line.slice(at + 3).trim() }
+    }
     if (q && a) cards.push({ q, a })
     else unread++
   }
@@ -232,7 +244,7 @@ export function topicSheetHtml(field: OwnField, s: OwnSeed, planted: boolean): s
     chipHtml(field.title, field.color) + '<h2>Change a topic</h2>' +
      '<label for="tName" class="sub">Name</label><input type="text" id="tName" class="write" data-quiet data-keep maxlength="' + TEXT.name + '" value="' + esc(s.name) + '" autocomplete="off">' +
     '<label for="tKind" class="sub">What kind of thing is it? This decides how it is drawn, asked about and harvested.</label>' +
-    '<select id="tKind" class="write">' + KIND_ORDER.map((k) => '<option value="' + k + '"' + (k === s.kind ? ' selected' : '') + '>' + esc(KINDS[k].label) + ' (' + esc(KINDS[k].such) + ')</option>').join('') + '</select>' +
+    '<select id="tKind" class="write" data-keep>' + KIND_ORDER.map((k) => '<option value="' + k + '"' + (k === s.kind ? ' selected' : '') + '>' + esc(KINDS[k].label) + ' (' + esc(KINDS[k].such) + ')</option>').join('') + '</select>' +
     '<label for="tSummary" class="sub">What to read or do (optional)</label><textarea id="tSummary" class="write short" rows="2" data-keep maxlength="' + TEXT.summary + '">' + esc(s.summary) + '</textarea>' +
     '<label for="tGroup" class="sub">Group (optional)</label><input type="text" id="tGroup" class="write" data-quiet data-keep list="tGroups" maxlength="' + TEXT.group + '" value="' + esc(s.group) + '" autocomplete="off">' +
     '<datalist id="tGroups">' + groups.map((g) => '<option value="' + esc(g) + '">').join('') + '</datalist>' +
