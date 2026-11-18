@@ -116,7 +116,7 @@ There is no message on the rain. The chat you send it in is the message.
 
 ### 5.6 Choosing what you grow
 
-A new farm starts with the fields its farmer ticks, not with every pack. Each pack is shown with its one-line description; at least one must be ticked; nothing is ticked for you unless you arrived by a farm link. The Workshop is one of the choices, described as what it is: helping to build the game. An unopened pack can be opened later from its tab in the learning tree. Farms that already exist keep every field they have, the sample farm keeps the four fields it was made with, and a pack added to the game later is offered, not forced.
+A new farm starts with the fields its farmer ticks, not with every pack. Each pack is shown with its one-line description; at least one must be ticked (or, since version 0.9.0, a field of the farmer's own named); nothing is ticked for you unless you arrived by a farm link. The Workshop is one of the choices, described as what it is: helping to build the game. An unopened pack can be opened later from its tab in the learning tree. Farms that already exist keep every field they have, the sample farm keeps the four fields it was made with, and a pack added to the game later is offered, not forced.
 
 The engine already opens a field with an event of its own, so the main change is in the store, which today opens a field for every pack when a farm begins and again on every page load. The engine needs three small checks, because until now it could assume every pack had a field:
 

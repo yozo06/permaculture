@@ -2,6 +2,8 @@
 // docs/design.md says the same things; src/engine/design-doc.test.ts checks its tables against RULES.
 import { LAYER_NAMES, type Catalog } from '../engine/catalog'
 import { LADDER } from '../engine/ladder'
+import { KINDS, KIND_ORDER, OWN_TODAY } from '../engine/own'
+import { TEXT } from '../engine/reader'
 import { GROUND_UP, earnedLine } from '../engine/readiness'
 import { RULES } from '../engine/rules'
 import type { Layer } from '../engine/types'
@@ -87,6 +89,14 @@ export function almanacHtml(catalog: Catalog, energyMax: number, version: string
       'Tap land next to a field to fence it in: ' + RULES.fence.open + ' coins for open ground, ' + RULES.fence.forest + ' to clear forest. Fields grow one tile at a time, any shape.',
       'A seed can sit on the <b>edge</b> of its own field, where it borders a second. Its harvest pays ' + timesOver(RULES.edge.times) + ', ' + RULES.edge.times * RULES.harvest.coins + ' coins, once you have a tree rooted in the field it borders. The learning tree lists them under both fields.',
       "Some seeds are not questions. The Workshop's are days of work on the game itself: you explain what moved forward, and you harvest when it ships, with a link as proof.",
+    ]) +
+    '<h3>A field of your own</h3>' +
+    list([
+      'Open the learning tree and press <b>+ Your own</b>. Name what you want to learn, then paste whatever you have: a list of topics, a syllabus, a contents page, your notes, a word list or a file of flashcards. One topic to a line is enough. The game reads it into topics and shows you what it made of it before anything is added.',
+      'Short pairs such as “Hund - dog” become <b>question cards</b>, up to ' + TEXT.bundle + ' to a topic. The wrong answers on a card are borrowed from the other cards of the field. A topic with cards is watered by answering them; any other is watered by writing.',
+      'Each topic is one <b>kind</b> of thing: ' + KIND_ORDER.map((k) => KINDS[k].label.toLowerCase()).join(', ') + '. The game guesses it from the name, and you can change it from the learning tree. A skill is harvested by doing it and saying so; the others by cards or a write-up.',
+      'A field of your own has no end: no readiness, no bar, nothing that waits for anything else. It holds ' + OWN_TODAY.seeds + ' topics. Fencing land in for it costs ' + RULES.fence.own + ' coins a tile. A topic that was never planted can be removed; one in the ground can be changed, and stays.',
+      'Your topics are part of your farm, so Export carries them. They are not shown in a farm link.',
     ]) +
     '<h3>Reading the farm</h3>' +
     '<p class="sub">Every seed belongs to one of seven layers, as in a forest garden, and each layer has a shape of its own. So the map shows what kind of knowledge sits where, and which kind a field is missing. These are the trees; a crop starts as a sprout of the same kind and gets bigger at each stage.</p>' +

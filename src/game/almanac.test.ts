@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { collectPacks } from '../../scripts/packs-lib.mjs'
 import { buildCatalog, LAYER_NAMES } from '../engine/catalog'
+import { OWN_TODAY } from '../engine/own'
+import { TEXT } from '../engine/reader'
 import { GROUND_UP } from '../engine/readiness'
 import { RULES } from '../engine/rules'
 import { almanacHtml } from './almanac'
@@ -12,6 +14,16 @@ describe('almanacHtml', () => {
     const html = almanacHtml(catalog, RULES.energyMax, '0.0.0')
     expect(html).toContain('Two days past thirsty without water, a crop wilts overnight')
     expect(html).toContain('The barrel fills before it is spent, so a crop never wilts overnight while the barrel holds a day')
+  })
+
+  it('says how to grow a subject of your own, with the numbers the game plays by', () => {
+    const html = almanacHtml(catalog, RULES.energyMax, '0.0.0')
+    const section = html.slice(html.indexOf('<h3>A field of your own</h3>'), html.indexOf('<h3>Reading the farm</h3>'))
+    expect(section).toContain('+ Your own')
+    expect(section).toContain('costs ' + RULES.fence.own + ' coins a tile')
+    expect(section).toContain('It holds ' + OWN_TODAY.seeds + ' topics')
+    expect(section).toContain('up to ' + TEXT.bundle + ' to a topic')
+    expect(section).toContain('a skill to practise')
   })
 
   it('says what a farm link shows and never shows, with the numbers from RULES', () => {

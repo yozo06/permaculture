@@ -10,6 +10,8 @@ Topics are seeds. Plant one in its field with notes in your own words, water it 
 
 Any goal is a **pack**: a YAML file of seeds with layers, prerequisites and questions. The game is built from `packs/`: add a seed to a YAML file and it is in the game. The packs so far are a senior backend engineer's prep (Haskell, system design, infra, DSA patterns, leadership) and everyday Kannada. The game's own roadmap is a pack too.
 
+Or grow your own subject, with no file to write: type what you want to learn and paste whatever you have. A list, a syllabus, your notes, a word list or a file of flashcards all work, and the game turns them into topics and question cards. See [`docs/own-fields.md`](docs/own-fields.md).
+
 ![The learning tree for System design: rooted seeds are solid, growing ones carry a bar, locked ones are dashed, and lines show what each seed needs](docs/img/learning-tree.jpg)
 
 ## Play with neighbours
@@ -20,7 +22,7 @@ A link shows only the fields you tick, with each crop at the furthest it has gro
 
 ## Status
 
-Phase 1 is done: the rules are an engine of their own (a farm is a fold over a log of what you did), the game is built from `packs/`, and a crop climbs a depth ladder — notes when you plant it, recall cards, explaining it in your own words, then a harder harvest. There are seven packs and 225 seeds: five full catalogues (Haskell backend, system design, infra, DSA patterns, leadership), everyday Kannada, and the Workshop, the game's own roadmap. The world pans and zooms, with a learning tree, wild finds and an almanac. Everything runs in your browser; your farm is saved there. Export it from the seed bag before clearing site data. Farms from the Phase 0 prototype still import.
+Phase 1 is done: the rules are an engine of their own (a farm is a fold over a log of what you did), the game is built from `packs/`, and a crop climbs a depth ladder — notes when you plant it, recall cards, explaining it in your own words, then a harder harvest. There are seven packs and 226 seeds: five full catalogues (Haskell backend, system design, infra, DSA patterns, leadership), everyday Kannada, and the Workshop, the game's own roadmap. The world pans and zooms, with a learning tree, wild finds and an almanac. Everything runs in your browser; your farm is saved there. Export it from the seed bag before clearing site data. Farms from the Phase 0 prototype still import.
 
 Phase 2, **Neighbours**, is half built (version 0.2.0): saved farms are guarded against later edits to the packs and rules, new farmers choose their fields, and farms can be shared and visited by link. Rain comes after a first week of beta. After that comes optional AI with your own key. The art was planned for last and did not wait: it is further down.
 
@@ -35,6 +37,8 @@ Then three rules about what grows together (version 0.6.0). A **guild** is whole
 Then where it all leads (version 0.7.0). At the **market** a buyer is a named set of bars, such as "Haskell at 80, System design at 60", and is buying once your farm meets them; a sale is something real that came of it, recorded in your own words. Your only **rival** is your own farm thirty days ago, which you can walk round. And every seventh day is a **walk day**: no tasks, the week that was, and three questions.
 
 And the farm has art of its own (version 0.8.0): one sprite sheet, made for this game, in place of shapes drawn by code. It is drawn at your screen's own resolution, so it is sharp on a phone and on a laptop, and you can zoom: pinch, or use the + and − buttons. How the art is made, and how to change it, is in [`art/README.md`](art/README.md).
+
+And it grows anyone's subject (version 0.9.0). A new farmer is asked what they want to learn before they are shown the ready-made fields. They paste what they have, and a reader with no AI in it works out the topics, their groups and the question cards. The topics live in the farm's own log, so an exported farm carries them.
 
 Why this exists, what it promises and the whole plan are in [`ROADMAP.md`](ROADMAP.md).
 
