@@ -149,55 +149,62 @@ function branchId(title: string): string {
   return 'g' + (h >>> 0).toString(36)
 }
 
-const same = (a: string, b: string): boolean => a.trim().toLowerCase() === b.trim().toLowerCase()
+/** How an answer reads, for telling two of them apart: put together the same way, trimmed, in small letters. */
+const read = (s: string): string => s.normalize('NFC').trim().toLowerCase()
 const isQuestion = (q: string): boolean => /[?？]\s*$/.test(q)
 const asks = (q: string): string => (isQuestion(q) ? q : 'Which of these goes with “' + q + '”?')
-
-/** How many of a field's other cards are looked at for a wrong answer before giving up: enough to find three, and no more. */
-const LOOK = 40
 /** A question that can be turned round and asked from its answer: a name, not a sentence. */
 const turns = (c: Card): boolean => !isQuestion(c.q) && c.q.length <= 60
 
 /**
  * The questions a field's cards make: each card asked forwards to water, and backwards to harvest. The wrong answers
- * are borrowed: from the other cards of the topic first, then from the cards of the topics after it. The work for one
- * card does not grow with the field, so a field of many cards is no slower to open than a field of few.
+ * are borrowed: from the other cards of the topic first, then from the rest of the field. The field's answers are
+ * listed once, each a single time, and a card takes the next few from where it stands in that list. So a list sorted
+ * by its answers ("der" fifty times, then "die") still finds the others, and the work for one card does not grow
+ * with the field.
  */
 function quiz(f: OwnField): Map<string, { water: Mcq[]; harvest: Mcq[] }> {
   const out = new Map<string, { water: Mcq[]; harvest: Mcq[] }>()
-  const all = f.seeds.flatMap((s, at) => s.cards.map((card) => ({ at, card })))
-  let after = 0
-  f.seeds.forEach((s, at) => {
-    after += s.cards.length
-    const end = after
-    /** Up to three of `of` from other cards, the nearest first, none that reads the same as `right` or as another. */
-    const wrong = (i: number, right: string, of: (c: Card) => string | null): string[] => {
-      const found: string[] = []
-      const take = (c: Card | undefined): void => {
-        const w = c ? of(c) : null
-        if (w !== null && !same(w, right) && !found.some((o) => same(o, w))) found.push(w)
-      }
-      for (let k = 1; k < s.cards.length && found.length < 3; k++) take(s.cards[(i + k) % s.cards.length])
-      for (let k = 0; k < Math.min(all.length, LOOK) && found.length < 3; k++) {
-        const other = all[(end + i + k) % all.length]
-        if (other && other.at !== at) take(other.card)
-      }
-      return found
+  const answers: string[] = []
+  const names: string[] = []
+  const seenAnswers = new Set<string>()
+  const seenNames = new Set<string>()
+  for (const s of f.seeds) {
+    for (const c of s.cards) {
+      if (!seenAnswers.has(read(c.a))) { seenAnswers.add(read(c.a)); answers.push(c.a) }
+      if (turns(c) && !seenNames.has(read(c.q))) { seenNames.add(read(c.q)); names.push(c.q) }
     }
+  }
+  let at = 0
+  for (const s of f.seeds) {
     const water: Mcq[] = []
     const harvest: Mcq[] = []
     s.cards.forEach((c, i) => {
+      const from = at++
+      /** Up to three wrong ones for `right`: the topic's own first, none that reads the same as it or as another. */
+      const wrong = (right: string, mine: (x: Card) => string | null, field: readonly string[]): string[] => {
+        const found: string[] = []
+        const taken = new Set([read(right)])
+        const take = (w: string | null | undefined): void => {
+          if (w === null || w === undefined || taken.has(read(w))) return
+          taken.add(read(w))
+          found.push(w)
+        }
+        for (let k = 1; k < s.cards.length && found.length < 3; k++) { const other = s.cards[(i + k) % s.cards.length]; take(other ? mine(other) : null) }
+        for (let k = 0; k < field.length && found.length < 3; k++) take(field[(from + k) % field.length])
+        return found
+      }
       const why = c.q + (isQuestion(c.q) ? ' ' : ': ') + c.a
-      const answers = wrong(i, c.a, (x) => x.a)
-      if (answers.length < 2) return
-      water.push({ q: asks(c.q), answer: c.a, distractors: answers, why })
+      const answersFor = wrong(c.a, (x) => x.a, answers)
+      if (answersFor.length < 2) return
+      water.push({ q: asks(c.q), answer: c.a, distractors: answersFor, why })
       // Asked the other way round only when the question is a name, and the answer short enough to be a question.
       if (!turns(c) || c.a.length > 80) return
-      const fronts = wrong(i, c.q, (x) => (turns(x) ? x.q : null))
+      const fronts = wrong(c.q, (x) => (turns(x) ? x.q : null), names)
       if (fronts.length >= 2) harvest.push({ q: asks(c.a), answer: c.q, distractors: fronts, why })
     })
     out.set(s.id, { water, harvest })
-  })
+  }
   return out
 }
 

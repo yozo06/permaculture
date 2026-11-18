@@ -147,6 +147,26 @@ describe('a field of your own, as a pack', () => {
     expect(Date.now() - started).toBeLessThan(1000)
   })
 
+  it('finds wrong answers in a list sorted by its answers, however far away the other answers are', () => {
+    const der = Array.from({ length: 50 }, (_, i) => ({ q: 'Nomen' + i, a: 'der' }))
+    const die = Array.from({ length: 20 }, (_, i) => ({ q: 'Frau' + i, a: 'die' }))
+    const das = Array.from({ length: 20 }, (_, i) => ({ q: 'Ding' + i, a: 'das' }))
+    const cards = [...der, ...die, ...das]
+    const p = ownPack(field(Array.from({ length: 9 }, (_, i) => seed('n' + String(i).padStart(5, '0'), { kind: 'facts', cards: cards.slice(i * 10, i * 10 + 10) }))))
+    for (const s of p.seeds) {
+      expect(s.harvest, s.id).toBe('recall')
+      expect(s.questions?.water).toHaveLength(10)
+      for (const m of s.questions?.water ?? []) expect(new Set([m.answer, ...m.distractors]).size).toBe(3)
+    }
+  })
+
+  it('knows two answers for the same when they differ only in how their letters are put together', () => {
+    const cards = [{ q: 'Kaffee', a: 'caf\u00E9' }, { q: 'Cafe', a: 'cafe\u0301' }, { q: 'Tee', a: 'tea' }, { q: 'Milch', a: 'milk' }, { q: 'Brot', a: 'bread' }]
+    const water = ownPack(field([seed('aaaaaa', { kind: 'facts', cards })])).seeds[0]?.questions?.water ?? []
+    expect(water[0]?.distractors.map((d) => d.normalize('NFC'))).not.toContain('caf\u00E9')
+    expect(new Set(water[2]?.distractors.map((d) => d.normalize('NFC'))).size).toBe(3)
+  })
+
   it('borrows wrong answers from the rest of the field when a topic has too few', () => {
     const p = ownPack(field([seed('aaaaaa', { kind: 'facts', cards: words(1) }), seed('bbbbbb', { kind: 'facts', cards: words(3, 10) })]))
     expect(p.seeds[0]?.questions?.water?.[0]?.distractors).toHaveLength(3)
