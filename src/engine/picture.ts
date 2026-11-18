@@ -4,6 +4,7 @@
 import type { Catalog } from './catalog'
 import { initialState } from './fold'
 import { fieldOf, fieldOrigin, isBuildingTile, tileKey, worldSize } from './land'
+import { isOwnId } from './own'
 import { RULES, interval } from './rules'
 import type { Crop, FarmState } from './types'
 import { isRecord } from './util'
@@ -79,7 +80,8 @@ const byPlace = (a: readonly [number, number], b: readonly [number, number]): nu
  * whether a crop is wilted or where it stands today, or any trace of a field that is not shown.
  */
 export function makePicture(s: FarmState, opts: { code: string; at: string; game: string; show: readonly string[] }): Picture {
-  const shown = Object.entries(s.fields).filter(([pack]) => opts.show.includes(pack)).sort((a, b) => a[1] - b[1])
+  // A field the farmer made themselves is never in a picture: a neighbour's game has no way to know what grows in it.
+  const shown = Object.entries(s.fields).filter(([pack]) => opts.show.includes(pack) && !isOwnId(pack)).sort((a, b) => a[1] - b[1])
   const fields = shown.map(([pack, slot]): PictureField => {
     const { x0, y0 } = fieldOrigin(slot)
     const land: [number, number][] = []

@@ -37,6 +37,24 @@ describe('the first visit', () => {
     expect(second.events()).toHaveLength(first.events().length)
   })
 
+  it('keeps a field of the farmer\'s own, and its topics, through a reload', () => {
+    // The log stamps every entry with an id and a time of its own, so an event may not keep anything under those names.
+    const disk = memory()
+    const first = make(disk)
+    const topic = { id: 'my_abcd1234_aaaaaa', name: 'Der Dativ', kind: 'rule', summary: '', group: '', cards: [] } as const
+    expect(first.dispatch({ type: 'own-field-set', field: 'my_abcd1234', slot: 0, title: 'German', color: '#4DB6A4' })).toBeNull()
+    expect(first.dispatch({ type: 'own-seeds-set', field: 'my_abcd1234', seeds: [{ ...topic, cards: [] }] })).toBeNull()
+    expect(first.dispatch({ type: 'own-seeds-set', field: 'my_abcd1234', seeds: [{ ...topic, id: 'my_abcd1234_bbbbbb', name: 'Gone', cards: [] }] })).toBeNull()
+    expect(first.dispatch({ type: 'own-seed-removed', topic: 'my_abcd1234_bbbbbb' })).toBeNull()
+    const second = make(disk)
+    expect(second.refused).toBe(0)
+    expect(second.state().fields).toEqual({ my_abcd1234: 0 })
+    expect(second.state().own['my_abcd1234']?.seeds.map((x) => x.name)).toEqual(['Der Dativ'])
+    expect(second.state()).toEqual(first.state())
+    expect(second.dispatch({ type: 'own-field-removed', field: 'my_abcd1234' })).toBeNull()
+    expect(make(disk).state().own).toEqual({})
+  })
+
   it('is not a first visit the second time, and replays to the same farm', () => {
     const disk = memory()
     const first = make(disk)

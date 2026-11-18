@@ -32,7 +32,7 @@ const numbersRows = [
   `| Harvest write-up | at least ${RULES.writeMin} characters; proof of an artifact, at least ${RULES.proofMin} |`,
   `| Jump the fence | ${RULES.testOut.energy} energy |`,
   `| Forage | ${RULES.forage.energy} energy; pays ${RULES.forage.coins} coins |`,
-  `| Fence a tile | ${RULES.fence.open} coins on open ground, ${RULES.fence.forest} in forest |`,
+  `| Fence a tile | ${RULES.fence.open} coins on open ground, ${RULES.fence.forest} in forest; ${RULES.fence.own} for a field of the farmer's own |`,
   `| Rain barrel | +1 day when a day ends with ${RULES.barrel.fillAt} or more energy; holds ${RULES.barrel.max} |`,
   `| New farm | day ${RULES.start.day}, ${RULES.start.coins} coins, nothing in the barrel |`,
   `| Longest text | ${RULES.textMax} characters |`,

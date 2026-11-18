@@ -63,7 +63,7 @@ Two days past thirsty without water, a crop wilts overnight unless the barrel ha
 | Harvest write-up | at least 80 characters; proof of an artifact, at least 8 |
 | Jump the fence | 10 energy |
 | Forage | 5 energy; pays 3 coins |
-| Fence a tile | 25 coins on open ground, 40 in forest |
+| Fence a tile | 25 coins on open ground, 40 in forest; 15 for a field of the farmer's own |
 | Rain barrel | +1 day when a day ends with 30 or more energy; holds 5 |
 | New farm | day 1, 140 coins, nothing in the barrel |
 | Longest text | 5000 characters |
@@ -132,6 +132,8 @@ A pack is one YAML file: a goal, its branches, sources, guilds and seeds. The en
 Pack #0 is the **Workshop**: the game's own backlog as seeds, capped at 30% of daily energy. The game gamifies its own development.
 
 A seed can be **earned**: it asks for learning before it can be planted, either so many seeds rooted (in other fields, or in one named field) or one field's readiness. Jumping the fence does not clear it. The Workshop uses this so its backlog cannot outrun the studying: sprite sheets wait for a first real harvest, sharing a pack for a first season of Kannada, live weather for Infra at 60.
+
+A farmer can make **a field of their own**: they name a subject and paste what they have (a list, a syllabus, notes, a word list, a file of flashcards), and a reader with no AI in it turns that into topics, groups and question cards. The topics are kept in the farm's own log and played by the same rules. Such a field has no end, and nothing in it waits for anything else. The whole of it is in `own-fields.md`.
 
 *(planned)* An **orchard** pack is for a goal with no answer (reading, a habit): its crops are slow, pay for showing up, and are never quizzed. A **research** pack is harvested with artifacts: a memo, a real decision.
 

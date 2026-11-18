@@ -175,6 +175,7 @@ export function fromV2(value: unknown, catalog: Catalog): FarmState | null {
     bars: {},
     sales: [],
     walks: [],
+    own: {},
     today: { planted: 0, spent: readSpent(value.today, catalog) },
     night: null,
   }

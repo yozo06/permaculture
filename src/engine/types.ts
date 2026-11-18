@@ -1,4 +1,5 @@
 // Pack data, as the schema (packs/schema/pack.schema.json) describes it. Optional fields stay optional here.
+import type { Own, OwnSeed } from './own'
 
 export type Layer = 'canopy' | 'understory' | 'shrub' | 'herb' | 'ground-cover' | 'root' | 'vine'
 export type HarvestType = 'recall' | 'solve' | 'judged' | 'artifact'
@@ -162,6 +163,8 @@ export interface FarmState {
   sales: Sale[]
   /** In the order they were taken. */
   walks: Walk[]
+  /** The fields the farmer made themselves, with their topics. Replaced whole when it changes, never changed in place. */
+  own: Own
   /** `spent` is energy used per field today; Sleep resets both. */
   today: { planted: number; spent: Record<string, number> }
   /** Set by `slept`. */
@@ -189,6 +192,18 @@ export type FarmEvent =
   | { type: 'sold'; buyer: string; text: string }
   /** A weekly walk. `asked` is kept with the answers, so the journal reads whole whatever the game asks later. */
   | { type: 'walked'; asked: string[]; answers: string[] }
+  /**
+   * A field of the farmer's own: made, on the plot `slot`, or renamed where it stands. Its topics come in
+   * `own-seeds-set`, a batch at a time; a topic that is there already is changed in its place. None of these keys is
+   * named `seed` (these events are about what could be grown, not about a crop), nor `id` or `at`: the log stamps every
+   * entry with those, over whatever an event held there.
+   */
+  | { type: 'own-field-set'; field: string; slot: number; title: string; color: string }
+  | { type: 'own-seeds-set'; field: string; seeds: OwnSeed[] }
+  /** A topic that was never planted, taken away. */
+  | { type: 'own-seed-removed'; topic: string }
+  /** A field with nothing planted in it, taken away with its land. */
+  | { type: 'own-field-removed'; field: string }
   /** A Phase 0 (v2) save, converted by `fromV2`. */
   | { type: 'snapshot-imported'; snapshot: unknown }
 

@@ -11,7 +11,8 @@ export const RULES = {
   harvest: { energy: 15, coins: 30 },
   testOut: { energy: 10 },
   forage: { energy: 5, coins: 3 },
-  fence: { open: 25, forest: 40 },
+  /** Coins to fence a tile in. A field of the farmer's own has no guilds, edges or finds to pay for its land, so its land costs less. */
+  fence: { open: 25, forest: 40, own: 15 },
   barrel: { fillAt: 30, max: 5 },
   wiltAfter: 2,
   intervals: [1, 2, 3, 4, 5],

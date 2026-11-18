@@ -3,6 +3,7 @@
 // And layer balance: a seed waits while a layer well below it is hollow.
 // Pure, and never part of a saved farm: all three are worked out from the crops each time they are asked for.
 import { LAYERS, type Catalog, type Earned, type Seed } from './catalog'
+import { isOwnId } from './own'
 import { RULES, available, cropOf } from './rules'
 import type { FarmState, Layer } from './types'
 
@@ -60,7 +61,8 @@ export interface EarnedProgress {
 
 /**
  * How far the farm is towards what a seed asks to be earned by, or null for a seed that asks for nothing.
- * Trees count once rooted, wilted or not, and extras (wild seeds, saplings) never do. A readiness is today's, so it can be lost again.
+ * Trees count once rooted, wilted or not, and extras (wild seeds, saplings) never do. Nor do the trees of a field the
+ * farmer made themselves: what earns a seed is learning the game can vouch for. A readiness is today's, so it can be lost again.
  */
 export function earnedProgress(seed: Seed, s: Pick<FarmState, 'crops' | 'bars'>, catalog: Catalog): EarnedProgress | null {
   const e = seed.earned
@@ -71,7 +73,7 @@ export function earnedProgress(seed: Seed, s: Pick<FarmState, 'crops' | 'bars'>,
   }
   const counts = (id: string): boolean => {
     const grown = catalog.seed(id)
-    return grown !== undefined && !grown.extra && (e.pack === null ? grown.pack !== seed.pack : grown.pack === e.pack)
+    return grown !== undefined && !grown.extra && !isOwnId(grown.pack) && (e.pack === null ? grown.pack !== seed.pack : grown.pack === e.pack)
   }
   const have = s.crops.filter((c) => c.perennial && counts(c.seed)).length
   return { have, want: e.count, met: have >= e.count }

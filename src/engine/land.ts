@@ -138,8 +138,8 @@ export function neighbourFields(x: number, y: number, fields: Fields, cleared: C
   return out
 }
 
-/** Coins to fence a tile in: forest costs more than open ground. */
-export const fenceCost = (t: Terrain): number => (t === 'wild' ? RULES.fence.forest : RULES.fence.open)
+/** Coins to fence a tile in: forest costs more than open ground, and land for a field of the farmer's own costs less than either. */
+export const fenceCost = (t: Terrain, own = false): number => (own ? RULES.fence.own : t === 'wild' ? RULES.fence.forest : RULES.fence.open)
 
 /** The lowest slot no field uses. */
 export function nextFreeSlot(fields: Fields): number {
