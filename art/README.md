@@ -32,4 +32,4 @@ There are two ways, and they do not mix.
 
 ## Licence
 
-The art was made for this game and is part of this repository.
+The art was drawn for this game, and none of it comes from anywhere else. The pictures (the sheet, and the screenshots in `docs/img/` and `public/`) are licensed CC BY-SA 4.0, like the packs: use them, change them and share them, credit this project, and share what you make from them the same way (`src/game/art/LICENSE.md`). The scripts in this folder are code, under MIT. By contributing art you agree to that.

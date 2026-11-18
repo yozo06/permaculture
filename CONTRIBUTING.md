@@ -34,4 +34,4 @@ The game is static and free to host. AI features (a later phase) use each player
 
 ## Licence
 
-Code: MIT (`LICENSE`). Packs and other content under `packs/`: CC-BY-SA 4.0 (`packs/LICENSE.md`).
+Code: MIT (`LICENSE`). Packs and other content under `packs/`: CC-BY-SA 4.0 (`packs/LICENSE.md`). The art (the sprite sheet and the screenshots): CC-BY-SA 4.0 (`src/game/art/LICENSE.md`); the scripts in `art/` that draw it are code.

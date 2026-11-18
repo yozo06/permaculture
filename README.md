@@ -66,4 +66,4 @@ Read `CONTRIBUTING.md`. The most useful contribution is a pack for a goal of you
 
 ## Licence
 
-Code MIT. Packs CC-BY-SA 4.0. The two fonts the game carries, Pixelify Sans and DM Sans, are under the SIL Open Font License.
+Code MIT. Packs and art CC-BY-SA 4.0. The two fonts the game carries, Pixelify Sans and DM Sans, are under the SIL Open Font License.
