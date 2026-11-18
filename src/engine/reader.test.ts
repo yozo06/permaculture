@@ -363,9 +363,15 @@ describe('what real pastes taught it', () => {
   })
 
   it('reads a day of the week before a colon as when, and what follows as the topic', () => {
-    const d = read(text('Mon: scales 20 min', 'Tue: chord changes G - C - D', 'Wednesday - barre chords'))
+    const d = read(text('Mon: scales 20 min', 'Tue: chord changes G - C - D', 'Wednesday: barre chords'))
     expect(names(d)).toEqual(['scales 20 min', 'chord changes G - C - D', 'barre chords'])
     expect(topic(d, 'barre chords').summary).toBe('Wednesday.')
+  })
+
+  it('reads a day that is one side of a card as a word to learn', () => {
+    const d = read(text('sun - Sonne', 'moon - Mond', 'star - Stern', 'Sunday = Sonntag'))
+    expect(d.topics[0]?.cards.map((c) => c.q)).toEqual(['sun', 'moon', 'star', 'Sunday'])
+    expect(d.notes).toEqual([])
   })
 
   it('keeps a label and what it labels together, whatever follows', () => {
@@ -379,9 +385,15 @@ describe('what real pastes taught it', () => {
   })
 
   it('skips code, and says so', () => {
-    const d = read(text('## ConfigMaps', '```yaml', 'apiVersion: v1', 'kind: ConfigMap', '```', '## Secrets', '~~~', 'x = 1', '~~~'))
+    const d = read(text('## ConfigMaps', '```yaml', 'apiVersion: v1', 'kind: ConfigMap', '```', '## Secrets', '````', 'x = 1', '```'))
     expect(names(d)).toEqual(['ConfigMaps', 'Secrets'])
     expect(d.notes).toEqual(['Left out 2 blocks of code.'])
+  })
+
+  it('reads rows of tildes as lines ruled across the page, and keeps what is between them', () => {
+    expect(names(read(text('A', '~~~', 'B', '~~~', 'C')))).toEqual(['A', 'B', 'C'])
+    expect(names(read(text('A', '', '~~~~', 'B', '', '~~~~', 'C')))).toEqual(['A', 'B', 'C'])
+    expect(read(text('A', '~~~', 'B', '~~~', 'C')).notes).toEqual([])
   })
 
   it('reads a quoted block as the lines in it', () => {
@@ -494,6 +506,43 @@ describe('what a second look found', () => {
     const d = read(text('Hund - dog', 'hund - dog', 'Katze - cat', 'Maus - mouse'))
     expect(d.topics[0]?.cards).toHaveLength(3)
     expect(d.notes).toEqual(['Left out, because it is there twice: hund'])
+  })
+
+  it('reads a link whose address or name has brackets of its own', () => {
+    const d = read(text('# Computing', '- [Recursion](https://en.wikipedia.org/wiki/Recursion_(computer_science))', '- [Sorting [stable]](http://x.y/z)'))
+    expect(names(d)).toEqual(['Recursion', 'Sorting [stable]'])
+    expect(topic(d, 'Recursion').summary).toBe('https://en.wikipedia.org/wiki/Recursion_(computer_science)')
+  })
+
+  it('leaves out the marks and the books when they are set off by a colon, and keeps a part of the subject of the same name', () => {
+    const d = read(text('# Syllabus', 'Unit 1: Limits', 'Unit 2: Derivatives', 'Assessment: 40 marks', 'Evaluation: internal 40, external 60', 'References: Spivak', 'Resources: Khan Academy'))
+    expect(names(d)).toEqual(['Unit 1: Limits', 'Unit 2: Derivatives'])
+    expect(d.notes).toEqual(['Left out, as not something to learn: Assessment, Evaluation, References, Resources'])
+    const books = read(text('Limits', 'Derivatives', 'References:', '1. Spivak, Calculus', '2. Stewart, Calculus'))
+    expect(names(books)).toEqual(['Limits', 'Derivatives'])
+  })
+
+  it('puts a title over the weeks and chapters under it', () => {
+    const d = read(text('Introductory Calculus Course', '', 'Week 1: Limits', '- Epsilon delta', 'Week 2: Derivatives', '- Chain rule'))
+    expect(d.title).toBe('Introductory Calculus Course')
+    expect(d.topics.map((t) => [t.group, t.name])).toEqual([['Week 1: Limits', 'Epsilon delta'], ['Week 2: Derivatives', 'Chain rule']])
+    const chapters = read(text('Introductory Calculus Course', '', 'Chapter 1 Limits', 'Chapter 2 Derivatives', 'Chapter 3 Integrals'))
+    expect(chapters.title).toBe('Introductory Calculus Course')
+    expect(names(chapters)).toEqual(['Chapter 1 Limits', 'Chapter 2 Derivatives', 'Chapter 3 Integrals'])
+  })
+
+  it('reads a table whose first column is a label as a contents page, like the same rows with tabs', () => {
+    const d = read(text('| Chapter 1 | Soil | 3 |', '| Chapter 2 | Water | 9 |', '| Chapter 3 | Light | 15 |'))
+    expect(d.pairs).toBe(0)
+    expect(names(d)).toEqual(['Chapter 1 Soil', 'Chapter 2 Water', 'Chapter 3 Light'])
+  })
+
+  it('is no slower for pictures, dots or brackets that go nowhere', () => {
+    for (const line of ['a' + '☀'.repeat(398) + 'x', 'a ' + '🐶 '.repeat(130) + 'x', 'x' + '. '.repeat(199), '.'.repeat(400), '('.repeat(399) + 'x', '['.repeat(399) + 'x', '|'.repeat(400)]) {
+      const started = Date.now()
+      read(Array.from({ length: 2000 }, () => line).join('\n'))
+      expect(Date.now() - started, line.slice(0, 8)).toBeLessThan(400)
+    }
   })
 
   it('never puts a heading under a line that is not one', () => {

@@ -111,8 +111,21 @@ const SPACES = new RegExp('[\\u00A0\\u1680\\u2000-\\u200A\\u202F\\u205F\\u3000]'
 const WIDE_COLON = new RegExp('\\uFF1A', 'g')
 const WIDE_EQUALS = new RegExp('\\uFF1D', 'g')
 /** Pictures at the ends of a line: an emoji is dress, not part of a name. The marks of ownership are not pictures. */
-const PICTURE = '(?:(?![\\u00A9\\u00AE\\u2122])[\\p{Extended_Pictographic}\\p{Emoji_Modifier}\\uFE0F\\u200D\\s])+'
-const PICTURES = new RegExp('^' + PICTURE + '|' + PICTURE + '$', 'gu')
+const PICTURE = '(?![\\u00A9\\u00AE\\u2122])[\\p{Extended_Pictographic}\\p{Emoji_Modifier}\\uFE0F\\u200D\\s]'
+const PICTURES_FIRST = new RegExp('^(?:' + PICTURE + ')+', 'u')
+const ONE_PICTURE = new RegExp('^' + PICTURE + '$', 'u')
+/** A line without the pictures at its ends. The end is walked back one character at a time, so a long run costs no more than its length. */
+function unpictured(s: string): string {
+  const out = s.replace(PICTURES_FIRST, '')
+  let end = out.length
+  while (end > 0) {
+    const low = out.charCodeAt(end - 1)
+    const size = low >= 0xdc00 && low <= 0xdfff && end > 1 ? 2 : 1
+    if (!ONE_PICTURE.test(out.slice(end - size, end))) break
+    end -= size
+  }
+  return out.slice(0, end)
+}
 /** Every way a text file ends a line. */
 const LINE_END = new RegExp('\\r\\n?|[\\u2028\\u2029]', 'g')
 
@@ -132,7 +145,8 @@ function fit(s: string, max: number): string {
 /** A line without its Markdown dress, its pictures and its addresses. The addresses are handed back beside it. */
 function undress(raw: string): { text: string; links: string[] } {
   const links: string[] = []
-  let s = raw.replace(/!?\[([^\][]*)\]\(\s*([^)\s]+)(?:\s[^)]*)?\)/g, (_, label: string, url: string) => {
+  // A link's name may have brackets in it, and its address one pair of them, as an encyclopedia's addresses do.
+  let s = raw.replace(/!?\[((?:[^\][]|\[[^\][]*\])*)\]\(\s*((?:[^()\s]|\([^()\s]*\))+)(?:\s[^)]*)?\)/g, (_, label: string, url: string) => {
     if (/^https?:\/\//i.test(url)) links.push(url)
     return label
   })
@@ -140,15 +154,28 @@ function undress(raw: string): { text: string; links: string[] } {
   s = s.replace(/<\/?[a-zA-Z][^>]*>/g, ' ').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"')
   s = s.replace(/\*\*|__|`/g, '')
   s = s.replace(/(^|[\s(])[*_]([^*_\s][^*_]*?)[*_](?=$|[\s).,;:!?])/g, '$1$2')
-  s = s.replace(/\s+/g, ' ').trim().replace(PICTURES, '')
+  s = unpictured(s.replace(/\s+/g, ' ').trim())
   // An address taken out of a line can leave the mark that led up to it hanging.
   if (links.length) s = s.replace(/\s*[-–—:]$/, '')
   return { text: s, links }
 }
 const plain = (raw: string): string => undress(raw).text
 
-/** Commas that separate, not the ones inside brackets. */
-const outside = (s: string): string => s.replace(/\([^)]*\)|\[[^\]]*\]/g, '')
+/** A line without what is in its brackets: the commas left are the ones that separate. A bracket that never closes is left as it is. */
+function outside(s: string): string {
+  let out = ''
+  const closes: Record<string, string> = { '(': ')', '[': ']' }
+  const none = new Set<string>()
+  for (let i = 0; i < s.length; i++) {
+    const ch = s[i] ?? ''
+    const close = closes[ch]
+    const end = close && !none.has(ch) ? s.indexOf(close, i + 1) : -1
+    if (close && end < 0) none.add(ch)
+    if (end >= 0) i = end
+    else out += ch
+  }
+  return out
+}
 
 /* ---------- a line in two parts ---------- */
 
@@ -193,6 +220,21 @@ function splitPair(s: string): Pair | null {
   return make(left, s.slice(at + mark.length), MARKS.indexOf(mark as (typeof MARKS)[number]) < 5 ? { eq: true } : mark === ': ' ? { colon: true } : {})
 }
 
+/**
+ * A line without the page number at its end, when dots lead up to it ("Keys ........ 12") or it is set far to the
+ * right ("Keys      12"). The end is looked at once, so a line of dots that leads nowhere costs nothing.
+ */
+function unpaged(s: string): string {
+  const page = /(\d+(?:\s*[-–]\s*\d+)?)\s*$/.exec(s)
+  if (!page) return s
+  const before = s.slice(0, page.index)
+  let end = before.length
+  let dots = 0
+  while (end > 0 && (before[end - 1] === '.' || before[end - 1] === ' ')) { if (before[end - 1] === '.') dots++; end-- }
+  if (dots >= 3) return before.slice(0, end)
+  return /\s{3}$/.test(before) && /^\d{1,4}$/.test(page[1] ?? '') ? before.trimEnd() : s
+}
+
 /** Short enough to be asked as a card. */
 const fitsCard = (p: Pair): boolean => p.left.length <= TEXT.q && p.right.length <= TEXT.a
 /** Looks like something to be asked, and not like a topic with a sentence about it. */
@@ -209,11 +251,15 @@ const ADMIN_LABEL = /^(tips?|pro tip|notes?|n\.?b\.?|remember|reminder|exam deta
  * keeping a list of books.
  */
 const ADMIN_ANY = /^(recommended (?:resources|reading|books|text ?books?)|suggested (?:reading|books)|further reading|text ?books?|reference ?books?|bibliography|office hours|evaluation scheme|grading policy)$/i
+/** Only when set off by a colon ("Assessment: 40 marks"): as a heading, any of these may be a part of the subject. */
+const ADMIN_COLON = /^(assessment|evaluation|grading|references?|resources)$/i
+/** A line that ends in a colon and stands over the books. */
+const ADMIN_OVER = /^(references?|resources)$/i
 const PAGE_MARK = /^(page|pg\.?|p\.)\s*\d+$/i
-const isAdmin = (text: string, pair: Pair | null): boolean => {
+const isAdmin = (text: string, pair: Pair | null, colon: boolean): boolean => {
   // "Note: bring a calculator" is about the course. "note - nota" is a word to learn: a label is set off by a colon.
-  if (pair) return (pair.colon === true && (ADMIN_LABEL.test(pair.left) || ADMIN_ANY.test(pair.left))) || (/^(sub)?total\b/i.test(pair.left) && /^(\d|~|≈|about|around|approx)/i.test(pair.right))
-  return ADMIN_ANY.test(text) || PAGE_MARK.test(text) || /^(sub)?total\b.*\d/i.test(text)
+  if (pair) return (pair.colon === true && (ADMIN_LABEL.test(pair.left) || ADMIN_ANY.test(pair.left) || ADMIN_COLON.test(pair.left))) || (/^(sub)?total\b/i.test(pair.left) && /^(\d|~|≈|about|around|approx)/i.test(pair.right))
+  return ADMIN_ANY.test(text) || (colon && ADMIN_OVER.test(text)) || PAGE_MARK.test(text) || /^(sub)?total\b.*\d/i.test(text)
 }
 
 /** "(8 hrs)", "[3 credits]", "(24%)" at the end of a heading. */
@@ -317,21 +363,20 @@ function sheet(lines: string[]): string[] {
 }
 
 /**
- * The lines that are code: from a fence to the next line that is nothing but a fence. A fence with nothing to close
- * it is no fence, so one stray mark cannot swallow the rest of a paste; only that line is dropped.
+ * The lines that are code: from a line that begins with three backticks to the next line that is nothing but
+ * backticks. A fence with nothing to close it is no fence, so one stray mark cannot swallow the rest of a paste; only
+ * that line is dropped. Rows of tildes are not fences here: in plain notes they rule a line across the page far more
+ * often than they hold code, and leaving out part of a subject is worse than reading a little code as topics.
  */
 function fenced(lines: string[]): { code: Set<number>; blocks: number } {
   const code = new Set<number>()
   let blocks = 0
   const ends: number[] = []
-  lines.forEach((l, i) => { if (/^\s*(?:`{3,}|~{3,})\s*$/.test(l)) ends.push(i) })
+  lines.forEach((l, i) => { if (/^\s*`{3,}\s*$/.test(l)) ends.push(i) })
   let e = 0
   for (let i = 0; i < lines.length; i++) {
     const l = lines[i] ?? ''
-    if (!/^\s*(?:```|~~~)/.test(l)) continue
-    // A long row of tildes right under a line of text underlines it, and "~~~ Week 1 ~~~" is a banner. Three are a fence.
-    const underline = /^\s*~{4,}\s*$/.test(l) && i > 0 && /^\s*[^\s#>~`-]/.test(lines[i - 1] ?? '') && !code.has(i - 1)
-    if (underline || /^\s*~{3,}\s*[^~\s].*~{3,}\s*$/.test(l)) continue
+    if (!/^\s*```/.test(l)) continue
     while (e < ends.length && (ends[e] ?? 0) <= i) e++
     const end = ends[e]
     if (end === undefined) { code.add(i); continue }
@@ -372,8 +417,8 @@ function tokens(input: string[], note: (n: string, key?: string) => void): Tok[]
       if (/ column:/i.test(rest) && /^\d+$/.test(anki[2] ?? '')) skip.add(Number(anki[2]) - 1)
       continue
     }
-    // A line of =, - or ~ right under a line of text makes that line a heading. Otherwise it is a ruled line.
-    if (/^(=+|-+|~+)$/.test(rest) && rest.length >= 3 && prev && !blankBefore && !prev.bulleted && prev.hash < 0 && !prev.table && !prev.pair) {
+    // A line of = or - (or a long one of ~) right under a line of text makes that line a heading. Otherwise it is a ruled line.
+    if (/^(=+|-+|~{4,})$/.test(rest) && rest.length >= 3 && prev && !blankBefore && !prev.bulleted && prev.hash < 0 && !prev.table && !prev.pair) {
       prev.hash = rest.startsWith('=') ? 0 : 1
       continue
     }
@@ -398,9 +443,15 @@ function tokens(input: string[], note: (n: string, key?: string) => void): Tok[]
       const row = rest.split('|').map((c) => plain(c)).filter((c, i, all) => !(c === '' && (i === 0 || i === all.length - 1)))
       const [first = '', second = ''] = row
       tok.table = true
-      if (first && second) tok.pair = { left: first, right: second, strong: true }
-      if (row.filter(Boolean).length > 2) note('Read the first two columns of each line as a card, and left the others out.')
-      rest = first
+      if (isLabelled(first)) {
+        // A contents page: "Chapter 1 | Soil | 3" is a chapter, its name and its page.
+        const cols = row.filter(Boolean)
+        rest = (cols.length >= 3 && /^\d{1,4}$/.test(cols[cols.length - 1] ?? '') ? cols.slice(0, -1) : cols).join(' ')
+      } else {
+        if (first && second) tok.pair = { left: first, right: second, strong: true }
+        if (row.filter(Boolean).length > 2) note('Read the first two columns of each line as a card, and left the others out.')
+        rest = first
+      }
     } else if (!tabbed) {
       const dash = /^(?:[-*+•‣▪◦●○·–—]\s+)(?:\[[ xX]?\]\s+)?(.*)$/.exec(rest) ?? /^\[[ xX]?\]\s+(.*)$/.exec(rest)
       const deep = /^(\d+(?:\.\d+)+)\.?\s+(.*)$/.exec(rest)
@@ -453,14 +504,14 @@ function tokens(input: string[], note: (n: string, key?: string) => void): Tok[]
         }
       } else {
         // Dots leading to a page number, a page number set far to the right, "pg 12", "(see page 212)".
-        rest = rest.replace(/\s*(?:\.\s?){3,}\s*\d+(?:\s*[-–]\s*\d+)?\s*$/, '').replace(/\s{3,}\d{1,4}\s*$/, '')
+        rest = unpaged(rest)
         const page = /[\s,(]+(?:see\s+)?(?:pp?\.?|pg\.?|pages?)\s*(\d+(?:\s*[-–]\s*\d+)?)\)?\s*$/i.exec(rest)
         if (page && !/[-–—:=]\s*$/.test(rest.slice(0, page.index)) && page.index > 0) { rest = rest.slice(0, page.index); tok.aside.push('Page ' + (page[1] ?? '').replace(/\s+/g, '') + '.') }
         rest = rest.replace(ASKING, '')
         tok.bold = !tok.bulleted && /^(\*\*|__)[^*_].*\1:?$/.test(rest) && !/^(\*\*|__).+?\1.+(\*\*|__)/.test(rest.replace(/:$/, ''))
         if (!isLabelled(plain(rest))) tok.pair = splitPair(rest)
-        // "Mon: scales" is scales, on Monday.
-        if (tok.pair && WEEKDAY.test(tok.pair.left)) { tok.aside.push(tok.pair.left + '.'); rest = tok.pair.right; tok.pair = null }
+        // "Mon: scales" is scales, on Monday. "sun - Sonne" is a word to learn.
+        if (tok.pair?.colon && WEEKDAY.test(tok.pair.left)) { tok.aside.push(tok.pair.left + '.'); rest = tok.pair.right; tok.pair = null }
       }
     }
     const { text, links } = undress(rest)
@@ -475,7 +526,7 @@ function tokens(input: string[], note: (n: string, key?: string) => void): Tok[]
     if (!worded(tok.text) && !links.length) { wordless++; continue }
     // One full stop, at the end, is the end of a line and not part of a name.
     if (/[^.]\.$/.test(tok.text) && tok.text.indexOf('.') === tok.text.length - 1 && !prose(tok.text)) tok.text = tok.text.slice(0, -1).trimEnd()
-    tok.admin = isAdmin(tok.text, tok.pair)
+    tok.admin = isAdmin(tok.text, tok.pair, tok.colon)
     const free = !tok.bulleted && tok.hash < 0 && !tok.table && !tok.asks
     if (free && CHATTER.test(tok.text)) continue
     // Four or more short things with commas between them are that many topics.
@@ -503,7 +554,8 @@ function levels(toks: Tok[]): void {
     // The first line, alone over a blank line, with a list under it: the title, even if it reads as two parts. But
     // only when it does not look like the lines under it: it is a few words long, or they are bulleted and it is not.
     if (i === 0 && next?.blankBefore && toks.length >= 4 && (words(t.whole) >= 3 || toks.slice(1).some((x) => x.bulleted))) {
-      t.soft = true; t.guessed = true; t.pair = null; t.admin = false; t.text = t.whole.replace(/\s*:$/, '')
+      // It stands over everything, the weeks and chapters under it included, as a "# Title" would.
+      t.hash = 0; t.guessed = true; t.pair = null; t.admin = false; t.text = t.whole.replace(/\s*:$/, '')
       return
     }
     const overList = !t.pair && next !== undefined && next.hash < 0 && (next.bulleted || next.indent > t.indent)
