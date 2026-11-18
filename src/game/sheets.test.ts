@@ -4,7 +4,7 @@ import { cropSheetHtml, countText, footHtml, heldSectionHtml, NO_NOTES, plantShe
 import type { CropView, EarnedRow, ReadinessRow, ReadinessView } from './views'
 
 const view = (patch: Partial<CropView> = {}): CropView => ({
-  seed: 'raft', name: 'Raft', pack: 'system-design', layer: 'Root', stageLine: 'Stage 2 of 5 · Z2 · Recall', statusLine: 'Growing.', nextWork: null,
+  seed: 'raft', name: 'Raft', pack: 'system-design', layer: 'Root', kind: null, stageLine: 'Stage 2 of 5 · Z2 · Recall', statusLine: 'Growing.', nextWork: null,
   notes: '', journal: [], sources: [], guilds: [], edge: null, saplings: [], ...patch,
 })
 

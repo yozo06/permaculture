@@ -1,5 +1,6 @@
 // What the seed bag and the learning tree draw, worked out from the packs and the farm. Pure: no DOM.
 import { HARVEST_NAMES, LAYER_NAMES, type Catalog, type Seed } from '../engine/catalog'
+import { isOwnId, kindLabel } from '../engine/own'
 import { harvestWork, rungName, waterWork, type WaterKind } from '../engine/ladder'
 import { earnedLine, earnedProgress, heldBy, isEarned, readiness } from '../engine/readiness'
 import { RULES, available, cropOf, revivable, ripe, rooted, thirsty, visible, zone } from '../engine/rules'
@@ -187,6 +188,9 @@ export interface BagSection {
   lockedCount: number
 }
 
+/** How a topic of the farmer's own is harvested, in a person's words. */
+export const OWN_HARVEST: Record<Seed['harvest'], string> = { recall: 'cards', judged: 'write-up', artifact: 'do it', solve: 'solve' }
+
 /** `selected` is the seed in the player's hand, if any. */
 export function bagView(state: FarmState, catalog: Catalog, selected: string | null = null): BagSection[] {
   const sections: BagSection[] = []
@@ -202,7 +206,8 @@ export function bagView(state: FarmState, catalog: Catalog, selected: string | n
       if (status === 'locked') { lockedCount++; continue }
       const below = status === 'held' ? heldBy(seed, state, catalog) : null
       seeds.push({
-        id: seed.id, name: seed.name, layer: LAYER_NAMES[seed.layer], harvest: HARVEST_NAMES[seed.harvest], status,
+        // A topic of the farmer's own is told in a person's words: what kind of thing it is, and how it is harvested.
+        id: seed.id, name: seed.name, layer: kindLabel(seed) ?? LAYER_NAMES[seed.layer], harvest: isOwnId(seed.pack) ? OWN_HARVEST[seed.harvest] : HARVEST_NAMES[seed.harvest], status,
         below: below && LAYER_NAMES[below], edge: edgeOf(seed, state, catalog)?.field ?? null, sapling: parentName(seed, catalog),
         focus: focusTitle !== null && seed.branch === focusId, selected: status === 'ready' && selected === seed.id,
       })
@@ -567,7 +572,9 @@ export interface CropView {
   name: string
   pack: string
   layer: string
-  /** "Stage 3 of 5 · Z2 · Recall". */
+  /** For a topic of the farmer's own: what kind of thing it is, said in place of its layer. Else null. */
+  kind: string | null
+  /** "Stage 3 of 5 · Z2 · Recall"; for a topic of the farmer's own, without the zone and the rung. */
   stageLine: string
   /** What is true of the crop today, in a sentence. */
   statusLine: string
@@ -593,7 +600,9 @@ export function cropView(crop: Crop, state: Pick<FarmState, 'day' | 'crops'>, ca
   const seed = catalog.seed(crop.seed)
   if (!seed) return null
   const day = state.day
-  const stageLine = 'Stage ' + (crop.stage + 1) + ' of ' + (RULES.maxStage + 1) + ' · ' + zone(crop) + ' · ' + rungName(crop)
+  const kind = kindLabel(seed)
+  const stage = 'Stage ' + (crop.stage + 1) + ' of ' + (RULES.maxStage + 1)
+  const stageLine = kind ? stage + (crop.perennial ? ' · rooted' : '') : stage + ' · ' + zone(crop) + ' · ' + rungName(crop)
   let statusLine: string
   let nextWork: string | null = null
   if (thirsty(crop, day) || revivable(crop, day)) {
@@ -609,7 +618,7 @@ export function cropView(crop: Crop, state: Pick<FarmState, 'day' | 'crops'>, ca
     statusLine = crop.perennial ? 'Rooted. Next check-in on day ' + crop.due + '.' : 'Growing. Thirsty again on day ' + crop.due + '.'
   }
   return {
-    seed: seed.id, name: seed.name, pack: seed.pack, layer: LAYER_NAMES[seed.layer], stageLine, statusLine, nextWork,
+    seed: seed.id, name: seed.name, pack: seed.pack, layer: LAYER_NAMES[seed.layer], kind, stageLine, statusLine, nextWork,
     notes: crop.notes, journal: crop.journal.map((j) => ({ day: j.day, label: j.kind === 'explain' ? 'Explained' : 'Harvest write-up', text: j.text, ok: j.ok })).reverse(),
     sources: sourceLinks(seed, catalog),
     guilds: catalog.guildsOf(seed.id).map((g) => g.title + ' guild: ' + guildStatus(guildStanding(g, state, catalog), RULES.guild.coins)),

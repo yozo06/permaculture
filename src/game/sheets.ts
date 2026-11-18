@@ -49,6 +49,8 @@ export interface PlantSheet {
   chip: string
   name: string
   layer: string
+  /** For a topic of the farmer's own: what kind of thing it is, said in place of its layer. */
+  kind?: string
   harvest: string
   summary?: string
   minutes?: number
@@ -65,7 +67,7 @@ export interface PlantSheet {
 export function plantSheetHtml(p: PlantSheet): string {
   return (
     p.chip + '<h2>Plant · ' + esc(p.name) + '</h2>' +
-    '<p class="sub">' + esc(p.layer) + ' layer · <span class="tag">' + esc(p.harvest) + '</span></p>' +
+    '<p class="sub">' + (p.kind ? esc(p.kind) : esc(p.layer) + ' layer') + ' · <span class="tag">' + esc(p.harvest) + '</span></p>' +
     (p.summary ? '<p>' + esc(p.summary) + '</p>' : '') +
     (p.minutes ? '<p class="sub">About ' + p.minutes + ' minutes of reading.</p>' : '') +
     (p.edge ? '<p class="sub">' + esc(p.edge) + '</p>' : '') +
@@ -84,7 +86,7 @@ export const NO_NOTES = 'Planted before notes existed.'
 export function cropSheetHtml(chip: string, v: CropView): string {
   return (
     chip + '<h2>' + esc(v.name) + '</h2>' +
-    '<p class="sub">' + esc(v.layer) + ' layer · ' + esc(v.stageLine) + '</p>' +
+    '<p class="sub">' + (v.kind ? esc(v.kind) : esc(v.layer) + ' layer') + ' · ' + esc(v.stageLine) + '</p>' +
     '<p>' + esc(v.statusLine) + (v.nextWork ? ' ' + esc(v.nextWork) : '') + '</p>' +
     (v.saplings.length ? '<p class="sub">' + esc(v.saplings.join(' ')) + '</p>' : '') +
     (v.edge ? '<p class="sub">' + esc(v.edge) + '</p>' : '') +
@@ -100,9 +102,9 @@ export function cropSheetHtml(chip: string, v: CropView): string {
 }
 
 /** One box per pack the farm does not have yet. The sheet's change handler keeps the button it gates in step. */
-export function pickerHtml(packs: readonly PickerPack[]): string {
+export function pickerHtml(packs: readonly PickerPack[], legend = 'What do you want to grow?'): string {
   return (
-    '<fieldset class="ticks"><legend>What do you want to grow?</legend>' +
+    '<fieldset class="ticks"><legend>' + esc(legend) + '</legend>' +
     packs.filter((p) => !p.open).map((p) =>
       '<label class="tick"><input type="checkbox" data-pack="' + esc(p.pack) + '"' + (p.ticked ? ' checked' : '') + '> <span><b style="color:' + esc(p.color) + '">' + esc(p.title) + '</b> · ' + p.seeds + ' seeds<br><span class="sub">' + esc(p.description) + '</span></span></label>').join('') +
     '</fieldset>'

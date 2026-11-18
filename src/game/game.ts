@@ -1,13 +1,15 @@
 import packDefs from 'virtual:packs'
-import { buildCatalog, LAYER_NAMES, type Seed } from '../engine/catalog'
+import { buildCatalog, LAYER_NAMES, type Catalog, type Seed } from '../engine/catalog'
 import { findCandidates, pickFind } from '../engine/finds'
 import { check, fieldsToOpen, refusedCount } from '../engine/fold'
 import {
   BARN, COMPOST, GATE, MARKET, SIGN, WELL, fenceCost, fieldOf as landFieldOf, flagTile, hash, homestead, inHomestead, isBuildingTile,
-  neighbourFields, terrain as landTerrain, tileKey, wildKind, worldSize, type Terrain,
+  neighbourFields, nextFreeSlot, terrain as landTerrain, tileKey, wildKind, worldSize, type Terrain,
 } from '../engine/land'
 import { farmFileName, farmFileText, parseFarmFile } from '../engine/log'
 import { buyersFor, standing } from '../engine/market'
+import { catalogFor, fieldOfSeed, isOwnId, kindLabel, whyTitle } from '../engine/own'
+import { TEXT, read as readText } from '../engine/reader'
 import { farmAtEndOf } from '../engine/past'
 import { WALK_QUESTIONS, isWalkDay, walkedToday } from '../engine/walk'
 import { farmCode, layOut, momentOf, readPicture, type Picture } from '../engine/picture'
@@ -21,6 +23,7 @@ import { MOMENT_MS, momentDots, type DotTone, type MomentKind } from './moments'
 import { BOOK_KEY, ageText, bookText, readBook, receive, remove, tooOld, type Arrival, type Book } from './neighbours'
 import { NEUTRAL_COLOR, cropHeight, cropSprite, holds, markRise, paintKeys, sprite as spriteAt } from './art/sprites'
 import { drop, frontmost, idle, lift, move, press, rehold, wheelStep, type Hand, type Point, type Said, type Target, type Wheel } from './hand'
+import { addSheetHtml, aiPrompt, cardsFromText, explainAsk, fieldSheetHtml, harvestTag, layerText, nameFieldSheetHtml, newFieldId, newSeedId, pickColor, readingHtml, toAdd, topicSheetHtml, type Adding } from './own'
 import { createStore, defaultId, LOG_KEY, type StorageLike } from './store'
 import { esc, shuffle } from './util'
 import { REF, cameraAfter, defaultZoom, fitView, pinchZoom, shift, zoomRange, type View } from './view'
@@ -89,12 +92,17 @@ const ctx = context2d(cv)
 const $ = byId
 
 /* ---------- packs ---------- */
-const catalog = buildCatalog(packDefs)
+/** The game's own packs. */
+const base = buildCatalog(packDefs)
+/** What this farm plays by: the game's packs, and the fields its farmer made. Replaced with `S`, by `act` and `adopt`. */
+let catalog: Catalog = base
 const nameOf = (id: string): string => catalog.seed(id)?.name ?? id
-const packTitle = (id: string): string => catalog.pack(id)?.title ?? id
+/** A field the farmer once made, on an earlier day of their farm that they are walking round, though it has since gone. */
+const goneField = (id: string) => (visiting && Object.hasOwn(visiting.state.own, id) ? visiting.state.own[id] : undefined)
+const packTitle = (id: string): string => catalog.pack(id)?.title ?? goneField(id)?.title ?? id
 const colorOf = (id: string): string => {
   const p = catalog.pack(id)
-  return p ? packColor(p) : '#6DB24F'
+  return p ? packColor(p) : goneField(id)?.color ?? '#6DB24F'
 }
 
 /* ---------- the farm ---------- */
@@ -102,15 +110,16 @@ function browserStorage(): StorageLike | null {
   try { return window.localStorage } catch { return null }
 }
 const storage = browserStorage()
-const store = createStore({ catalog, storage, sample: sampleFarm, newId: defaultId, now: () => new Date().toISOString() })
+const store = createStore({ catalog: base, storage, sample: sampleFarm, newId: defaultId, now: () => new Date().toISOString() })
 /** The folded farm. Only `act` and `adopt` replace it. */
 let S: FarmState = store.state()
+catalog = catalogFor(base, S.own)
 
 /* ---------- neighbours ---------- */
 /** This farm's code, worked out from its first event: the same for the life of the farm, and new after a reset. */
 const ownCode = (): string => farmCode(store.events()[0]?.id ?? '')
 /** The neighbours this browser knows. Not part of the farm: kept under its own key, and kept through a reset. */
-let book: Book = readBook(readStored(BOOK_KEY), catalog, Date.now())
+let book: Book = readBook(readStored(BOOK_KEY), base, Date.now())
 function readStored(key: string): string | null {
   try { return storage ? storage.getItem(key) : null } catch { return null }
 }
@@ -123,7 +132,7 @@ function saveBook(): void {
  */
 function latestBook(): Book {
   const stored = readStored(BOOK_KEY)
-  if (stored !== null) book = readBook(stored, catalog, Date.now())
+  if (stored !== null) book = readBook(stored, base, Date.now())
   return book
 }
 function changeBook(change: (b: Book) => Book): void {
@@ -170,7 +179,7 @@ const terrain = (x: number, y: number): Terrain => landTerrain(x, y, D().fields,
 const inHome = (x: number, y: number): boolean => inHomestead(x, y, D().fields)
 
 /** Land and fields change the shape of the world, so the ground has to be redrawn. */
-const LAND_EVENTS = new Set<FarmEvent['type']>(['fenced', 'field-opened', 'snapshot-imported', 'farm-started'])
+const LAND_EVENTS = new Set<FarmEvent['type']>(['fenced', 'field-opened', 'snapshot-imported', 'farm-started', 'own-field-set', 'own-field-removed'])
 let warnedAboutSaving = false
 /** Send an event to the farm. If the rules refuse it, the reason is shown and this returns false. */
 function act(e: FarmEvent): boolean {
@@ -179,6 +188,7 @@ function act(e: FarmEvent): boolean {
   const why = store.dispatch(e)
   if (why !== null) { toast(why); return false }
   S = store.state()
+  catalog = catalogFor(base, S.own)
   if (LAND_EVENTS.has(e.type)) buildStatics()
   hud()
   if (store.saveFailed() && !warnedAboutSaving) {
@@ -196,6 +206,7 @@ function refused(e: FarmEvent): boolean {
 /** Pick up a farm the store has just replaced (new farm, import). */
 function adopt(): void {
   S = store.state()
+  catalog = catalogFor(base, S.own)
   moments = []
   buildStatics()
   clampCam()
@@ -481,13 +492,17 @@ function toast(m: string): void {
 function hint(h: string): void { if (!sheetGone) $('hint').innerHTML = h }
 const veil = $('veil')
 const sheet = $('sheet')
+// The sheet can hold the focus itself, for when nothing in it should have it yet.
+sheet.tabIndex = -1
 function open(html: string): void {
   sheet.innerHTML = html
   veil.hidden = false
   // A sheet that asks for writing starts in the box; the others start on their main button.
-  const target = sheet.querySelector<HTMLElement>('textarea[data-min], input[type=text]') ?? sheet.querySelector<HTMLButtonElement>('button.pri') ?? sheet.querySelector<HTMLButtonElement>('button')
-  // Focus moves into the sheet for the keyboard, but the sheet is read from its top.
-  if (target) target.focus({ preventScroll: true })
+  const target = sheet.querySelector<HTMLElement>('textarea[data-min]:not([data-quiet]), input[type=text]:not([data-quiet])') ?? sheet.querySelector<HTMLButtonElement>('button.pri') ?? sheet.querySelector<HTMLButtonElement>('button')
+  // Focus moves into the sheet for the keyboard, but the sheet is read from its top. A sheet whose box waits to be
+  // tapped, and whose button waits for the box, takes the focus itself, so that Tab does not wander off behind it.
+  const takes = target instanceof HTMLButtonElement && target.disabled ? sheet : target ?? sheet
+  takes.focus({ preventScroll: true })
   sheet.scrollTop = 0
 }
 /** A farm with no fields has not been set up: its farmer has yet to say what they want to grow. */
@@ -508,6 +523,8 @@ const primary = (): HTMLButtonElement | null => sheet.querySelector<HTMLButtonEl
  */
 const hasDraft = (): boolean =>
   [...sheet.querySelectorAll<HTMLTextAreaElement>('textarea[data-min]')].some((t) => t.value.trim().length > 0) ||
+  // A box that came filled in (a topic's name, its cards) holds a draft once it no longer says what it came with.
+  [...sheet.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>('[data-keep]')].some((t) => t.value !== t.defaultValue) ||
   sheet.querySelector('[data-act="submitExplain"]') !== null
 /** Dismiss by tapping away or Escape, but never while the player is mid-writing. The sheet's own buttons always close. */
 function softClose(): void { if (!hasDraft()) close() }
@@ -797,13 +814,16 @@ function onTile(x: number, y: number): void {
   const first = near[0]
   if (first !== undefined) {
     walkTo(x, y)
-    const cost = fenceCost(tr)
-    const others = near.slice(1).map((p) => '<button type="button" data-act="expand" data-arg="' + k + '|' + p + '">Add to ' + esc(packTitle(p)) + ' · ' + cost + ' coins</button>').join('')
+    // Land for a field of your own costs less than land for one of the game's.
+    const costFor = (p: string): number => fenceCost(tr, isOwnId(p))
+    const cost = costFor(first)
+    const others = near.slice(1).map((p) => '<button type="button" data-act="expand" data-arg="' + k + '|' + esc(p) + '">Add to ' + esc(packTitle(p)) + ' · ' + costFor(p) + ' coins</button>').join('')
     open(chip(first) + '<h2>' + (tr === 'wild' ? 'Clear and fence' : 'Fence it in') + '</h2><p>' + (tr === 'wild' ? 'Clear the wild ground and add' : 'Add') + ' this tile to the ' + esc(packTitle(first)) + ' field. Fields grow one tile at a time, in any shape.</p><p class="sub">Costs ' + cost + ' coins. You have ' + S.coins + '.</p>' +
       (others ? '<div class="branches">' + others + '</div>' : '') +
       foot('Add to ' + packTitle(first) + ' · ' + cost + ' coins', '<button type="button" data-act="close">Not now</button>'))
     const b = primary()
     if (b) { b.dataset.act = 'expand'; b.dataset.arg = k + '|' + first }
+    // (`dataset` takes the id as it is; no markup is made of it.)
     return
   }
   if (tr === 'wild') {
@@ -826,10 +846,11 @@ let PLANT: { seed: Seed; x: number; y: number } | null = null
 function openPlant(seed: Seed, x: number, y: number): void {
   PLANT = { seed, x, y }
   const edge = edgeLine(seed, S, catalog)
+  const own = kindLabel(seed)
   open(plantSheetHtml({
-    chip: chip(seed.pack), name: seed.name, layer: LAYER_NAMES[seed.layer], harvest: seed.harvest, summary: seed.summary, minutes: seed.minutes,
+    chip: chip(seed.pack), name: seed.name, layer: LAYER_NAMES[seed.layer], harvest: harvestTag(seed), summary: seed.summary, minutes: seed.minutes,
     sources: sourceLinks(seed, catalog), notesMin: RULES.notesMin, textMax: RULES.textMax, energy: RULES.plant.energy, coins: RULES.plant.coins,
-    ...(edge ? { edge } : {}),
+    ...(edge ? { edge } : {}), ...(own ? { kind: own } : {}),
   }))
 }
 function plant(): void {
@@ -871,7 +892,9 @@ const workTitle = (seed: Seed, mode: Mode): string => (mode === 'harvest' ? 'Har
 function workSub(seed: Seed, mode: Mode): string {
   if (mode === 'testout') return 'Prove you already know it. A clean answer unlocks the seed without its prerequisites.'
   const c = cropOf(S, seed.id)
-  return esc(LAYER_NAMES[seed.layer]) + ' layer · ' + (c ? zone(c) : '') + ' · ' + COST[mode] + ' energy' + (mode === 'harvest' ? ' · premium grade makes it perennial' : '')
+  // A topic of the farmer's own is told in plain words: what kind of thing it is, and no zone.
+  if (isOwnId(seed.pack)) return esc(layerText(seed)) + ' · ' + COST[mode] + ' energy' + (mode === 'harvest' ? ' · a clean harvest roots it for good' : '')
+  return esc(layerText(seed)) + ' · ' + (c ? zone(c) : '') + ' · ' + COST[mode] + ' energy' + (mode === 'harvest' ? ' · premium grade makes it perennial' : '')
 }
 
 /* Explain: write it down first, with the notes hidden, then rate it against the rubric. */
@@ -879,7 +902,7 @@ let EXPLAIN: { seed: Seed; text: string } | null = null
 function openExplain(seed: Seed, text = ''): void {
   EXPLAIN = { seed, text }
   open(chip(seed.pack) + '<h2>' + workTitle(seed, 'water') + ' · ' + esc(seed.name) + '</h2><p class="sub">' + workSub(seed, 'water') + '</p>' +
-    '<p>Explain <b>' + esc(seed.name) + '</b> in your own words. Write first; your notes are hidden until you submit.</p>' +
+    '<p>' + explainAsk(seed) + '</p>' +
     writingBox({ id: 'explain', label: 'Your explanation', min: RULES.explainMin, max: RULES.textMax, gate: 'rateGo', value: text, rows: 7 }) +
     '<div class="foot"><button type="button" data-act="close">Not now</button><button type="button" class="pri" id="rateGo" data-act="rate"' + (text.trim().length >= RULES.explainMin ? '' : ' disabled') + '>Rate it</button></div>')
 }
@@ -891,7 +914,9 @@ function rate(): void {
   EXPLAIN = { seed: e.seed, text }
   open(chip(e.seed.pack) + '<h2>Rate it · ' + esc(e.seed.name) + '</h2><h3>What you wrote</h3>' + noteHtml(text) +
     '<p class="sub">Be honest: you are the only judge. More than half the lines is a pass.</p>' +
-    tickList('Your explanation…', explainChecklist(e.seed)) +
+    tickList(isOwnId(e.seed.pack) ? 'Tick what is true of it' : 'Your explanation…', explainChecklist(e.seed)) +
+    // A home-made topic has no rubric written for it, so it is rated against the notes its farmer planted it with.
+    (isOwnId(e.seed.pack) ? '<h3>Your planting notes</h3>' + noteHtml(cropOf(S, e.seed.id)?.notes || NO_NOTES) : '') +
     '<div class="foot"><button type="button" data-act="editExplain">Edit</button><button type="button" class="pri" data-act="submitExplain">Submit</button></div>')
 }
 /** How many of the rubric lines on screen are ticked, and how many there are. */
@@ -972,7 +997,7 @@ function settle(seed: Seed, mode: Mode, ok: boolean, detail: Detail): string | n
   if (ok) {
     return c.perennial
       ? '<b>Checked in.</b> ' + name + ' stays rooted. Next check-in on day ' + c.due + '.' + guilds
-      : '<b>Watered.</b> ' + name + ' grows to stage ' + (c.stage + 1) + '/5. Next watering on day ' + c.due + ' (' + zone(c) + ').'
+      : '<b>Watered.</b> ' + name + ' grows to stage ' + (c.stage + 1) + '/5. Next watering on day ' + c.due + (isOwnId(seed.pack) ? '.' : ' (' + zone(c) + ').')
   }
   return '<b>Wilted.</b> ' + name + (c.perennial ? '' : ' drops a stage and') + ' goes in the compost heap. Revive it tomorrow.' + guilds
 }
@@ -1015,17 +1040,17 @@ function openBag(): void {
   let html = '<h2>Seed bag</h2><p class="sub">Each seed is a topic. Plant it in its own field with notes in your own words, water it by answering or explaining, harvest it to make it perennial. ' + RULES.plant.energy + ' energy + ' + RULES.plant.coins + ' coins to plant, and ' + RULES.newSeedsPerDay + ' new seeds a day.</p>'
   for (const sec of bagView(S, catalog, store.ui.seedSel)) {
     const labels = [
-      sec.perennial ? 'perennial' : '',
+      sec.perennial && !isOwnId(sec.pack) ? 'perennial' : '',
       sec.capPercent !== null ? "uses at most " + sec.capPercent + "% of the day's energy (" + catalog.capOf(sec.pack, S.energyMax) + ')' : '',
       sec.focusTitle ? 'focus: ' + esc(sec.focusTitle) : '',
     ].filter(Boolean)
-    html += '<div class="fh"><i style="background:' + sec.color + '"></i>' + esc(sec.title) + '</div>' + (labels.length ? '<div class="sub">' + labels.join(' · ') + '</div>' : '') + '<div>'
+    html += '<div class="fh"><i style="background:' + esc(sec.color) + '"></i>' + esc(sec.title) + '</div>' + (labels.length ? '<div class="sub">' + labels.join(' · ') + '</div>' : '') + '<div>'
     for (const sd of sec.seeds) {
       const tag = '<span class="tag">' + esc(sd.harvest) + '</span>'
       const edge = (sd.sapling ? ' · sapling of ' + esc(sd.sapling) : '') + (sd.edge ? ' · edge of ' + esc(sd.edge) : '')
       if (sd.status === 'held') html += '<div class="row"><div class="n">' + esc(sd.name) + '<small>' + esc(sd.layer) + ' ' + tag + edge + ' · plant in the ' + esc(sd.below ?? '') + ' layer first</small></div><span class="sub">waiting</span></div>'
       else if (sd.status !== 'ready') html += '<div class="row slim"><div class="n">' + esc(sd.name) + '<small>' + esc(sd.layer) + ' · in the ground ' + tag + ' ' + sd.status + edge + '</small></div><button type="button" data-act="cropSheet" data-arg="' + esc(sd.id) + '">Notes</button></div>'
-      else html += '<div class="row"><div class="n">' + esc(sd.name) + '<small>' + esc(sd.layer) + ' ' + tag + edge + (sd.focus ? ' · focus' : '') + '</small></div><button type="button" data-act="seed" data-arg="' + sd.id + '"' + (sd.selected ? ' class="pri"' : '') + '>' + (sd.selected ? 'Selected' : 'Select') + '</button></div>'
+      else html += '<div class="row"><div class="n">' + esc(sd.name) + '<small>' + esc(sd.layer) + ' ' + tag + edge + (sd.focus ? ' · focus' : '') + '</small></div><button type="button" data-act="seed" data-arg="' + esc(sd.id) + '"' + (sd.selected ? ' class="pri"' : '') + '>' + (sd.selected ? 'Selected' : 'Select') + '</button></div>'
     }
     if (sec.lockedCount) html += '<div class="row locked slim"><div class="n">' + sec.lockedCount + ' locked<small>see the learning tree</small></div></div>'
     html += '</div>'
@@ -1050,7 +1075,7 @@ function exportFarm(): void {
   open('<h2>Export farm</h2><p class="sub">A file named <b>' + esc(name) + '</b> should have downloaded. If not, copy this and keep it somewhere safe.</p><label for="exp" class="sub">Farm data</label><textarea id="exp" readonly>' + esc(data) + '</textarea>' + foot('Close', '<button type="button" data-act="copyExp">Copy</button>'))
 }
 function importFarm(): void {
-  open('<h2>Import farm</h2><p class="sub">Choose an exported file, or paste its contents. This replaces the farm in this browser. Farms saved by the first prototype work too.</p><input type="file" id="impFile" accept="application/json,.json"><label for="imp" class="sub">Or paste here</label><textarea id="imp"></textarea>' + foot('Import', '<button type="button" data-act="close">Cancel</button>'))
+  open('<h2>Import farm</h2><p class="sub">Choose an exported file, or paste its contents. This replaces the farm in this browser' + (Object.keys(S.own).length ? ', and the topics you added yourself with it' : '') + '. Farms saved by the first prototype work too.</p><input type="file" id="impFile" accept="application/json,.json"><label for="imp" class="sub">Or paste here</label><textarea id="imp"></textarea>' + foot('Import', '<button type="button" data-act="close">Cancel</button>'))
   const b = primary()
   if (b) b.dataset.act = 'doImport'
   byIdAs('impFile', HTMLInputElement).addEventListener('change', (e) => {
@@ -1067,7 +1092,7 @@ function doImport(): void {
   if (parsed.kind === 'error') return toast(parsed.message)
   if (parsed.kind === 'v2') return finishImport(store.importSnapshot(parsed.snapshot))
   // Say what would be lost before the farm in this browser is replaced, not after.
-  const refused = refusedCount(parsed.events, catalog)
+  const refused = refusedCount(parsed.events, base)
   if (refused === 0) return finishImport(store.importLog(parsed.events))
   IMPORT = parsed.events
   open('<h2>This farm does not fully fit</h2><p>' + esc(driftText(refused)) + '</p><p class="sub">It was probably saved by a different version of the game (this one is ' + esc(__APP_VERSION__) + '). You can import it as it is, or keep the farm you have and report this.</p>' +
@@ -1094,32 +1119,49 @@ function startNewFarm(kind: 'fresh' | 'sample'): void {
 /** Open a field for each pack ticked in the picker on screen. */
 function openTickedFields(): void {
   const ticked = [...sheet.querySelectorAll<HTMLInputElement>('input[data-pack]')].filter((b) => b.checked).map((b) => b.dataset.pack ?? '')
+  const box = document.getElementById('ownName')
+  const name = box instanceof HTMLInputElement ? box.value.trim() : ''
+  // A name the farm would refuse is said before anything is opened, so that Start does all of what it says or none.
+  const bad = name ? whyTitle(name) : null
+  if (bad) return toast(bad)
   const first = needsSetup()
   for (const e of fieldsToOpen(S, catalog, ticked)) if (!act(e)) return
+  // A field of their own, if they named one: it is made, and then they are asked what is in it.
+  const mine = name ? makeField(name) : null
+  if (name && !mine) return
   if (needsSetup()) return
   visitedPacks = []
   // The world may have grown with the fields; centre on it, and save that, or a reload shows the farm off-centre.
   store.ui.cam = camHome()
   store.saveUi()
+  if (mine) return openAdd(mine, true)
   close()
   if (first) hint('Open the <b>Seed bag</b>, pick a seed, then tap soil in its field to plant it with notes in your own words.')
   toast(first ? 'Your farm is ready. Day ' + S.day + '.' : 'Field opened.')
 }
 function openReset(): void {
-  open('<h2>Start a new farm?</h2><p>This replaces the farm in this browser. Export it first if you want to keep it.</p><p class="sub"><b>Start fresh</b>: day 1, ' + RULES.start.coins + ' coins, and you choose what to grow. <b>Sample farm</b>: the prototype farm on day 12, with crops already growing.</p><div class="branches"><button type="button" data-act="newFarm" data-arg="fresh">Start fresh</button><button type="button" data-act="newFarm" data-arg="sample">Sample farm</button></div>' + foot('Cancel'))
+  open('<h2>Start a new farm?</h2><p>This replaces the farm in this browser' + (Object.keys(S.own).length ? ', and the topics you added yourself go with it' : '') + '. Export it first if you want to keep it.</p><p class="sub"><b>Start fresh</b>: day 1, ' + RULES.start.coins + ' coins, and you choose what to grow. <b>Sample farm</b>: the prototype farm on day 12, with crops already growing.</p><div class="branches"><button type="button" data-act="newFarm" data-arg="fresh">Start fresh</button><button type="button" data-act="newFarm" data-arg="sample">Sample farm</button></div>' + foot('Cancel'))
 }
 /** The first thing a new farm shows: what the game is, and which fields to start with. `ticked` are packs to tick for the farmer. */
 function openWelcome(ticked: readonly string[] = []): void {
-  const picker = pickerView(catalog, S, ticked)
+  const picker = pickerView(base, S, ticked)
+  // The box does not take the focus: on a phone that would bring the keyboard up over a sheet nobody has read yet.
   open('<h2>Welcome to Permaculture</h2><p>A farm where the crops are the things you are learning. Plant a seed with notes in your own words, water it by answering and explaining, and it grows. Leave a crop two days past thirsty and it wilts, unless the rain barrel has a day to spend.</p>' +
-    pickerHtml(picker) +
-    '<p class="sub">Each one becomes a field on your farm. Pick at least one; you can open the others later from the learning tree. You can plant ' + RULES.newSeedsPerDay + ' new seeds a day, and everything is saved in this browser.</p>' +
+    '<label for="ownName" class="lead">What do you want to learn?</label>' +
+    '<input type="text" id="ownName" class="write" data-quiet data-keep maxlength="' + TEXT.title + '" placeholder="German, Organic chemistry, Guitar…" autocomplete="off">' +
+    '<p class="sub">Anything at all. It becomes a field of your own, and next you fill it with your topics: paste a syllabus, a word list or your notes, and the game works out the rest.</p>' +
+    pickerHtml(picker, 'Or start with a ready-made field') +
+    '<p class="sub">Each one becomes a field on your farm, and you can open more later from the learning tree. You can plant ' + RULES.newSeedsPerDay + ' new seeds a day, and everything is saved in this browser.</p>' +
     '<div class="foot"><button type="button" data-act="newFarm" data-arg="sample">Try the sample farm</button><button type="button" class="pri" id="fieldsGo" data-act="openFields"' + (picker.some((p) => p.ticked) ? '' : ' disabled') + '>Start my farm</button></div>')
 }
-// The picker's button waits for at least one tick.
-sheet.addEventListener('change', (e) => {
+/** The welcome's button waits for something to grow: a field of the farmer's own, or a ready-made one. */
+function welcomeGate(): void {
   const go = document.getElementById('fieldsGo')
-  if (go instanceof HTMLButtonElement) go.disabled = !sheet.querySelector('input[data-pack]:checked')
+  const name = document.getElementById('ownName')
+  if (go instanceof HTMLButtonElement) go.disabled = !sheet.querySelector('input[data-pack]:checked') && !(name instanceof HTMLInputElement && name.value.trim() !== '')
+}
+sheet.addEventListener('change', (e) => {
+  welcomeGate()
   // On the Share sheet, ticking a field remakes the link, so what is on screen is always what would be sent.
   if (e.target instanceof HTMLInputElement && e.target.dataset.show !== undefined) {
     openShare([...sheet.querySelectorAll<HTMLInputElement>('input[data-show]')].filter((b) => b.checked).map((b) => b.dataset.show ?? ''))
@@ -1127,6 +1169,8 @@ sheet.addEventListener('change', (e) => {
 })
 sheet.addEventListener('keydown', (e) => {
   if (e.key === 'Enter' && !e.isComposing && e.target instanceof HTMLInputElement && e.target.id === 'farmName') { e.preventDefault(); saveName() }
+  // Enter in the box for a field's name does what the sheet's main button does.
+  if (e.key === 'Enter' && !e.isComposing && e.target instanceof HTMLInputElement && e.target.id === 'ownName') { e.preventDefault(); primary()?.click() }
 })
 function openWell(): void { open('<h2>Rain barrel</h2><p>' + S.barrel + ' of ' + RULES.barrel.max + ' days stored.</p><p class="sub">Catch and store energy. End a day with ' + RULES.barrel.fillAt + '+ energy left and the barrel fills by one. When a crop is about to wilt, the barrel spends a day to keep it alive. It never grows a crop; only you do.</p>' + foot()) }
 function openCompost(): void {
@@ -1224,7 +1268,7 @@ function openNeighbours(): void {
 function visitNeighbour(code: string): void {
   const n = book.neighbours.find((x) => x.picture.code === code)
   if (!n || tooOld(n.picture.at, Date.now())) return toast('No recent picture. Ask for a new link.')
-  enterVisit(layOut(n.picture, catalog).state, n.picture.name, visitLabel(n.picture), visitDetail(n.picture), packsOf(n.picture))
+  enterVisit(layOut(n.picture, base).state, n.picture.name, visitLabel(n.picture), visitDetail(n.picture), packsOf(n.picture))
   close()
 }
 
@@ -1244,16 +1288,19 @@ function saveName(): void {
 let SHARE: ShareView | null = null
 function openShare(show?: readonly string[]): void {
   if (!S.name) return openName('share')
-  const mine = catalog.packs.filter((p) => Object.hasOwn(S.fields, p.pack))
+  // Only the game's own fields can be shown: a neighbour's game cannot know what grows in one you made.
+  const mine = base.packs.filter((p) => Object.hasOwn(S.fields, p.pack))
+  if (mine.length === 0) return open('<h2>Share your farm</h2><p>A farm link shows ready-made fields, and your farm has only fields of your own so far. Those are not in a link yet.</p><p class="sub">Open a ready-made field from the learning tree and it can be shared.</p>' + foot())
   const ticked = show ?? mine.map((p) => p.pack)
   const now = Date.now()
-  SHARE = shareView(S, ticked, { code: ownCode(), at: momentOf(now), game: __APP_VERSION__ }, catalog, now)
+  SHARE = shareView(S, ticked, { code: ownCode(), at: momentOf(now), game: __APP_VERSION__ }, base, now)
   // The link opens wherever this game is running, so forks and local copies work too.
   const url = SHARE ? location.origin + location.pathname + '#' + SHARE.hash : null
   open(shareSheetHtml({
     name: S.name, packs: mine.map((p) => ({ pack: p.pack, title: p.title, color: packColor(p), ticked: ticked.includes(p.pack) })),
     view: SHARE, url, canShare: typeof navigator.share === 'function',
   }))
+  if (Object.keys(S.own).length) sheet.querySelector('.foot')?.insertAdjacentHTML('beforebegin', '<p class="sub">Fields of your own are not in a farm link yet.</p>')
 }
 /** Remember when a link was last made, for the Neighbours sheet. */
 function markShared(): void {
@@ -1272,7 +1319,7 @@ function shareNative(): void {
 }
 function previewShare(): void {
   if (!SHARE) return
-  enterVisit(layOut(SHARE.picture, catalog).state, S.name, 'your farm as a neighbour will see it', '', [])
+  enterVisit(layOut(SHARE.picture, base).state, S.name, 'your farm as a neighbour will see it', '', [])
   close()
 }
 function openPaste(): void {
@@ -1294,7 +1341,7 @@ function handleLink(text: string): void {
   if (!link) return toast('That link cannot be read.')
   if ('newer' in link || link.kind !== 'farm') return toast('That link needs a newer version of the game.')
   const now = Date.now()
-  const read = readPicture(link.payload, catalog, now)
+  const read = readPicture(link.payload, base, now)
   if (!read) return toast('That link cannot be read.')
   const p = read.picture
   if (p.code === ownCode()) return toast(arrivalText('own', p.name))
@@ -1306,7 +1353,7 @@ function handleLink(text: string): void {
     changeBook((b) => { const r = receive(b, p, ownCode(), now); result = r.result; return r.book })
     return toast(arrivalText(result, p.name))
   }
-  const laid = layOut(p, catalog)
+  const laid = layOut(p, base)
   leaveVisit(true)
   ARRIVAL = { picture: p, state: laid.state }
   // Someone who has never played lands on the sender's farm: that is the front door to the game.
@@ -1374,11 +1421,18 @@ function treeSvg(v: TreeView): string {
   }
   return s + '</svg>'
 }
+/** A tab for each field there is, the farmer's own after the game's, and a way to make another. */
+const treeTabs = (on: string): string =>
+  '<div class="tabs">' + catalog.packs.map((p) => '<button type="button" data-act="treeTab" data-arg="' + esc(p.pack) + '"' + (p.pack === on ? ' class="on"' : '') + '><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:' + esc(packColor(p)) + ';margin-right:6px;vertical-align:-1px"></span>' + esc(p.title) + '</button>').join('') +
+  '<button type="button" data-act="ownNew">+ Your own</button></div>'
 function openTree(packId: string = treePack()): void {
+  // A field the farmer made has no tree to draw: nothing in it waits for anything else. It is shown as a list.
+  const mine = Object.hasOwn(S.own, packId) ? S.own[packId] : undefined
+  if (mine) return open('<h2>Learning tree</h2>' + treeTabs(packId) + fieldSheetHtml(mine, S, catalog) + foot('Close'))
   const v = treeView(packId, S, catalog)
   if (!v) return
   let html = '<h2>Learning tree</h2><p class="sub">What you could grow, including what you cannot reach yet. A wild seed joins it when you domesticate it, and a sapling when its tree drops it. A seed unlocks when the seeds it needs are <b>rooted</b> (harvested to perennial). Pick a branch to focus; the seed bag puts it first.</p>'
-  html += '<div class="tabs">' + catalog.packs.map((p) => '<button type="button" data-act="treeTab" data-arg="' + esc(p.pack) + '"' + (p.pack === v.pack ? ' class="on"' : '') + '><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:' + packColor(p) + ';margin-right:6px;vertical-align:-1px"></span>' + esc(p.title) + '</button>').join('') + '</div>'
+  html += treeTabs(v.pack)
   if (!Object.hasOwn(S.fields, v.pack)) {
     // A pack this farm does not grow yet: say what it is and offer the field.
     const about = pickerView(catalog, S, []).find((p) => p.pack === v.pack)
@@ -1405,6 +1459,141 @@ function openTree(packId: string = treePack()): void {
   html += earnedSectionHtml(v.earned, packTitle)
   html += foot('Close', '<button type="button" data-act="readiness">Readiness</button>')
   open(html)
+}
+
+/* ---------- a field of your own ---------- */
+/** Make a field of the farmer's own on the next free plot. Its id, or null if the farm refused it (the reason is on screen). */
+function makeField(title: string): string | null {
+  const id = newFieldId((x) => Object.hasOwn(S.fields, x))
+  const flying = catalog.packs.filter((p) => Object.hasOwn(S.fields, p.pack)).map(packColor)
+  if (!act({ type: 'own-field-set', field: id, slot: nextFreeSlot(S.fields), title, color: pickColor(flying) })) return null
+  // The world may have grown to hold it.
+  store.ui.treeTab = id
+  store.ui.cam = camHome()
+  store.saveUi()
+  return id
+}
+/** The sheet where topics are added, and what the reader makes of what is in its box. `first` is true while a farm is being set up. */
+let ADD: { field: string; pairs: 'cards' | 'topics' | null; adding: Adding | null; first: boolean } | null = null
+function openAdd(fieldId: string, first = false): void {
+  const field = Object.hasOwn(S.own, fieldId) ? S.own[fieldId] : undefined
+  if (!field) return
+  ADD = { field: fieldId, pairs: null, adding: null, first }
+  open(addSheetHtml(field, first))
+  byIdAs('ownFile', HTMLInputElement).addEventListener('change', (e) => {
+    const input = e.target
+    const f = input instanceof HTMLInputElement ? input.files?.[0] : undefined
+    if (!f) return
+    // A file of topics is small. Anything else was chosen by mistake.
+    if (f.size > 2_000_000) return toast('That file is too big to be a list of topics.')
+    f.text().then((t) => {
+      // What was typed stays, with the file after it. And the same file can be chosen again.
+      const box = document.getElementById('ownText')
+      if (!(box instanceof HTMLTextAreaElement)) return
+      box.value = box.value.trim() ? box.value.replace(/\s+$/, '') + '\n' + t : t
+      if (input instanceof HTMLInputElement) input.value = ''
+      reread()
+    }, () => toast('Could not read that file.'))
+  })
+}
+/** Read the box again, and show what would be added. */
+function reread(): void {
+  const a = ADD
+  const field = a && Object.hasOwn(S.own, a.field) ? S.own[a.field] : undefined
+  const box = document.getElementById('ownText'), out = document.getElementById('ownReading'), go = document.getElementById('ownAdd')
+  if (!a || !field || !(box instanceof HTMLTextAreaElement) || !out || !(go instanceof HTMLButtonElement)) return
+  const draft = readText(box.value, a.pairs ? { pairs: a.pairs } : {})
+  a.adding = toAdd(draft, field)
+  out.innerHTML = readingHtml(draft, a.adding, a.pairs)
+  const n = a.adding.seeds.length
+  go.disabled = n === 0
+  go.textContent = n === 0 ? 'Add topics' : 'Add ' + n + (n === 1 ? ' topic' : ' topics')
+}
+// Registered after the handler that keeps a writing box's button in step, so this one has the last word on the button.
+sheet.addEventListener('input', (e) => {
+  if (!(e.target instanceof HTMLElement)) return
+  if (e.target.id === 'ownText') reread()
+  else if (e.target.id === 'ownName') welcomeGate()
+})
+function addTopics(): void {
+  const a = ADD
+  const seeds = a?.adding?.seeds ?? []
+  if (!a || seeds.length === 0) return
+  if (!act({ type: 'own-seeds-set', field: a.field, seeds })) return
+  ADD = null
+  toast('Added ' + seeds.length + (seeds.length === 1 ? ' topic.' : ' topics.'))
+  if (!a.first) return openTree(a.field)
+  close()
+  hint('Open the <b>Seed bag</b>, pick a topic, then tap soil in the <b>' + esc(packTitle(a.field)) + '</b> field to plant it with notes in your own words.')
+}
+/** Copy what to ask an AI chat for. Where the browser will not copy, the words are put on the sheet to be copied by hand. */
+function copyPrompt(fieldId: string): void {
+  const prompt = aiPrompt(packTitle(fieldId))
+  const done = (): void => toast('Copied. Paste it into any AI chat, then paste its answer here.')
+  const byHand = (): void => {
+    if (!document.getElementById('ownPromptText')) sheet.querySelector('#ownReading')?.insertAdjacentHTML('beforebegin', '<textarea id="ownPromptText" class="write short" rows="4" readonly></textarea>')
+    const t = byIdAs('ownPromptText', HTMLTextAreaElement)
+    t.value = prompt
+    t.focus()
+    t.select()
+    toast('Select all and copy. Paste it into any AI chat.')
+  }
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(prompt).then(done, byHand)
+  else byHand()
+}
+/** A new field from the sheet that asks its name, or a new name for the field `fieldId`. */
+function nameField(fieldId: string): void {
+  const name = byIdAs('ownName', HTMLInputElement).value
+  if (!fieldId) {
+    const id = makeField(name)
+    if (id) openAdd(id)
+    return
+  }
+  const field = Object.hasOwn(S.own, fieldId) ? S.own[fieldId] : undefined
+  if (!field || !act({ type: 'own-field-set', field: fieldId, slot: S.fields[fieldId] ?? 0, title: name, color: field.color })) return
+  openTree(fieldId)
+}
+function openTopic(seedId: string): void {
+  const field = S.own[fieldOfSeed(seedId)]
+  const topic = Object.hasOwn(S.own, fieldOfSeed(seedId)) ? field?.seeds.find((x) => x.id === seedId) : undefined
+  if (field && topic) open(topicSheetHtml(field, topic, cropOf(S, seedId) !== undefined))
+}
+function saveTopic(seedId: string): void {
+  const fieldId = fieldOfSeed(seedId)
+  const was = (Object.hasOwn(S.own, fieldId) ? S.own[fieldId] : undefined)?.seeds.find((x) => x.id === seedId)
+  const { cards, unread } = cardsFromText(byIdAs('tCards', HTMLTextAreaElement).value, was?.cards ?? [])
+  if (unread > 0) return toast(unread + (unread === 1 ? ' line of the cards has' : ' lines of the cards have') + ' no “ = ” in it. Write each as question = answer.')
+  // The farm reads the kind like anything else it is handed, and refuses one it does not know.
+  const kind = byIdAs('tKind', HTMLSelectElement).value as never
+  const field = fieldId
+  // The line on what to read is one line: an Enter typed in its box is a space.
+  const summary = byIdAs('tSummary', HTMLTextAreaElement).value.replace(/\s*\n\s*/g, ' ')
+  if (!act({ type: 'own-seeds-set', field, seeds: [{ id: seedId, name: byIdAs('tName', HTMLInputElement).value, kind, summary, group: byIdAs('tGroup', HTMLInputElement).value, cards }] })) return
+  toast('Saved.')
+  openTree(field)
+}
+function removeTopic(seedId: string): void {
+  if (!act({ type: 'own-seed-removed', topic: seedId })) return
+  if (store.ui.seedSel === seedId) store.ui.seedSel = null
+  openTree(fieldOfSeed(seedId))
+}
+function openDropField(fieldId: string): void {
+  const field = Object.hasOwn(S.own, fieldId) ? S.own[fieldId] : undefined
+  if (!field) return
+  const n = field.seeds.length
+  open(chip(fieldId) + '<h2>Remove this field?</h2><p>The <b>' + esc(field.title) + '</b> field goes, with ' + (n === 0 ? 'no topics in it' : n === 1 ? 'its 1 topic' : 'its ' + n + ' topics') + ', and its land goes back to the wild. Nothing is planted in it, so no crop is lost.</p>' +
+    '<div class="foot"><button type="button" data-act="ownBack" data-arg="' + esc(fieldId) + '">Keep it</button><button type="button" class="pri" data-act="ownDropGo" data-arg="' + esc(fieldId) + '">Remove it</button></div>')
+}
+function dropField(fieldId: string): void {
+  if (!act({ type: 'own-field-removed', field: fieldId })) return
+  if (store.ui.seedSel && fieldOfSeed(store.ui.seedSel) === fieldId) store.ui.seedSel = null
+  store.ui.treeTab = null
+  store.ui.cam = camHome()
+  store.saveUi()
+  toast('Field removed.')
+  // A farm with no field left goes back to the welcome.
+  if (needsSetup()) close()
+  else openTree()
 }
 
 /* ---------- readiness ---------- */
@@ -1454,7 +1643,7 @@ function walk(): void {
 }
 
 /* ---------- almanac ---------- */
-function openAlmanac(): void { open(almanacHtml(catalog, S.energyMax, __APP_VERSION__)) }
+function openAlmanac(): void { open(almanacHtml(base, S.energyMax, __APP_VERSION__)) }
 
 /* ---------- sleep ---------- */
 function morningReport(night: Night): string {
@@ -1525,7 +1714,7 @@ sheet.addEventListener('click', (e) => {
   else if (what === 'export') exportFarm()
   else if (what === 'import') importFarm()
   else if (what === 'doImport') doImport()
-  else if (what === 'importAnyway') { if (IMPORT) finishImport(store.importLog(IMPORT), refusedCount(IMPORT, catalog)) }
+  else if (what === 'importAnyway') { if (IMPORT) finishImport(store.importLog(IMPORT), refusedCount(IMPORT, base)) }
   else if (what === 'copyExp') copyFrom('exp')
   else if (what === 'neighbours') openNeighbours()
   else if (what === 'rename') openName('neighbours')
@@ -1559,11 +1748,24 @@ sheet.addEventListener('click', (e) => {
     if (Object.hasOwn(S.fields, arg)) { store.ui.treeTab = arg; store.saveUi() }
     openTree(arg)
   }
+  else if (what === 'ownNew') open(nameFieldSheetHtml(null))
+  else if (what === 'ownRename') { if (Object.hasOwn(S.own, arg)) open(nameFieldSheetHtml({ id: arg, title: S.own[arg]?.title ?? '' })) }
+  else if (what === 'ownCreate') nameField(arg)
+  else if (what === 'ownAddOpen') openAdd(arg)
+  else if (what === 'ownBack') openTree(arg)
+  else if (what === 'ownPairs') { if (ADD) { ADD.pairs = arg === 'cards' || arg === 'topics' ? arg : null; reread() } }
+  else if (what === 'ownAdd') addTopics()
+  else if (what === 'ownPrompt') copyPrompt(arg)
+  else if (what === 'ownEdit') openTopic(arg)
+  else if (what === 'ownSave') saveTopic(arg)
+  else if (what === 'ownRemove') removeTopic(arg)
+  else if (what === 'ownDrop') openDropField(arg)
+  else if (what === 'ownDropGo') dropField(arg)
   else if (what === 'focus') {
     const [packId, branchId] = arg.split('|')
     const pack = packId ? catalog.pack(packId) : undefined
     if (!pack || !branchId) return
-    if (act({ type: 'focus-set', pack: pack.pack, branch: S.focus[pack.pack] === branchId ? null : branchId })) openTree()
+    if (act({ type: 'focus-set', pack: pack.pack, branch: S.focus[pack.pack] === branchId ? null : branchId })) openTree(pack.pack)
   } else if (what === 'testout') {
     const seed = catalog.seed(arg)
     if (!seed || refused({ type: 'unlocked', seed: seed.id, ok: true })) return
