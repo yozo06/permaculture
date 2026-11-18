@@ -225,6 +225,16 @@ seeds:
     minutes: 90
     summary: Before anyone else has a farm, make sure an edit to a pack or a rule cannot quietly damage one. A lock on every id a saved farm depends on, a played farm that must always replay, and a warning when a farm's history no longer fits.
     prompts: [Renaming a seed id turns the build red.]
+  - id: own-fields
+    name: A field of your own
+    layer: understory
+    branch: engine
+    tier: 2
+    needs: [pack-loader]
+    harvest: artifact
+    minutes: 120
+    summary: A learner names a subject and pastes whatever they have (a list, a syllabus, notes, a word list, a file of flashcards). A reader with no AI in it turns that into topics, groups and question cards. The topics are kept in the farm's own log and played by the same rules.
+    prompts: [Someone who has never seen the code starts a farm for a subject of their own and waters their first card the next day.]
   - id: snapshot
     name: Farm snapshot
     layer: ground-cover
