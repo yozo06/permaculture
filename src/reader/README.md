@@ -68,12 +68,22 @@ and the two notes, said in English, are "Left out, as not something to learn: To
 | `topics` | Every line that had nothing under it, in order. |
 | `topics[].name` | What the topic is called. No two topics have the same name. |
 | `topics[].summary` | What to read or do: the second part of "Recursion - a function that calls itself", the text under the line, a page number taken off its end. May be `''`. |
-| `topics[].kind` | A guess from the words in the name: `idea`, `facts`, `skill`, `rule` or `whole`. A set of cards is `facts`. |
+| `topics[].kind` | A guess from the words in the name, or failing that from the line on what to do: `idea`, `facts`, `skill`, `rule` or `whole`. A set of cards with nothing said about it is `facts`. |
 | `topics[].group` | The heading it stood under, or `''`. |
-| `topics[].cards` | Question cards, each a `q` and an `a`. Short pairs, a table, or a question with its answer. |
+| `topics[].cards` | Question cards, each a `q` and an `a`. Short pairs, a table, or a question with its answer. A card written with wrong answers after its answer ("question = right \| wrong \| wrong") has them in `wrong`, three at most. A card with none leaves the wrong answers to whoever asks it. |
 | `notes` | What was shortened or left out. See below. |
 | `pairs` | How many lines came in two parts. Where there are some, they can be read two ways. |
 | `pairsAs` | How most of them were read, `cards` or `topics`; or what `pairs` asked for, when it was set. |
+
+## Shapes it knows
+
+Bullets, numbering, indenting, Markdown headings and tables, lines in two parts ("Hund - dog", "Brot = bread"), "Q:" and "A:", files of flashcards from Anki or Quizlet, and spreadsheets saved as CSV. `read.test.ts` has one of each. Three were added for what an AI chat writes:
+
+- **Wrong answers.** After an equals sign or a question, "Robusta | Arabica | Liberica" is the answer and the wrong answers to show beside it.
+- **A list said in words.** "Part: ..." is a heading, "Topic: ..." is the heading of one topic under it, and "Read: ..." (or "Practise: ...") is the line on what to read for the topic above it. A chat's page turns "## heading" into a plain line before it is copied; the words come through. They are in the lists, under `outline`.
+- **A list in a block of code.** When far more of a text stands inside rows of backticks than outside them, the block is the list, and only the rows of backticks are left out.
+
+The text under a heading that holds cards is the line on what to read for them. Cards with such a line are the questions of a topic, and the topic takes its kind from its name. Cards with none are `facts`.
 
 ## Settings
 

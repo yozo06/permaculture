@@ -18,15 +18,32 @@ Anything with one topic to a line works. The reader also understands the shapes 
 | Short pairs: "Hund - dog", "Brot = bread" | Question cards, up to eight to a topic. |
 | A file of flashcards from Anki or Quizlet, a spreadsheet saved as CSV, a Markdown table | Question cards. The first two columns are the question and the answer. |
 | "Q: ..." with "A: ..." under it, or "What is the capital of France? Paris" | Question cards. |
-| What an AI chat wrote for you | The same as any of the above. The usual opening and closing lines ("Here is...", "Let me know...") are dropped. The add sheet has a prompt you can copy into any AI chat to get a list in a shape that reads well. The game itself never talks to one. |
+| "Which species has more caffeine? = Robusta \| Arabica \| Liberica \| Excelsa" | A question card with its own wrong answers: what follows the answer, each after an upright bar. Three are kept. |
+| "Part: ...", "Topic: ...", and under a topic "Read: ..." and question lines | A topic for each "Topic:", grouped by its "Part:", with the "Read:" line as what to read and the questions as its cards. |
+| A heading with a sentence under it and then cards | One topic, with the sentence as what to read and the cards as its questions. |
+| What an AI chat wrote for you | The same as any of the above. The usual opening and closing lines ("Here is...", "Let me know...") are dropped, and a list handed over in a block of code is read as the list. The game itself never talks to one. |
 
-Lines in two parts can be read two ways, as cards or as topics with a note. The reader decides heading by heading. The pairs under one heading are cards when there are three or more of them, nearly all are short (a few words after the mark), and they are most of the lines there. Pairs written with a tab, in a table, or as a question and its answer are always cards. The add sheet lets you overrule it either way.
+### Questions from an AI chat
+
+A topic with question cards is watered by multiple choice. A topic with none is watered by explaining it in writing, which is slower and asks more of you. If you would rather be asked, let an AI chat write the questions:
+
+1. On the add sheet, write in the box what you want to learn, in your own words. This is optional.
+2. Press **Copy a prompt for an AI chat** and paste the prompt into any chat. It asks for a list of parts and topics, and under every topic a line on what to read and four to six questions, each with its right answer and three wrong ones.
+3. Paste the chat's answer into the box. The sheet shows what the game made of it, and says so if any topic came without questions.
+
+A field that already has topics with nothing to ask can get them questions the same way: the add sheet then has a second button, **Copy a prompt for questions on your topics without any**. Paste the chat's answer, and each of those topics takes its questions and keeps everything else, whether it is planted or not.
+
+The prompt asks for the list in words ("Part:", "Topic:", "Read:") and not in Markdown marks, because a chat's page turns "## heading" into a plain line before you copy it.
+
+### Lines in two parts
+
+Lines in two parts can be read two ways, as cards or as topics with a note. The reader decides heading by heading. The pairs under one heading are cards when there are three or more of them, nearly all are short (a few words after the mark), and they are most of the lines there. Pairs written with a tab, in a table, as a question and its answer, or with wrong answers after the answer are always cards. The add sheet lets you overrule it either way.
 
 What the reader leaves out, and the names it shortens, it says under "Check these". The rules are in `src/reader/read.ts`, and `src/reader/read.test.ts` has the pastes they came from. The reader knows English words only for now ("Week 3", "Total: 45 hours"); a list in another language still reads by its shape. `src/reader/README.md` describes the reader by itself.
 
 ## How a topic is played
 
-A topic of your own is planted, watered and harvested like any other. The reader guesses what kind of thing it is from the words in its name, and you can change that from the learning tree. The kind decides the rest:
+A topic of your own is planted, watered and harvested like any other. The reader guesses what kind of thing it is from the words in its name, or failing that from the line on what to do ("practise ..." is a skill), and you can change that from the learning tree. The kind decides the rest:
 
 | Kind | Drawn as | Watered by | Harvested by |
 |---|---|---|---|
@@ -36,7 +53,7 @@ A topic of your own is planted, watered and harvested like any other. The reader
 | A rule or a pattern | a small tree | explaining it in writing | a write-up |
 | The big picture | a tall tree | explaining it in writing | a write-up |
 
-**Cards.** A topic of any kind that has cards is watered by answering them, with one explanation in writing before the harvest, and harvested by them too. At the harvest a card is asked the other way round, from its answer, when its question is a short name; a card that is itself a question is asked as it is. A card needs wrong answers to choose between. They are borrowed from the other cards of the same topic, and then of the same field. A card with fewer than two to borrow is not asked, and its topic is explained in writing instead.
+**Cards.** A topic of any kind that has cards is watered by answering them, with one explanation in writing before the harvest, and harvested by them too. At the harvest a card is asked the other way round, from its answer, when its question is a short name; a card that is itself a question is asked as it is. A card needs wrong answers to choose between. It is asked with the ones it came with, up to three. What it is short of is borrowed from the other cards of the same topic, and then of the same field. A card with fewer than two in all is not asked, and a topic with no card that can be asked is explained in writing instead. You can change a topic's cards, wrong answers and all, from the learning tree.
 
 **No end.** A field of your own has no readiness, no bar and no layer that waits for another. You decide how much is enough. Its topics have no prerequisites, guilds, edges, wild finds or saplings.
 
