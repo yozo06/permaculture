@@ -3,7 +3,7 @@ import { buildCatalog } from '../engine/catalog'
 import { smallCatalog as cat, smallFarm, run } from '../engine/fixtures'
 import { check } from '../engine/fold'
 import { OWN_TODAY, catalogFor, isOwnFieldId, isOwnSeedId, type OwnField, type OwnSeed } from '../engine/own'
-import { read } from '../engine/reader'
+import { read } from '../reader'
 import type { FarmEvent } from '../engine/types'
 import {
   OWN_COLORS, addSheetHtml, aiPrompt, cardsFromText, cardsText, explainAsk, fieldSheetHtml, harvestTag, layerText, nameFieldSheetHtml, newFieldId, newSeedId, pickColor, readingHtml,

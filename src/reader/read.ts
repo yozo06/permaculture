@@ -11,7 +11,7 @@
 //
 // Pure, with nothing imported: text in, a draft out. It never throws, it says what it leaves out and which names it
 // shortens (`notes`), and it reads only so far along a line and so many lines, so that no paste can hold the page up.
-// Every rule here came from a paste somebody might really make; reader.test.ts has one of each.
+// Every rule here came from a paste somebody might really make; read.test.ts has one of each.
 
 /** What kind of thing a topic is. The game draws it, asks about it and harvests it by this. */
 export type Kind = 'facts' | 'skill' | 'idea' | 'rule' | 'whole'

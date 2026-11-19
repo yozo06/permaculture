@@ -3,7 +3,7 @@
 // Everything a learner typed is escaped before it reaches the page.
 import { HARVEST_NAMES, LAYER_NAMES, type Catalog, type Seed } from '../engine/catalog'
 import { KINDS, KIND_ORDER, OWN_TODAY, isOwnId, kindLabel, kindOfLayer, whyOwnSeed, type OwnField, type OwnSeed } from '../engine/own'
-import { TEXT, type Card, type Draft } from '../engine/reader'
+import { TEXT, type Card, type Draft } from '../reader'
 import { RULES, cropOf } from '../engine/rules'
 import type { FarmState } from '../engine/types'
 import { cropSprite, iconHtml } from './art/sprites'

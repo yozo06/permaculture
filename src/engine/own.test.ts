@@ -10,7 +10,7 @@ import { KINDS, KIND_ORDER, OWN, OWN_TODAY, catalogFor, isOwnId, ownPack, whyOwn
 import { makePicture } from './picture'
 import { earnedProgress, readiness } from './readiness'
 import { RULES, cropOf } from './rules'
-import { HIDDEN, TEXT, read } from './reader'
+import { HIDDEN, TEXT, read } from '../reader'
 import type { FarmEvent, FarmState } from './types'
 
 const F = 'my_abcd1234'

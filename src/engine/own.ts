@@ -5,7 +5,7 @@
 // a kind becomes a layer, a rubric and a harvest; a group becomes a branch; cards become questions, with the wrong
 // answers borrowed from the other cards of the field. So a saved farm cannot carry a rule of its own making.
 import { buildCatalog, type Catalog } from './catalog'
-import { HIDDEN, TEXT, type Card, type Kind } from './reader'
+import { HIDDEN, TEXT, type Card, type Kind } from '../reader'
 import type { BranchDef, Layer, Mcq, PackDef, SeedDef } from './types'
 import { isRecord } from './util'
 

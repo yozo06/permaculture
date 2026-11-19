@@ -18,7 +18,7 @@ The engine does not know what any seed means. Adding a goal never touches engine
 2. `vite.config.ts` runs the same code at build time and serves the result as the module `virtual:packs`. A broken pack fails the build with the validator's messages. In `npm run dev`, saving a pack reloads the page.
 3. `src/engine/catalog.ts` turns the packs into a `Catalog`: seeds, finds and packs looked up by id, with every optional list filled in.
 
-A farm can also have fields its farmer made (`docs/own-fields.md`). `src/engine/reader.ts` reads whatever they paste into topics: it imports nothing and guesses nothing, and `reader.test.ts` has the pastes its rules came from. `src/engine/own.ts` turns those topics into a pack, and `catalogFor` lays the farm's own fields over the game's catalog. Their topics are events in the log, so `fold` asks each event against the catalog as that farm had it at that moment.
+A farm can also have fields its farmer made (`docs/own-fields.md`). `src/reader/read.ts` reads whatever they paste into topics: it imports nothing and guesses nothing, and `read.test.ts` has the pastes its rules came from. `src/engine/own.ts` turns those topics into a pack, and `catalogFor` lays the farm's own fields over the game's catalog. Their topics are events in the log, so `fold` asks each event against the catalog as that farm had it at that moment.
 
 ## A farm is a log
 
@@ -81,7 +81,7 @@ When the page loads, the store reads the log and folds it. If the log cannot be 
 | To… | Change |
 |---|---|
 | add a seed, a question or a whole goal | a file in `packs/`. No code. See `pack-format.md`. |
-| teach the reader a new kind of paste | `src/engine/reader.ts`. Put the paste in `reader.test.ts` first, with what a person would expect of it. A rule may not guess, and whatever it leaves out it says in the notes. |
+| teach the reader a new kind of paste | `src/reader/read.ts`. Put the paste in `read.test.ts` first, with what a person would expect of it. A rule may not guess, and whatever it leaves out it says in the notes. |
 | change a number | `RULES` in `src/engine/rules.ts`, and the same row in `docs/design.md`. A test fails until they agree. The Almanac follows by itself. |
 | add a rule | a new event in `types.ts`; its shape in `parseEvent`, its check and its effect in `fold.ts`; tests in `fold.test.ts`; and teach `fold.property.test.ts` to play it. |
 | hold back something a player may start, without touching saved farms | `whyToday` in `fold.ts`, which only `check` asks. Replay never does. |

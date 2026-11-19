@@ -9,7 +9,7 @@ import {
 import { farmFileName, farmFileText, parseFarmFile } from '../engine/log'
 import { buyersFor, standing } from '../engine/market'
 import { catalogFor, fieldOfSeed, isOwnId, kindLabel, whyTitle } from '../engine/own'
-import { TEXT, read as readText } from '../engine/reader'
+import { TEXT, read as readText } from '../reader'
 import { farmAtEndOf } from '../engine/past'
 import { WALK_QUESTIONS, isWalkDay, walkedToday } from '../engine/walk'
 import { farmCode, layOut, momentOf, readPicture, type Picture } from '../engine/picture'

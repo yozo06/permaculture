@@ -1,6 +1,6 @@
 import fc from 'fast-check'
 import { describe, expect, it } from 'vitest'
-import { TEXT, read, type Draft, type DraftTopic } from './reader'
+import { TEXT, read, type Draft, type DraftTopic } from './index.ts'
 
 const names = (d: Draft): string[] => d.topics.map((t) => t.name)
 const topic = (d: Draft, name: string): DraftTopic => {

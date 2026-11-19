@@ -3,7 +3,7 @@
 import { LAYER_NAMES, type Catalog } from '../engine/catalog'
 import { LADDER } from '../engine/ladder'
 import { KINDS, KIND_ORDER, OWN_TODAY } from '../engine/own'
-import { TEXT } from '../engine/reader'
+import { TEXT } from '../reader'
 import { GROUND_UP, earnedLine } from '../engine/readiness'
 import { RULES } from '../engine/rules'
 import type { Layer } from '../engine/types'

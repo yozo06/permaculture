@@ -22,7 +22,7 @@ Anything with one topic to a line works. The reader also understands the shapes 
 
 Lines in two parts can be read two ways, as cards or as topics with a note. The reader decides heading by heading. The pairs under one heading are cards when there are three or more of them, nearly all are short (a few words after the mark), and they are most of the lines there. Pairs written with a tab, in a table, or as a question and its answer are always cards. The add sheet lets you overrule it either way.
 
-What the reader leaves out, and the names it shortens, it says under "Check these". The rules are in `src/engine/reader.ts`, and `src/engine/reader.test.ts` has the pastes they came from.
+What the reader leaves out, and the names it shortens, it says under "Check these". The rules are in `src/reader/read.ts`, and `src/reader/read.test.ts` has the pastes they came from.
 
 ## How a topic is played
 
