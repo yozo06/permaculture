@@ -99,9 +99,11 @@ export interface Words {
   counters: readonly string[]
   /** The first row of a table of cards, when it names the columns: "Word", "Meaning". */
   columns: readonly string[]
-  /** "Q: ..." on one line and "A: ..." on the next. */
+  /** "Q: ..." on one line and "A: ..." on the next. An answer may also say which of a question's options is right: "Answer: B". */
   questions: readonly string[]
   answers: readonly string[]
+  /** "Wrong: ..." under a question and its answer: the wrong answers to show beside it. */
+  wrongs: readonly string[]
   /** "algebra and geometry and trigonometry". */
   ands: readonly string[]
   /** The few words the reader writes into a draft itself. What stands in curly brackets is filled in. */
@@ -143,10 +145,12 @@ export interface Patterns {
   chatter: RegExp
   /** Finds the asking at the start of a line, to be taken off it. */
   asking: RegExp
-  /** "Part: ...", "Topic: ..." and "Read: ...". Their first group is what follows. */
+  /** "Part: ...", "Topic: ..." and "Read: ...". Their first group is a number after the word, if there is one, and their second what follows. */
   part: RegExp
   topic: RegExp
   noteLine: RegExp
+  /** "Wrong: ...". Its first group is what follows. */
+  wrongLine: RegExp
   counter: RegExp
   column: RegExp
   /** Their first group is what was asked, and what was answered. */
@@ -224,7 +228,8 @@ export function compile(words: Words): Patterns {
   const re = (source: string, flags = 'iu'): RegExp => new RegExp(source, flags)
   const whole = (list: unknown): RegExp => re('^' + any(list) + '$')
   const within = (list: unknown): string => EDGE + any(list) + BOUND
-  const labelled = (list: unknown): RegExp => re('^' + any(list) + '\\s*:\\s*(\\S.*)$')
+  // "Topic: x", "Topic 1.2: x", "Topic - x": a chat numbers what it was asked not to, and likes a dash as well as a colon.
+  const labelled = (list: unknown): RegExp => re('^' + any(list) + '(\\s+[ivxlc]+|\\s*\\d+(?:\\.\\d+)*\\.?)?\\s*(?::|\\s[-–—]\\s)\\s*(\\S.*)$')
   const written = (name: string): string => (typeof writes[name] === 'string' ? (writes[name] as string) : '')
   const totals = any(course.totals)
   const patterns: Patterns = {
@@ -253,6 +258,7 @@ export function compile(words: Words): Patterns {
     part: labelled(outline.parts),
     topic: labelled(outline.topics),
     noteLine: labelled(outline.notes),
+    wrongLine: re('^' + any(all.wrongs) + '\\s*[:.)]\\s*(.+)$'),
     counter: re('^' + any(all.counters) + '\\s*#?\\d+\\s*[:.)]?$'),
     column: whole(all.columns),
     question: re('^' + any(all.questions) + '\\s*\\d*\\s*[:.)]\\s*(.+)$'),

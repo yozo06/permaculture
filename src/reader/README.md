@@ -77,13 +77,15 @@ and the two notes, said in English, are "Left out, as not something to learn: To
 
 ## Shapes it knows
 
-Bullets, numbering, indenting, Markdown headings and tables, lines in two parts ("Hund - dog", "Brot = bread"), "Q:" and "A:", files of flashcards from Anki or Quizlet, and spreadsheets saved as CSV. `read.test.ts` has one of each. Three were added for what an AI chat writes:
+Bullets, numbering, indenting, Markdown headings and tables, lines in two parts ("Hund - dog", "Brot = bread"), "Q:" and "A:", files of flashcards from Anki or Quizlet, and spreadsheets saved as CSV. `read.test.ts` has one of each. These were added for what an AI chat writes when it is asked for questions:
 
-- **Wrong answers.** After an equals sign or a question, "Robusta | Arabica | Liberica" is the answer and the wrong answers to show beside it.
-- **A list said in words.** "Part: ..." is a heading, "Topic: ..." is the heading of one topic under it, and "Read: ..." (or "Practise: ...") is the line on what to read for the topic above it. A chat's page turns "## heading" into a plain line before it is copied; the words come through. They are in the lists, under `outline`.
-- **A list in a block of code.** When far more of a text stands inside rows of backticks than outside them, the block is the list, and only the rows of backticks are left out.
+- **Wrong answers on the line.** After an equals sign, an arrow or a question, "Robusta | Arabica | Liberica" is the answer and the wrong answers to show beside it. A bar counts with a space on either side, so "|x|" and "a || b" are answers. There must be two wrong answers at least: one bar is as likely "meaning | how it is said". After a question, four answers with slashes or semicolons between them are read the same way.
+- **Options on lines of their own.** A question, then "A) ...", "B) ...", "C) ..." under it, then "Answer: B" (or the answer itself, or one option ticked or set in bold) is one card. Options with nothing to say which is right are left out, with a note.
+- **"Wrong: ..."** under a question and its answer gives that card its wrong answers.
+- **A list said in words.** "Part: ..." is a heading, "Topic: ..." is the heading of one topic under it, and "Read: ..." is the line on what to read for the topic above it. "Practise: ..." in its place marks the topic as something to do. A number after the word ("Topic 2:"), a dash for the colon, bold and brackets make no difference. A chat's page turns "## heading" into a plain line before it is copied; the words come through. They are in the lists, under `outline`. They are read so only where the text is such a list: two "Topic:" lines, or one with questions or a note under it. In a list of words, "Part: Teil" is a word to learn.
+- **A list in a block of code.** When far more of a text stands inside rows of backticks than outside them, and what stands inside is a list of topics or questions, the block is the list, and only the rows of backticks are left out. Any other block of code is left out, with a note.
 
-The text under a heading that holds cards is the line on what to read for them. Cards with such a line are the questions of a topic, and the topic takes its kind from its name. Cards with none are `facts`.
+The text under a heading that holds cards is the line on what to read for them. Cards with such a line are the questions of a topic, and the topic takes its kind from its name. Cards with none are `facts`. A line that ends by asking ("What does E = mc^2 mean?") is one question, whatever marks are in it.
 
 ## Settings
 
@@ -128,6 +130,7 @@ A note is a code and what it counted or the name concerned. It carries no senten
 | `name-shortened` | `text` | A name was cut. `text` is what it was cut to. |
 | `summary-cut` | `text` | The line on what to read for the topic `text` was cut. |
 | `text-left-out` | `count` | Headings had running text under them, which is not kept. |
+| `options-left-out` | `count` | Answers to choose from stood under a question ("A) ...", "B) ...") with no line to say which is right. |
 | `more-notes` | `count` | There were this many notes more than were asked for. |
 
 `NOTE_CODES` lists the codes.

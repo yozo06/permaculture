@@ -41,7 +41,8 @@ export const ENGLISH: Words = frozen({
   kinds: {
     doing: [
       'how to', 'practice', 'practise', 'practicing', 'practising', 'write', 'build', 'make', 'draw', 'solve', 'implement', 'set up', 'configure', 'play', 'sing', 'cook', 'bake', 'run', 'perform', 'create', 'design', 'deploy', 'debug',
-      'speak', 'pronounce', 'conjugate', 'translate', 'train', 'rehearse', 'memorise', 'memorize', 'present', 'record', 'sketch', 'paint', 'code',
+      // Not "present": the present tense is something to understand.
+      'speak', 'pronounce', 'conjugate', 'translate', 'train', 'rehearse', 'memorise', 'memorize', 'record', 'sketch', 'paint', 'code',
     ],
     rule: ['rule', 'rules', 'law', 'laws', 'theorem', 'theorems', 'principle', 'principles', 'pattern', 'patterns', 'formula', 'equation', 'equations', 'versus', 'lemma', 'axiom', 'axioms', 'difference between', 'tradeoff', 'tradeoffs', 'trade-off', 'trade-offs'],
     ruleStarts: ['when to', 'when not to', 'why to', 'why not to'],
@@ -54,7 +55,10 @@ export const ENGLISH: Words = frozen({
     drill: ['exercise', 'exercises', 'drill', 'drills', 'practice', 'practise', 'lab', 'project', 'workout', 'kata', 'rehearsal'],
   },
   chatter: {
-    starts: ["here's", 'here is', 'here are', 'let me know', 'i hope', 'hope this helps', 'hope that helps', 'hope it helps', 'feel free', 'would you like', 'happy to', 'good luck', 'great question', "if you'd like", 'if you would like', 'do you want me'],
+    starts: [
+      "here's", 'here is', 'here are', 'here you go', 'let me know', 'i hope', 'hope this helps', 'hope that helps', 'hope it helps', 'feel free', 'would you like', 'happy to', 'good luck', 'great question', "if you'd like",
+      'if you would like', 'do you want me', 'want me to', 'shall i', 'great choice', 'no problem', 'happy studying', 'happy learning', 'enjoy your', 'have fun', 'below is',
+    ],
     openers: ['sure', 'certainly', 'of course', 'absolutely'],
     whole: ['thanks', 'thank you', 'thx', 'ty', 'cheers', 'ok', 'okay', 'hi', 'hello', 'hey', 'enjoy'],
     tails: ['for reading'],
@@ -75,7 +79,8 @@ export const ENGLISH: Words = frozen({
   counters: ['card', 'flashcard', 'question', 'item', 'no', 'no.'],
   columns: ['word', 'words', 'term', 'terms', 'front', 'question', 'q', 'phrase', 'expression', 'vocab', 'vocabulary', 'kanji', 'meaning', 'definition', 'back', 'answer', 'a', 'translation', 'english'],
   questions: ['q', 'question'],
-  answers: ['a', 'ans', 'answer'],
+  answers: ['a', 'ans', 'answer', 'correct answer', 'right answer', 'correct'],
+  wrongs: ['wrong', 'wrong answer', 'wrong answers', 'incorrect', 'distractors', 'other options'],
   ands: ['and', '&'],
   writes: { page: 'Page {n}.', partOf: 'Part of {path}.', card: '{n} card: {list}', cards: '{n} cards: {list}', cardsName: 'Cards' },
 })
@@ -96,6 +101,7 @@ const SENTENCES: { readonly [C in Note['code']]: (n: Extract<Note, { code: C }>)
   'name-shortened': (n) => 'Shortened, with the whole line kept as what to read: ' + n.text,
   'summary-cut': (n) => 'Cut short, the line on what to read for: ' + n.text,
   'text-left-out': (n) => 'Left out the text under ' + counted(n.count, 'heading.', 'headings.'),
+  'options-left-out': (n) => 'Left out ' + counted(n.count, 'answer', 'answers') + ' to choose from, because no line said which is right.',
   'more-notes': (n) => 'And ' + n.count + ' more like these.',
 }
 

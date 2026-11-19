@@ -817,6 +817,8 @@ describe('the notes in English', () => {
     [{ code: 'text-left-out', count: 1 }, 'Left out the text under 1 heading.'],
     [{ code: 'text-left-out', count: 4 }, 'Left out the text under 4 headings.'],
     [{ code: 'more-notes', count: 7 }, 'And 7 more like these.'],
+    [{ code: 'options-left-out', count: 1 }, 'Left out 1 answer to choose from, because no line said which is right.'],
+    [{ code: 'options-left-out', count: 4 }, 'Left out 4 answers to choose from, because no line said which is right.'],
   ]
 
   it('has a sentence for every code, in the singular and in the plural', () => {
@@ -947,7 +949,7 @@ describe('a list an AI chat wrote, as it comes out of the chat', () => {
 
 describe('questions with their wrong answers', () => {
   it('takes what stands after the answer, between upright bars, for wrong answers', () => {
-    const d = read(text('Which species has more caffeine? = Robusta | Arabica | Liberica | Excelsa', 'FOB = Free on board | Freight on board|Free of bond', 'Basis = Cash price minus futures price'))
+    const d = read(text('Which species has more caffeine? = Robusta | Arabica | Liberica | Excelsa', 'FOB = Free on board | Freight on board | Free of bond', 'Basis = Cash price minus futures price'))
     expect(d.topics).toHaveLength(1)
     expect(d.topics[0]?.cards).toEqual([
       { q: 'Which species has more caffeine?', a: 'Robusta', wrong: ['Arabica', 'Liberica', 'Excelsa'] },
@@ -957,17 +959,98 @@ describe('questions with their wrong answers', () => {
   })
 
   it('keeps three wrong answers, none twice, none that is the right one, none too long to be an answer', () => {
-    const cards = (line: string): unknown => read(text(line, 'x = y | z', 'u = v | w')).topics[0]?.cards[0]
+    const cards = (line: string): unknown => read(text(line, 'x = y', 'u = v')).topics[0]?.cards[0]
     expect(cards('q = a | b | c | d | e')).toEqual({ q: 'q', a: 'a', wrong: ['b', 'c', 'd'] })
     expect(cards('q = a | A | b | B | c')).toEqual({ q: 'q', a: 'a', wrong: ['b', 'c'] })
-    expect(cards('q = a | | b |')).toEqual({ q: 'q', a: 'a', wrong: ['b'] })
-    expect(cards('q = a | ' + 'x'.repeat(LIMITS.a + 1) + ' | b')).toEqual({ q: 'q', a: 'a', wrong: ['b'] })
-    expect(cards('q = a | a')).toEqual({ q: 'q', a: 'a' })
+    expect(cards('q = a | ' + 'x'.repeat(LIMITS.a + 1) + ' | b | c')).toEqual({ q: 'q', a: 'a', wrong: ['b', 'c'] })
+    expect(cards('q = a | a | a')).toEqual({ q: 'q', a: 'a' })
   })
 
   it('makes a card of a line with wrong answers, however few such lines there are', () => {
     const d = read(text('## Soil', 'What holds water best? = Clay | Sand | Gravel', '## Water', '- Rain', '- Rivers'))
     expect(d.topics.map((t) => [t.name, t.cards.length])).toEqual([['Soil', 1], ['Rain', 0], ['Rivers', 0]])
+  })
+
+  it('takes one bar for part of the answer, and a bar with no space beside it for part of a word', () => {
+    // One bar is as likely "meaning | how it is said" as a wrong answer, and two answers are no choice.
+    expect(read(text('Hund = dog | hunt', 'Katze = cat | katse', 'Maus = mouse | mows')).topics[0]?.cards[0]).toEqual({ q: 'Hund', a: 'dog | hunt' })
+    const d = read(text('How else can you write the absolute value of x? = |x| | [x] | (x) | {x}', 'Which operator means "or" in JavaScript? = `||` | `&&` | `!` | `??`', 'What is P(A|B) called? = Conditional probability | Joint probability | Prior | Odds'))
+    expect(d.topics[0]?.cards).toEqual([
+      { q: 'How else can you write the absolute value of x?', a: '|x|', wrong: ['[x]', '(x)', '{x}'] },
+      { q: 'Which operator means "or" in JavaScript?', a: '||', wrong: ['&&', '!', '??'] },
+      { q: 'What is P(A|B) called?', a: 'Conditional probability', wrong: ['Joint probability', 'Prior', 'Odds'] },
+    ])
+  })
+
+  it('keeps the whole of what follows the mark when the line is read as a topic', () => {
+    const d = read(text('Loops = for | while | until', 'Lists = arrays | tuples | sets'), { pairs: 'topics' })
+    expect(d.topics.map((t) => [t.name, t.summary])).toEqual([['Loops', 'for | while | until'], ['Lists', 'arrays | tuples | sets']])
+  })
+
+  it('reads a question with its answers however a chat marks it', () => {
+    const want = { q: 'What is a fork?', a: 'One piece attacking two', wrong: ['A pin', 'A skewer', 'A check'] }
+    for (const line of [
+      'What is a fork? = One piece attacking two | A pin | A skewer | A check',
+      'What is a fork?: One piece attacking two | A pin | A skewer | A check',
+      'What is a fork? -> One piece attacking two | A pin | A skewer | A check',
+      '**What is a fork?** = One piece attacking two | A pin | A skewer | A check',
+      '**What is a fork?** One piece attacking two | A pin | A skewer | A check',
+      'What is a fork? = **One piece attacking two** | A pin | A skewer | A check',
+      'Q1. What is a fork? = One piece attacking two | A pin | A skewer | A check',
+      'Q: What is a fork? = One piece attacking two | A pin | A skewer | A check',
+      '3. What is a fork? = One piece attacking two | A pin | A skewer | A check',
+      '- What is a fork? = One piece attacking two | A pin | A skewer | A check',
+      'What is a fork? = One piece attacking two / A pin / A skewer / A check',
+      'What is a fork? = One piece attacking two; A pin; A skewer; A check',
+    ]) expect(read(text('## Tactics', line)).topics.map((t) => [t.name, t.cards]), line).toEqual([['Tactics', [want]]])
+    // A long question that is not asked with a question mark is still a card when its answers stand in bars.
+    const told = read(text('## Tactics', 'Name the tactic where one piece attacks two pieces at once -> A fork | A pin | A skewer | A check'))
+    expect(told.topics[0]?.cards).toEqual([{ q: 'Name the tactic where one piece attacks two pieces at once', a: 'A fork', wrong: ['A pin', 'A skewer', 'A check'] }])
+    // A question with an equals sign in it is one question, not a name and what it equals.
+    expect(names(read(text('What does E = mc^2 mean?', 'What is 2 + 2 = ?', 'Loops')))).toEqual(['What does E = mc^2 mean?', 'What is 2 + 2 = ?', 'Loops'])
+    // Three things with slashes between them are an answer, not a choice of four.
+    expect(read(text('## Units', 'What is speed measured in? = km / h', 'What is the date format? = day / month / year')).topics[0]?.cards.map((c) => c.a)).toEqual(['km / h', 'day / month / year'])
+  })
+
+  it('reads the options of a question that stand on lines of their own, with the line that says which is right', () => {
+    const d = read(text(
+      '## SELECT and WHERE',
+      '1. What does SELECT * FROM users WHERE age = 30 return?', 'A) Every row and column of users', 'B) Only the first row', 'C) The number of rows', 'D) Nothing', 'Answer: A',
+      '',
+      '2. Which keyword filters rows?', 'a. ORDER BY', 'b. WHERE', 'c. GROUP BY', 'd. LIMIT', '**Correct answer: b) WHERE**',
+      '',
+      'Q: Which keyword sorts rows?', '(A) ORDER BY', '(B) WHERE', '(C) HAVING', 'Answer: ORDER BY',
+      '',
+      'Which keyword removes duplicates?', '- A) UNIQUE', '- B) DISTINCT ✓', '- C) SINGLE',
+    ))
+    expect(d.topics.map((t) => t.name)).toEqual(['SELECT and WHERE'])
+    expect(d.topics[0]?.cards).toEqual([
+      { q: 'What does SELECT * FROM users WHERE age = 30 return?', a: 'Every row and column of users', wrong: ['Only the first row', 'The number of rows', 'Nothing'] },
+      { q: 'Which keyword filters rows?', a: 'WHERE', wrong: ['ORDER BY', 'GROUP BY', 'LIMIT'] },
+      { q: 'Which keyword sorts rows?', a: 'ORDER BY', wrong: ['WHERE', 'HAVING'] },
+      { q: 'Which keyword removes duplicates?', a: 'DISTINCT', wrong: ['UNIQUE', 'SINGLE'] },
+    ])
+    expect(d.notes).toEqual([])
+  })
+
+  it('leaves out options that nothing says the right one of, and says so', () => {
+    const d = read(text('## Soil', 'Which holds water best?', 'A) Clay', 'B) Sand', 'C) Gravel', 'Loam'))
+    expect(d.topics.map((t) => [t.name, t.cards.length])).toEqual([['Which holds water best?', 0], ['Loam', 0]])
+    expect(d.notes).toEqual([{ code: 'options-left-out', count: 3 }])
+    expect(say({ code: 'options-left-out', count: 3 })).toBe('Left out 3 answers to choose from, because no line said which is right.')
+    // Lettered lines under a heading, or after a line that asks nothing, are a list as they always were.
+    expect(names(read(text('## Which of these?', 'A. Supply', 'B. Demand')))).toEqual(['Supply', 'Demand'])
+    expect(names(read(text('Economics', 'A. Supply', 'B. Demand')))).toEqual(['Supply', 'Demand'])
+  })
+
+  it('takes the wrong answers from a line of their own under a question and its answer', () => {
+    const d = read(text('Q: What is the SI unit of velocity?', 'A: Metres per second', 'Wrong: Metres per second squared, Newtons, Joules per second', 'Q: What is the SI unit of force?', 'A: Newton', 'Wrong answers: Joule | Watt | Pascal'))
+    expect(d.topics[0]?.cards).toEqual([
+      { q: 'What is the SI unit of velocity?', a: 'Metres per second', wrong: ['Metres per second squared', 'Newtons', 'Joules per second'] },
+      { q: 'What is the SI unit of force?', a: 'Newton', wrong: ['Joule', 'Watt', 'Pascal'] },
+    ])
+    // With no card over it, a line that begins "Wrong:" is a line like any other.
+    expect(read(text('Wrong: turn', 'Right: turn', 'Left: turn')).topics[0]?.cards.map((c) => c.q)).toEqual(['Wrong', 'Right', 'Left'])
   })
 
   it('does not look for wrong answers after a dash or a colon, or in a table', () => {
@@ -1050,6 +1133,53 @@ describe('a list with its parts, topics and questions said in words', () => {
     expect(d.topics.map((t) => [t.name, t.kind, t.summary])).toEqual([['Loops', 'idea', 'for and while'], ['Practice', 'skill', 'FizzBuzz and a number guessing game']])
     const noted = read(text('## Arabica versus Robusta', 'Read: how the two species differ', 'Which has more caffeine? = Robusta | Arabica | Liberica'))
     expect(noted.topics.map((t) => [t.name, t.summary, t.cards.length])).toEqual([['Arabica versus Robusta', 'how the two species differ', 1]])
+  })
+
+  it('reads parts and topics that a chat numbered, where the list is one of topics with questions', () => {
+    const numbered = text('Part 1: Forces and Motion', 'Topic 1.1: Speed and velocity', 'Read - the chapter on scalars and vectors', 'What is speed? = Distance over time | Force over area | Mass times speed | Work over time',
+      'Topic 1.2 - Acceleration', '(Read: the worked examples on changing speed)', 'What is acceleration? = Change of velocity over time | Distance over time | Force | Energy',
+      'Part 2: Energy', '1. Topic: Work', 'What is work? = Force times distance | Mass times speed | Power times time | Heat')
+    const d = read(numbered)
+    expect(d.title).toBe('')
+    expect(d.topics.map((t) => [t.group, t.name, t.summary, t.cards.length])).toEqual([
+      ['Forces and Motion', 'Speed and velocity', 'the chapter on scalars and vectors', 1],
+      ['Forces and Motion', 'Acceleration', 'the worked examples on changing speed', 1],
+      ['Energy', 'Work', '1 card: What is work?', 1],
+    ])
+    expect(d.notes).toEqual([])
+    // A name in quotation marks is the name without them.
+    expect(names(read(text('Topic: "Emulsions: mayo vs. hollandaise"', 'What holds an emulsion? = An emulsifier | Salt | Heat | Sugar', 'Topic: ‘Stocks’', 'What is a stock made from? = Bones | Flour | Cream | Sugar')))).toEqual(['Emulsions: mayo vs. hollandaise', 'Stocks'])
+  })
+
+  it('leaves a list of words alone whose words happen to be "part", "topic" or "read"', () => {
+    const d = read(text('Unit: metre', 'Part: Teil', 'Topic: Thema', 'Chapter: Kapitel'))
+    expect(d.topics[0]?.cards).toEqual([{ q: 'Unit', a: 'metre' }, { q: 'Part', a: 'Teil' }, { q: 'Topic', a: 'Thema' }, { q: 'Chapter', a: 'Kapitel' }])
+    expect(names(read(text('read - lesen', 'write - schreiben', 'learn - lernen')))).toEqual(['read, write, learn'])
+    // And under a heading of marks, things to do stay things to do unless the list is one of questions.
+    expect(names(read(text('# Week 1', 'Read: chapter 4', 'Do: exercises 1 to 5', 'Watch: lecture 2')))).toEqual(['Read', 'Do', 'Watch'])
+  })
+
+  it('says a topic is something to do only when the list says "Practise", not from how a note on reading begins', () => {
+    const d = read(text('Topic: Atomic structure', 'Read: Draw the nucleus and label each particle', 'What carries a positive charge? = The proton | The neutron | The electron | The photon',
+      'Topic: Balancing by hand', 'Practise: twelve equations, checking each atom', 'What must be equal on both sides? = Atoms of each element | Molecules | Volumes | Charges only'))
+    expect(d.topics.map((t) => [t.name, t.kind, t.summary])).toEqual([['Atomic structure', 'idea', 'Draw the nucleus and label each particle'], ['Balancing by hand', 'skill', 'Practise twelve equations, checking each atom']])
+    expect(read('Present tense').topics[0]?.kind).toBe('idea')
+  })
+
+  it('says so when the line on what to read for a set of cards is cut', () => {
+    const d = read(text('Topic: Long', 'Read: ' + 'word '.repeat(70), 'What? = a | b | c'))
+    expect(d.notes).toEqual([{ code: 'summary-cut', text: 'Long' }])
+  })
+
+  it('reads a block of code in ordinary notes as code, however long it is', () => {
+    const d = read(text('## Loops', '```python', ...Array.from({ length: 12 }, (_, i) => 'print(' + i + ')'), '```', '## Lists'))
+    expect(names(d)).toEqual(['Loops', 'Lists'])
+    expect(d.notes).toEqual([{ code: 'code-left-out', count: 1 }])
+  })
+
+  it('leaves out what a chat says before and after its list', () => {
+    const d = read(text('Great choice! I have put together a study list for IELTS Speaking:', '', 'Topic: Part 1 questions', 'How long is Part 1? = 4 to 5 minutes | 1 minute | 10 minutes | 15 minutes', '', 'Happy studying!', 'Want me to add a part on window functions?'))
+    expect([d.title, ...names(d)]).toEqual(['', 'Part 1 questions'])
   })
 
   it('takes "Part 2: ..." and "Topic 3: ..." as it always did, and a line that only begins like one as a line', () => {
