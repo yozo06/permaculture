@@ -1538,7 +1538,12 @@ function copyPrompt(fieldId: string, fill = false): void {
   const box = document.getElementById('ownText')
   const field = Object.hasOwn(S.own, fieldId) ? S.own[fieldId] : undefined
   const prompt = aiPrompt(packTitle(fieldId), !fill && box instanceof HTMLTextAreaElement ? box.value : '', fill ? field?.seeds ?? [] : [])
-  const done = (): void => toast('Copied. Paste it into any AI chat, then paste its answer here.')
+  const took = !fill && box instanceof HTMLTextAreaElement && box.value.trim() !== ''
+  const done = (): void => {
+    toast(took ? 'Copied, with what you wrote. Paste it into any AI chat, then paste its answer here.' : 'Copied. Paste it into any AI chat, then paste its answer here.')
+    // What was written has gone with the prompt. It is left selected, so that pasting the chat's answer takes its place.
+    if (took && box instanceof HTMLTextAreaElement) { box.focus(); box.select() }
+  }
   const byHand = (): void => {
     if (!document.getElementById('ownPromptText')) sheet.querySelector('#ownReading')?.insertAdjacentHTML('beforebegin', '<textarea id="ownPromptText" class="write short" rows="4" readonly></textarea>')
     const t = byIdAs('ownPromptText', HTMLTextAreaElement)

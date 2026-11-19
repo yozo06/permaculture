@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { buildCatalog } from '../engine/catalog'
 import { smallCatalog as cat, smallFarm, run } from '../engine/fixtures'
@@ -332,7 +333,9 @@ describe('the prompt for an AI chat', () => {
     expect(p).toContain('I trade physical coffee and want to understand futures.')
     expect(p.indexOf('I trade')).toBeLessThan(p.indexOf('line shapes'))
     expect(aiPrompt('Coffee', '   ')).toBe(aiPrompt('Coffee'))
-    expect(aiPrompt('Coffee', 'x'.repeat(9000)).length).toBeLessThan(aiPrompt('Coffee').length + 3200)
+    expect(aiPrompt('Coffee', 'x'.repeat(9000)).length).toBeLessThan(aiPrompt('Coffee').length + 6200)
+    // A list of forty topics with a line each fits whole.
+    expect(aiPrompt('Coffee', readFileSync('src/reader/pastes/coffee-chat.txt', 'utf8'))).toContain('Broker and market access')
   })
 
   it('asks for questions on the topics a field has that have none, by their own names', () => {

@@ -176,7 +176,7 @@ export function addSheetHtml(field: Pick<OwnField, 'id' | 'title' | 'color'>, fi
 }
 
 /** How much of what a learner wrote goes into the prompt. */
-const WANTS = 3000
+const WANTS = 6000
 
 /**
  * What to ask an AI chat for, so that its answer pastes straight in: a list of topics, each with a line on what to
