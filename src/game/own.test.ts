@@ -4,7 +4,7 @@ import { smallCatalog as cat, smallFarm, run } from '../engine/fixtures'
 import { check } from '../engine/fold'
 import { OWN_TODAY, catalogFor, isOwnFieldId, isOwnSeedId, type OwnField, type OwnSeed } from '../engine/own'
 import { read } from '../reader'
-import type { FarmEvent } from '../engine/types'
+import type { FarmEvent, FarmState } from '../engine/types'
 import {
   OWN_COLORS, addSheetHtml, aiPrompt, cardsFromText, cardsText, explainAsk, fieldSheetHtml, harvestTag, layerText, nameFieldSheetHtml, newFieldId, newSeedId, pickColor, readingHtml,
   toAdd, topicSheetHtml,
@@ -23,6 +23,9 @@ const counting = (): (() => number) => {
 }
 const seed = (n: string, more: Partial<OwnSeed> = {}): OwnSeed => ({ id: F + '_' + n, name: 'Topic ' + n, kind: 'idea', summary: '', group: '', cards: [], ...more })
 const field = (seeds: OwnSeed[] = []): OwnField => ({ id: F, title: 'German', color: '#4DB6A4', seeds })
+/** The small farm with that field made on it, holding these topics. */
+const farmWith = (...batches: OwnSeed[][]): FarmState =>
+  run(cat, [{ type: 'own-field-set', field: F, slot: 2, title: 'German', color: '#4DB6A4' }, ...batches.map((seeds): FarmEvent => ({ type: 'own-seeds-set', field: F, seeds }))], smallFarm())
 
 describe('ids and colours', () => {
   it('makes ids the farm will take', () => {
@@ -276,11 +279,152 @@ describe('plain words for a topic of your own', () => {
 })
 
 describe('the prompt for an AI chat', () => {
-  it('names the subject, and asks for a shape the reader reads', () => {
+  /** The lines of the prompt that show a shape, which are a small list in that shape themselves. */
+  const shapes = (p: string): string => p.slice(p.indexOf('line shapes'), p.indexOf('Rules:')).split('\n').slice(1).join('\n')
+
+  it('names the subject, and asks for questions with wrong answers under every topic', () => {
     const p = aiPrompt('German A1')
-    expect(p).toContain('German A1')
-    const answer = '## Greetings\n- Saying hello: the three greetings and when each is used\n- Introducing yourself: name, where you are from\n## Food words\nBrot = bread\nKäse = cheese\nMilch = milk\nWasser = water'
+    expect(p).toContain('I am learning: German A1')
+    expect(p).toMatch(/Under every topic[^\n]*question lines/)
+    expect(p).toMatch(/three wrong answers/)
+    expect(p).not.toContain('##')
+    expect(p).not.toContain('**')
+  })
+
+  it('shows the chat a shape that the reader reads as a topic with its part, its note and a card with three wrong answers', () => {
+    const d = read(shapes(aiPrompt('German A1')))
+    expect(d.notes).toEqual([])
+    expect(d.topics).toHaveLength(1)
+    // One part alone stands over everything, as a title does. Two or more are the groups of their topics.
+    expect(d.title).toBe('the name of a part of the subject')
+    expect(d.topics[0]?.name).toBe('the name of one topic in that part')
+    expect(d.topics[0]?.summary).toBe('one line on what to read or practise for that topic')
+    expect(d.topics[0]?.cards).toHaveLength(1)
+    expect(d.topics[0]?.cards[0]?.wrong).toHaveLength(3)
+    expect(d.topics[0]?.cards[0]?.q.endsWith('?')).toBe(true)
+  })
+
+  it('reads an answer in that shape, and the farm takes every topic of it', () => {
+    const answer = [
+      'Part: Greetings', 'Topic: Saying hello', 'Read: the three greetings and when each is used',
+      'Which greeting is used in the morning? = Guten Morgen | Guten Abend | Gute Nacht | Tschüss',
+      'What does "Tschüss" mean? = Bye | Hello | Thanks | Please',
+      'Topic: Introducing yourself', 'Practise: saying your name and where you are from',
+      'How do you say "My name is"? = Ich heiße | Ich bin aus | Ich habe | Ich mag',
+      'Part: Food', 'Topic: Bread and cheese', 'Read: the words on a breakfast table',
+      'What is "Brot"? = Bread | Butter | Cheese | Milk',
+    ].join('\n')
     const d = read(answer)
-    expect(d.topics.map((t) => [t.group, t.name, t.cards.length])).toEqual([['Greetings', 'Saying hello', 0], ['Greetings', 'Introducing yourself', 0], ['', 'Food words', 4]])
+    expect(d.topics.map((t) => [t.group, t.name, t.kind, t.cards.length])).toEqual([['Greetings', 'Saying hello', 'idea', 2], ['Greetings', 'Introducing yourself', 'skill', 1], ['Food', 'Bread and cheese', 'idea', 1]])
+    const a = toAdd(d, field(), counting())
+    expect(a.seeds).toHaveLength(3)
+    expect(a.unfit).toBe(0)
+    const after = farmWith(a.seeds)
+    expect(after.own[F]?.seeds[1]?.cards[0]).toEqual({ q: 'How do you say "My name is"?', a: 'Ich heiße', wrong: ['Ich bin aus', 'Ich habe', 'Ich mag'] })
+    // Every one of them is asked as multiple choice, with the wrong answers it came with.
+    const pack = catalogFor(cat, after.own).pack(F)
+    expect(pack?.seeds.map((x) => x.harvest)).toEqual(['recall', 'recall', 'recall'])
+    expect(pack?.seeds[2]?.questions?.water?.[0]?.distractors).toEqual(['Butter', 'Cheese', 'Milk'])
+  })
+
+  it('hands the chat what the learner wrote in the box, cut to what a chat will read', () => {
+    const p = aiPrompt('Coffee', '  I trade physical coffee and want to understand futures.  ')
+    expect(p).toContain('I trade physical coffee and want to understand futures.')
+    expect(p.indexOf('I trade')).toBeLessThan(p.indexOf('line shapes'))
+    expect(aiPrompt('Coffee', '   ')).toBe(aiPrompt('Coffee'))
+    expect(aiPrompt('Coffee', 'x'.repeat(9000)).length).toBeLessThan(aiPrompt('Coffee').length + 3200)
+  })
+
+  it('asks for questions on the topics a field has that have none, by their own names', () => {
+    const have = [seed('aaaaaa', { name: 'Basis risk', summary: 'practise examples' }), seed('bbbbbb', { name: 'Core vocabulary', cards: [{ q: 'FOB', a: 'Free on board' }] }), seed('cccccc', { name: 'Weather risk' })]
+    const p = aiPrompt('Coffee', '', have)
+    expect(p).toContain('Topic: Basis risk')
+    expect(p).toContain('Topic: Weather risk')
+    expect(p).not.toContain('Core vocabulary')
+    expect(p).toMatch(/exactly as/)
+    expect(p).not.toContain('Part:')
+    // With no topic that lacks questions, it is the prompt for a new list.
+    expect(aiPrompt('Coffee', '', [have[1] as OwnSeed])).toBe(aiPrompt('Coffee'))
+  })
+})
+
+describe('questions for topics that are there already', () => {
+  const have = field([seed('aaaaaa', { name: 'Basis risk', summary: 'practise examples', group: 'Hedging', kind: 'skill' }), seed('bbbbbb', { name: 'Weather risk' }), seed('cccccc', { name: 'Core vocabulary', cards: [{ q: 'FOB', a: 'Free on board' }] })])
+  const answer = 'Topic: basis risk\nRead: something else\nWhat is basis? = Cash minus futures | Futures minus cash | A fee | A grade\nTopic: Weather risk\nRead: frost and drought\nWhich hurts Brazil most? = Frost | Hail | Fog | Snow\nTopic: Core vocabulary\nPTBF = Price to be fixed | Paid | Posted | Port\nTopic: New one\nWhat? = a | b | c'
+
+  it('gives a topic that had none its questions, and leaves everything else of it as it was', () => {
+    const a = toAdd(read(answer), have, counting())
+    expect(a.filled.map((s) => [s.id, s.name, s.kind, s.group, s.summary, s.cards.length])).toEqual([
+      [F + '_aaaaaa', 'Basis risk', 'skill', 'Hedging', 'practise examples', 1],
+      [F + '_bbbbbb', 'Weather risk', 'idea', '', 'frost and drought', 1],
+    ])
+    expect(a.filled[0]?.cards[0]).toEqual({ q: 'What is basis?', a: 'Cash minus futures', wrong: ['Futures minus cash', 'A fee', 'A grade'] })
+    // A topic that has cards keeps them, and a new topic is new.
+    expect(a.already).toBe(1)
+    expect(a.seeds.map((s) => s.name)).toEqual(['New one'])
+  })
+
+  it('says so on the sheet, and the farm takes them', () => {
+    const d = read(answer)
+    const a = toAdd(d, have, counting())
+    const html = readingHtml(d, a)
+    expect(html).toContain('2 topics you already have get their questions')
+    expect(html).toContain('1 is in the field already')
+    const s1 = farmWith(have.seeds, [...a.filled, ...a.seeds])
+    expect(s1.own[F]?.seeds.map((x) => [x.name, x.cards.length])).toEqual([['Basis risk', 1], ['Weather risk', 1], ['Core vocabulary', 1], ['New one', 1]])
+  })
+
+  it('shows what it would do when there is nothing new but questions', () => {
+    const only = 'Topic: Weather risk\nWhich hurts Brazil most? = Frost | Hail | Fog | Snow'
+    const a = toAdd(read(only), have, counting())
+    expect(a.seeds).toEqual([])
+    expect(readingHtml(read(only), a)).toContain('1 topic you already have gets its questions')
+    expect(readingHtml(read(only), a)).not.toContain('Nothing new to add')
+  })
+})
+
+describe('topics with nothing to ask', () => {
+  it('says how many there are, and what that means, before they are added', () => {
+    const d = read('Part: A\nTopic: One\nWhat? = a | b | c\nTopic: Two\nTopic: Three')
+    const html = readingHtml(d, toAdd(d, field(), counting()))
+    expect(html).toContain('2 of them have no questions')
+    expect(html).toMatch(/explain(ing)? (them )?in writing/)
+    const all = read('Topic: One\nWhat? = a | b | c')
+    expect(readingHtml(all, toAdd(all, field(), counting()))).not.toContain('no questions')
+  })
+
+  it('says on the field\'s sheet how many of its topics have none, and where to get them', () => {
+    const mine = field([seed('aaaaaa'), seed('bbbbbb', { cards: [{ q: 'a', a: 'b' }] })])
+    const s = farmWith(mine.seeds)
+    expect(fieldSheetHtml(s.own[F] as OwnField, s, catalogFor(cat, s.own))).toContain('1 topic has no questions')
+    const full = farmWith([seed('bbbbbb', { cards: [{ q: 'a', a: 'b' }] })])
+    expect(fieldSheetHtml(full.own[F] as OwnField, full, catalogFor(cat, full.own))).not.toContain('no questions')
+  })
+
+  it('offers on the add sheet a prompt for questions when the field has topics without any', () => {
+    expect(addSheetHtml({ id: F, title: 'German', color: '#4DB6A4' }, false, 3)).toContain('data-act="ownPromptFill"')
+    expect(addSheetHtml({ id: F, title: 'German', color: '#4DB6A4' }, false, 0)).not.toContain('ownPromptFill')
+    expect(addSheetHtml({ id: F, title: 'German', color: '#4DB6A4' }, true)).not.toContain('ownPromptFill')
+  })
+})
+
+describe('the box of a topic\'s cards, with wrong answers', () => {
+  it('writes a card\'s wrong answers after its answer, and reads them back', () => {
+    const had = [{ q: 'Capital of Peru?', a: 'Lima', wrong: ['Quito', 'Bogotá'] }, { q: 'Hund', a: 'dog' }]
+    expect(cardsText(had)).toBe('Capital of Peru? = Lima | Quito | Bogotá\nHund = dog')
+    expect(cardsFromText(cardsText(had), had)).toEqual({ cards: had, unread: 0 })
+    expect(cardsFromText('Capital of Chile? = Santiago | Lima|Quito | | lima | Lima').cards).toEqual([{ q: 'Capital of Chile?', a: 'Santiago', wrong: ['Lima', 'Quito'] }])
+    expect(cardsFromText('q = a | b | c | d | e').cards).toEqual([{ q: 'q', a: 'a', wrong: ['b', 'c', 'd'] }])
+  })
+
+  it('leaves a card whose answer has an upright bar in it alone, while its line is not changed', () => {
+    const had = [{ q: 'or in shell', a: 'a | b' }]
+    expect(cardsFromText(cardsText(had), had)).toEqual({ cards: had, unread: 0 })
+  })
+
+  it('takes away a card\'s wrong answers when they are taken off its line', () => {
+    const had = [{ q: 'Capital of Peru?', a: 'Lima', wrong: ['Quito', 'Bogotá'] }]
+    expect(cardsFromText('Capital of Peru? = Lima', had).cards).toEqual([{ q: 'Capital of Peru?', a: 'Lima' }])
+    expect(cardsFromText('Capital of Peru? = Lima | Cusco', had).cards).toEqual([{ q: 'Capital of Peru?', a: 'Lima', wrong: ['Cusco'] }])
   })
 })

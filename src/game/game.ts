@@ -1484,7 +1484,7 @@ function openAdd(fieldId: string, first = false): void {
   const field = Object.hasOwn(S.own, fieldId) ? S.own[fieldId] : undefined
   if (!field) return
   ADD = { field: fieldId, pairs: null, adding: null, first }
-  open(addSheetHtml(field, first))
+  open(addSheetHtml(field, first, field.seeds.filter((s) => s.cards.length === 0).length))
   byIdAs('ownFile', HTMLInputElement).addEventListener('change', (e) => {
     const input = e.target
     const f = input instanceof HTMLInputElement ? input.files?.[0] : undefined
@@ -1510,9 +1510,9 @@ function reread(): void {
   const draft = readText(box.value, { limits: READING, ...(a.pairs ? { pairs: a.pairs } : {}) })
   a.adding = toAdd(draft, field)
   out.innerHTML = readingHtml(draft, a.adding, a.pairs)
-  const n = a.adding.seeds.length
-  go.disabled = n === 0
-  go.textContent = n === 0 ? 'Add topics' : 'Add ' + n + (n === 1 ? ' topic' : ' topics')
+  const n = a.adding.seeds.length, fills = a.adding.filled.length
+  go.disabled = n + fills === 0
+  go.textContent = n > 0 ? 'Add ' + n + (n === 1 ? ' topic' : ' topics') + (fills ? ' and the questions' : '') : fills ? 'Add questions to ' + fills + (fills === 1 ? ' topic' : ' topics') : 'Add topics'
 }
 // Registered after the handler that keeps a writing box's button in step, so this one has the last word on the button.
 sheet.addEventListener('input', (e) => {
@@ -1522,18 +1522,22 @@ sheet.addEventListener('input', (e) => {
 })
 function addTopics(): void {
   const a = ADD
-  const seeds = a?.adding?.seeds ?? []
-  if (!a || seeds.length === 0) return
-  if (!act({ type: 'own-seeds-set', field: a.field, seeds })) return
+  const seeds = a?.adding?.seeds ?? [], filled = a?.adding?.filled ?? []
+  if (!a || seeds.length + filled.length === 0) return
+  // A topic that is there takes its questions and keeps its place; the new ones follow.
+  if (!act({ type: 'own-seeds-set', field: a.field, seeds: [...filled, ...seeds] })) return
   ADD = null
-  toast('Added ' + seeds.length + (seeds.length === 1 ? ' topic.' : ' topics.'))
+  toast(seeds.length > 0 ? 'Added ' + seeds.length + (seeds.length === 1 ? ' topic.' : ' topics.') : 'Added questions to ' + filled.length + (filled.length === 1 ? ' topic.' : ' topics.'))
   if (!a.first) return openTree(a.field)
   close()
   hint('Open the <b>Seed bag</b>, pick a topic, then tap soil in the <b>' + esc(packTitle(a.field)) + '</b> field to plant it with notes in your own words.')
 }
 /** Copy what to ask an AI chat for. Where the browser will not copy, the words are put on the sheet to be copied by hand. */
-function copyPrompt(fieldId: string): void {
-  const prompt = aiPrompt(packTitle(fieldId))
+function copyPrompt(fieldId: string, fill = false): void {
+  // What is written in the box goes along: what the learner is after, or the list they have so far.
+  const box = document.getElementById('ownText')
+  const field = Object.hasOwn(S.own, fieldId) ? S.own[fieldId] : undefined
+  const prompt = aiPrompt(packTitle(fieldId), !fill && box instanceof HTMLTextAreaElement ? box.value : '', fill ? field?.seeds ?? [] : [])
   const done = (): void => toast('Copied. Paste it into any AI chat, then paste its answer here.')
   const byHand = (): void => {
     if (!document.getElementById('ownPromptText')) sheet.querySelector('#ownReading')?.insertAdjacentHTML('beforebegin', '<textarea id="ownPromptText" class="write short" rows="4" readonly></textarea>')
@@ -1764,6 +1768,7 @@ sheet.addEventListener('click', (e) => {
   else if (what === 'ownPairs') { if (ADD) { ADD.pairs = arg === 'cards' || arg === 'topics' ? arg : null; reread() } }
   else if (what === 'ownAdd') addTopics()
   else if (what === 'ownPrompt') copyPrompt(arg)
+  else if (what === 'ownPromptFill') copyPrompt(arg, true)
   else if (what === 'ownEdit') openTopic(arg)
   else if (what === 'ownSave') saveTopic(arg)
   else if (what === 'ownRemove') removeTopic(arg)

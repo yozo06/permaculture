@@ -61,7 +61,9 @@ export function explainAsk(seed: Pick<Seed, 'pack' | 'layer' | 'name'>): string 
 export interface Adding {
   /** What would be added, with ids of their own. */
   seeds: OwnSeed[]
-  /** Topics left out because the field has one of that name. */
+  /** Topics the field has that had nothing to ask, as they would be with the questions read for them. */
+  filled: OwnSeed[]
+  /** Topics left out because the field has one of that name, with questions of its own or with none read for it. */
   already: number
   /** Topics left out because the field has no room for them. */
   over: number
@@ -69,16 +71,31 @@ export interface Adding {
   unfit: number
 }
 
-/** What a reading would add to a field: the topics it has not got, as many as it has room for. */
+const copied = (cards: readonly Card[]): Card[] => cards.map((c) => ({ q: c.q, a: c.a, ...(c.wrong && c.wrong.length ? { wrong: [...c.wrong] } : {}) }))
+
+/**
+ * What a reading would add to a field: the topics it has not got, as many as it has room for, and questions for the
+ * topics it has that had none. A topic that is there keeps its name, its kind and its group, and its line on what
+ * to read if it has one.
+ */
 export function toAdd(draft: Draft, field: Pick<OwnField, 'id' | 'seeds'>, rand: () => number = Math.random): Adding {
-  const have = new Set(field.seeds.map((s) => s.name.trim().toLowerCase()))
+  const have = new Map(field.seeds.map((s) => [s.name.trim().toLowerCase(), s]))
   const ids = new Set(field.seeds.map((s) => s.id))
-  const fresh = draft.topics.filter((t) => !have.has(t.name.trim().toLowerCase()))
+  const fresh: Draft['topics'] = []
+  const filled: OwnSeed[] = []
+  let already = 0
+  for (const t of draft.topics) {
+    const had = have.get(t.name.trim().toLowerCase())
+    if (!had) { fresh.push(t); continue }
+    const given: OwnSeed = { ...had, summary: had.summary || t.summary, cards: copied(t.cards) }
+    if (had.cards.length === 0 && t.cards.length > 0 && !filled.some((s) => s.id === had.id) && whyOwnSeed(given) === null) filled.push(given)
+    else already++
+  }
   // One topic the farm would refuse must not take the whole batch down with it.
   const fit = fresh.filter((t) => whyOwnSeed({ id: field.id + '_000000', ...t }) === null)
   const room = Math.max(0, OWN_TODAY.seeds - field.seeds.length)
-  const seeds = fit.slice(0, room).map((t): OwnSeed => ({ id: newSeedId(field.id, ids, rand), name: t.name, kind: t.kind, summary: t.summary, group: t.group, cards: t.cards.map((c) => ({ ...c })) }))
-  return { seeds, already: draft.topics.length - fresh.length, over: fit.length - seeds.length, unfit: fresh.length - fit.length }
+  const seeds = fit.slice(0, room).map((t): OwnSeed => ({ id: newSeedId(field.id, ids, rand), name: t.name, kind: t.kind, summary: t.summary, group: t.group, cards: copied(t.cards) }))
+  return { seeds, filled, already, over: fit.length - seeds.length, unfit: fresh.length - fit.length }
 }
 
 const plural = (n: number, one: string, many = one + 's'): string => n + ' ' + (n === 1 ? one : many)
@@ -117,53 +134,107 @@ export function readingHtml(draft: Draft, adding: Adding, told: 'cards' | 'topic
     ...(adding.unfit ? [(adding.unfit === 1 ? '1 line' : adding.unfit + ' lines') + ' could not be made into a topic, and ' + (adding.unfit === 1 ? 'is' : 'are') + ' left out.'] : []),
   ]
   const checks = notes.length ? '<h3>Check these</h3><ul>' + notes.map((n) => '<li>' + esc(n) + '</li>').join('') + '</ul>' : ''
-  if (adding.seeds.length === 0) return '<p class="sub">' + (draft.topics.length ? 'Nothing new to add.' : 'Nothing to add yet. One topic to a line is enough.') + '</p>' + checks
+  const fills = adding.filled.length
+  const filling = fills ? '<p>' + plural(fills, 'topic') + ' you already have ' + (fills === 1 ? 'gets its' : 'get their') + ' questions.</p>' : ''
+  if (adding.seeds.length === 0) return (filling || '<p class="sub">' + (draft.topics.length ? 'Nothing new to add.' : 'Nothing to add yet. One topic to a line is enough.') + '</p>') + checks
   const cards = adding.seeds.reduce((n, s) => n + s.cards.length, 0)
+  // A topic with nothing to ask is watered by writing. A learner should know that before they add forty of them.
+  const bare = adding.seeds.filter((s) => s.cards.length === 0).length
+  const unasked = bare
+    ? '<p class="sub"><b>' + bare + ' of them ' + (bare === 1 ? 'has' : 'have') + ' no questions</b>, so ' + (bare === 1 ? 'it is' : 'they are') + ' watered by explaining ' + (bare === 1 ? 'it' : 'them') +
+      ' in writing, not by multiple choice. The prompt for an AI chat asks for questions under every topic.</p>'
+    : ''
   const pairs = draft.pairs > 0
     ? '<p class="sub">' + plural(draft.pairs, 'line') + ' came in two parts, like “Hund - dog”. A short pair makes a question card; a name and a sentence make a topic with a note.</p><div class="tabs">' +
       WAYS.map(([way, label]) => '<button type="button" data-act="ownPairs" data-arg="' + way + '"' + ((told ?? '') === way ? ' class="on"' : '') + '>' + label + '</button>').join('') + '</div>'
     : ''
   const shown = adding.seeds.slice(0, SHOWN)
   return (
-    '<p>The game read this as <b>' + plural(adding.seeds.length, 'topic') + '</b>' + (cards ? ', with ' + plural(cards, 'question card') + ' in ' + (cards === 1 ? 'it' : 'them') : '') + '.</p>' + pairs +
+    '<p>The game read this as <b>' + plural(adding.seeds.length, 'topic') + '</b>' + (cards ? ', with ' + plural(cards, 'question card') + ' in ' + (cards === 1 ? 'it' : 'them') : '') + '.</p>' + filling + unasked + pairs +
     '<div class="reading">' + grouped(shown, (s) => topicRow(s)) + (adding.seeds.length > SHOWN ? '<p class="sub">… and ' + (adding.seeds.length - SHOWN) + ' more.</p>' : '') + '</div>' + checks
   )
 }
 
-/** The sheet where a learner pastes what they have. `first` is true straight after the field was made. */
-export function addSheetHtml(field: Pick<OwnField, 'id' | 'title' | 'color'>, first: boolean): string {
+/**
+ * The sheet where a learner pastes what they have. `first` is true straight after the field was made, and `bare` is
+ * how many of the field's topics have nothing to ask.
+ */
+export function addSheetHtml(field: Pick<OwnField, 'id' | 'title' | 'color'>, first: boolean, bare = 0): string {
   return (
     chipHtml(field.title, field.color) + '<h2>What is in ' + esc(field.title) + '?</h2>' +
     '<p>Paste whatever you have: a syllabus, a contents page, your notes, a word list, flashcards, or what an AI chat wrote for you. Or just type, one topic to a line. The game works out the rest.</p>' +
     '<label for="ownText" class="sub">Your topics</label>' +
     '<textarea id="ownText" class="write" rows="7" data-min="1" data-gate="ownAdd" data-quiet autocomplete="off" spellcheck="false" placeholder="Photosynthesis&#10;Cell division - read chapter 4&#10;Hund = dog"></textarea>' +
     '<div class="branches"><label class="filebtn">Choose a file<input type="file" id="ownFile" accept=".txt,.md,.csv,.tsv,text/*"></label>' +
-    '<button type="button" data-act="ownPrompt" data-arg="' + esc(field.id) + '">Copy a prompt for an AI chat</button></div>' +
+    '<button type="button" data-act="ownPrompt" data-arg="' + esc(field.id) + '">Copy a prompt for an AI chat</button>' +
+    (bare > 0 && !first ? '<button type="button" data-act="ownPromptFill" data-arg="' + esc(field.id) + '">Copy a prompt for questions on your ' + plural(bare, 'topic') + ' without any</button>' : '') + '</div>' +
     '<div id="ownReading" aria-live="polite"><p class="sub">Nothing to add yet. One topic to a line is enough.</p></div>' +
-    '<p class="sub">A topic takes about ten days to grow from seed to tree, and you can plant ' + RULES.newSeedsPerDay + ' new ones a day. Lines like “Hund = dog” become question cards, which are quicker to water than a topic you explain in writing.</p>' +
+    '<p class="sub">A topic takes about ten days to grow from seed to tree, and you can plant ' + RULES.newSeedsPerDay + ' new ones a day. A topic with question cards is watered by multiple choice; one without is watered by explaining it in writing. Lines like “Hund = dog” become cards, and the prompt for an AI chat asks it for questions under every topic. If you write in the box what you want to learn first, the prompt takes that along.</p>' +
     '<div class="foot"><button type="button" data-act="' + (first ? 'close' : 'ownBack') + '" data-arg="' + esc(field.id) + '">' + (first ? 'Skip for now' : 'Back') + '</button>' +
     '<button type="button" class="pri" id="ownAdd" data-act="ownAdd" data-arg="' + esc(field.id) + '" disabled>Add topics</button></div>'
   )
 }
 
-/** What to ask an AI chat for, so that its answer pastes straight in. The game itself never talks to one. */
-export function aiPrompt(subject: string): string {
+/** How much of what a learner wrote goes into the prompt. */
+const WANTS = 3000
+
+/**
+ * What to ask an AI chat for, so that its answer pastes straight in: a list of topics, each with a line on what to
+ * read and questions with their wrong answers. The game itself never talks to one. `wants` is what the learner wrote
+ * about what they are after, or have so far. Given a field's topics, it asks instead for questions on the ones that
+ * have none.
+ *
+ * The shape is said in words ("Part:", "Topic:", "Read:") and not in marks: a chat's page turns "## heading" into a
+ * plain line before it is copied, and the words come through.
+ */
+export function aiPrompt(subject: string, wants = '', have: readonly Pick<OwnSeed, 'name' | 'summary' | 'cards'>[] = []): string {
+  const bare = have.filter((s) => s.cards.length === 0)
+  const said = wants.trim().slice(0, WANTS).trim()
+  const plainly = 'Give only the list, as plain text: no introduction, no closing remarks, no table, no bold, no numbering.'
+  const question = 'A question about that topic? = the right answer | a wrong answer | another wrong answer | a third wrong answer'
+  const rules = [
+    '- A question is one line that ends with a question mark. After it come " = ", the right answer, and three wrong answers with " | " between them.',
+    '- Every answer is short: 8 words at most. The wrong answers must be believable: the same kind of thing as the right one, and about as long.',
+    '- A question makes sense by itself, and tests understanding of the topic, not the wording of this list.',
+    '- Do not use "=" or "|" anywhere else.',
+  ]
+  if (bare.length > 0) {
+    return [
+      'I am learning: ' + subject.trim(),
+      '',
+      'Write quiz questions for my topics below, to paste into a learning game. ' + plainly,
+      '',
+      'Use exactly these line shapes:',
+      '',
+      'Topic: the name of the topic, exactly as I wrote it',
+      question,
+      '',
+      'Rules:',
+      '- Under every topic, 4 to 6 question lines. Leave no topic out, and add none.',
+      ...rules,
+      '',
+      'My topics:',
+      ...bare.flatMap((s) => ['Topic: ' + s.name, ...(s.summary ? ['Read: ' + s.summary] : [])]),
+    ].join('\n')
+  }
   return [
     'I am learning: ' + subject.trim(),
+    ...(said ? ['', 'What I want from it, or what I have so far:', said] : []),
     '',
-    'Make me a study list that I can paste into a learning game. Give only the list: no introduction, no closing remarks, no table.',
+    'Write me a study list with quiz questions, to paste into a learning game. ' + plainly,
     '',
-    'Use exactly this shape:',
+    'Use exactly these line shapes:',
     '',
-    '## A heading for each part',
-    '- Topic name: one line on what to read or practise',
+    'Part: the name of a part of the subject',
+    'Topic: the name of one topic in that part',
+    'Read: one line on what to read or practise for that topic',
+    question,
     '',
     'Rules:',
-    '- 3 to 8 parts, in the order I should learn them, and 4 to 8 topics under each.',
+    '- 3 to 6 parts, in the order I should learn them, with 3 to 6 topics in each.',
     '- A topic name is short: 6 words at most.',
-    '- Where a part is facts to memorise (words, dates, formulas, names), do not write topics for it. Write 6 to 8 lines under its heading in the form',
-    '  question = answer',
-    '  with a short answer.',
+    '- Under every topic, one "Read:" line and then 4 to 6 question lines.',
+    ...rules,
   ].join('\n')
 }
 
@@ -175,6 +246,7 @@ export function fieldSheetHtml(field: OwnField, state: Pick<FarmState, 'crops' |
   const growing = field.seeds.filter((s) => { const c = crop(s); return c !== undefined && !c.perennial }).length
   const rooted = field.seeds.filter((s) => crop(s)?.perennial === true).length
   const planted = growing + rooted
+  const bare = field.seeds.filter((s) => s.cards.length === 0).length
   const status = (s: OwnSeed): string => {
     const c = crop(s)
     return !c ? 'not planted' : c.perennial ? (c.wilted ? 'rooted, wilted' : 'rooted') : c.wilted ? 'wilted' : 'growing, stage ' + (c.stage + 1) + ' of ' + (RULES.maxStage + 1)
@@ -194,21 +266,24 @@ export function fieldSheetHtml(field: OwnField, state: Pick<FarmState, 'crops' |
     '<div class="branches"><button type="button" class="pri" data-act="ownAddOpen" data-arg="' + esc(field.id) + '">Add topics</button>' +
     '<button type="button" data-act="ownRename" data-arg="' + esc(field.id) + '">Rename</button>' +
     (planted === 0 ? '<button type="button" data-act="ownDrop" data-arg="' + esc(field.id) + '">Remove this field</button>' : '') + '</div>' +
+    (bare ? '<p class="sub">' + plural(bare, 'topic') + (bare === 1 ? ' has' : ' have') + ' no questions, so ' + (bare === 1 ? 'it is' : 'they are') + ' watered by explaining in writing. Under “Add topics” there is a prompt that gets questions for ' + (bare === 1 ? 'it' : 'them') + ' from an AI chat.</p>' : '') +
     (field.seeds.length
       ? grouped(field.seeds, row) + focus + '<p class="sub">Plant a topic from the seed bag. One that is in the ground can be changed but not removed.</p>'
       : '<p class="sub">No topics yet. Add some, then plant them from the seed bag.</p>')
   )
 }
 
-/** A card as a line of the box it is edited in. */
-export const cardsText = (cards: readonly Card[]): string => cards.map((c) => c.q + ' = ' + c.a).join('\n')
+/** A card as a line of the box it is edited in: its question, its answer, and after that the wrong answers it has. */
+const cardLine = (c: Card): string => c.q + ' = ' + c.a + (c.wrong && c.wrong.length ? ' | ' + c.wrong.join(' | ') : '')
+export const cardsText = (cards: readonly Card[]): string => cards.map(cardLine).join('\n')
 
 /**
  * Cards from the lines of that box: "question = answer", or the two with a tab between. `known` are the cards the
  * topic had. A line that still says one of them is that card, untouched, and a line that still begins with one's
  * question keeps that question, so that saving a topic never moves the place where a card is parted. A line that is
  * new is parted at its first " = ", as the reader parts it ("Force = F = ma"), unless what comes before its last one
- * is a question ("2 + 2 = ? = 4").
+ * is a question ("2 + 2 = ? = 4"). What follows the answer of a new or changed line, each after an upright bar, are
+ * wrong answers to show with it.
  */
 export function cardsFromText(text: string, known: readonly Card[] = []): { cards: Card[]; unread: number } {
   const cards: Card[] = []
@@ -217,7 +292,7 @@ export function cardsFromText(text: string, known: readonly Card[] = []): { card
   for (const raw of text.split('\n')) {
     const line = raw.trim()
     if (line === '') continue
-    const same = left.findIndex((c) => c.q + ' = ' + c.a === line)
+    const same = left.findIndex((c) => cardLine(c) === line)
     const was = left[same]
     if (was) { cards.push({ ...was }); left.splice(same, 1); continue }
     let q = '', a = ''
@@ -231,7 +306,10 @@ export function cardsFromText(text: string, known: readonly Card[] = []): { card
       const at = last > first && /[?？]\s*$/.test(line.slice(0, last)) ? last : first
       if (at >= 0) { q = line.slice(0, at).trim(); a = line.slice(at + 3).trim() }
     }
-    if (q && a) cards.push({ q, a })
+    const [answer = '', ...others] = a.split('|').map((x) => x.trim())
+    const wrong: string[] = []
+    for (const w of others) if (w && w.toLowerCase() !== answer.toLowerCase() && !wrong.some((x) => x.toLowerCase() === w.toLowerCase()) && wrong.length < TEXT.wrong) wrong.push(w)
+    if (q && answer) cards.push({ q, a: answer, ...(wrong.length ? { wrong } : {}) })
     else unread++
   }
   return { cards, unread }
@@ -248,7 +326,7 @@ export function topicSheetHtml(field: OwnField, s: OwnSeed, planted: boolean): s
     '<label for="tSummary" class="sub">What to read or do (optional)</label><textarea id="tSummary" class="write short" rows="2" data-keep maxlength="' + TEXT.summary + '">' + esc(s.summary) + '</textarea>' +
     '<label for="tGroup" class="sub">Group (optional)</label><input type="text" id="tGroup" class="write" data-quiet data-keep list="tGroups" maxlength="' + TEXT.group + '" value="' + esc(s.group) + '" autocomplete="off">' +
     '<datalist id="tGroups">' + groups.map((g) => '<option value="' + esc(g) + '">').join('') + '</datalist>' +
-    '<label for="tCards" class="sub">Question cards (optional): one to a line, as question = answer. At most ' + TEXT.cards + '. A topic with cards is watered by answering them.</label>' +
+    '<label for="tCards" class="sub">Question cards (optional): one to a line, as question = answer. Wrong answers to show with it may follow, each after a “ | ”. At most ' + TEXT.cards + ' cards. A topic with cards is watered by answering them.</label>' +
     '<textarea id="tCards" class="write short" rows="4" data-keep spellcheck="false">' + esc(cardsText(s.cards)) + '</textarea>' +
     '<div class="foot"><button type="button" data-act="ownBack" data-arg="' + esc(field.id) + '">Back</button>' +
     (planted ? '' : '<button type="button" data-act="ownRemove" data-arg="' + esc(s.id) + '">Remove</button>') +
