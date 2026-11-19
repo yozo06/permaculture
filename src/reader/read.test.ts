@@ -891,6 +891,21 @@ describe('what a look at the reader as its own part found', () => {
     expect(took(unnamed(16000)) / plain, 'with no words for a name').toBeLessThan(10)
   })
 
+  it('takes little longer when many names are cut to the same few letters before they are numbered', () => {
+    const limits = { lines: 20000, name: 12 }
+    const took = (paste: string): number => Math.min(...[0, 1, 2].map(() => {
+      const started = performance.now()
+      read(paste, { limits })
+      return performance.now() - started
+    }))
+    const plain = took(Array.from({ length: 15000 }, (_, i) => 'Topic ' + i).join('\n'))
+    const name = (k: number): string => 'abcdefgh' + String(k).padStart(4, '0')
+    // A topic of each name, then a set of cards under a heading of each name: every set wants a number after one stem.
+    const shared = (n: number): string => [...Array.from({ length: n }, (_, k) => '- ' + name(k)), ...Array.from({ length: n }, (_, k) => '## ' + name(k) + '\nq' + k + '\tgot')].join('\n')
+    expect(read(shared(3), { limits }).topics.map((t) => t.name)).toEqual(['abcdefgh0000', 'abcdefgh0001', 'abcdefgh0002', 'abcdefg… (2)', 'abcdefg… (3)', 'abcdefg… (4)'])
+    expect(took(shared(5000)) / plain).toBeLessThan(10)
+  })
+
   it('numbers sets of one name in order, past names that are taken already', () => {
     const d = read(text('Words (2)', '## Words', 'Hund\tdog', '## Words', 'Katze\tcat', '## Words', 'Maus\tmouse'))
     expect(names(d)).toEqual(['Words (2)', 'Words', 'Words (3)', 'Words (4)'])

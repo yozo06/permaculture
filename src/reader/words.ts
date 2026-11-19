@@ -159,16 +159,38 @@ export interface Patterns {
 
 /**
  * What a word is joined by, in any script: a letter, a mark written on one, a digit, or the underscore of a name out
- * of a program. A sign that only counts, such as a circled number, joins nothing.
+ * of a program. A sign that only counts, such as a circled number, joins nothing. (Labels and rules end as they
+ * always did: see BOUND_OF_OLD.)
  */
 const JOINS = '\\p{L}\\p{M}\\p{Nd}_'
 /** After a word: nothing follows that it could be joined to. */
 const BOUND = '(?![' + JOINS + '])'
 /** Before a word: the start of the text, or something it could not be joined to. */
 const EDGE = '(?:^|[^' + JOINS + '])'
+/**
+ * After the number of a label and after a word that makes a rule, as it has always been: a sign that counts joins
+ * too, and an underscore does not. "Week 2_Loops" is week 2, "rule_of_three" is a rule, "law²" is not a law.
+ */
+const BOUND_OF_OLD = '(?![\\p{L}\\p{M}\\p{N}])'
 
-/** The words in a list. Whatever else it holds, and whatever is no list at all, counts for nothing. */
-const strings = (list: unknown): string[] => (Array.isArray(list) ? list.filter((w): w is string => typeof w === 'string') : [])
+/** How many words of a list are looked for, and how long a word may be. English has no list a quarter as long. */
+const MOST = { words: 200, letters: 80 } as const
+
+/**
+ * The words in a list. Whatever else it holds, and whatever is no list at all, counts for nothing. So does a word
+ * too long to be one, and every word past the most that are looked for: a pattern of thousands of words is slow to
+ * make and can be too large to make at all. The list is walked by number and only so far, since it may be all
+ * length and no words.
+ */
+function strings(list: unknown): string[] {
+  if (!Array.isArray(list)) return []
+  const out: string[] = []
+  for (let i = 0; i < list.length && i < 10 * MOST.words && out.length < MOST.words; i++) {
+    const w: unknown = list[i]
+    if (typeof w === 'string' && w.length <= MOST.letters) out.push(w)
+  }
+  return out
+}
 /** A part of the words, or nothing if it is not there. */
 const part = (words: unknown, name: string): Record<string, unknown> => {
   const v: unknown = typeof words === 'object' && words !== null ? (words as Record<string, unknown>)[name] : undefined
@@ -190,9 +212,8 @@ const made = new WeakMap<Words, Patterns>()
 /**
  * What the reader looks for in a text, for one language's words. It is made once for each `Words` and kept, so a
  * `Words` that has been read with is not to be changed afterwards: make another. A list that is missing or is no
- * list finds nothing, and a line the reader writes that is missing is not written. It throws only for words that
- * cannot be looked for at all, such as a single word of tens of thousands of characters; the reader then reads by
- * English.
+ * list finds nothing, and a line the reader writes that is missing is not written. Should the words still be more
+ * than a pattern can hold, that shows only when a text is read by them, and the reader then reads it by English.
  */
 export function compile(words: Words): Patterns {
   const kept = made.get(words)
@@ -207,7 +228,7 @@ export function compile(words: Words): Patterns {
   const written = (name: string): string => (typeof writes[name] === 'string' ? (writes[name] as string) : '')
   const totals = any(course.totals)
   const patterns: Patterns = {
-    label: re('^' + any(all.labels) + '\\s+(?:\\d+(?:\\s*[-–]\\s*\\d+)?|[ivxlc]+|[a-z])' + BOUND),
+    label: re('^' + any(all.labels) + '\\s+(?:\\d+(?:\\s*[-–]\\s*\\d+)?|[ivxlc]+|[a-z])' + BOUND_OF_OLD),
     weekday: whole(all.weekdays),
     note: re('^(?:' + any(reading.verbs) + '\\s+\\S|' + any(reading.refs) + '\\s*\\d)|https?://'),
     courseLabel: whole(course.labels),
@@ -221,7 +242,7 @@ export function compile(words: Words): Patterns {
     hours: re('\\s*[[(]\\s*\\d+(?:\\.\\d+)?\\s*' + any(all.units) + '\\s*[\\])]\\s*$'),
     pageRef: re('[\\s,(]+(?:' + any(page.see) + '\\s+)?' + any(page.refs) + '\\s*(\\d+(?:\\s*[-–]\\s*\\d+)?)\\)?\\s*$'),
     doing: re('^' + any(kinds.doing) + '(?=\\s|$)'),
-    rule: re(within(kinds.rule) + '|^' + any(kinds.ruleStarts) + BOUND),
+    rule: re(EDGE + any(kinds.rule) + BOUND_OF_OLD + '|^' + any(kinds.ruleStarts) + BOUND),
     versus: re('\\s' + any(kinds.versus) + '\\s', 'u'),
     whole: re(within(kinds.whole)),
     facts: re(within(kinds.facts)),
@@ -239,9 +260,6 @@ export function compile(words: Words): Patterns {
     ands: re('\\s*[,;]\\s*|\\s+' + any(all.ands) + '\\s+'),
     writes: { page: written('page'), partOf: written('partOf'), card: written('card'), cards: written('cards'), cardsName: written('cardsName') },
   }
-  // Each is tried once, on plain and on other letters, so that words too many or too long to look for fail here,
-  // where the reader can fall back on its own, and not in the middle of a text.
-  for (const pattern of Object.values(patterns)) if (pattern instanceof RegExp) { pattern.test('a'); pattern.test('\u0101') }
   if (typeof words === 'object' && words !== null) made.set(words, patterns)
   return patterns
 }

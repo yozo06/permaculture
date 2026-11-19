@@ -96,7 +96,7 @@ All three are optional.
 | Limit | Its own | Can be set from | What it limits |
 |---|---|---|---|
 | `title` | 60 | 12 to 400 | Characters in the title. |
-| `name` | 48 | 12 to 400 | Characters in a topic's name. A longer one is cut at a word, and the whole line is kept in the summary. |
+| `name` | 48 | 12 to 400 | Characters in a topic's name. A longer one is cut, at a word where it can be, and the whole line is kept in the summary as far as the summary has room. |
 | `summary` | 300 | 12 to 10000 | Characters in the line on what to read. |
 | `group` | 60 | 12 to 400 | Characters in a group's name. |
 | `q` | 160 | 1 to 400 | Characters in a card's question. A pair with a longer side is a topic, not a card. |
@@ -147,19 +147,19 @@ read(text, { words: SPANISH })
 - a word is written as it is found, in small letters. Capitals in the text are found too (except for `kinds.versus`, which is found only in the letters written, so that "VS Code" is not "a vs b");
 - a space stands for any run of spaces, and either apostrophe stands for both;
 - nothing in a word is a pattern. `c++` is three characters;
-- a word is found whole. `regla` is not found in "Reglamento", nor `total` in "total_budget". A letter, a mark written on a letter, a digit and an underscore all join a word to what is next to it.
+- a word is found whole. `regla` is not found in "Reglamento", nor `total` in "total_budget". A letter, a mark written on a letter, a digit and an underscore all join a word to what is next to it. Three places keep older habits: a counter may touch its number ("Card3"), and after the number of a label and after a word in `kinds.rule` an underscore ends the word ("Week 2_Loops" is week 2, "rule_of_three" is a rule).
 
-A list may be empty. With no words at all the reader still reads bullets, numbering, headings, tables and lines in two parts. What it loses is everything a word tells it: a label from a name, a total from a topic, a question from its answer ("Q:", "A:"), a counter or a row of column names from a card, the chatter round a list from the list, and every kind but `idea`. The words the reader writes itself ("Page 12.", "3 cards: ...") are in the same lists, under `writes`; one left empty is not written.
+A list may be empty. With no words at all the reader still reads bullets, numbering, headings, tables and lines in two parts. What it loses is everything a word tells it: a label from a name, a total from a topic, a question from its answer ("Q:", "A:"), a counter or a row of column names from a card, the chatter round a list from the list, and nearly every kind but `idea` ("3 x 10 squats" is still something to do). The words the reader writes itself ("Page 12.", "3 cards: ...") are in the same lists, under `writes`; one left empty is not written.
 
-A set of words is made ready the first time it is read with and kept, so do not change one afterwards. Make another. Words that cannot be made ready at all, such as a single word tens of thousands of characters long, are set aside, and the text is read by English.
+A set of words is made ready the first time it is read with and kept, so do not change one afterwards. Make another. The first 200 words of a list are looked for, and a word longer than 80 characters is passed over. If a set of words still cannot be read by, the text is read by English.
 
 ## What it promises
 
 - **The same text always reads the same way.** Nothing is guessed by chance.
 - **It never throws**, whatever it is given to read and whatever it is given for settings. What is not text is read as the text it would be written as, and a setting that cannot be read is the reader's own.
-- **It says what it leaves out.** A line that could have been a topic or a card and was not kept has a note. What goes without one is dress: ruled lines, tags, the lines a flashcard program writes at the top of its file, a row that names the columns, a counter such as "Card 3", the hours in brackets after a heading, a stray row of backticks, running text under a card, and the chatter before and after a list ("Here is your plan", "Thanks!").
+- **It says what it leaves out.** A line that could have been a topic or a card and was not kept has a note. What goes without one is dress: ruled lines, tags, the lines a flashcard program writes at the top of its file, a row that names the columns, a counter such as "Card 3", the hours in brackets after a heading, a stray row of backticks, running text under a card, an address on a line of its own under a heading or a card, and the chatter before and after a list ("Here is your plan", "Thanks!").
 - **It cannot hold a page up.** It reads only so many lines and only so far along each, and the time it takes grows in step with the number of lines.
-- **The characters in `HIDDEN` never come out of it**: zero-width spaces, soft hyphens, control characters and the ones that turn text round. The joiners that Indic scripts and emoji are written with are kept inside a line; one at the very start or end of a line goes with the pictures there.
+- **The characters in `HIDDEN` never come out of it**: zero-width spaces, soft hyphens, control characters and the ones that turn text round. The joiners that Indic scripts and emoji are written with are kept inside a line; a zero-width joiner at the very start or end of a line goes with the pictures there.
 - **It leans on nothing.** No package, no browser, no clock.
 
 ## What it does not do well

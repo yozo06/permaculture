@@ -752,7 +752,17 @@ export function read(input: string, opts: ReadOptions = {}): Draft {
   const lim = attempt(() => limitsOf(opts.limits), { ...LIMITS })
   const told = attempt(() => opts.pairs, undefined)
   const pairsAs = told === 'cards' || told === 'topics' ? told : undefined
-  const made = attempt(() => (typeof opts.words === 'object' && opts.words !== null ? compile(opts.words) : null), null) ?? compile(ENGLISH)
+  const given = attempt(() => (typeof opts.words === 'object' && opts.words !== null ? compile(opts.words) : null), null)
+  const text = normal(attempt(() => (input === null || input === undefined ? '' : String(input)), ''))
+  // Words that are more than a pattern can hold show it only when a text is read by them. It is read by English then.
+  if (given) {
+    try { return reading(text, lim, pairsAs, given) } catch { /* by English, below */ }
+  }
+  return reading(text, lim, pairsAs, compile(ENGLISH))
+}
+
+/** A text, already made plain, read into a draft by these limits and these words. */
+function reading(text: string, lim: Limits, pairsAs: 'cards' | 'topics' | undefined, made: Patterns): Draft {
   // The few words the reader writes are text like any other: one line each, with nothing in them that cannot be seen.
   const tidied = (line: string): string => normal(line).replace(/\s+/g, ' ').trim()
   const p: Patterns = { ...made, writes: { page: tidied(made.writes.page), partOf: tidied(made.writes.partOf), card: tidied(made.writes.card), cards: tidied(made.writes.cards), cardsName: tidied(made.writes.cardsName) } }
@@ -761,7 +771,7 @@ export function read(input: string, opts: ReadOptions = {}): Draft {
   /** No two notes alike: one of a kind, or one for each name where a note names one. */
   const note = (n: Note, key: string = n.code): void => { if (!said.has(key)) { said.add(key); notes.push(n) } }
 
-  let lines = normal(attempt(() => (input === null || input === undefined ? '' : String(input)), '')).split('\n')
+  let lines = text.split('\n')
   // The end of the last line is not a line more.
   while (lines.length > 1 && (lines[lines.length - 1] ?? '').trim() === '') lines.pop()
   if (lines.length > lim.lines) {
@@ -833,11 +843,18 @@ export function read(input: string, opts: ReadOptions = {}): Draft {
     if (taken.has(name.toLowerCase())) {
       // A set of cards is kept under a name of its own; a topic that is there twice is left out.
       if (!spare) return note({ code: 'twice-left-out', text: name }, 'twice:' + name.toLowerCase())
-      // The first number not yet taken. Where the last set of this name stopped looking, this one starts.
+      // The first number not yet taken, from 2. A name is cut to make room for its number, so names that are cut
+      // to the same letters share their numbers: where the last of those stopped looking, this one starts.
       const base = name
-      let i = tried.get(base.toLowerCase()) ?? 2
-      for (; taken.has(name.toLowerCase()); i++) name = fit(base, lim.name - (' (' + i + ')').length) + ' (' + i + ')'
-      tried.set(base.toLowerCase(), i)
+      for (let digits = 1; taken.has(name.toLowerCase()); digits++) {
+        const stem = fit(base, lim.name - (3 + digits))
+        const key = digits + ':' + stem.toLowerCase()
+        const end = 10 ** digits
+        let i = tried.get(key) ?? Math.max(2, end / 10)
+        while (i < end && taken.has((stem + ' (' + i + ')').toLowerCase())) i++
+        tried.set(key, i)
+        if (i < end) name = stem + ' (' + i + ')'
+      }
     }
     taken.add(name.toLowerCase())
     topics.push({ ...t, name })

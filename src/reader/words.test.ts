@@ -109,6 +109,29 @@ describe('the words it reads by', () => {
     expect(kinds(read(text('नियम', 'नियमों की सूची'), { words: hindi }))).toEqual(['rule', 'idea'])
   })
 
+  it('reads a number after a label, and a word in a rule, as it did before the words were lists', () => {
+    // "Lecture 1_Basics" is a lecture and its name, as "Lecture 1 Basics" is: the line is a topic, not a card.
+    const d = read(text('- Lecture 1_Basics - arrays', '- Lecture 2_Sorting - merge sort', '- Lecture 3_Trees - bst'))
+    expect(names(d)).toEqual(['Lecture 1_Basics - arrays', 'Lecture 2_Sorting - merge sort', 'Lecture 3_Trees - bst'])
+    expect(d.pairs).toBe(0)
+    expect(read(text('rule_of_three', 'law_of_demeter', 'pattern_matching', 'Ohm law²', 'Week 2² - Intro')).topics.map((t) => [t.name, t.kind])).toEqual([
+      ['rule_of_three', 'rule'], ['law_of_demeter', 'rule'], ['pattern_matching', 'rule'], ['Ohm law²', 'idea'], ['Week 2²', 'idea'],
+    ])
+  })
+
+  it('takes only so many words of a list, and only words of a length a word can be', () => {
+    const many = Array.from({ length: 5000 }, (_, i) => 'word' + i)
+    const d = read(text('Word150 total', 'Word4000 total', 'x'.repeat(90) + ': note'), { words: { ...NONE, kinds: { ...NONE.kinds, rule: many, whole: ['x'.repeat(90)] } } })
+    expect(d.topics.map((t) => t.kind)).toEqual(['rule', 'idea', 'idea'])
+    // A list with nothing in it but a length is no list to walk.
+    const hollow: string[] = []
+    hollow.length = 4294967295
+    hollow[0] = 'week'
+    const started = performance.now()
+    expect(names(read(text('Week 1', '- One'), { words: { ...NONE, labels: hollow } }))).toEqual(['One'])
+    expect(performance.now() - started).toBeLessThan(5000)
+  })
+
   it('knows a rough number by a whole word', () => {
     const left = (line: string): boolean => read(text('# T', line, '- a', '- b')).notes.some((n) => n.code === 'course-left-out')
     for (const line of ['Total: about 40', 'Total: approx. 40 hours', 'Total: approximately 40', 'Total: roughly 12', 'Total: ~40', 'Total: 45 hours']) expect(left(line), line).toBe(true)
@@ -142,8 +165,9 @@ describe('the words it reads by', () => {
 
   it('reads by English when the words it is handed cannot be made ready', () => {
     const paste = text('Week 1: Limits', '- One', 'Total: 45 hours')
+    // A word too long to be a word is no word: the list is read without it.
     const huge = { ...ENGLISH, labels: ['x'.repeat(60000)] }
-    expect(read(paste, { words: huge })).toEqual(read(paste))
+    expect(read(paste, { words: huge })).toEqual(read(paste, { words: { ...ENGLISH, labels: [] } }))
     const trap = { get labels(): string[] { throw new Error('no') } } as unknown as Words
     expect(read(paste, { words: trap })).toEqual(read(paste))
   })
