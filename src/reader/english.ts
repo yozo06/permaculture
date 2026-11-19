@@ -1,5 +1,79 @@
-// The reader's English: what its notes say, for a program that shows them to a person who reads English.
+// The reader's English: the words it knows an English text by, and what its notes say in English.
+//
+// Every word here came from a paste somebody might really make. A list is words and nothing else (words.ts says how
+// they are found), so another language is this file again, in that language.
 import type { Note } from './read.ts'
+import type { Words } from './words.ts'
+
+/** Frozen all the way down: the words are shared by everything that reads with them. */
+function frozen<T>(value: T): T {
+  if (typeof value === 'object' && value !== null) for (const v of Object.values(value)) frozen(v)
+  return Object.freeze(value)
+}
+
+export const ENGLISH: Words = frozen({
+  // The last four are German, from before the words were kept by language. They go to a German list when there is one.
+  labels: ['chapter', 'unit', 'week', 'weeks', 'module', 'part', 'lesson', 'section', 'day', 'days', 'lecture', 'topic', 'phase', 'stage', 'level', 'step', 'session', 'class', 'book', 'volume', 'semester', 'sem', 'year', 'term', 'trimester', 'quarter', 'domain', 'kapitel', 'lektion', 'woche', 'teil'],
+  weekdays: ['mon', 'tue', 'tues', 'wed', 'thu', 'thur', 'thurs', 'fri', 'sat', 'sun', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'],
+  reading: {
+    verbs: ['read', 'see', 'watch', 'do', 'practice', 'practise', 'review', 'revise', 'listen to'],
+    refs: ['chapter', 'chapters', 'page', 'pages', 'section', 'sections', 'lecture', 'lectures', 'video', 'videos', 'ch.', 'p.', 'pp.'],
+  },
+  course: {
+    labels: ['tip', 'tips', 'pro tip', 'note', 'notes', 'nb', 'n.b', 'nb.', 'n.b.', 'remember', 'reminder', 'exam details', 'duration', 'credit', 'credits', 'marks', 'l-t-p', 'instructor', 'course code', 'prerequisite', 'prerequisites', 'pre-requisite', 'pre-requisites'],
+    // Words a subject may well have a part named after ("Evaluation", "References", "Assessment") are not here:
+    // leaving out a part of the subject is worse than keeping a list of books.
+    headings: [
+      'recommended resources', 'recommended reading', 'recommended books', 'recommended textbook', 'recommended textbooks', 'recommended text book', 'recommended text books', 'suggested reading', 'suggested books', 'further reading',
+      'textbook', 'textbooks', 'text book', 'text books', 'reference book', 'reference books', 'referencebook', 'referencebooks', 'bibliography', 'office hours', 'evaluation scheme', 'grading policy',
+    ],
+    afterColon: ['assessment', 'evaluation', 'grading', 'reference', 'references', 'resources'],
+    over: ['reference', 'references', 'resources'],
+    pages: ['page', 'pg', 'pg.', 'p.'],
+    totals: ['total', 'subtotal'],
+    roughly: ['about', 'around', 'approx'],
+  },
+  units: ['hr', 'hrs', 'hour', 'hours', 'credit', 'credits', 'mark', 'marks', 'period', 'periods', 'lecture', 'lectures', 'min', 'mins', 'minute', 'minutes', 'week', 'weeks', '%'],
+  page: {
+    see: ['see'],
+    refs: ['p', 'p.', 'pp', 'pp.', 'pg', 'pg.', 'page', 'pages'],
+  },
+  kinds: {
+    doing: [
+      'how to', 'practice', 'practise', 'practicing', 'practising', 'write', 'build', 'make', 'draw', 'solve', 'implement', 'set up', 'configure', 'play', 'sing', 'cook', 'bake', 'run', 'perform', 'create', 'design', 'deploy', 'debug',
+      'speak', 'pronounce', 'conjugate', 'translate', 'train', 'rehearse', 'memorise', 'memorize', 'present', 'record', 'sketch', 'paint', 'code',
+    ],
+    rule: ['rule', 'rules', 'law', 'laws', 'theorem', 'theorems', 'principle', 'principles', 'pattern', 'patterns', 'formula', 'equation', 'equations', 'versus', 'lemma', 'axiom', 'axioms', 'difference between', 'tradeoff', 'tradeoffs', 'trade-off', 'trade-offs'],
+    ruleStarts: ['when to', 'when not to', 'why to', 'why not to'],
+    versus: ['vs', 'vs.'],
+    whole: ['overview', 'introduction', 'intro', 'big picture', 'recap', 'summary', 'history of', 'landscape', 'map of', 'architecture of', 'foundations of', 'fundamentals of', 'basics of', 'the whole'],
+    facts: [
+      'vocabulary', 'vocab', 'words', 'verbs', 'nouns', 'adjectives', 'key terms', 'terminology', 'glossary', 'dates', 'capitals', 'names of', 'symbols', 'abbreviations', 'acronyms', 'alphabet', 'definitions', 'formulas', 'formulae', 'phrases', 'idioms',
+      'kanji', 'hiragana', 'katakana',
+    ],
+    drill: ['exercise', 'exercises', 'drill', 'drills', 'practice', 'practise', 'lab', 'project', 'workout', 'kata', 'rehearsal'],
+  },
+  chatter: {
+    starts: ["here's", 'here is', 'here are', 'let me know', 'i hope', 'hope this helps', 'hope that helps', 'hope it helps', 'feel free', 'would you like', 'happy to', 'good luck', 'great question', "if you'd like", 'if you would like', 'do you want me'],
+    openers: ['sure', 'certainly', 'of course', 'absolutely'],
+    whole: ['thanks', 'thank you', 'thx', 'ty', 'cheers', 'ok', 'okay', 'hi', 'hello', 'hey', 'enjoy'],
+    tails: ['for reading'],
+  },
+  asking: {
+    leads: ['ok so', 'okay so', 'also', 'and also'],
+    wants: ['i want to', 'i wanna', 'i would like to', 'i need to', "i'd like to"],
+    verbs: ['learn', 'know', 'study', 'understand'],
+    whole: ['teach me', 'help me with', 'help me learn'],
+    more: ['more'],
+    about: ['about'],
+  },
+  counters: ['card', 'flashcard', 'question', 'item', 'no', 'no.'],
+  columns: ['word', 'words', 'term', 'terms', 'front', 'question', 'q', 'phrase', 'expression', 'vocab', 'vocabulary', 'kanji', 'meaning', 'definition', 'back', 'answer', 'a', 'translation', 'english'],
+  questions: ['q', 'question'],
+  answers: ['a', 'ans', 'answer'],
+  ands: ['and', '&'],
+  writes: { page: 'Page {n}.', partOf: 'Part of {path}.', card: '{n} card: {list}', cards: '{n} cards: {list}', cardsName: 'Cards' },
+})
 
 const counted = (n: number, one: string, many: string): string => n + ' ' + (n === 1 ? one : many)
 

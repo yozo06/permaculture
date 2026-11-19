@@ -9,9 +9,12 @@
 //   the way a field of the game keeps them, so sixty words are eight topics and not sixty;
 // - the kind of thing a topic is, from the words in its name.
 //
-// Pure, with nothing imported: text in, a draft out. It never throws, it says what it leaves out and which names it
-// shortens (`notes`), and it reads only so far along a line and so many lines, so that no paste can hold the page up.
-// Every rule here came from a paste somebody might really make; read.test.ts has one of each.
+// Pure: text in, a draft out. It never throws, it says what it leaves out and which names it shortens (`notes`), and
+// it reads only so far along a line and so many lines, so that no paste can hold the page up. The rules here are
+// about shapes; the words a rule needs are a language's own (words.ts), and English is the one there is (english.ts).
+// Every rule came from a paste somebody might really make; read.test.ts has one of each.
+import { ENGLISH } from './english.ts'
+import { compile, fill, type Patterns, type Words } from './words.ts'
 
 /** What kind of thing a topic is. The game draws it, asks about it and harvests it by this. */
 export type Kind = 'facts' | 'skill' | 'idea' | 'rule' | 'whole'
@@ -105,6 +108,8 @@ export interface ReadOptions {
   pairs?: 'cards' | 'topics'
   /** Limits to keep to in place of the reader's own. One left out, or not a number, is the reader's own. */
   limits?: Partial<Limits>
+  /** The words of the language the text is in, in place of English. */
+  words?: Words
 }
 
 /** The limits kept to when none are given. */
@@ -261,23 +266,17 @@ function outside(s: string): string {
 
 /* ---------- a line in two parts ---------- */
 
-/** "Chapter 3", "Week 2", "Unit IV": a label, which belongs with what follows it. */
-const LABEL = /^(chapter|unit|week|weeks|module|part|lesson|section|day|days|lecture|topic|phase|stage|level|step|session|class|book|volume|semester|sem|year|term|trimester|quarter|domain|kapitel|lektion|woche|teil)\s+(\d+(?:\s*[-–]\s*\d+)?|[ivxlc]+|[a-z])(?![\p{L}\p{N}])/iu
-const isLabelled = (text: string): boolean => LABEL.test(text)
 
-const WEEKDAY = /^(mon|tue|tues|wed|thu|thur|thurs|fri|sat|sun|monday|tuesday|wednesday|thursday|friday|saturday|sunday)$/i
 
-/** The second part is a note on what to read or do, not something to be asked. */
-const NOTE = /^(?:(?:read|see|watch|do|practi[cs]e|review|revise|listen to)\s+\S|(?:chapters?|pages?|sections?|lectures?|videos?|ch\.|pp?\.)\s*\d)|https?:\/\//i
 
 const MARKS = [' = ', ' → ', ' -> ', ' => ', ' :: ', ' - ', ' – ', ' — ', ': '] as const
 
-function splitPair(s: string): Pair | null {
+function splitPair(s: string, p: Patterns): Pair | null {
   // A side that is nothing but a picture or a sign ("dog - 🐶") is kept as it is; an address is not a side.
   const side = (raw: string): string => plain(raw) || (/https?:\/\//i.test(raw) ? '' : raw.trim())
   const make = (left: string, right: string, more: Partial<Pair> = {}): Pair | null => {
     const l = side(left), r = side(right)
-    return l && r && !LABEL.test(l) ? { left: l, right: r, strong: false, ...more } : null
+    return l && r && !p.label.test(l) ? { left: l, right: r, strong: false, ...more } : null
   }
   // A bold start is the name, when a mark sets it apart from the rest. Without one the line simply goes on.
   const inside = /^(\*\*|__)(.+?):\1\s*(\S.*)$/.exec(s)
@@ -318,64 +317,33 @@ function unpaged(s: string): string {
 }
 
 /** Short enough to be asked as a card. */
-const fitsCard = (p: Pair, lim: Limits): boolean => p.left.length <= lim.q && p.right.length <= lim.a
+const fitsCard = (pair: Pair, lim: Limits): boolean => pair.left.length <= lim.q && pair.right.length <= lim.a
 /** Looks like something to be asked, and not like a topic with a sentence about it. */
-const cardLike = (p: Pair): boolean =>
-  p.strong || (!p.named && p.left.length <= 60 && !NOTE.test(p.right) && (p.eq ? p.right.length <= 80 : p.right.length <= 40 && words(p.right) <= 6))
+const cardLike = (pair: Pair, p: Patterns): boolean =>
+  pair.strong || (!pair.named && pair.left.length <= 60 && !p.note.test(pair.right) && (pair.eq ? pair.right.length <= 80 : pair.right.length <= 40 && words(pair.right) <= 6))
 
 /* ---------- lines that are about the course, not in it ---------- */
 
-/** Before a colon or a dash: a tip, a note, the credits. */
-const ADMIN_LABEL = /^(tips?|pro tip|notes?|n\.?b\.?|remember|reminder|exam details|duration|credits?|marks|l-t-p|instructor|course code|prerequisites?|pre-requisites?)$/i
-/**
- * As a label or as a heading: the lists of books and the scheme of marks. Words a subject may well have a part named
- * after ("Evaluation", "References", "Assessment") are not here: leaving out a part of the subject is worse than
- * keeping a list of books.
- */
-const ADMIN_ANY = /^(recommended (?:resources|reading|books|text ?books?)|suggested (?:reading|books)|further reading|text ?books?|reference ?books?|bibliography|office hours|evaluation scheme|grading policy)$/i
-/** Only when set off by a colon ("Assessment: 40 marks"): as a heading, any of these may be a part of the subject. */
-const ADMIN_COLON = /^(assessment|evaluation|grading|references?|resources)$/i
-/** A line that ends in a colon and stands over the books. */
-const ADMIN_OVER = /^(references?|resources)$/i
-const PAGE_MARK = /^(page|pg\.?|p\.)\s*\d+$/i
-const isAdmin = (text: string, pair: Pair | null, colon: boolean): boolean => {
+const isAdmin = (text: string, pair: Pair | null, colon: boolean, p: Patterns): boolean => {
   // "Note: bring a calculator" is about the course. "note - nota" is a word to learn: a label is set off by a colon.
-  if (pair) return (pair.colon === true && (ADMIN_LABEL.test(pair.left) || ADMIN_ANY.test(pair.left) || ADMIN_COLON.test(pair.left))) || (/^(sub)?total\b/i.test(pair.left) && /^(\d|~|≈|about|around|approx)/i.test(pair.right))
-  return ADMIN_ANY.test(text) || (colon && ADMIN_OVER.test(text)) || PAGE_MARK.test(text) || /^(sub)?total\b.*\d/i.test(text)
+  if (pair) return (pair.colon === true && (p.courseLabel.test(pair.left) || p.courseHeading.test(pair.left) || p.courseColon.test(pair.left))) || (p.total.test(pair.left) && p.rough.test(pair.right))
+  return p.courseHeading.test(text) || (colon && p.courseOver.test(text)) || p.coursePage.test(text) || p.totalLine.test(text)
 }
 
-/** "(8 hrs)", "[3 credits]", "(24%)" at the end of a heading. */
-const HOURS = /\s*[[(]\s*\d+(?:\.\d+)?\s*(?:hrs?|hours?|credits?|marks?|periods?|lectures?|mins?|minutes?|weeks?|%)\s*[\])]\s*$/i
-const headingText = (n: Node): string => n.tok.text.replace(HOURS, '') || n.tok.text
+/** A heading without the "(8 hrs)", "[3 credits]" or "(24%)" at its end. */
+const headingText = (n: Node, p: Patterns): string => n.tok.text.replace(p.hours, '') || n.tok.text
 
 /* ---------- the kind of thing ---------- */
 
-const DOING = /^(how to|practi[cs]e|practi[cs]ing|write|build|make|draw|solve|implement|set up|configure|play|sing|cook|bake|run|perform|create|design|deploy|debug|speak|pronounce|conjugate|translate|train|rehearse|memori[sz]e|present|record|sketch|paint|code)(?=\s|$)/i
-const RULE = /\b(rules?|laws?|theorems?|principles?|patterns?|formula|equations?|versus|lemma|axioms?|difference between|trade-?offs?)(?![\p{L}\p{N}])|^(when|why) (not )?to\b/iu
-/** "Stack vs heap", but not "VS Code". */
-const VERSUS = /\svs\.?\s/
-const WHOLE = /\b(overview|introduction|intro|big picture|recap|summary|history of|landscape|map of|architecture of|foundations of|fundamentals of|basics of|the whole)\b/i
-const FACTS = /\b(vocabulary|vocab|words|verbs|nouns|adjectives|key terms|terminology|glossary|dates|capitals|names of|symbols|abbreviations|acronyms|alphabet|definitions|formulas|formulae|phrases|idioms|kanji|hiragana|katakana)\b/i
-const DRILL = /\b(exercises?|drills?|practice|practise|lab|project|workout|kata|rehearsal)\b|\b\d+\s*x\s*\d+/i
-
-function kindOf(name: string): Kind {
-  if (DOING.test(name)) return 'skill'
-  if (RULE.test(name) || VERSUS.test(name)) return 'rule'
-  if (WHOLE.test(name)) return 'whole'
-  if (FACTS.test(name)) return 'facts'
-  return DRILL.test(name) ? 'skill' : 'idea'
+function kindOf(name: string, p: Patterns): Kind {
+  if (p.doing.test(name)) return 'skill'
+  if (p.rule.test(name) || p.versus.test(name)) return 'rule'
+  if (p.whole.test(name)) return 'whole'
+  if (p.facts.test(name)) return 'facts'
+  return p.drill.test(name) ? 'skill' : 'idea'
 }
 
 /* ---------- lines ---------- */
-
-/** What is said before and after a list: by an AI chat that was asked for one, or by the person typing it. */
-const CHATTER = /^(here('s| is| are)\b|sure[,!. ]|certainly[,!. ]|of course[,!. ]|absolutely[,!. ]|let me know\b|i hope\b|hope (this|that|it) helps|feel free\b|would you like\b|happy to\b|good luck\b|great question|if you('d| would) like\b|do you want me\b|enjoy[!. ]*$|(thanks|thank you|thx|ty|cheers|ok|okay|hi|hello|hey)\b[\s!.,:)]*(for reading\b.*)?$)/i
-/** "ok so i want to learn about ...": the asking, which is not part of what is asked for. */
-const ASKING = /^(?:(?:ok(?:ay)? so|also|and also)\s+)?(?:(?:i\s+(?:want|wanna|would like|need|'d like)\s+to\s+(?:learn|know|study|understand)|teach me|help me (?:with|learn))(?:\s+more)?(?:\s+about)?\s+)?/i
-/** "Card 3", "Question 4": a counter over a card, which names nothing. */
-const COUNTER = /^(?:card|flashcard|question|item|no\.?)\s*#?\d+\s*[:.)]?$/i
-/** The first row of a table of cards, when it names the columns. */
-const COLUMN = /^(word|words|term|terms|front|question|q|phrase|expression|vocab|vocabulary|kanji|meaning|definition|back|answer|a|translation|english)$/i
 
 /** Running text, not the name of a topic. A question is something to learn the answer to, however long it is. */
 const prose = (s: string): boolean =>
@@ -399,14 +367,13 @@ function roman(s: string): number {
 }
 
 /** One spoken line ("algebra and geometry and trigonometry") or one line of commas is a list of topics. */
-function oneLine(lines: string[]): string[] {
+function oneLine(lines: string[], p: Patterns): string[] {
   const full = lines.filter((l) => l.trim() !== '')
   if (full.length < 1 || full.length > 2) return lines
-  const SEP = /\s*[,;]\s*|\s+(?:and|&)\s+/i
-  const parts = (l: string): string[] => l.trim().replace(ASKING, '').split(SEP).map((p) => p.trim()).filter(Boolean)
+  const parts = (l: string): string[] => l.trim().replace(p.asking, '').split(p.ands).map((x) => x.trim()).filter(Boolean)
   const listed = (l: string): boolean => {
     const ps = parts(l)
-    return ps.length >= 3 && !/\t|\||\s[-–—=]\s|:\s|\?|^\s*[#>]|[([]/.test(l) && ps.every((p) => p.length <= 60)
+    return ps.length >= 3 && !/\t|\||\s[-–—=]\s|:\s|\?|^\s*[#>]|[([]/.test(l) && ps.every((x) => x.length <= 60)
   }
   return full.every(listed) ? full.flatMap(parts) : lines
 }
@@ -469,8 +436,8 @@ function fenced(lines: string[]): { code: Set<number>; blocks: number } {
   return { code, blocks }
 }
 
-function tokens(input: string[], note: (n: Note, key?: string) => void): Tok[] {
-  const lines = sheet(oneLine(input))
+function tokens(input: string[], p: Patterns, note: (n: Note, key?: string) => void): Tok[] {
+  const lines = sheet(oneLine(input, p))
   const out: Tok[] = []
   let blank = true
   let asked: Tok | null = null
@@ -525,7 +492,7 @@ function tokens(input: string[], note: (n: Note, key?: string) => void): Tok[] {
       const row = rest.split('|').map((c) => plain(c)).filter((c, i, all) => !(c === '' && (i === 0 || i === all.length - 1)))
       const [first = '', second = ''] = row
       tok.table = true
-      if (isLabelled(first)) {
+      if (p.label.test(first)) {
         // A contents page: "Chapter 1 | Soil | 3" is a chapter, its name and its page.
         const cols = row.filter(Boolean)
         rest = (cols.length >= 3 && /^\d{1,4}$/.test(cols[cols.length - 1] ?? '') ? cols.slice(0, -1) : cols).join(' ')
@@ -552,9 +519,9 @@ function tokens(input: string[], note: (n: Note, key?: string) => void): Tok[] {
       else if (romaned && (roman(romaned[1] ?? '') === 1 || roman(romaned[1] ?? '') === countRoman + 1)) { countRoman = roman(romaned[1] ?? ''); tok.bulleted = true; tok.marker = 'num'; rest = romaned[2] ?? '' }
     }
     if (!tok.table && hash === null) {
-      if (COUNTER.test(plain(rest))) continue
+      if (p.counter.test(plain(rest))) continue
       // An answer belongs to the question on the line before it.
-      const answer = asked && asked === prev ? /^(?:a|ans|answer)\s*\d*\s*[:.)]\s*(.+)$/i.exec(rest) : null
+      const answer = asked && asked === prev ? p.answer.exec(rest) : null
       if (answer && asked) {
         const a = plain(answer[1] ?? '')
         if (a) asked.pair = { left: asked.text, right: a, strong: true }
@@ -562,7 +529,7 @@ function tokens(input: string[], note: (n: Note, key?: string) => void): Tok[] {
         asked = null
         continue
       }
-      const question = /^(?:q|question)\s*\d*\s*[:.)]\s*(.+)$/i.exec(rest)
+      const question = p.question.exec(rest)
       const quoted = /^"((?:[^"]|"")+)"\s*[,;]\s*"((?:[^"]|"")*)"\s*$/.exec(rest)
       if (question) {
         rest = question[1] ?? ''
@@ -574,11 +541,11 @@ function tokens(input: string[], note: (n: Note, key?: string) => void): Tok[] {
         rest = left
       } else if (tabbed) {
         // Columns: a card's two sides, or a contents page's chapter, title and page.
-        let cols = rest.split('\t').map((p) => plain(p)).filter((_, i) => !skip.has(i)).filter(Boolean)
-        if (firstRow && cols.length >= 2 && (COLUMN.test(cols[0] ?? '') || COLUMN.test(cols[1] ?? ''))) { firstRow = false; continue }
+        let cols = rest.split('\t').map((c) => plain(c)).filter((_, i) => !skip.has(i)).filter(Boolean)
+        if (firstRow && cols.length >= 2 && (p.column.test(cols[0] ?? '') || p.column.test(cols[1] ?? ''))) { firstRow = false; continue }
         firstRow = false
         if (cols.length >= 3 && /^\d{1,4}$/.test(cols[cols.length - 1] ?? '')) cols = cols.slice(0, -1)
-        if (cols.length >= 2 && isLabelled(cols[0] ?? '')) rest = cols.join(' ')
+        if (cols.length >= 2 && p.label.test(cols[0] ?? '')) rest = cols.join(' ')
         else {
           if (cols.length >= 2) tok.pair = { left: cols[0] ?? '', right: cols[1] ?? '', strong: true }
           if (cols.length > 2) note({ code: 'columns-left-out' })
@@ -587,13 +554,13 @@ function tokens(input: string[], note: (n: Note, key?: string) => void): Tok[] {
       } else {
         // Dots leading to a page number, a page number set far to the right, "pg 12", "(see page 212)".
         rest = unpaged(rest)
-        const page = /[\s,(]+(?:see\s+)?(?:pp?\.?|pg\.?|pages?)\s*(\d+(?:\s*[-–]\s*\d+)?)\)?\s*$/i.exec(rest)
-        if (page && !/[-–—:=]\s*$/.test(rest.slice(0, page.index)) && page.index > 0) { rest = rest.slice(0, page.index); tok.aside.push('Page ' + (page[1] ?? '').replace(/\s+/g, '') + '.') }
-        rest = rest.replace(ASKING, '')
+        const page = p.pageRef.exec(rest)
+        if (page && !/[-–—:=]\s*$/.test(rest.slice(0, page.index)) && page.index > 0) { rest = rest.slice(0, page.index); tok.aside.push(fill(p.writes.page, { n: (page[1] ?? '').replace(/\s+/g, '') })) }
+        rest = rest.replace(p.asking, '')
         tok.bold = !tok.bulleted && /^(\*\*|__)[^*_].*\1:?$/.test(rest) && !/^(\*\*|__).+?\1.+(\*\*|__)/.test(rest.replace(/:$/, ''))
-        if (!isLabelled(plain(rest))) tok.pair = splitPair(rest)
+        if (!p.label.test(plain(rest))) tok.pair = splitPair(rest, p)
         // "Mon: scales" is scales, on Monday. "sun - Sonne" is a word to learn.
-        if (tok.pair?.colon && WEEKDAY.test(tok.pair.left)) { tok.aside.push(tok.pair.left + '.'); rest = tok.pair.right; tok.pair = null }
+        if (tok.pair?.colon && p.weekday.test(tok.pair.left)) { tok.aside.push(tok.pair.left + '.'); rest = tok.pair.right; tok.pair = null }
       }
     }
     const { text, links } = undress(rest)
@@ -608,18 +575,18 @@ function tokens(input: string[], note: (n: Note, key?: string) => void): Tok[] {
     if (!worded(tok.text) && !links.length) { wordless++; continue }
     // One full stop, at the end, is the end of a line and not part of a name.
     if (/[^.]\.$/.test(tok.text) && tok.text.indexOf('.') === tok.text.length - 1 && !prose(tok.text)) tok.text = tok.text.slice(0, -1).trimEnd()
-    tok.admin = isAdmin(tok.text, tok.pair, tok.colon)
+    tok.admin = isAdmin(tok.text, tok.pair, tok.colon, p)
     const free = !tok.bulleted && tok.hash < 0 && !tok.table && !tok.asks
-    if (free && CHATTER.test(tok.text)) continue
+    if (free && p.chatter.test(tok.text)) continue
     // Four or more short things with commas between them are that many topics.
     const things = tok.text.split(/\s*[,;]\s*/)
     const listed = !tok.pair && tok.hash < 0 && !tok.table && !tok.asks && !tok.colon && outside(tok.text).split(/\s*[,;]\s*/).length === things.length
-    if (listed && things.length >= 4 && things.every((p) => p.length >= 1 && p.length <= 40 && words(p) <= 5)) {
+    if (listed && things.length >= 4 && things.every((x) => x.length >= 1 && x.length <= 40 && words(x) <= 5)) {
       things.map((part) => part.replace(/\.$/, '').trim()).filter(worded).forEach((part, i) => out.push({ ...tok, text: part, whole: part, body: [], aside: [], links: [], blankBefore: tok.blankBefore && i === 0 }))
       continue
     }
     // Running text belongs to the heading or the line it stands under.
-    if (free && prev && !tok.pair && !tok.colon && !tok.bold && !isLabelled(tok.text) && prose(tok.text)) { prev.body.push(tok.text); continue }
+    if (free && prev && !tok.pair && !tok.colon && !tok.bold && !p.label.test(tok.text) && prose(tok.text)) { prev.body.push(tok.text); continue }
     out.push(tok)
   }
   if (codeBlocks > 0) note({ code: 'code-left-out', count: codeBlocks })
@@ -628,7 +595,7 @@ function tokens(input: string[], note: (n: Note, key?: string) => void): Tok[] {
 }
 
 /** Which lines are headings though nothing marks them as one, and how deep every line sits. */
-function levels(toks: Tok[]): void {
+function levels(toks: Tok[], p: Patterns): void {
   const capsShare = toks.filter((t) => isCaps(t.text)).length / Math.max(1, toks.length)
   toks.forEach((t, i) => {
     const next = toks[i + 1], after = toks[i + 2]
@@ -642,7 +609,7 @@ function levels(toks: Tok[]): void {
     }
     const overList = !t.pair && next !== undefined && next.hash < 0 && (next.bulleted || next.indent > t.indent)
     const overPairs = !t.pair && next?.pair != null && after?.pair != null && !next.admin && !after.admin
-    const marked = t.colon || t.bold || isLabelled(t.text) || (isCaps(t.text) && capsShare < 0.5 && !t.pair)
+    const marked = t.colon || t.bold || p.label.test(t.text) || (isCaps(t.text) && capsShare < 0.5 && !t.pair)
     t.soft = marked || overList || overPairs
     t.guessed = t.soft && !marked
   })
@@ -715,6 +682,7 @@ function fronts(cards: Card[], lim: Limits): string {
 /** Read a learner's own text into topics. Never throws. */
 export function read(input: string, opts: ReadOptions = {}): Draft {
   const lim = limitsOf(opts.limits)
+  const p = compile(typeof opts.words === 'object' && opts.words !== null ? opts.words : ENGLISH)
   const notes: Note[] = []
   const said = new Set<string>()
   /** No two notes alike: one of a kind, or one for each name where a note names one. */
@@ -731,8 +699,8 @@ export function read(input: string, opts: ReadOptions = {}): Draft {
     note({ code: 'long-lines-cut', count: long, kept: lim.line })
     lines = lines.map((l) => (l.length > lim.line ? l.slice(0, lim.line) : l))
   }
-  const toks = tokens(lines, note)
-  levels(toks)
+  const toks = tokens(lines, p, note)
+  levels(toks, p)
 
   // What is about the course and not in it is left out, with everything under it.
   const dropped: { text: string; under: number }[] = []
@@ -750,7 +718,7 @@ export function read(input: string, opts: ReadOptions = {}): Draft {
   let over: Node | null = null
   const only = top[0]
   if (top.length === 1 && only && only.children.length > 0) {
-    title = fit(headingText(only), lim.title)
+    title = fit(headingText(only, p), lim.title)
     // A plain line taken for the title is not a topic any more, and a person should know that it was.
     if (only.tok.guessed) note({ code: 'title-taken', text: title })
     over = only
@@ -772,7 +740,7 @@ export function read(input: string, opts: ReadOptions = {}): Draft {
     const mine = ns.filter((n) => n.children.length === 0)
     const paired = mine.filter((n) => n.tok.pair)
     const fitting = paired.filter((n) => n.tok.pair && fitsCard(n.tok.pair, lim))
-    const like = fitting.filter((n) => n.tok.pair && cardLike(n.tok.pair)).length
+    const like = fitting.filter((n) => n.tok.pair && cardLike(n.tok.pair, p)).length
     return fitting.length >= 3 && like >= 0.8 * fitting.length && paired.length >= 0.6 * mine.length
   }
   let asCards = 0
@@ -784,7 +752,7 @@ export function read(input: string, opts: ReadOptions = {}): Draft {
     // A name has a letter or a number in it. A set of cards whose questions are all signs is still a set of cards.
     if (!worded(name) && !/^https?:/i.test(name)) {
       if (!spare) return note({ code: 'wordless-name-left-out' })
-      name = 'Cards'
+      name = p.writes.cardsName || '1'
     }
     if (taken.has(name.toLowerCase())) {
       // A set of cards is kept under a name of its own; a topic that is there twice is left out.
@@ -807,7 +775,7 @@ export function read(input: string, opts: ReadOptions = {}): Draft {
     let cardsDone = false
     for (const n of ns) {
       if (n.children.length > 0) {
-        const mine = headingText(n)
+        const mine = headingText(n, p)
         // The first heading down is the group; the ones under it are said in the line on what to read.
         within(n.children, n, group || fit(mine, lim.group), group ? [...middle, mine] : middle)
         continue
@@ -818,32 +786,32 @@ export function read(input: string, opts: ReadOptions = {}): Draft {
         const all: Card[] = []
         const seen = new Set<string>()
         for (const c of cards) {
-          const p = c.tok.pair
-          if (!p) continue
-          if (seen.has(p.left.toLowerCase())) { note({ code: 'twice-left-out', text: p.left }, 'twice:' + p.left.toLowerCase()); continue }
-          seen.add(p.left.toLowerCase())
-          all.push({ q: p.left, a: p.right })
+          const pair = c.tok.pair
+          if (!pair) continue
+          if (seen.has(pair.left.toLowerCase())) { note({ code: 'twice-left-out', text: pair.left }, 'twice:' + pair.left.toLowerCase()); continue }
+          seen.add(pair.left.toLowerCase())
+          all.push({ q: pair.left, a: pair.right })
         }
         const sets = shares(all, lim.cards)
-        const under = parent ? headingText(parent) : ''
+        const under = parent ? headingText(parent, p) : ''
         sets.forEach((set, i) => {
           const tag = ' (' + (i + 1) + ')'
           const name = under ? (sets.length > 1 ? fit(under, lim.name - tag.length) + tag : fit(under, lim.name)) : fronts(set, lim)
-          const list = set.length + (set.length === 1 ? ' card: ' : ' cards: ') + set.map((c) => c.q).join(', ')
+          const list = fill(set.length === 1 ? p.writes.card : p.writes.cards, { n: set.length, list: set.map((c) => c.q).join(', ') }) || set.map((c) => c.q).join(', ')
           // Sets under one heading are grouped by it; one set under a heading stands where the heading stood.
           const g = under && sets.length > 1 && !group ? fit(under, lim.group) : parent && group === fit(under, lim.group) && sets.length === 1 ? '' : group
           add({ name, summary: fit(list, lim.summary), kind: 'facts', group: g, cards: set }, true)
         })
         continue
       }
-      const p = n.tok.pair
-      const whole = p ? p.left : n.tok.text
+      const pair = n.tok.pair
+      const whole = pair ? pair.left : n.tok.text
       const name = fit(whole, lim.name)
       if (name !== whole) note({ code: 'name-shortened', text: name }, 'short:' + name)
-      const parts = [name !== whole ? whole : '', p ? p.right : '', n.tok.body.join(' '), n.tok.aside.join(' '), n.tok.links.join(' '), middle.length ? 'Part of ' + middle.join(' › ') + '.' : ''].filter(Boolean)
-      const summary = parts.join(name !== whole && p ? ': ' : ' ')
+      const parts = [name !== whole ? whole : '', pair ? pair.right : '', n.tok.body.join(' '), n.tok.aside.join(' '), n.tok.links.join(' '), middle.length ? fill(p.writes.partOf, { path: middle.join(' › ') }) : ''].filter(Boolean)
+      const summary = parts.join(name !== whole && pair ? ': ' : ' ')
       if (summary.length > lim.summary) note({ code: 'summary-cut', text: name }, 'cut:' + name)
-      add({ name, summary: fit(summary, lim.summary), kind: kindOf(whole), group, cards: [] }, false)
+      add({ name, summary: fit(summary, lim.summary), kind: kindOf(whole, p), group, cards: [] }, false)
     }
   }
   within(top, over, '', [])
