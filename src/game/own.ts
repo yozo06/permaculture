@@ -73,23 +73,36 @@ export interface Adding {
 
 const copied = (cards: readonly Card[]): Card[] => cards.map((c) => ({ q: c.q, a: c.a, ...(c.wrong && c.wrong.length ? { wrong: [...c.wrong] } : {}) }))
 
+/** A name as a topic is known by it: capitals and marks make no difference. */
+const known = (name: string): string => name.normalize('NFC').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim()
+
 /**
  * What a reading would add to a field: the topics it has not got, as many as it has room for, and questions for the
- * topics it has that had none. A topic that is there keeps its name, its kind and its group, and its line on what
- * to read if it has one.
+ * topics it has that had none. A topic that is there keeps everything but its cards. A chat that is asked for
+ * questions on a topic seldom writes its name back exactly, so a topic is known by its name without capitals and
+ * marks, and failing that without the number a chat set before it or the "(2)" the reader set after it.
  */
 export function toAdd(draft: Draft, field: Pick<OwnField, 'id' | 'seeds'>, rand: () => number = Math.random): Adding {
-  const have = new Map(field.seeds.map((s) => [s.name.trim().toLowerCase(), s]))
+  const have = new Map<string, OwnSeed>()
+  // Of two topics of one name, the one with nothing to ask is the one that questions are for.
+  for (const s of field.seeds) {
+    const was = have.get(known(s.name))
+    if (!was || (was.cards.length > 0 && s.cards.length === 0)) have.set(known(s.name), s)
+  }
   const ids = new Set(field.seeds.map((s) => s.id))
   const fresh: Draft['topics'] = []
   const filled: OwnSeed[] = []
   let already = 0
   for (const t of draft.topics) {
-    const had = have.get(t.name.trim().toLowerCase())
+    const whole = t.name.replace(/\s*\(\d+\)\s*$/, '')
+    const had = have.get(known(t.name)) ?? have.get(known(whole)) ?? have.get(known(whole).replace(/^\d+(?: \d+)* /, ''))
     if (!had) { fresh.push(t); continue }
-    const given: OwnSeed = { ...had, summary: had.summary || t.summary, cards: copied(t.cards) }
-    if (had.cards.length === 0 && t.cards.length > 0 && !filled.some((s) => s.id === had.id) && whyOwnSeed(given) === null) filled.push(given)
-    else already++
+    const filling = filled.find((s) => s.id === had.id)
+    const room = TEXT.cards - (filling?.cards.length ?? 0)
+    const given: OwnSeed = { ...had, cards: [...(filling?.cards ?? []), ...copied(t.cards).slice(0, room)] }
+    if (had.cards.length > 0 || t.cards.length === 0 || room <= 0 || whyOwnSeed(given) !== null) { already++; continue }
+    if (filling) filling.cards = given.cards
+    else filled.push(given)
   }
   // One topic the farm would refuse must not take the whole batch down with it.
   const fit = fresh.filter((t) => whyOwnSeed({ id: field.id + '_000000', ...t }) === null)
@@ -167,7 +180,9 @@ export function addSheetHtml(field: Pick<OwnField, 'id' | 'title' | 'color'>, fi
     '<textarea id="ownText" class="write" rows="7" data-min="1" data-gate="ownAdd" data-quiet autocomplete="off" spellcheck="false" placeholder="Photosynthesis&#10;Cell division - read chapter 4&#10;Hund = dog"></textarea>' +
     '<div class="branches"><label class="filebtn">Choose a file<input type="file" id="ownFile" accept=".txt,.md,.csv,.tsv,text/*"></label>' +
     '<button type="button" data-act="ownPrompt" data-arg="' + esc(field.id) + '">Copy a prompt for an AI chat</button>' +
-    (bare > 0 && !first ? '<button type="button" data-act="ownPromptFill" data-arg="' + esc(field.id) + '">Copy a prompt for questions on your ' + plural(bare, 'topic') + ' without any</button>' : '') + '</div>' +
+    (bare > 0 && !first
+      ? '<button type="button" data-act="ownPromptFill" data-arg="' + esc(field.id) + '">Copy a prompt for questions on ' + (bare > FILL_AT_ONCE ? FILL_AT_ONCE + ' of your ' : 'your ') + plural(bare, 'topic') + ' without any</button>'
+      : '') + '</div>' +
     '<div id="ownReading" aria-live="polite"><p class="sub">Nothing to add yet. One topic to a line is enough.</p></div>' +
     '<p class="sub">A topic takes about ten days to grow from seed to tree, and you can plant ' + RULES.newSeedsPerDay + ' new ones a day. A topic with question cards is watered by multiple choice; one without is watered by explaining it in writing. Lines like “Hund = dog” become cards, and the prompt for an AI chat asks it for questions under every topic. If you write in the box what you want to learn first, the prompt takes that along.</p>' +
     '<div class="foot"><button type="button" data-act="' + (first ? 'close' : 'ownBack') + '" data-arg="' + esc(field.id) + '">' + (first ? 'Skip for now' : 'Back') + '</button>' +
@@ -177,26 +192,36 @@ export function addSheetHtml(field: Pick<OwnField, 'id' | 'title' | 'color'>, fi
 
 /** How much of what a learner wrote goes into the prompt. */
 const WANTS = 6000
+/** How many topics one prompt asks for questions on. A chat writes only so much in one answer. */
+export const FILL_AT_ONCE = 20
 
 /**
  * What to ask an AI chat for, so that its answer pastes straight in: a list of topics, each with a line on what to
  * read and questions with their wrong answers. The game itself never talks to one. `wants` is what the learner wrote
- * about what they are after, or have so far. Given a field's topics, it asks instead for questions on the ones that
- * have none.
+ * about what they are after, or have so far. Given a field's topics, it asks instead for questions on the first of
+ * them that have none.
  *
  * The shape is said in words ("Part:", "Topic:", "Read:") and not in marks: a chat's page turns "## heading" into a
- * plain line before it is copied, and the words come through.
+ * plain line before it is copied, and the words come through. The rules name the shapes weaker chats fall back on,
+ * and one finished topic is shown, because an example is what they copy best.
  */
 export function aiPrompt(subject: string, wants = '', have: readonly Pick<OwnSeed, 'name' | 'summary' | 'cards'>[] = []): string {
-  const bare = have.filter((s) => s.cards.length === 0)
-  const said = wants.trim().slice(0, WANTS).trim()
-  const plainly = 'Give only the list, as plain text: no introduction, no closing remarks, no table, no bold, no numbering.'
+  const bare = have.filter((s) => s.cards.length === 0).slice(0, FILL_AT_ONCE)
+  // What is too long to go whole is cut at the end of a line.
+  const all = wants.trim()
+  const cut = all.length > WANTS ? all.slice(0, WANTS) : all
+  const said = (all.length > WANTS && cut.includes('\n') ? cut.slice(0, cut.lastIndexOf('\n')) : cut).trim()
+  const plainly = 'Give only the list, as plain text: no introduction, no closing remarks, no table, no bold, no numbering. End on the last question line.'
   const question = 'A question about that topic? = the right answer | a wrong answer | another wrong answer | a third wrong answer'
   const rules = [
-    '- A question is one line that ends with a question mark. After it come " = ", the right answer, and three wrong answers with " | " between them.',
+    '- A question and all its answers are one line: the question, " = ", the right answer, then three wrong answers with " | " between them. No "A) B) C)" lines, no "Answer:" line, no "Q:".',
     '- Every answer is short: 8 words at most. The wrong answers must be believable: the same kind of thing as the right one, and about as long.',
     '- A question makes sense by itself, and tests understanding of the topic, not the wording of this list.',
-    '- Do not use "=" or "|" anywhere else.',
+    '- Do not use "=" or "|" anywhere else. Write an operator in words, such as "double bar" or "equals".',
+  ]
+  const example = [
+    'Which planet is closest to the Sun? = Mercury | Venus | Earth | Mars',
+    'Which planet is known as the red planet? = Mars | Venus | Jupiter | Mercury',
   ]
   if (bare.length > 0) {
     return [
@@ -206,12 +231,18 @@ export function aiPrompt(subject: string, wants = '', have: readonly Pick<OwnSee
       '',
       'Use exactly these line shapes:',
       '',
-      'Topic: the name of the topic, exactly as I wrote it',
+      'Topic: the name of the topic',
       question,
       '',
       'Rules:',
-      '- Under every topic, 4 to 6 question lines. Leave no topic out, and add none.',
+      '- Copy each of my "Topic:" lines exactly as I wrote it: no quotation marks, no bold, no number, no changed capitals or words. Leave no topic out, and add none.',
+      '- Under every topic, 4 to 6 question lines.',
       ...rules,
+      '',
+      'An example of one topic, to show the shape. Do not copy it:',
+      '',
+      'Topic: The inner planets',
+      ...example,
       '',
       'My topics:',
       ...bare.flatMap((s) => ['Topic: ' + s.name, ...(s.summary ? ['Read: ' + s.summary] : [])]),
@@ -227,14 +258,21 @@ export function aiPrompt(subject: string, wants = '', have: readonly Pick<OwnSee
     '',
     'Part: the name of a part of the subject',
     'Topic: the name of one topic in that part',
-    'Read: one line on what to read or practise for that topic',
+    'Read: one line on what to read for that topic',
     question,
     '',
     'Rules:',
-    '- 3 to 6 parts, in the order I should learn them, with 3 to 6 topics in each.',
-    '- A topic name is short: 6 words at most.',
-    '- Under every topic, one "Read:" line and then 4 to 6 question lines.',
+    '- If what I wrote above is already a list of topics, keep its parts and topics as they are. Otherwise make 3 to 6 parts, in the order I should learn them, with 3 to 6 topics in each.',
+    '- Write "Part:" and "Topic:" exactly so, with no number after them. A topic name is short: 6 words at most.',
+    '- Under every topic, one "Read:" line and then 4 to 6 question lines. Where a topic is something to do and not something to understand, write "Practise:" in place of "Read:".',
     ...rules,
+    '',
+    'An example of one topic, to show the shape. Do not copy it:',
+    '',
+    'Part: The solar system',
+    'Topic: The inner planets',
+    'Read: the four rocky planets and what sets each apart',
+    ...example,
   ].join('\n')
 }
 

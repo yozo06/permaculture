@@ -7,6 +7,7 @@ import { GROUND_UP, earnedLine } from '../engine/readiness'
 import { RULES } from '../engine/rules'
 import type { Layer } from '../engine/types'
 import { cropSprite, iconHtml } from './art/sprites'
+import { FILL_AT_ONCE } from './own'
 import { esc } from './util'
 import { timesOver } from './views'
 
@@ -93,8 +94,8 @@ export function almanacHtml(catalog: Catalog, energyMax: number, version: string
     list([
       'Open the learning tree and press <b>+ Your own</b>. Name what you want to learn, then paste whatever you have: a list of topics, a syllabus, a contents page, your notes, a word list or a file of flashcards. One topic to a line is enough. The game reads it into topics and shows you what it made of it before anything is added.',
       'Short pairs such as “Hund - dog” become <b>question cards</b>, up to ' + READING.cards + ' to a topic. A topic with cards is watered by answering them, as multiple choice; any other is watered by writing. A card may bring its own wrong answers (“question = right | wrong | wrong”); what it is short of is borrowed from the other cards of the field.',
-      'To have <b>every topic asked</b>, use <b>Copy a prompt for an AI chat</b> on the sheet where topics are added. It asks the chat for questions with wrong answers under every topic, and takes along what you wrote in the box. Paste the chat’s answer back. The game itself never talks to an AI. A field whose topics have no questions can get them the same way.',
-      'Each topic is one <b>kind</b> of thing: ' + KIND_ORDER.map((k) => KINDS[k].label.toLowerCase()).join(', ') + '. The game guesses it from the name, and you can change it from the learning tree. A skill is harvested by doing it and saying so; the others by cards or a write-up.',
+      'To have <b>every topic asked</b>, use <b>Copy a prompt for an AI chat</b> on the sheet where topics are added. It asks the chat for questions with wrong answers under every topic, and takes along what you wrote in the box. Paste the chat’s answer back. The game itself never talks to an AI. A field whose topics have no questions can get them the same way, ' + FILL_AT_ONCE + ' topics at a time.',
+      'Each topic is one <b>kind</b> of thing: ' + KIND_ORDER.map((k) => KINDS[k].label.toLowerCase()).join(', ') + '. The game guesses it from the name, and you can change it from the learning tree. A topic with cards is harvested by its cards, whatever its kind. Without cards, a skill is harvested by doing it and saying so, and the others by a write-up.',
       'A field of your own has no end: no readiness, no bar, nothing that waits for anything else. It holds ' + OWN_TODAY.seeds + ' topics. Fencing land in for it costs ' + RULES.fence.own + ' coins a tile. A topic that was never planted can be removed; one in the ground can be changed, and stays.',
       'Your topics are part of your farm, so Export carries them. They are not shown in a farm link.',
     ]) +

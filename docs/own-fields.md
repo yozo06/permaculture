@@ -18,9 +18,10 @@ Anything with one topic to a line works. The reader also understands the shapes 
 | Short pairs: "Hund - dog", "Brot = bread" | Question cards, up to eight to a topic. |
 | A file of flashcards from Anki or Quizlet, a spreadsheet saved as CSV, a Markdown table | Question cards. The first two columns are the question and the answer. |
 | "Q: ..." with "A: ..." under it, or "What is the capital of France? Paris" | Question cards. |
-| "Which species has more caffeine? = Robusta \| Arabica \| Liberica \| Excelsa" | A question card with its own wrong answers: what follows the answer, each after an upright bar. Three are kept. |
-| "Part: ...", "Topic: ...", and under a topic "Read: ..." and question lines | A topic for each "Topic:", grouped by its "Part:", with the "Read:" line as what to read and the questions as its cards. |
-| A heading with a sentence under it and then cards | One topic, with the sentence as what to read and the cards as its questions. |
+| "Which species has more caffeine? = Robusta \| Arabica \| Liberica \| Excelsa" | A question card with its own wrong answers: what follows the answer, each after an upright bar with a space on either side. There must be two at least, and three are kept. |
+| A question with "A) ...", "B) ...", "C) ..." on the lines under it and then "Answer: B" | A question card, with the other options as its wrong answers. Options with no line to say which is right are left out, and the sheet says so. |
+| "Part: ...", "Topic: ...", and under a topic "Read: ..." and question lines | A topic for each "Topic:", grouped by its "Part:", with the "Read:" line as what to read and the questions as its cards. A number after the word ("Topic 2:") makes no difference. "Practise: ..." in place of "Read: ..." marks the topic as a skill. |
+| A heading with running text under it (a full sentence or more, or a line that begins "Read:") and then cards | One topic, with that text as what to read and the cards as its questions. |
 | What an AI chat wrote for you | The same as any of the above. The usual opening and closing lines ("Here is...", "Let me know...") are dropped, and a list handed over in a block of code is read as the list. The game itself never talks to one. |
 
 ### Questions from an AI chat
@@ -31,7 +32,7 @@ A topic with question cards is watered by multiple choice. A topic with none is 
 2. Press **Copy a prompt for an AI chat** and paste the prompt into any chat. It asks for a list of parts and topics, and under every topic a line on what to read and four to six questions, each with its right answer and three wrong ones.
 3. Paste the chat's answer into the box. The sheet shows what the game made of it, and says so if any topic came without questions.
 
-A field that already has topics with nothing to ask can get them questions the same way: the add sheet then has a second button, **Copy a prompt for questions on your topics without any**. Paste the chat's answer, and each of those topics takes its questions and keeps everything else, whether it is planted or not.
+A field that already has topics with nothing to ask can get them questions the same way: the add sheet then has a second button, **Copy a prompt for questions on your topics without any**. Paste the chat's answer, and each of those topics takes its questions and keeps everything else, whether it is planted or not. One prompt asks about twenty topics, because a chat writes only so much in one answer; a field with more is done in rounds. A chat seldom writes a name back exactly, so a topic is known by its name whatever the capitals, quotation marks or numbering.
 
 The prompt asks for the list in words ("Part:", "Topic:", "Read:") and not in Markdown marks, because a chat's page turns "## heading" into a plain line before you copy it.
 

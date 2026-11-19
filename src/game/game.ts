@@ -1576,7 +1576,7 @@ function saveTopic(seedId: string): void {
   const fieldId = fieldOfSeed(seedId)
   const was = (Object.hasOwn(S.own, fieldId) ? S.own[fieldId] : undefined)?.seeds.find((x) => x.id === seedId)
   const { cards, unread } = cardsFromText(byIdAs('tCards', HTMLTextAreaElement).value, was?.cards ?? [])
-  if (unread > 0) return toast(unread + (unread === 1 ? ' line of the cards has' : ' lines of the cards have') + ' no “ = ” in it. Write each as question = answer.')
+  if (unread > 0) return toast(unread + (unread === 1 ? ' line of the cards is' : ' lines of the cards are') + ' not a question and an answer. Write each as question = answer.')
   // The farm reads the kind like anything else it is handed, and refuses one it does not know.
   const kind = byIdAs('tKind', HTMLSelectElement).value as never
   const field = fieldId

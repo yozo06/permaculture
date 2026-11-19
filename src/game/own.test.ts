@@ -7,7 +7,7 @@ import { OWN_TODAY, catalogFor, isOwnFieldId, isOwnSeedId, type OwnField, type O
 import { read } from '../reader'
 import type { FarmEvent, FarmState } from '../engine/types'
 import {
-  OWN_COLORS, addSheetHtml, aiPrompt, cardsFromText, cardsText, explainAsk, fieldSheetHtml, harvestTag, layerText, nameFieldSheetHtml, newFieldId, newSeedId, pickColor, readingHtml,
+  FILL_AT_ONCE, OWN_COLORS, addSheetHtml, aiPrompt, cardsFromText, cardsText, explainAsk, fieldSheetHtml, harvestTag, layerText, nameFieldSheetHtml, newFieldId, newSeedId, pickColor, readingHtml,
   toAdd, topicSheetHtml,
 } from './own'
 
@@ -299,7 +299,7 @@ describe('the prompt for an AI chat', () => {
     // One part alone stands over everything, as a title does. Two or more are the groups of their topics.
     expect(d.title).toBe('the name of a part of the subject')
     expect(d.topics[0]?.name).toBe('the name of one topic in that part')
-    expect(d.topics[0]?.summary).toBe('one line on what to read or practise for that topic')
+    expect(d.topics[0]?.summary).toBe('one line on what to read for that topic')
     expect(d.topics[0]?.cards).toHaveLength(1)
     expect(d.topics[0]?.cards[0]?.wrong).toHaveLength(3)
     expect(d.topics[0]?.cards[0]?.q.endsWith('?')).toBe(true)
@@ -328,12 +328,31 @@ describe('the prompt for an AI chat', () => {
     expect(pack?.seeds[2]?.questions?.water?.[0]?.distractors).toEqual(['Butter', 'Cheese', 'Milk'])
   })
 
+  it('shows the chat one finished topic, which the reader reads as it reads the answer', () => {
+    const p = aiPrompt('German A1')
+    const example = p.slice(p.indexOf('Do not copy it'))
+    const d = read(example.split('\n').slice(1).join('\n'))
+    expect(d.topics).toHaveLength(1)
+    expect(d.topics[0]?.cards.length).toBeGreaterThanOrEqual(2)
+    expect(d.topics[0]?.cards.every((c) => c.wrong?.length === 3)).toBe(true)
+    expect(d.notes).toEqual([])
+    // And it tells the chat off the shapes that weaker ones fall back on.
+    expect(p).toMatch(/no number after/)
+    expect(p).toMatch(/one line/)
+    expect(p).toMatch(/End on the last question line/)
+  })
+
   it('hands the chat what the learner wrote in the box, cut to what a chat will read', () => {
     const p = aiPrompt('Coffee', '  I trade physical coffee and want to understand futures.  ')
     expect(p).toContain('I trade physical coffee and want to understand futures.')
     expect(p.indexOf('I trade')).toBeLessThan(p.indexOf('line shapes'))
     expect(aiPrompt('Coffee', '   ')).toBe(aiPrompt('Coffee'))
     expect(aiPrompt('Coffee', 'x'.repeat(9000)).length).toBeLessThan(aiPrompt('Coffee').length + 6200)
+    // A list too long to go whole is cut at the end of a line, not through a topic.
+    const lines = Array.from({ length: 400 }, (_, i) => 'Topic number ' + i + ' of my own list')
+    const carried = aiPrompt('Coffee', lines.join('\n'))
+    const last = carried.slice(0, carried.indexOf('\n\nWrite me')).split('\n').pop()
+    expect(lines).toContain(last)
     // A list of forty topics with a line each fits whole.
     expect(aiPrompt('Coffee', readFileSync('src/reader/pastes/coffee-chat.txt', 'utf8'))).toContain('Broker and market access')
   })
@@ -348,6 +367,12 @@ describe('the prompt for an AI chat', () => {
     expect(p).not.toContain('Part:')
     // With no topic that lacks questions, it is the prompt for a new list.
     expect(aiPrompt('Coffee', '', [have[1] as OwnSeed])).toBe(aiPrompt('Coffee'))
+    // A chat writes only so much at once: twenty topics to a prompt, the first twenty that have no questions.
+    const many = Array.from({ length: 45 }, (_, i) => seed('n' + String(i).padStart(5, '0'), { name: 'Bare topic ' + i }))
+    const first = aiPrompt('Coffee', '', many)
+    expect((first.match(/^Topic: Bare topic /gm) ?? []).length).toBe(FILL_AT_ONCE)
+    expect(first).toContain('Topic: Bare topic 19')
+    expect(first).not.toContain('Topic: Bare topic 20')
   })
 })
 
@@ -359,12 +384,36 @@ describe('questions for topics that are there already', () => {
     const a = toAdd(read(answer), have, counting())
     expect(a.filled.map((s) => [s.id, s.name, s.kind, s.group, s.summary, s.cards.length])).toEqual([
       [F + '_aaaaaa', 'Basis risk', 'skill', 'Hedging', 'practise examples', 1],
-      [F + '_bbbbbb', 'Weather risk', 'idea', '', 'frost and drought', 1],
+      [F + '_bbbbbb', 'Weather risk', 'idea', '', '', 1],
     ])
     expect(a.filled[0]?.cards[0]).toEqual({ q: 'What is basis?', a: 'Cash minus futures', wrong: ['Futures minus cash', 'A fee', 'A grade'] })
     // A topic that has cards keeps them, and a new topic is new.
     expect(a.already).toBe(1)
     expect(a.seeds.map((s) => s.name)).toEqual(['New one'])
+  })
+
+  it('knows a topic by its name however the chat wrote it back', () => {
+    const mine = field([seed('aaaaaa', { name: 'Knife skills: dicing & slicing' }), seed('bbbbbb', { name: 'Roasting vs. baking' }), seed('cccccc', { name: 'HEAT CONTROL' }), seed('dddddd', { name: 'Stocks' })])
+    const back = 'Topic: 1. Knife Skills - Dicing & Slicing\nWhat is a dice? = Small even cubes | Thin strips | A rough chop | A fine paste\nTopic: "Roasting vs baking"\nWhich uses dry heat? = Both | Neither | Only roasting | Only baking\nTopic: Heat control.\nWhat does simmer mean? = Just below boiling | A rolling boil | No heat | Deep frying\nTopic: **Stocks**\nWhat is stock made from? = Bones | Flour | Cream | Sugar'
+    const a = toAdd(read(back), mine, counting())
+    expect(a.filled.map((s) => s.name)).toEqual(['Knife skills: dicing & slicing', 'Roasting vs. baking', 'HEAT CONTROL', 'Stocks'])
+    expect(a.seeds).toEqual([])
+  })
+
+  it('gives the questions to the one of two topics of a name that has none', () => {
+    const twins = field([seed('aaaaaa', { name: 'Stocks' }), seed('bbbbbb', { name: 'Stocks', cards: [{ q: 'a', a: 'b' }] })])
+    expect(toAdd(read('Topic: Stocks\nWhat is stock made from? = Bones | Flour | Cream | Sugar'), twins, counting()).filled.map((s) => s.id)).toEqual([F + '_aaaaaa'])
+    const other = field([seed('bbbbbb', { name: 'Stocks', cards: [{ q: 'a', a: 'b' }] }), seed('aaaaaa', { name: 'Stocks' })])
+    expect(toAdd(read('Topic: Stocks\nWhat is stock made from? = Bones | Flour | Cream | Sugar'), other, counting()).filled.map((s) => s.id)).toEqual([F + '_aaaaaa'])
+  })
+
+  it('gives a topic the questions of every set the reader made of them, as many as a topic holds', () => {
+    const lots = 'Topic: Weather risk\n' + Array.from({ length: 13 }, (_, i) => 'Question ' + i + '? = right ' + i + ' | wrong a | wrong b | wrong c').join('\n')
+    const d = read(lots, { limits: { cards: 8 } })
+    expect(d.topics.map((t) => t.name)).toEqual(['Weather risk (1)', 'Weather risk (2)'])
+    const a = toAdd(d, have, counting())
+    expect(a.filled.map((s) => [s.name, s.cards.length])).toEqual([['Weather risk', 10]])
+    expect(a.seeds).toEqual([])
   })
 
   it('says so on the sheet, and the farm takes them', () => {
@@ -406,6 +455,8 @@ describe('topics with nothing to ask', () => {
 
   it('offers on the add sheet a prompt for questions when the field has topics without any', () => {
     expect(addSheetHtml({ id: F, title: 'German', color: '#4DB6A4' }, false, 3)).toContain('data-act="ownPromptFill"')
+    expect(addSheetHtml({ id: F, title: 'German', color: '#4DB6A4' }, false, 3)).toContain('questions on your 3 topics without any')
+    expect(addSheetHtml({ id: F, title: 'German', color: '#4DB6A4' }, false, 45)).toContain('questions on ' + FILL_AT_ONCE + ' of your 45 topics without any')
     expect(addSheetHtml({ id: F, title: 'German', color: '#4DB6A4' }, false, 0)).not.toContain('ownPromptFill')
     expect(addSheetHtml({ id: F, title: 'German', color: '#4DB6A4' }, true)).not.toContain('ownPromptFill')
   })
