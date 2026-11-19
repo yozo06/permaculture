@@ -73,13 +73,13 @@ and the two notes, said in English, are "Left out, as not something to learn: To
 | `topics[].cards` | Question cards, each a `q` and an `a`. Short pairs, a table, or a question with its answer. |
 | `notes` | What was shortened or left out. See below. |
 | `pairs` | How many lines came in two parts. Where there are some, they can be read two ways. |
-| `pairsAs` | How most of them were read: `cards` or `topics`. |
+| `pairsAs` | How most of them were read, `cards` or `topics`; or what `pairs` asked for, when it was set. |
 
 ## Settings
 
 All three are optional.
 
-**`pairs`** is `'cards'` or `'topics'`. A line in two parts ("Hund - dog", "Recursion - a function that calls itself") is either a card or a topic with a line about it, and no rule can always tell which. Left alone, the reader decides heading by heading. Set, it reads every such line the one way. Show a person the draft and let them choose.
+**`pairs`** is `'cards'` or `'topics'`. A line in two parts ("Hund - dog", "Recursion - a function that calls itself") is either a card or a topic with a line about it, and no rule can always tell which. Left alone, the reader decides heading by heading. Set, it reads every such line the one way, except that a pair with a side too long for a card stays a topic. Anything else is taken as not set. Show a person the draft and let them choose.
 
 **`limits`** is how much each part may hold. Give only the ones you want changed; `LIMITS` holds the reader's own.
 
@@ -94,9 +94,9 @@ All three are optional.
 | `cards` | 8 | 1 to 1000 | Cards in one topic. Sixty words are eight topics, not sixty. |
 | `lines` | 2000 | 1 to 20000 | Lines read. |
 | `line` | 400 | 20 to 400 | Characters read of each line. |
-| `notes` | 12 | 0 to 1000 | Notes handed back. The rest are counted in one more. |
+| `notes` | 12 | 0 to 1000 | Notes handed back before the rest are counted in one more. A single note over is handed back as it is. |
 
-A limit that is not a number is ignored. One outside its range is brought to the nearest end of it. No more of a line is read than 400 characters, because the rules were timed on lines up to that length.
+A limit that is not a number, or is not finite, is ignored. One outside its range is brought to the nearest end of it, and a fraction is rounded down. No more of a line is read than 400 characters, because the rules were timed on lines up to that length.
 
 **`words`** is the words of the language the text is in. See "Another language".
 
@@ -137,19 +137,19 @@ read(text, { words: SPANISH })
 - a word is written as it is found, in small letters. Capitals in the text are found too (except for `kinds.versus`, which is found only in the letters written, so that "VS Code" is not "a vs b");
 - a space stands for any run of spaces, and either apostrophe stands for both;
 - nothing in a word is a pattern. `c++` is three characters;
-- a word is found whole. `regla` is not found in "Reglamento".
+- a word is found whole. `regla` is not found in "Reglamento", nor `total` in "total_budget". A letter, a mark written on a letter, a digit and an underscore all join a word to what is next to it.
 
-A list may be empty. With no words at all the reader still reads every shape; it only stops knowing a label from a name and a total from a topic. The words the reader writes itself ("Page 12.", "3 cards: ...") are in the same lists, under `writes`.
+A list may be empty. With no words at all the reader still reads bullets, numbering, headings, tables and lines in two parts. What it loses is everything a word tells it: a label from a name, a total from a topic, a question from its answer ("Q:", "A:"), a counter or a row of column names from a card, the chatter round a list from the list, and every kind but `idea`. The words the reader writes itself ("Page 12.", "3 cards: ...") are in the same lists, under `writes`; one left empty is not written.
 
-A set of words is made ready the first time it is read with and kept, so do not change one afterwards. Make another.
+A set of words is made ready the first time it is read with and kept, so do not change one afterwards. Make another. Words that cannot be made ready at all, such as a single word tens of thousands of characters long, are set aside, and the text is read by English.
 
 ## What it promises
 
 - **The same text always reads the same way.** Nothing is guessed by chance.
-- **It never throws**, whatever it is given to read and whatever it is given for settings.
-- **It says what it leaves out.** A line that could have been a topic or a card and was not kept has a note. What goes without one is dress: ruled lines, tags, the lines a flashcard program writes at the top of its file, a row that names the columns, a counter such as "Card 3", the hours in brackets after a heading, and the chatter before and after a list ("Here is your plan", "Thanks!").
+- **It never throws**, whatever it is given to read and whatever it is given for settings. What is not text is read as the text it would be written as, and a setting that cannot be read is the reader's own.
+- **It says what it leaves out.** A line that could have been a topic or a card and was not kept has a note. What goes without one is dress: ruled lines, tags, the lines a flashcard program writes at the top of its file, a row that names the columns, a counter such as "Card 3", the hours in brackets after a heading, a stray row of backticks, running text under a card, and the chatter before and after a list ("Here is your plan", "Thanks!").
 - **It cannot hold a page up.** It reads only so many lines and only so far along each, and the time it takes grows in step with the number of lines.
-- **The characters in `HIDDEN` never come out of it**: zero-width spaces, soft hyphens, control characters and the ones that turn text round. The joiners that Indic scripts and emoji are written with are kept.
+- **The characters in `HIDDEN` never come out of it**: zero-width spaces, soft hyphens, control characters and the ones that turn text round. The joiners that Indic scripts and emoji are written with are kept inside a line; one at the very start or end of a line goes with the pictures there.
 - **It leans on nothing.** No package, no browser, no clock.
 
 ## What it does not do well
@@ -160,7 +160,7 @@ Each of these is a paste that can honestly be read two ways. The draft shows the
 - A first line of one or two words over plain lines is read as a topic, not as the title.
 - A plain block that begins with a heading nothing marks ("Advanced", then its lines) is read as topics throughout.
 - "## 2.5 litres of water" loses "2.5", as "## 2.1 Language" should.
-- A word list with long meanings is read as topics with a note. `pairs: 'cards'` turns it into cards.
+- A word list with long meanings is read as topics, each with its meaning as the line on what to read. `pairs: 'cards'` turns it into cards, as far as each side fits one.
 - The kind guessed from a name is rough.
 
 ## Where things are

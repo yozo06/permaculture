@@ -31,7 +31,7 @@ export const ENGLISH: Words = frozen({
     over: ['reference', 'references', 'resources'],
     pages: ['page', 'pg', 'pg.', 'p.'],
     totals: ['total', 'subtotal'],
-    roughly: ['about', 'around', 'approx'],
+    roughly: ['about', 'around', 'approx', 'approx.', 'approximately', 'roughly', 'nearly', 'almost', 'circa'],
   },
   units: ['hr', 'hrs', 'hour', 'hours', 'credit', 'credits', 'mark', 'marks', 'period', 'periods', 'lecture', 'lectures', 'min', 'mins', 'minute', 'minutes', 'week', 'weeks', '%'],
   page: {
@@ -61,7 +61,7 @@ export const ENGLISH: Words = frozen({
   },
   asking: {
     leads: ['ok so', 'okay so', 'also', 'and also'],
-    wants: ['i want to', 'i wanna', 'i would like to', 'i need to', "i'd like to"],
+    wants: ['i want to', 'i wanna', 'i wanna to', 'i would like to', 'i need to', "i'd like to"],
     verbs: ['learn', 'know', 'study', 'understand'],
     whole: ['teach me', 'help me with', 'help me learn'],
     more: ['more'],

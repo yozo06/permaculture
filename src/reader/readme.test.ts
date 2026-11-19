@@ -44,4 +44,15 @@ describe('src/reader/README.md', () => {
   it('names every file in the folder', () => {
     for (const file of readdirSync('src/reader')) if (file !== 'README.md' && file !== 'tsconfig.json') expect(page, file).toContain('`' + file + '`')
   })
+
+  it('describes a folder that leans on nothing outside it, and that the game enters by one door', () => {
+    const files = (dir: string): string[] => readdirSync(dir, { withFileTypes: true }).flatMap((f) => (f.isDirectory() ? files(dir + '/' + f.name) : f.name.endsWith('.ts') ? [dir + '/' + f.name] : []))
+    const imports = (file: string): string[] => [...readFileSync(file, 'utf8').matchAll(/\bfrom '([^']+)'/g)].map((m) => m[1] ?? '')
+    for (const file of files('src/reader')) {
+      for (const from of imports(file)) expect(/^\.\/[\w.-]+\.ts$/.test(from) || (file.endsWith('.test.ts') && /^(node:fs|vitest|fast-check)$/.test(from)), file + ' imports ' + from).toBe(true)
+    }
+    for (const file of files('src').filter((f) => !f.startsWith('src/reader/'))) {
+      for (const from of imports(file)) if (from.includes('reader')) expect(/^(\.\.\/)+reader$/.test(from), file + ' imports ' + from).toBe(true)
+    }
+  })
 })

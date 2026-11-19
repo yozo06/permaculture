@@ -118,7 +118,8 @@ export const LIMITS: Readonly<Limits> = Object.freeze({ title: 60, name: 48, sum
 /**
  * The least and the most each limit can be set to. A name needs room for an ellipsis and a number after it. No more
  * of a line is read than the reader's own limit: its rules were timed on lines up to that length, and a few of them
- * slow down on longer ones. The time a text takes grows in step with `lines`.
+ * slow down on longer ones. The time a text takes grows in step with `lines`; read.test.ts times the shapes that
+ * once did not.
  */
 export const BOUNDS: Readonly<Record<keyof Limits, readonly [number, number]>> = {
   title: [12, 400], name: [12, 400], summary: [12, 10000], group: [12, 400], q: [1, 400], a: [1, 400], cards: [1, 1000], lines: [1, 20000], line: [20, 400], notes: [0, 1000],
@@ -215,6 +216,17 @@ function unpictured(s: string): string {
 }
 /** Every way a text file ends a line. */
 const LINE_END = new RegExp('\\r\\n?|[\\u2028\\u2029]', 'g')
+/** Text as the reader reads it: lines ended one way, plain spaces, colons and equals signs, and nothing that cannot be seen. */
+const normal = (s: string): string => s.normalize('NFC').replace(LINE_END, '\n').replace(SPACES, ' ').replace(WIDE_COLON, ': ').replace(WIDE_EQUALS, ' = ').replace(UNSEEN, '')
+/** The first `max` characters of a line, and never half of one that takes two. */
+function cut(s: string, max: number): string {
+  const last = s.charCodeAt(max - 1)
+  return s.slice(0, last >= 0xd800 && last <= 0xdbff ? max - 1 : max)
+}
+/** What a thing gives, or `otherwise` if asking for it throws. */
+function attempt<T>(ask: () => T, otherwise: T): T {
+  try { return ask() } catch { return otherwise }
+}
 
 const words = (s: string): number => (s.trim() ? s.trim().split(/\s+/).length : 0)
 
@@ -555,7 +567,11 @@ function tokens(input: string[], p: Patterns, note: (n: Note, key?: string) => v
         // Dots leading to a page number, a page number set far to the right, "pg 12", "(see page 212)".
         rest = unpaged(rest)
         const page = p.pageRef.exec(rest)
-        if (page && !/[-–—:=]\s*$/.test(rest.slice(0, page.index)) && page.index > 0) { rest = rest.slice(0, page.index); tok.aside.push(fill(p.writes.page, { n: (page[1] ?? '').replace(/\s+/g, '') })) }
+        if (page && !/[-–—:=]\s*$/.test(rest.slice(0, page.index)) && page.index > 0) {
+          rest = rest.slice(0, page.index)
+          const said = fill(p.writes.page, { n: (page[1] ?? '').replace(/\s+/g, '') })
+          if (said) tok.aside.push(said)
+        }
         rest = rest.replace(p.asking, '')
         tok.bold = !tok.bulleted && /^(\*\*|__)[^*_].*\1:?$/.test(rest) && !/^(\*\*|__).+?\1.+(\*\*|__)/.test(rest.replace(/:$/, ''))
         if (!p.label.test(plain(rest))) tok.pair = splitPair(rest, p)
@@ -681,14 +697,22 @@ function fronts(cards: Card[], lim: Limits): string {
 
 /** Read a learner's own text into topics. Never throws. */
 export function read(input: string, opts: ReadOptions = {}): Draft {
-  const lim = limitsOf(opts.limits)
-  const p = compile(typeof opts.words === 'object' && opts.words !== null ? opts.words : ENGLISH)
+  // Settings that cannot be read are the reader's own, one by one: it reads whatever it is handed.
+  const lim = attempt(() => limitsOf(opts.limits), { ...LIMITS })
+  const told = attempt(() => opts.pairs, undefined)
+  const pairsAs = told === 'cards' || told === 'topics' ? told : undefined
+  const made = attempt(() => (typeof opts.words === 'object' && opts.words !== null ? compile(opts.words) : null), null) ?? compile(ENGLISH)
+  // The few words the reader writes are text like any other: one line each, with nothing in them that cannot be seen.
+  const tidied = (line: string): string => normal(line).replace(/\s+/g, ' ').trim()
+  const p: Patterns = { ...made, writes: { page: tidied(made.writes.page), partOf: tidied(made.writes.partOf), card: tidied(made.writes.card), cards: tidied(made.writes.cards), cardsName: tidied(made.writes.cardsName) } }
   const notes: Note[] = []
   const said = new Set<string>()
   /** No two notes alike: one of a kind, or one for each name where a note names one. */
   const note = (n: Note, key: string = n.code): void => { if (!said.has(key)) { said.add(key); notes.push(n) } }
 
-  let lines = String(input).normalize('NFC').replace(LINE_END, '\n').replace(SPACES, ' ').replace(WIDE_COLON, ': ').replace(WIDE_EQUALS, ' = ').replace(UNSEEN, '').split('\n')
+  let lines = normal(attempt(() => (input === null || input === undefined ? '' : String(input)), '')).split('\n')
+  // The end of the last line is not a line more.
+  while (lines.length > 1 && (lines[lines.length - 1] ?? '').trim() === '') lines.pop()
   if (lines.length > lim.lines) {
     note({ code: 'lines-cut', kept: lim.lines, of: lines.length })
     lines = lines.slice(0, lim.lines)
@@ -697,7 +721,7 @@ export function read(input: string, opts: ReadOptions = {}): Draft {
   const long = lines.filter((l) => l.length > lim.line).length
   if (long > 0) {
     note({ code: 'long-lines-cut', count: long, kept: lim.line })
-    lines = lines.map((l) => (l.length > lim.line ? l.slice(0, lim.line) : l))
+    lines = lines.map((l) => (l.length > lim.line ? cut(l, lim.line) : l))
   }
   const toks = tokens(lines, p, note)
   levels(toks, p)
@@ -736,7 +760,7 @@ export function read(input: string, opts: ReadOptions = {}): Draft {
    * it keeps its topics and gets its cards. Told how to read them, the reader does as it is told everywhere.
    */
   const cardsUnder = (ns: Node[]): boolean => {
-    if (opts.pairs) return opts.pairs === 'cards'
+    if (pairsAs) return pairsAs === 'cards'
     const mine = ns.filter((n) => n.children.length === 0)
     const paired = mine.filter((n) => n.tok.pair)
     const fitting = paired.filter((n) => n.tok.pair && fitsCard(n.tok.pair, lim))
@@ -747,18 +771,22 @@ export function read(input: string, opts: ReadOptions = {}): Draft {
 
   const topics: DraftTopic[] = []
   const taken = new Set<string>()
+  const tried = new Map<string, number>()
   const add = (t: DraftTopic, spare: boolean): void => {
     let name = t.name
     // A name has a letter or a number in it. A set of cards whose questions are all signs is still a set of cards.
     if (!worded(name) && !/^https?:/i.test(name)) {
       if (!spare) return note({ code: 'wordless-name-left-out' })
-      name = p.writes.cardsName || '1'
+      name = fit(p.writes.cardsName, lim.name) || '1'
     }
     if (taken.has(name.toLowerCase())) {
       // A set of cards is kept under a name of its own; a topic that is there twice is left out.
       if (!spare) return note({ code: 'twice-left-out', text: name }, 'twice:' + name.toLowerCase())
+      // The first number not yet taken. Where the last set of this name stopped looking, this one starts.
       const base = name
-      for (let i = 2; taken.has(name.toLowerCase()); i++) name = fit(base, lim.name - (' (' + i + ')').length) + ' (' + i + ')'
+      let i = tried.get(base.toLowerCase()) ?? 2
+      for (; taken.has(name.toLowerCase()); i++) name = fit(base, lim.name - (' (' + i + ')').length) + ' (' + i + ')'
+      tried.set(base.toLowerCase(), i)
     }
     taken.add(name.toLowerCase())
     topics.push({ ...t, name })
@@ -769,7 +797,7 @@ export function read(input: string, opts: ReadOptions = {}): Draft {
     if (parent && parent.tok.body.length) bodies++
     const here = cardsUnder(ns)
     // What can only be a card (a question and its answer, a table) is one, unless the reader was told otherwise.
-    const isCard = (n: Node): boolean => n.tok.pair !== null && fitsCard(n.tok.pair, lim) && (here || (opts.pairs === undefined && n.tok.pair.strong))
+    const isCard = (n: Node): boolean => n.tok.pair !== null && fitsCard(n.tok.pair, lim) && (here || (pairsAs === undefined && n.tok.pair.strong))
     const cards = ns.filter((n) => n.children.length === 0 && isCard(n))
     asCards += cards.length
     let cardsDone = false
@@ -818,5 +846,5 @@ export function read(input: string, opts: ReadOptions = {}): Draft {
   if (bodies > 0) note({ code: 'text-left-out', count: bodies })
 
   const shown: Note[] = notes.length > lim.notes + 1 ? [...notes.slice(0, lim.notes), { code: 'more-notes', count: notes.length - lim.notes }] : notes
-  return { title, topics, notes: shown, pairs, pairsAs: opts.pairs ?? (pairs > 0 && 2 * asCards >= pairs ? 'cards' : 'topics') }
+  return { title, topics, notes: shown, pairs, pairsAs: pairsAs ?? (pairs > 0 && 2 * asCards >= pairs ? 'cards' : 'topics') }
 }

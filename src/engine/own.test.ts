@@ -375,6 +375,11 @@ describe('what the farm asks of the reader', () => {
     for (const key of ['title', 'name', 'summary', 'group', 'q', 'a', 'cards'] as const) expect(READING[key], key).toBeLessThanOrEqual(TEXT[key])
   })
 
+  it('asks for all the room a farm has, and for eight cards to a topic', () => {
+    expect(READING).toEqual({ title: 60, name: 48, summary: 300, group: 60, q: 160, a: 120, cards: 8 })
+    expect({ ...READING, cards: TEXT.cards }).toEqual(TEXT)
+  })
+
   it('takes every topic the reader makes by the limits the farm hands it', () => {
     const piece = fc.constantFrom('#', '##', '-', '1.', ' ', '\t', '\n', '\n\n', ' - ', ': ', ' = ', '|', '**', 'Q:', 'A:', '?', ',', 'Week 1', 'long '.repeat(30), 'x'.repeat(70), 'alpha', 'beta', 'gamma')
     const junk = fc.array(fc.oneof(piece, fc.string({ maxLength: 12 })), { maxLength: 60 }).map((a) => a.join(''))

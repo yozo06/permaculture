@@ -126,6 +126,11 @@ describe('the reading, as the sheet shows it', () => {
     const html = readingHtml(d, toAdd(d, field([seed('aaaaaa')]), counting()))
     expect(html).toContain('there twice')
     expect(html).toContain('1 is in the field already')
+    // What a note says of a paste is the learner's own text: it goes on the page as text.
+    const evil = read('Rock <img src=x onerror=alert(1);//\nrock <img src=x onerror=alert(1);//')
+    const shown = readingHtml(evil, toAdd(evil, field(), counting()))
+    expect(shown).toContain('there twice')
+    expect(shown).not.toContain('<img')
     const full = field(Array.from({ length: OWN_TODAY.seeds }, (_, i) => seed('n' + String(i).padStart(5, '0'))))
     expect(readingHtml(read('One'), toAdd(read('One'), full, counting()))).toContain('holds ' + OWN_TODAY.seeds)
   })

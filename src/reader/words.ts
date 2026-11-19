@@ -22,9 +22,9 @@ export interface Words {
   }
   /** Lines that are about the course and not in it. */
   course: {
-    /** Before a colon or a dash: "Note: bring a calculator". */
+    /** Before a colon: "Note: bring a calculator". After a dash it is a word to learn: "note - nota". */
     labels: readonly string[]
-    /** As a label or as a heading: "Recommended reading". Not words a subject may well have a part named after. */
+    /** Before a colon, or as a line of its own: "Recommended reading". Not words a subject may well have a part named after. */
     headings: readonly string[]
     /** Only when set off by a colon ("Assessment: 40 marks"): as a heading, any of these may be a part of the subject. */
     afterColon: readonly string[]
@@ -143,10 +143,15 @@ export interface Patterns {
   writes: Words['writes']
 }
 
-/** After a word: no letter or number of any script follows. */
-const BOUND = '(?![\\p{L}\\p{N}])'
-/** Before a word: the start of the text, or something that is no letter or number. */
-const EDGE = '(?:^|[^\\p{L}\\p{N}])'
+/**
+ * What a word is joined by, in any script: a letter, a mark written on one, a digit, or the underscore of a name out
+ * of a program. A sign that only counts, such as a circled number, joins nothing.
+ */
+const JOINS = '\\p{L}\\p{M}\\p{Nd}_'
+/** After a word: nothing follows that it could be joined to. */
+const BOUND = '(?![' + JOINS + '])'
+/** Before a word: the start of the text, or something it could not be joined to. */
+const EDGE = '(?:^|[^' + JOINS + '])'
 
 /** The words in a list. Whatever else it holds, and whatever is no list at all, counts for nothing. */
 const strings = (list: unknown): string[] => (Array.isArray(list) ? list.filter((w): w is string => typeof w === 'string') : [])
@@ -170,8 +175,10 @@ const made = new WeakMap<Words, Patterns>()
 
 /**
  * What the reader looks for in a text, for one language's words. It is made once for each `Words` and kept, so a
- * `Words` that has been read with is not to be changed afterwards: make another. It never throws: a list that is
- * missing or is no list finds nothing, and a line the reader writes that is missing is not written.
+ * `Words` that has been read with is not to be changed afterwards: make another. A list that is missing or is no
+ * list finds nothing, and a line the reader writes that is missing is not written. It throws only for words that
+ * cannot be looked for at all, such as a single word of tens of thousands of characters; the reader then reads by
+ * English.
  */
 export function compile(words: Words): Patterns {
   const kept = made.get(words)
@@ -194,7 +201,7 @@ export function compile(words: Words): Patterns {
     courseOver: whole(course.over),
     coursePage: re('^' + any(course.pages) + '\\s*\\d+$'),
     total: re('^' + totals + BOUND),
-    rough: re('^(?:\\d|~|≈|' + any(course.roughly) + ')'),
+    rough: re('^(?:\\d|~|≈|' + any(course.roughly) + BOUND + ')'),
     totalLine: re('^' + totals + BOUND + '.*\\d'),
     hours: re('\\s*[[(]\\s*\\d+(?:\\.\\d+)?\\s*' + any(all.units) + '\\s*[\\])]\\s*$'),
     pageRef: re('[\\s,(]+(?:' + any(page.see) + '\\s+)?' + any(page.refs) + '\\s*(\\d+(?:\\s*[-–]\\s*\\d+)?)\\)?\\s*$'),
@@ -214,6 +221,9 @@ export function compile(words: Words): Patterns {
     ands: re('\\s*[,;]\\s*|\\s+' + any(all.ands) + '\\s+'),
     writes: { page: written('page'), partOf: written('partOf'), card: written('card'), cards: written('cards'), cardsName: written('cardsName') },
   }
+  // Each is tried once, on plain and on other letters, so that words too many or too long to look for fail here,
+  // where the reader can fall back on its own, and not in the middle of a text.
+  for (const pattern of Object.values(patterns)) if (pattern instanceof RegExp) { pattern.test('a'); pattern.test('\u0101') }
   if (typeof words === 'object' && words !== null) made.set(words, patterns)
   return patterns
 }

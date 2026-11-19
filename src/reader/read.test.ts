@@ -1,6 +1,6 @@
 import fc from 'fast-check'
 import { describe, expect, it } from 'vitest'
-import { LIMITS, NOTE_CODES, read, say, type Draft, type DraftTopic, type Limits, type Note } from './index.ts'
+import { LIMITS, NOTE_CODES, read, say, type Draft, type DraftTopic, type Limits, type Note, type ReadOptions } from './index.ts'
 
 const names = (d: Draft): string[] => d.topics.map((t) => t.name)
 const topic = (d: Draft, name: string): DraftTopic => {
@@ -830,5 +830,68 @@ describe('the notes in English', () => {
   it('says the code itself of a note it has no sentence for', () => {
     expect(say({ code: 'something-new' } as unknown as Note)).toBe('something-new')
     expect(say({ code: 'toString' } as unknown as Note)).toBe('toString')
+  })
+})
+
+describe('what a look at the reader as its own part found', () => {
+  /** No half of a character that takes two. */
+  const whole = (s: string): boolean => { try { encodeURIComponent(s); return true } catch { return false } }
+
+  it('reads with its own settings when it is handed none, nothing, or something that cannot be read', () => {
+    const paste = text('Hund - dog', 'Katze - cat', 'Maus - mouse')
+    expect(read(paste, null as unknown as ReadOptions)).toEqual(read(paste))
+    expect(read(paste, 'cards' as unknown as ReadOptions)).toEqual(read(paste))
+    expect(read(paste, { pairs: 'maybe' } as unknown as ReadOptions)).toEqual(read(paste))
+    expect(read(paste, { get limits(): Limits { throw new Error('no') } })).toEqual(read(paste))
+    expect(read(paste, { limits: { get name(): number { throw new Error('no') } } as Limits })).toEqual(read(paste))
+  })
+
+  it('reads what is not text as the text it would be written as, or as nothing', () => {
+    expect(names(read(42 as unknown as string))).toEqual(['42'])
+    expect(read(null as unknown as string).topics).toEqual([])
+    expect(read(undefined as unknown as string).topics).toEqual([])
+    expect(read(Object.create(null) as unknown as string).topics).toEqual([])
+    expect(read({ toString() { throw new Error('no') } } as unknown as string).topics).toEqual([])
+  })
+
+  it('does not count the end of the last line as a line more', () => {
+    expect(read(text('a', 'b', 'c') + '\n', { limits: { lines: 3 } }).notes).toEqual([])
+    expect(read(text('a', 'b', 'c') + '\n\n  \n', { limits: { lines: 3 } }).notes).toEqual([])
+    expect(read(text('a', 'b', 'c', 'd') + '\n', { limits: { lines: 3 } }).notes).toEqual([{ code: 'lines-cut', kept: 3, of: 4 }])
+    expect(read(Array.from({ length: LIMITS.lines }, (_, i) => 'Topic ' + i).join('\n') + '\n').notes).toEqual([])
+  })
+
+  it('never cuts a line through the middle of a character', () => {
+    const long = '# Plan\n- ' + 'word '.repeat(79).slice(0, 397) + '😀😀 tail\n- next'
+    expect(whole(read(long, { limits: { summary: 1000 } }).topics[0]?.summary ?? '')).toBe(true)
+    const answers = read(Array.from({ length: 4 }, (_, i) => 'k' + i + ' = ' + 'x'.repeat(394) + '😀😀').join('\n'), { pairs: 'cards', limits: { a: 400 } })
+    expect(answers.topics.flatMap((t) => t.cards).length).toBe(4)
+    for (const c of answers.topics.flatMap((t) => t.cards)) expect(whole(c.a), c.q).toBe(true)
+    // With nothing set: a line of marks, which are taken off after the line is cut.
+    const dressed = read('**'.repeat(199) + 'x' + '😀' + ' tail')
+    expect(dressed.topics.map((t) => whole(t.name + t.summary))).toEqual([true])
+  })
+
+  it('takes little longer over many sets of cards with one name than over as many plain lines', () => {
+    // Against plain lines, not the clock. Numbering each set from 2 again took 50 and 170 times as long as these.
+    const limits = { lines: 20000, cards: 1 }
+    const took = (paste: string): number => Math.min(...[0, 1, 2].map(() => {
+      const started = performance.now()
+      read(paste, { limits })
+      return performance.now() - started
+    }))
+    const plain = took(Array.from({ length: 16000 }, (_, i) => 'Topic ' + i).join('\n'))
+    const headed = (n: number): string => Array.from({ length: n }, () => '## Words\nHund\tdog').join('\n')
+    expect(read(headed(3)).topics.map((t) => t.name)).toEqual(['Words', 'Words (2)', 'Words (3)'])
+    expect(took(headed(8000)) / plain, 'under one heading').toBeLessThan(10)
+    const signs = Array.from({ length: 150 }, (_, i) => String.fromCodePoint(0x2190 + i))
+    const unnamed = (n: number): string => Array.from({ length: n }, (_, i) => (signs[i % 150] ?? '') + (signs[Math.floor(i / 150)] ?? '') + ' = z' + i).join('\n')
+    expect(read(unnamed(3), { limits }).topics.map((t) => t.name)).toEqual(['Cards', 'Cards (2)', 'Cards (3)'])
+    expect(took(unnamed(16000)) / plain, 'with no words for a name').toBeLessThan(10)
+  })
+
+  it('numbers sets of one name in order, past names that are taken already', () => {
+    const d = read(text('Words (2)', '## Words', 'Hund\tdog', '## Words', 'Katze\tcat', '## Words', 'Maus\tmouse'))
+    expect(names(d)).toEqual(['Words (2)', 'Words', 'Words (3)', 'Words (4)'])
   })
 })

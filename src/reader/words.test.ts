@@ -64,7 +64,7 @@ describe('the words it reads by', () => {
     expect(names(read(text('→ = flecha', '← = atrás', '↑ = arriba'), { words: SPANISH }))).toEqual(['Tarjetas'])
   })
 
-  it('still reads every shape with no words at all', () => {
+  it('still reads bullets, headings, tables and lines in two parts with no words at all', () => {
     const d = read(text('# Course', '## Week 1', '- Limits', '- Series', '## Words', '| Hund | dog |', '| Katze | cat |', 'Total: 45 hours'), { words: NONE })
     expect(d.title).toBe('Course')
     // "Week 1" is a heading because it is marked as one, and the total is one more line in two parts: a card.
@@ -90,9 +90,62 @@ describe('the words it reads by', () => {
   })
 
   it('takes the asking off the front however it is said', () => {
-    for (const asking of ['i want to learn', "I'd like to learn about", 'I’d like to know more about', 'i wanna learn', 'ok so i need to study', 'teach me', 'help me with']) {
+    for (const asking of ['i want to learn', "I'd like to learn about", 'I’d like to know more about', 'i wanna learn', 'i wanna to learn', 'ok so i need to study', 'teach me', 'help me with']) {
       expect(names(read(asking + ' birds')), asking).toEqual(['birds'])
     }
+  })
+
+  it('takes a word joined to a letter, a digit, a mark or an underscore for another word', () => {
+    const kinds = (d: Draft): string[] => d.topics.map((t) => t.kind)
+    expect(kinds(read(text("Ohm's law", 'Outlaw tactics', 'Lawé of motion', 'Law2 of motion', 'Labし', 'design_patterns', 'lab_report', 'intro_to_python', 'vocab_list')))).toEqual(['rule', 'idea', 'idea', 'idea', 'idea', 'idea', 'idea', 'idea', 'idea'])
+    // A name out of a program is a name, not a total.
+    const code = read(text('Variables', '- total_budget - 500', '- subtotal_tax 12', '- total_hours 45'))
+    expect(names(code)).toEqual(['total_budget', 'subtotal_tax 12', 'total_hours 45'])
+    expect(code.notes.map((n) => n.code)).toEqual(['title-taken'])
+    // A sign that counts is not a letter: the word after it is still that word.
+    expect(kinds(read(text('①Overview', '②Rules of chess', '③Vocabulary')))).toEqual(['whole', 'rule', 'facts'])
+    // In a script that writes its vowels as marks, the word with one more mark is another word.
+    const hindi: Words = { ...NONE, kinds: { ...NONE.kinds, rule: ['नियम'] } }
+    expect(kinds(read(text('नियम', 'नियमों की सूची'), { words: hindi }))).toEqual(['rule', 'idea'])
+  })
+
+  it('knows a rough number by a whole word', () => {
+    const left = (line: string): boolean => read(text('# T', line, '- a', '- b')).notes.some((n) => n.code === 'course-left-out')
+    for (const line of ['Total: about 40', 'Total: approx. 40 hours', 'Total: approximately 40', 'Total: roughly 12', 'Total: ~40', 'Total: 45 hours']) expect(left(line), line).toBe(true)
+    for (const line of ['Total: Aboutface tactics', 'Total: Aroundabout routes', 'Total: Approximation methods']) expect(left(line), line).toBe(false)
+  })
+
+  it('keeps a line that only begins like chatter', () => {
+    expect(names(read(text('Great questions about biology', 'Algebra', 'Hope this helpsheet works', 'Geometry')))).toEqual(['Great questions about biology', 'Algebra', 'Hope this helpsheet works', 'Geometry'])
+    expect(names(read(text('Great question!', 'Algebra', 'Hope this helps.', 'Geometry', 'Enjoy!')))).toEqual(['Algebra', 'Geometry'])
+  })
+
+  it('tries the longest word first, trims a word, and finds nothing by an empty one', () => {
+    const leads: Words = { ...ENGLISH, asking: { ...ENGLISH.asking, leads: ['ok', 'ok so'] } }
+    expect(names(read(text('ok so i want to learn about guitar', 'algebra', 'geometry'), { words: leads }))).toEqual(['guitar', 'algebra', 'geometry'])
+    const spaced: Words = { ...NONE, chatter: { ...NONE.chatter, whole: [' thanks '] }, kinds: { ...NONE.kinds, whole: ['', '  ', 'overview'] } }
+    const d = read(text('Salt', 'Overview of salts', 'Thanks'), { words: spaced })
+    expect(d.topics.map((t) => [t.name, t.kind])).toEqual([['Salt', 'idea'], ['Overview of salts', 'whole']])
+  })
+
+  it('writes nothing where it has no words to write, and tidies the ones it is given', () => {
+    const with_ = (writes: Partial<Words['writes']>): Words => ({ ...ENGLISH, writes: { ...ENGLISH.writes, ...writes } })
+    expect(read(text('Mon: scales, p. 5', 'Tue: arpeggios, p. 6'), { words: with_({ page: '' }) }).topics.map((t) => t.summary)).toEqual(['Mon.', 'Tue.'])
+    expect(read(text('Mon: scales, p. 5', 'Tue: arpeggios, p. 6'), { words: with_({ page: '   ' }) }).topics.map((t) => t.summary)).toEqual(['Mon.', 'Tue.'])
+    expect(read(text('Mon: scales, p. 5', 'Tue: arpeggios, p. 6'), { words: with_({ page: ' p.\n{n} ' }) }).topics.map((t) => t.summary)).toEqual(['p. 5 Mon.', 'p. 6 Tue.'])
+    const signs = text('→ = forward', '← = back', '↑ = up', '↓ = down')
+    expect(names(read(signs, { words: with_({ cardsName: 'x'.repeat(200) }) }))[0]?.length).toBeLessThanOrEqual(48)
+    expect(names(read(signs, { words: with_({ cardsName: '   ' }) }))).toEqual(['1'])
+    expect(names(read(signs, { words: with_({ cardsName: ' a\nb\u200B ' }) }))).toEqual(['a b'])
+    expect(names(read(signs, { words: with_({ cardsName: 'Cards of the study' }), limits: { name: 12 } }))[0]?.length).toBeLessThanOrEqual(12)
+  })
+
+  it('reads by English when the words it is handed cannot be made ready', () => {
+    const paste = text('Week 1: Limits', '- One', 'Total: 45 hours')
+    const huge = { ...ENGLISH, labels: ['x'.repeat(60000)] }
+    expect(read(paste, { words: huge })).toEqual(read(paste))
+    const trap = { get labels(): string[] { throw new Error('no') } } as unknown as Words
+    expect(read(paste, { words: trap })).toEqual(read(paste))
   })
 
   it('never throws, whatever it is handed for words', () => {
@@ -128,8 +181,9 @@ describe('the words it reads by', () => {
         expect(seen.has(t.name.toLowerCase())).toBe(false)
         seen.add(t.name.toLowerCase())
       }
-    }), { numRuns: 300 })
-  })
+    }), { numRuns: 60 })
+    // Each run makes a language ready, which is the slow part and happens once in a real program.
+  }, 30000)
 })
 
 describe('the English words', () => {
