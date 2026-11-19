@@ -3,7 +3,7 @@
 // Everything a learner typed is escaped before it reaches the page.
 import { HARVEST_NAMES, LAYER_NAMES, type Catalog, type Seed } from '../engine/catalog'
 import { KINDS, KIND_ORDER, OWN_TODAY, TEXT, isOwnId, kindLabel, kindOfLayer, whyOwnSeed, type OwnField, type OwnSeed } from '../engine/own'
-import type { Card, Draft } from '../reader'
+import { say, type Card, type Draft } from '../reader'
 import { RULES, cropOf } from '../engine/rules'
 import type { FarmState } from '../engine/types'
 import { cropSprite, iconHtml } from './art/sprites'
@@ -111,7 +111,7 @@ const WAYS: readonly (readonly [string, string])[] = [['', 'Let the game decide'
  */
 export function readingHtml(draft: Draft, adding: Adding, told: 'cards' | 'topics' | null = null): string {
   const notes = [
-    ...draft.notes,
+    ...draft.notes.map(say),
     ...(adding.already ? [(adding.already === 1 ? '1 is' : adding.already + ' are') + ' in the field already, and left out.'] : []),
     ...(adding.over ? ['A field holds ' + OWN_TODAY.seeds + ' topics. ' + (adding.over === 1 ? '1 does' : adding.over + ' do') + ' not fit, and ' + (adding.over === 1 ? 'is' : 'are') + ' left out.'] : []),
     ...(adding.unfit ? [(adding.unfit === 1 ? '1 line' : adding.unfit + ' lines') + ' could not be made into a topic, and ' + (adding.unfit === 1 ? 'is' : 'are') + ' left out.'] : []),

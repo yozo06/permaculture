@@ -1,6 +1,6 @@
 import fc from 'fast-check'
 import { describe, expect, it } from 'vitest'
-import { LIMITS, read, type Draft, type DraftTopic, type Limits } from './index.ts'
+import { LIMITS, NOTE_CODES, read, say, type Draft, type DraftTopic, type Limits, type Note } from './index.ts'
 
 const names = (d: Draft): string[] => d.topics.map((t) => t.name)
 const topic = (d: Draft, name: string): DraftTopic => {
@@ -9,6 +9,8 @@ const topic = (d: Draft, name: string): DraftTopic => {
   return t
 }
 const text = (...lines: string[]): string => lines.join('\n')
+/** What a draft says it left out, in English. */
+const said = (d: Draft): string[] => d.notes.map(say)
 
 describe('a plain list', () => {
   it('makes a topic of each line', () => {
@@ -146,7 +148,7 @@ describe('cards from a table or a file of cards', () => {
     expect(d.pairsAs).toBe('cards')
     expect(d.topics).toHaveLength(1)
     expect(d.topics[0]?.cards).toEqual([{ q: 'la maison', a: 'the house' }, { q: 'le chat', a: 'the cat' }, { q: 'le pain', a: 'the bread' }])
-    expect(d.notes).toEqual(['Read the first two columns of each line as a card, and left the others out.'])
+    expect(said(d)).toEqual(['Read the first two columns of each line as a card, and left the others out.'])
   })
 
   it('leaves out the columns an Anki file says are not the card', () => {
@@ -359,7 +361,7 @@ describe('what real pastes taught it', () => {
     const d = read(text('UNIT I: INTRODUCTION (8 hrs)', 'Data models', 'Keys', 'Notes on normal forms', 'Total: 45 hours', 'Tip: practise every day', 'Text books:', '1. Silberschatz, Database System Concepts', '2. Elmasri, Fundamentals of Database Systems', 'Page 45'))
     expect(names(d)).toEqual(['Data models', 'Keys', 'Notes on normal forms'])
     expect(d.title).toBe('UNIT I: INTRODUCTION')
-    expect(d.notes).toEqual(['Left out, as not something to learn: Total, Tip, Text books (and the 2 lines under it), Page 45'])
+    expect(said(d)).toEqual(['Left out, as not something to learn: Total, Tip, Text books (and the 2 lines under it), Page 45'])
   })
 
   it('reads a day of the week before a colon as when, and what follows as the topic', () => {
@@ -387,7 +389,7 @@ describe('what real pastes taught it', () => {
   it('skips code, and says so', () => {
     const d = read(text('## ConfigMaps', '```yaml', 'apiVersion: v1', 'kind: ConfigMap', '```', '## Secrets', '````', 'x = 1', '```'))
     expect(names(d)).toEqual(['ConfigMaps', 'Secrets'])
-    expect(d.notes).toEqual(['Left out 2 blocks of code.'])
+    expect(said(d)).toEqual(['Left out 2 blocks of code.'])
   })
 
   it('reads rows of tildes as lines ruled across the page, and keeps what is between them', () => {
@@ -455,7 +457,7 @@ describe('what a second look found', () => {
     expect(names(read(text('Algebra', '', 'Geometry', '', 'Trigonometry', '', 'Calculus')))).toEqual(['Algebra', 'Geometry', 'Trigonometry', 'Calculus'])
     const listed = read(text('Maths', '', '- Geometry', '- Trigonometry', '- Calculus'))
     expect(listed.title).toBe('Maths')
-    expect(listed.notes).toEqual(['Read as the title of the whole list, not as a topic: Maths'])
+    expect(said(listed)).toEqual(['Read as the title of the whole list, not as a topic: Maths'])
   })
 
   it('keeps a part of the subject that happens to share a name with the business of a course', () => {
@@ -481,7 +483,7 @@ describe('what a second look found', () => {
   it('leaves out a line with no letter or number in it, and says how many', () => {
     const d = read(text('Intro', '...', '???', '->', '--', '😀', 'Python'))
     expect(names(d)).toEqual(['Intro', 'Python'])
-    expect(d.notes).toEqual(['Left out 5 lines with no words in them.'])
+    expect(said(d)).toEqual(['Left out 5 lines with no words in them.'])
     expect(read('.'.repeat(100)).topics).toEqual([])
   })
 
@@ -505,7 +507,7 @@ describe('what a second look found', () => {
   it('says so when a card is there twice', () => {
     const d = read(text('Hund - dog', 'hund - dog', 'Katze - cat', 'Maus - mouse'))
     expect(d.topics[0]?.cards).toHaveLength(3)
-    expect(d.notes).toEqual(['Left out, because it is there twice: hund'])
+    expect(said(d)).toEqual(['Left out, because it is there twice: hund'])
   })
 
   it('reads a link whose address or name has brackets of its own', () => {
@@ -517,7 +519,7 @@ describe('what a second look found', () => {
   it('leaves out the marks and the books when they are set off by a colon, and keeps a part of the subject of the same name', () => {
     const d = read(text('# Syllabus', 'Unit 1: Limits', 'Unit 2: Derivatives', 'Assessment: 40 marks', 'Evaluation: internal 40, external 60', 'References: Spivak', 'Resources: Khan Academy'))
     expect(names(d)).toEqual(['Unit 1: Limits', 'Unit 2: Derivatives'])
-    expect(d.notes).toEqual(['Left out, as not something to learn: Assessment, Evaluation, References, Resources'])
+    expect(said(d)).toEqual(['Left out, as not something to learn: Assessment, Evaluation, References, Resources'])
     const books = read(text('Limits', 'Derivatives', 'References:', '1. Spivak, Calculus', '2. Stewart, Calculus'))
     expect(names(books)).toEqual(['Limits', 'Derivatives'])
   })
@@ -566,7 +568,7 @@ describe('what a second look found', () => {
   it('reads only so far along a line, and says so, so that no line can hold the page up', () => {
     const long = 'x'.repeat(LIMITS.line + 50)
     const d = read(text('Short', long))
-    expect(d.notes).toContain('Read only the first ' + LIMITS.line + ' characters of 1 very long line.')
+    expect(said(d)).toContain('Read only the first ' + LIMITS.line + ' characters of 1 very long line.')
     for (const hostile of ['[a](b'.repeat(4000), '['.repeat(40000), '('.repeat(40000), '<a'.repeat(20000), '*_'.repeat(20000), 'a ? '.repeat(10000), '. '.repeat(20000) + '1', 'a' + ' '.repeat(40000) + '1', '"a",'.repeat(10000), '**a** '.repeat(8000)]) {
       const started = Date.now()
       read(hostile)
@@ -609,25 +611,25 @@ describe('what it tells the reader', () => {
     expect(t.name.endsWith('…')).toBe(true)
     expect(t.name.startsWith('The causes and the long consequences')).toBe(true)
     expect(t.summary).toBe(line)
-    expect(d.notes.some((n) => n.startsWith('Shortened'))).toBe(true)
+    expect(said(d).some((n) => n.startsWith('Shortened'))).toBe(true)
   })
 
   it('leaves out a line that repeats another, and says so', () => {
     const d = read(text('Loops', 'Recursion', 'loops', 'LOOPS '))
     expect(names(d)).toEqual(['Loops', 'Recursion'])
-    expect(d.notes).toEqual(['Left out, because it is there twice: loops'])
+    expect(said(d)).toEqual(['Left out, because it is there twice: loops'])
   })
 
   it('says how many headings had text under them that it did not keep', () => {
     const d = read(text('# Plan', 'This plan is for the spring term and assumes four hours a week of study at home.', '## Part one', '- Topic one'))
-    expect(d.notes).toContain('Left out the text under 1 heading.')
+    expect(said(d)).toContain('Left out the text under 1 heading.')
   })
 
   it('does not list more notes than a person would read', () => {
     const d = read(Array.from({ length: 60 }, (_, i) => i + ' is a very long line that goes on and on past what a name can hold').join('\n'))
     expect(d.topics).toHaveLength(60)
     expect(d.notes.length).toBeLessThanOrEqual(13)
-    expect(d.notes[d.notes.length - 1]).toMatch(/^And \d+ more/)
+    expect(said(d)[d.notes.length - 1]).toMatch(/^And \d+ more/)
   })
 })
 
@@ -684,7 +686,7 @@ describe('whatever it is given', () => {
   it('reads a very long text without reading for ever', () => {
     const d = read(Array.from({ length: 30000 }, (_, i) => 'topic ' + i).join('\n'))
     expect(d.topics.length).toBeLessThanOrEqual(LIMITS.lines)
-    expect(d.notes.some((n) => n.includes('lines'))).toBe(true)
+    expect(said(d).some((n) => n.includes('lines'))).toBe(true)
   })
 })
 
@@ -723,7 +725,7 @@ describe('the limits it is given', () => {
     expect(read(twice).notes).toHaveLength(5)
     const d = read(twice, { limits: { notes: 2 } })
     expect(d.notes).toHaveLength(3)
-    expect(d.notes[2]).toBe('And 3 more like these.')
+    expect(d.notes[2]).toEqual({ code: 'more-notes', count: 3 })
   })
 
   it('keeps its own where it is given none, or something that is not a number', () => {
@@ -750,5 +752,83 @@ describe('the limits it is given', () => {
     expect(mine).toEqual({ name: 5, cards: 2.5 })
     expect(LIMITS).toEqual(before)
     expect(Object.isFrozen(LIMITS)).toBe(true)
+  })
+})
+
+describe('what it left out, as codes', () => {
+  it('says each thing as a code and what it counted, with no sentence in it', () => {
+    expect(read(text('One', 'Two', 'Three'), { limits: { lines: 2 } }).notes).toEqual([{ code: 'lines-cut', kept: 2, of: 3 }])
+    expect(read(text('Short', 'word '.repeat(90))).notes).toContainEqual({ code: 'long-lines-cut', count: 1, kept: 400 })
+    expect(read(text('la maison\tthe house\tf', 'le chat\tthe cat\tm', 'le pain\tthe bread\tm')).notes).toEqual([{ code: 'columns-left-out' }])
+    expect(read(text('## ConfigMaps', '```yaml', 'kind: ConfigMap', '```', '## Secrets')).notes).toEqual([{ code: 'code-left-out', count: 1 }])
+    expect(read(text('Intro', '...', '???', 'Python')).notes).toEqual([{ code: 'wordless-left-out', count: 2 }])
+    expect(read(text('Maths', '', '- Geometry', '- Trigonometry', '- Calculus')).notes).toEqual([{ code: 'title-taken', text: 'Maths' }])
+    expect(read(text('Loops', 'Recursion', 'loops')).notes).toEqual([{ code: 'twice-left-out', text: 'loops' }])
+    expect(read(text('# Plan', 'This plan is for the spring term and assumes four hours a week of study at home.', '## Part one', '- Topic one')).notes).toContainEqual({ code: 'text-left-out', count: 1 })
+    expect(read(text('🐶 - the animal that barks at night and keeps the whole street awake', 'Cats')).notes).toEqual([{ code: 'wordless-name-left-out' }])
+  })
+
+  it('says what of the course it left out, and how much stood under each', () => {
+    const d = read(text('# Syllabus', 'Unit 1: Limits', 'Unit 2: Derivatives', 'Assessment: 40 marks', 'Text books:', '- Spivak', '- Apostol'))
+    expect(d.notes).toEqual([{ code: 'course-left-out', items: [{ text: 'Assessment', under: 0 }, { text: 'Text books', under: 2 }], more: 0 }])
+    const many = read(text('Algebra', ...Array.from({ length: 9 }, (_, i) => 'Note: bring thing ' + i)))
+    const note = many.notes.find((n) => n.code === 'course-left-out')
+    expect(note && note.code === 'course-left-out' ? [note.items.length, note.more] : null).toEqual([6, 3])
+  })
+
+  it('names the topic whose name it shortened, and the one whose line on what to read it cut', () => {
+    const line = 'The causes and the long consequences of the revolution of 1848 across the whole of central Europe'
+    const d = read(text(line, 'Short'))
+    expect(d.notes).toEqual([{ code: 'name-shortened', text: d.topics[0]?.name }])
+    const cut = read(text('Topic: ' + 'a long line about it '.repeat(18)))
+    expect(cut.notes).toContainEqual({ code: 'summary-cut', text: 'Topic' })
+  })
+
+  it('counts the notes it does not hand back in one more', () => {
+    const d = read(text(...['a', 'b', 'c', 'd', 'e'].flatMap((x) => ['Topic ' + x, 'topic ' + x])), { limits: { notes: 2 } })
+    expect(d.notes.map((n) => n.code)).toEqual(['twice-left-out', 'twice-left-out', 'more-notes'])
+  })
+
+  it('makes no two notes alike', () => {
+    const d = read(text('a\tb\tc', 'd\te\tf', 'g\th\ti', 'Loops', 'loops', 'LOOPS'))
+    expect(d.notes).toEqual([{ code: 'columns-left-out' }, { code: 'twice-left-out', text: 'loops' }])
+  })
+})
+
+describe('the notes in English', () => {
+  const each: [Note, string][] = [
+    [{ code: 'lines-cut', kept: 2000, of: 2400 }, 'Read the first 2000 lines only; the text has 2400.'],
+    [{ code: 'lines-cut', kept: 1, of: 3 }, 'Read the first line only; the text has 3.'],
+    [{ code: 'long-lines-cut', count: 1, kept: 400 }, 'Read only the first 400 characters of 1 very long line.'],
+    [{ code: 'long-lines-cut', count: 3, kept: 400 }, 'Read only the first 400 characters of 3 very long lines.'],
+    [{ code: 'columns-left-out' }, 'Read the first two columns of each line as a card, and left the others out.'],
+    [{ code: 'code-left-out', count: 1 }, 'Left out 1 block of code.'],
+    [{ code: 'code-left-out', count: 2 }, 'Left out 2 blocks of code.'],
+    [{ code: 'wordless-left-out', count: 1 }, 'Left out 1 line with no words in it.'],
+    [{ code: 'wordless-left-out', count: 5 }, 'Left out 5 lines with no words in them.'],
+    [{ code: 'course-left-out', items: [{ text: 'Total', under: 0 }, { text: 'Text books', under: 2 }, { text: 'Tip', under: 1 }], more: 0 }, 'Left out, as not something to learn: Total, Text books (and the 2 lines under it), Tip (and the 1 line under it)'],
+    [{ code: 'course-left-out', items: [{ text: 'Note', under: 0 }], more: 3 }, 'Left out, as not something to learn: Note, and 3 more'],
+    [{ code: 'title-taken', text: 'Maths' }, 'Read as the title of the whole list, not as a topic: Maths'],
+    [{ code: 'wordless-name-left-out' }, 'Left out a line whose first part has no words in it.'],
+    [{ code: 'twice-left-out', text: 'loops' }, 'Left out, because it is there twice: loops'],
+    [{ code: 'name-shortened', text: 'A long…' }, 'Shortened, with the whole line kept as what to read: A long…'],
+    [{ code: 'summary-cut', text: 'Topic' }, 'Cut short, the line on what to read for: Topic'],
+    [{ code: 'text-left-out', count: 1 }, 'Left out the text under 1 heading.'],
+    [{ code: 'text-left-out', count: 4 }, 'Left out the text under 4 headings.'],
+    [{ code: 'more-notes', count: 7 }, 'And 7 more like these.'],
+  ]
+
+  it('has a sentence for every code, in the singular and in the plural', () => {
+    for (const [note, sentence] of each) expect(say(note), note.code).toBe(sentence)
+  })
+
+  it('has a sentence for every note the reader can make', () => {
+    const tried = new Set(each.map(([n]) => n.code))
+    expect([...tried].sort()).toEqual([...NOTE_CODES].sort())
+  })
+
+  it('says the code itself of a note it has no sentence for', () => {
+    expect(say({ code: 'something-new' } as unknown as Note)).toBe('something-new')
+    expect(say({ code: 'toString' } as unknown as Note)).toBe('toString')
   })
 })

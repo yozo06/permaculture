@@ -33,8 +33,8 @@ export interface Draft {
   /** The one heading that stood over everything, or ''. */
   title: string
   topics: DraftTopic[]
-  /** What was shortened or left out, in words a person can read. */
-  notes: string[]
+  /** What was shortened or left out, each as a code and what it counted or the name concerned. */
+  notes: Note[]
   /** How many lines came in two parts. Where there are some, they can be read two ways. */
   pairs: number
   /** How they were read, or how most of them were: as question cards, or each as a topic with a line on what to read. */
@@ -59,6 +59,46 @@ export interface Limits {
   /** Notes handed back. The rest are counted in one more. */
   notes: number
 }
+
+/** Everything the reader can say it shortened or left out, and what each note carries besides its code. */
+interface Notes {
+  /** The text had `of` lines, and only the first `kept` were read. */
+  'lines-cut': { kept: number; of: number }
+  /** `count` lines were longer than `kept` characters, and were read only that far. */
+  'long-lines-cut': { count: number; kept: number }
+  /** Lines had more than two columns. The first two made a card. */
+  'columns-left-out': object
+  /** `count` blocks of code. */
+  'code-left-out': { count: number }
+  /** `count` lines with no letter or number in them. */
+  'wordless-left-out': { count: number }
+  /** Lines about the course and not in it, each with how many lines stood under it. `more` of them are not listed. */
+  'course-left-out': { items: { text: string; under: number }[]; more: number }
+  /** A plain first line was read as the title of the whole, so it is not a topic. */
+  'title-taken': { text: string }
+  /** A line in two parts whose first part has no letter or number in it. */
+  'wordless-name-left-out': object
+  /** A topic or a card that was there before under the same name. */
+  'twice-left-out': { text: string }
+  /** A name too long to keep: `text` is what it was cut to, and the whole line is in the line on what to read. */
+  'name-shortened': { text: string }
+  /** The line on what to read for the topic `text` was too long to keep whole. */
+  'summary-cut': { text: string }
+  /** `count` headings had running text under them, which is not kept. */
+  'text-left-out': { count: number }
+  /** `count` notes more than were asked for. */
+  'more-notes': { count: number }
+}
+
+/** One thing the reader shortened or left out. It carries no sentence: `say` has the English, and a program may have its own. */
+export type Note = { [C in keyof Notes]: { code: C } & Notes[C] }[keyof Notes]
+
+const CODES: { readonly [C in Note['code']]: true } = {
+  'lines-cut': true, 'long-lines-cut': true, 'columns-left-out': true, 'code-left-out': true, 'wordless-left-out': true, 'course-left-out': true, 'title-taken': true,
+  'wordless-name-left-out': true, 'twice-left-out': true, 'name-shortened': true, 'summary-cut': true, 'text-left-out': true, 'more-notes': true,
+}
+/** Every code a note can have. */
+export const NOTE_CODES: readonly Note['code'][] = Object.freeze(Object.keys(CODES) as Note['code'][])
 
 export interface ReadOptions {
   /** Read lines in two parts this way, whatever they look like. */
@@ -429,7 +469,7 @@ function fenced(lines: string[]): { code: Set<number>; blocks: number } {
   return { code, blocks }
 }
 
-function tokens(input: string[], note: (n: string, key?: string) => void): Tok[] {
+function tokens(input: string[], note: (n: Note, key?: string) => void): Tok[] {
   const lines = sheet(oneLine(input))
   const out: Tok[] = []
   let blank = true
@@ -491,7 +531,7 @@ function tokens(input: string[], note: (n: string, key?: string) => void): Tok[]
         rest = (cols.length >= 3 && /^\d{1,4}$/.test(cols[cols.length - 1] ?? '') ? cols.slice(0, -1) : cols).join(' ')
       } else {
         if (first && second) tok.pair = { left: first, right: second, strong: true }
-        if (row.filter(Boolean).length > 2) note('Read the first two columns of each line as a card, and left the others out.')
+        if (row.filter(Boolean).length > 2) note({ code: 'columns-left-out' })
         rest = first
       }
     } else if (!tabbed) {
@@ -541,7 +581,7 @@ function tokens(input: string[], note: (n: string, key?: string) => void): Tok[]
         if (cols.length >= 2 && isLabelled(cols[0] ?? '')) rest = cols.join(' ')
         else {
           if (cols.length >= 2) tok.pair = { left: cols[0] ?? '', right: cols[1] ?? '', strong: true }
-          if (cols.length > 2) note('Read the first two columns of each line as a card, and left the others out.')
+          if (cols.length > 2) note({ code: 'columns-left-out' })
           rest = cols[0] ?? ''
         }
       } else {
@@ -582,8 +622,8 @@ function tokens(input: string[], note: (n: string, key?: string) => void): Tok[]
     if (free && prev && !tok.pair && !tok.colon && !tok.bold && !isLabelled(tok.text) && prose(tok.text)) { prev.body.push(tok.text); continue }
     out.push(tok)
   }
-  if (codeBlocks > 0) note('Left out ' + codeBlocks + (codeBlocks === 1 ? ' block of code.' : ' blocks of code.'))
-  if (wordless > 0) note('Left out ' + wordless + (wordless === 1 ? ' line with no words in it.' : ' lines with no words in them.'))
+  if (codeBlocks > 0) note({ code: 'code-left-out', count: codeBlocks })
+  if (wordless > 0) note({ code: 'wordless-left-out', count: wordless })
   return out
 }
 
@@ -675,35 +715,35 @@ function fronts(cards: Card[], lim: Limits): string {
 /** Read a learner's own text into topics. Never throws. */
 export function read(input: string, opts: ReadOptions = {}): Draft {
   const lim = limitsOf(opts.limits)
-  const notes: string[] = []
+  const notes: Note[] = []
   const said = new Set<string>()
-  const note = (n: string, key = n): void => { if (!said.has(key)) { said.add(key); notes.push(n) } }
+  /** No two notes alike: one of a kind, or one for each name where a note names one. */
+  const note = (n: Note, key: string = n.code): void => { if (!said.has(key)) { said.add(key); notes.push(n) } }
 
   let lines = String(input).normalize('NFC').replace(LINE_END, '\n').replace(SPACES, ' ').replace(WIDE_COLON, ': ').replace(WIDE_EQUALS, ' = ').replace(UNSEEN, '').split('\n')
   if (lines.length > lim.lines) {
-    note('Read the first ' + lim.lines + ' lines only; the text has ' + lines.length + '.')
+    note({ code: 'lines-cut', kept: lim.lines, of: lines.length })
     lines = lines.slice(0, lim.lines)
   }
   // No name or note is as long as this, and a line read only so far cannot keep a pattern busy for long.
   const long = lines.filter((l) => l.length > lim.line).length
   if (long > 0) {
-    note('Read only the first ' + lim.line + ' characters of ' + long + (long === 1 ? ' very long line.' : ' very long lines.'))
+    note({ code: 'long-lines-cut', count: long, kept: lim.line })
     lines = lines.map((l) => (l.length > lim.line ? l.slice(0, lim.line) : l))
   }
   const toks = tokens(lines, note)
   levels(toks)
 
   // What is about the course and not in it is left out, with everything under it.
-  const dropped: string[] = []
+  const dropped: { text: string; under: number }[] = []
   const size = (n: Node): number => n.children.reduce((sum, c) => sum + 1 + size(c), 0)
   const prune = (ns: Node[]): Node[] => ns.filter((n) => {
     if (!n.tok.admin) { n.children = prune(n.children); return true }
-    const under = size(n)
-    dropped.push((n.tok.pair ? n.tok.pair.left : n.tok.text) + (under ? ' (and the ' + under + (under === 1 ? ' line' : ' lines') + ' under it)' : ''))
+    dropped.push({ text: n.tok.pair ? n.tok.pair.left : n.tok.text, under: size(n) })
     return false
   })
   let top = prune(tree(toks))
-  if (dropped.length) note('Left out, as not something to learn: ' + dropped.slice(0, 6).join(', ') + (dropped.length > 6 ? ', and ' + (dropped.length - 6) + ' more' : ''))
+  if (dropped.length) note({ code: 'course-left-out', items: dropped.slice(0, 6), more: Math.max(0, dropped.length - 6) })
 
   // One heading over everything is the title of the whole thing.
   let title = ''
@@ -712,7 +752,7 @@ export function read(input: string, opts: ReadOptions = {}): Draft {
   if (top.length === 1 && only && only.children.length > 0) {
     title = fit(headingText(only), lim.title)
     // A plain line taken for the title is not a topic any more, and a person should know that it was.
-    if (only.tok.guessed) note('Read as the title of the whole list, not as a topic: ' + title)
+    if (only.tok.guessed) note({ code: 'title-taken', text: title })
     over = only
     top = only.children
   }
@@ -743,12 +783,12 @@ export function read(input: string, opts: ReadOptions = {}): Draft {
     let name = t.name
     // A name has a letter or a number in it. A set of cards whose questions are all signs is still a set of cards.
     if (!worded(name) && !/^https?:/i.test(name)) {
-      if (!spare) return note('Left out a line whose first part has no words in it.', 'wordless')
+      if (!spare) return note({ code: 'wordless-name-left-out' })
       name = 'Cards'
     }
     if (taken.has(name.toLowerCase())) {
       // A set of cards is kept under a name of its own; a topic that is there twice is left out.
-      if (!spare) return note('Left out, because it is there twice: ' + name, 'twice:' + name.toLowerCase())
+      if (!spare) return note({ code: 'twice-left-out', text: name }, 'twice:' + name.toLowerCase())
       const base = name
       for (let i = 2; taken.has(name.toLowerCase()); i++) name = fit(base, lim.name - (' (' + i + ')').length) + ' (' + i + ')'
     }
@@ -780,7 +820,7 @@ export function read(input: string, opts: ReadOptions = {}): Draft {
         for (const c of cards) {
           const p = c.tok.pair
           if (!p) continue
-          if (seen.has(p.left.toLowerCase())) { note('Left out, because it is there twice: ' + p.left, 'twice:' + p.left.toLowerCase()); continue }
+          if (seen.has(p.left.toLowerCase())) { note({ code: 'twice-left-out', text: p.left }, 'twice:' + p.left.toLowerCase()); continue }
           seen.add(p.left.toLowerCase())
           all.push({ q: p.left, a: p.right })
         }
@@ -799,16 +839,16 @@ export function read(input: string, opts: ReadOptions = {}): Draft {
       const p = n.tok.pair
       const whole = p ? p.left : n.tok.text
       const name = fit(whole, lim.name)
-      if (name !== whole) note('Shortened, with the whole line kept as what to read: ' + name, 'short:' + name)
+      if (name !== whole) note({ code: 'name-shortened', text: name }, 'short:' + name)
       const parts = [name !== whole ? whole : '', p ? p.right : '', n.tok.body.join(' '), n.tok.aside.join(' '), n.tok.links.join(' '), middle.length ? 'Part of ' + middle.join(' › ') + '.' : ''].filter(Boolean)
       const summary = parts.join(name !== whole && p ? ': ' : ' ')
-      if (summary.length > lim.summary) note('Cut short, the line on what to read for: ' + name, 'cut:' + name)
+      if (summary.length > lim.summary) note({ code: 'summary-cut', text: name }, 'cut:' + name)
       add({ name, summary: fit(summary, lim.summary), kind: kindOf(whole), group, cards: [] }, false)
     }
   }
   within(top, over, '', [])
-  if (bodies > 0) note('Left out the text under ' + bodies + (bodies === 1 ? ' heading.' : ' headings.'))
+  if (bodies > 0) note({ code: 'text-left-out', count: bodies })
 
-  const shown = notes.length > lim.notes + 1 ? [...notes.slice(0, lim.notes), 'And ' + (notes.length - lim.notes) + ' more like these.'] : notes
+  const shown: Note[] = notes.length > lim.notes + 1 ? [...notes.slice(0, lim.notes), { code: 'more-notes', count: notes.length - lim.notes }] : notes
   return { title, topics, notes: shown, pairs, pairsAs: opts.pairs ?? (pairs > 0 && 2 * asCards >= pairs ? 'cards' : 'topics') }
 }
