@@ -2,12 +2,13 @@
 
 One page for someone opening this repo for the first time: what the parts are, how a tap becomes a saved farm, and where to make a change. The rules of the game itself are in `design.md`.
 
-## Three parts
+## Four parts
 
 | Part | What it is | The rule it keeps |
 |---|---|---|
 | `packs/` | Data. One YAML file per goal: its seeds, questions, sources and wild finds. | A released id is never renamed or removed. Saved farms refer to seeds by id. |
 | `src/engine/` | The rules. Plain TypeScript. | Pure: no DOM, no clock, no randomness. The same log always gives the same farm. |
+| `src/reader/` | What turns a learner's own text into topics and cards. Plain TypeScript. | It knows nothing of the game, and the game takes it only from `index.ts`. The same text always reads the same way. |
 | `src/game/` | The screen: the canvas, the sheets, saving. | Nothing from a player or a pack reaches the page unescaped, and bad saved data never crashes the game. |
 
 The engine does not know what any seed means. Adding a goal never touches engine code.
@@ -18,7 +19,7 @@ The engine does not know what any seed means. Adding a goal never touches engine
 2. `vite.config.ts` runs the same code at build time and serves the result as the module `virtual:packs`. A broken pack fails the build with the validator's messages. In `npm run dev`, saving a pack reloads the page.
 3. `src/engine/catalog.ts` turns the packs into a `Catalog`: seeds, finds and packs looked up by id, with every optional list filled in.
 
-A farm can also have fields its farmer made (`docs/own-fields.md`). `src/reader/read.ts` reads whatever they paste into topics: it imports nothing and guesses nothing, and `read.test.ts` has the pastes its rules came from. `src/engine/own.ts` turns those topics into a pack, and `catalogFor` lays the farm's own fields over the game's catalog. Their topics are events in the log, so `fold` asks each event against the catalog as that farm had it at that moment.
+A farm can also have fields its farmer made (`docs/own-fields.md`). The reader in `src/reader/` reads whatever they paste into topics. Its rules (`read.ts`) are about shapes and guess nothing, the English words they need are lists in `english.ts`, what it left out comes back as codes, and `read.test.ts` has the pastes its rules came from. The folder has a page of its own, `src/reader/README.md`. The game hands the reader the farm's limits (`READING` in `src/engine/own.ts`), so whatever it reads fits a farm. `src/engine/own.ts` turns those topics into a pack, and `catalogFor` lays the farm's own fields over the game's catalog. Their topics are events in the log, so `fold` asks each event against the catalog as that farm had it at that moment.
 
 ## A farm is a log
 
@@ -69,6 +70,7 @@ When the page loads, the store reads the log and folds it. If the log cannot be 
 `npm test` runs all of them.
 
 - `src/engine/*.test.ts`: each event's allowed path and each refusal. `fold.property.test.ts` plays long random games (80 to 300 moves each) and checks after every move that replaying the log gives the same farm and that energy and coins never go negative. It also plays farms on the packs with their guilds, edges and saplings taken out and replays each with them back, to show those rules only ever add. It also feeds the engine events of any shape and checks that nothing throws.
+- `src/reader/*.test.ts`: a paste for every rule of the reader, the limits and the words it can be handed, and its own page checked against what it does.
 - `src/engine/design-doc.test.ts`: the two tables in `docs/design.md` match `RULES` exactly.
 - `scripts/catalogues.test.ts`: what the catalogues promise, such as every seed id from the Phase 0 farm still existing.
 - `scripts/lock.test.ts` and `src/engine/played-farm.test.ts`: saved farms keep replaying (see above).
@@ -81,7 +83,7 @@ When the page loads, the store reads the log and folds it. If the log cannot be 
 | To… | Change |
 |---|---|
 | add a seed, a question or a whole goal | a file in `packs/`. No code. See `pack-format.md`. |
-| teach the reader a new kind of paste | `src/reader/read.ts`. Put the paste in `read.test.ts` first, with what a person would expect of it. A rule may not guess, and whatever it leaves out it says in the notes. |
+| teach the reader a new kind of paste | `src/reader/read.ts`. Put the paste in `read.test.ts` first, with what a person would expect of it. A rule may not guess, and whatever it leaves out it says in a note. A new English word goes in `src/reader/english.ts`, not in a rule. |
 | change a number | `RULES` in `src/engine/rules.ts`, and the same row in `docs/design.md`. A test fails until they agree. The Almanac follows by itself. |
 | add a rule | a new event in `types.ts`; its shape in `parseEvent`, its check and its effect in `fold.ts`; tests in `fold.test.ts`; and teach `fold.property.test.ts` to play it. |
 | hold back something a player may start, without touching saved farms | `whyToday` in `fold.ts`, which only `check` asks. Replay never does. |

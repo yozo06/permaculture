@@ -54,7 +54,7 @@ ROADMAP.md the vision, the mission and the plan
 scripts/   the pack validator (shared with the build) and its tests
 ```
 
-New to the code? `docs/code-tour.md` is a one-page walk through it: the three parts, how a tap becomes a saved farm, and where to make a change.
+New to the code? `docs/code-tour.md` is a one-page walk through it: the four parts, how a tap becomes a saved farm, and where to make a change.
 
 ```sh
 npm install           # needs Node 22.12 or newer

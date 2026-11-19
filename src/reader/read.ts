@@ -120,7 +120,7 @@ export const LIMITS: Readonly<Limits> = Object.freeze({ title: 60, name: 48, sum
  * of a line is read than the reader's own limit: its rules were timed on lines up to that length, and a few of them
  * slow down on longer ones. The time a text takes grows in step with `lines`.
  */
-const BOUNDS: Readonly<Record<keyof Limits, readonly [number, number]>> = {
+export const BOUNDS: Readonly<Record<keyof Limits, readonly [number, number]>> = {
   title: [12, 400], name: [12, 400], summary: [12, 10000], group: [12, 400], q: [1, 400], a: [1, 400], cards: [1, 1000], lines: [1, 20000], line: [20, 400], notes: [0, 1000],
 }
 

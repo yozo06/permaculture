@@ -21,7 +21,7 @@ Better distractors, better `why` lines, a missing layer, a guild that should exi
 
 ## Code
 
-- The game lives in `src/` and is built by Vite from TypeScript: `npm run dev` to play locally, `npm test` for the tests, `npm run build` for the site. It is split in two. `src/engine/` holds every rule as pure TypeScript with no DOM, and `src/game/` draws the farm and the sheets. The game reads `packs/*.yaml` at build time, so a new seed needs no code. `docs/code-tour.md` walks through the code in one page; see `docs/design.md` §9 for the phases.
+- The game lives in `src/` and is built by Vite from TypeScript: `npm run dev` to play locally, `npm test` for the tests, `npm run build` for the site. It is split in three. `src/engine/` holds every rule as pure TypeScript with no DOM, `src/reader/` reads a learner's own text into topics and knows nothing of the game, and `src/game/` draws the farm and the sheets. The game reads `packs/*.yaml` at build time, so a new seed needs no code. `docs/code-tour.md` walks through the code in one page; see `docs/design.md` §9 for the phases.
 - Keep the loop honest: a change should make plant → water → harvest truer, faster or clearer. Features that do not serve the loop wait.
 - No leaderboards, no streak shaming, no accounts before the village needs them.
 - The engine stays pure: `src/engine/` has no DOM, no clock and no randomness, and a farm is a fold over its event log. A new rule is a new event and a check in `src/engine/fold.ts`, with a property test. If a change makes that harder, it is probably wrong.
