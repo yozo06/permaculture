@@ -1,4 +1,5 @@
 import fc from 'fast-check'
+import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { LIMITS, NOTE_CODES, read, say, type Draft, type DraftTopic, type Limits, type Note, type ReadOptions } from './index.ts'
 
@@ -780,8 +781,8 @@ describe('what it left out, as codes', () => {
     const line = 'The causes and the long consequences of the revolution of 1848 across the whole of central Europe'
     const d = read(text(line, 'Short'))
     expect(d.notes).toEqual([{ code: 'name-shortened', text: d.topics[0]?.name }])
-    const cut = read(text('Topic: ' + 'a long line about it '.repeat(18)))
-    expect(cut.notes).toContainEqual({ code: 'summary-cut', text: 'Topic' })
+    const cut = read(text('Subject: ' + 'a long line about it '.repeat(18)))
+    expect(cut.notes).toContainEqual({ code: 'summary-cut', text: 'Subject' })
   })
 
   it('counts the notes it does not hand back in one more', () => {
@@ -893,5 +894,153 @@ describe('what a look at the reader as its own part found', () => {
   it('numbers sets of one name in order, past names that are taken already', () => {
     const d = read(text('Words (2)', '## Words', 'Hund\tdog', '## Words', 'Katze\tcat', '## Words', 'Maus\tmouse'))
     expect(names(d)).toEqual(['Words (2)', 'Words', 'Words (3)', 'Words (4)'])
+  })
+})
+
+describe('a list an AI chat wrote, as it comes out of the chat', () => {
+  // The first real paste: what a chat answered to the game's own prompt of version 0.9.0, copied from the chat's page.
+  // The page had turned "## heading" into a plain line and "- " into "* ".
+  const coffee = read(readFileSync('src/reader/pastes/coffee-chat.txt', 'utf8'))
+  const of = (name: string): DraftTopic => topic(coffee, name)
+
+  it('takes the first of several headings for a heading, not for the title of them all', () => {
+    expect(coffee.title).toBe('')
+    expect(coffee.notes).toEqual([])
+    expect(coffee.topics).toHaveLength(42)
+    expect(coffee.topics.slice(0, 6).map((t) => t.group)).toEqual(Array.from({ length: 6 }, () => 'Coffee as a commodity'))
+    expect([...new Set(coffee.topics.map((t) => t.group))]).toEqual(['Coffee as a commodity', '', 'The physical trade', 'Futures and options markets', 'Hedging and pricing', 'Fundamental analysis', 'Trading practice and risk'])
+    expect(of('Core vocabulary').cards).toHaveLength(8)
+    expect(of('Contract facts').cards[0]).toEqual({ q: 'ICE Arabica futures ticker', a: 'KC' })
+  })
+
+  it('still takes one line over one list for its title', () => {
+    expect(read(text('Maths', '', '- Geometry', '- Trigonometry', '- Calculus')).title).toBe('Maths')
+    expect(read(text('Learning German', '', 'Week 1', '- Hund', '- Katze', 'Week 2', '- Brot')).title).toBe('Learning German')
+    const two = read(text('First things', '', '- a b', '- c d', 'Second things', '', '- e f', '- g h'))
+    expect([two.title, ...two.topics.map((t) => t.group)]).toEqual(['', 'First things', 'First things', 'Second things', 'Second things'])
+  })
+
+  it('knows something to do by the line on what to do, when the name does not say', () => {
+    expect(of('Incoterms and shipping').kind).toBe('skill')
+    expect(of('Pricing a physical deal').kind).toBe('skill')
+    expect(of('Trade plan and journal').kind).toBe('skill')
+    expect(of('Arabica versus Robusta').kind).toBe('rule')
+    expect(of('Weather risk').kind).toBe('idea')
+    expect(read(text('Overview of options: practise pricing a call', 'Loops', 'Lists')).topics[0]?.kind).toBe('whole')
+  })
+})
+
+describe('questions with their wrong answers', () => {
+  it('takes what stands after the answer, between upright bars, for wrong answers', () => {
+    const d = read(text('Which species has more caffeine? = Robusta | Arabica | Liberica | Excelsa', 'FOB = Free on board | Freight on board|Free of bond', 'Basis = Cash price minus futures price'))
+    expect(d.topics).toHaveLength(1)
+    expect(d.topics[0]?.cards).toEqual([
+      { q: 'Which species has more caffeine?', a: 'Robusta', wrong: ['Arabica', 'Liberica', 'Excelsa'] },
+      { q: 'FOB', a: 'Free on board', wrong: ['Freight on board', 'Free of bond'] },
+      { q: 'Basis', a: 'Cash price minus futures price' },
+    ])
+  })
+
+  it('keeps three wrong answers, none twice, none that is the right one, none too long to be an answer', () => {
+    const cards = (line: string): unknown => read(text(line, 'x = y | z', 'u = v | w')).topics[0]?.cards[0]
+    expect(cards('q = a | b | c | d | e')).toEqual({ q: 'q', a: 'a', wrong: ['b', 'c', 'd'] })
+    expect(cards('q = a | A | b | B | c')).toEqual({ q: 'q', a: 'a', wrong: ['b', 'c'] })
+    expect(cards('q = a | | b |')).toEqual({ q: 'q', a: 'a', wrong: ['b'] })
+    expect(cards('q = a | ' + 'x'.repeat(LIMITS.a + 1) + ' | b')).toEqual({ q: 'q', a: 'a', wrong: ['b'] })
+    expect(cards('q = a | a')).toEqual({ q: 'q', a: 'a' })
+  })
+
+  it('makes a card of a line with wrong answers, however few such lines there are', () => {
+    const d = read(text('## Soil', 'What holds water best? = Clay | Sand | Gravel', '## Water', '- Rain', '- Rivers'))
+    expect(d.topics.map((t) => [t.name, t.cards.length])).toEqual([['Soil', 1], ['Rain', 0], ['Rivers', 0]])
+  })
+
+  it('does not look for wrong answers after a dash or a colon, or in a table', () => {
+    expect(read(text('Hund - dog | cat', 'Katze - cat | dog', 'Maus - mouse | rat')).topics[0]?.cards[0]).toEqual({ q: 'Hund', a: 'dog | cat' })
+    expect(read(text('| Hund | dog | cat |', '| Katze | cat | dog |', '| Maus | mouse | rat |')).topics[0]?.cards[0]).toEqual({ q: 'Hund', a: 'dog' })
+  })
+
+  it('takes the mark off the front of an answer that follows a question', () => {
+    const d = read(text('What is the capital of France? = Paris', 'What is the capital of Peru? - Lima', 'What is the capital of Chile? Santiago', 'What is 2 + 2? → 4'))
+    expect(d.topics[0]?.cards.map((c) => [c.q, c.a])).toEqual([['What is the capital of France?', 'Paris'], ['What is the capital of Peru?', 'Lima'], ['What is the capital of Chile?', 'Santiago'], ['What is 2 + 2?', '4']])
+  })
+})
+
+describe('a list with its parts, topics and questions said in words', () => {
+  const list = text(
+    'Part: Coffee as a commodity',
+    'Topic: Arabica versus Robusta',
+    'Read: how the two species differ in taste, cost and use',
+    'Which species has more caffeine? = Robusta | Arabica | Liberica | Excelsa',
+    'Which species grows higher up? = Arabica | Robusta | Liberica | Excelsa',
+    'Topic: Processing methods',
+    'Read: compare washed, natural and honey processing',
+    'Which method dries the whole cherry? = Natural | Washed | Honey | Wet-hulled',
+    '',
+    'Part: The physical trade',
+    'Topic: Incoterms and shipping',
+    'Practise: working out who pays freight under FOB, CIF and FCA',
+    'Under FOB, who pays the ocean freight? = The buyer | The seller | The insurer | The port',
+    'Topic: Trade finance basics',
+    'Read: letters of credit and pre-export finance',
+  )
+
+  it('makes a topic of each, with its part for a group, its line on what to read, and its questions', () => {
+    const d = read(list)
+    expect(d.title).toBe('')
+    expect(d.notes).toEqual([])
+    expect(d.topics.map((t) => [t.group, t.name, t.summary, t.cards.length])).toEqual([
+      ['Coffee as a commodity', 'Arabica versus Robusta', 'how the two species differ in taste, cost and use', 2],
+      ['Coffee as a commodity', 'Processing methods', 'compare washed, natural and honey processing', 1],
+      ['The physical trade', 'Incoterms and shipping', 'Practise working out who pays freight under FOB, CIF and FCA', 1],
+      ['The physical trade', 'Trade finance basics', 'letters of credit and pre-export finance', 0],
+    ])
+    expect(d.topics[0]?.cards[0]).toEqual({ q: 'Which species has more caffeine?', a: 'Robusta', wrong: ['Arabica', 'Liberica', 'Excelsa'] })
+  })
+
+  it('knows the kind of a topic with questions by its name and by what there is to do, not as a list of facts', () => {
+    expect(read(list).topics.map((t) => t.kind)).toEqual(['rule', 'idea', 'skill', 'idea'])
+    // A set of cards under a heading with nothing said about it is still facts to remember.
+    expect(read(text('## Animals', 'Hund = dog', 'Katze = cat', 'Maus = mouse')).topics[0]?.kind).toBe('facts')
+  })
+
+  it('reads the same list however the chat dressed it', () => {
+    const plain = read(list)
+    const dressed = (line: string): string => line.replace(/^(Part|Topic|Read|Practise): /, '**$1:** ')
+    expect(read('Topic: Scales\nPractise: two octaves, hands together\nDo: ten minutes a day').topics[0]?.summary).toBe('Practise two octaves, hands together ten minutes a day')
+    expect(read(list.split('\n').map(dressed).join('\n')).topics).toEqual(plain.topics)
+    expect(read(list.replace(/^Part: /gm, '# Part: ').replace(/^Topic: /gm, '## Topic: ')).topics).toEqual(plain.topics)
+    expect(read(list.replace(/^(Topic|Read|Practise|Which|Under)/gm, '- $1')).topics).toEqual(plain.topics)
+    expect(read(list.replace(/^Part: /gm, 'PART: ').replace(/^Topic: /gm, 'topic : ')).topics).toEqual(plain.topics)
+    expect(read(list.split('\n').join('\n\n')).topics).toEqual(plain.topics)
+  })
+
+  it('reads a list that is all in one block of code as the list it is', () => {
+    const d = read('Here is your list:\n\n```\n' + list + '\n```\n\nGood luck!')
+    expect(d.topics).toEqual(read(list).topics)
+    expect(d.notes).toEqual([])
+    // Notes with code in them and topics outside it still lose the code, and say so.
+    expect(read(text('## ConfigMaps', '```yaml', 'kind: ConfigMap', '```', '## Secrets')).notes).toEqual([{ code: 'code-left-out', count: 1 }])
+  })
+
+  it('puts the text under a heading that holds cards into the line on what to read, and says nothing of leaving it out', () => {
+    const d = read(text('## Verbs', 'The strong verbs change their vowel in the past tense, and are best learnt by heart.', 'gehen = to go', 'kommen = to come', 'sehen = to see'))
+    expect(d.topics.map((t) => [t.name, t.summary, t.kind])).toEqual([['Verbs', 'The strong verbs change their vowel in the past tense, and are best learnt by heart.', 'facts']])
+    expect(d.notes).toEqual([])
+    expect(read(text('## Verbs', 'gehen = to go', 'kommen = to come', 'sehen = to see')).topics[0]?.summary).toBe('3 cards: gehen, kommen, sehen')
+  })
+
+  it('keeps a thing to do that is one of the bullets under a heading, and takes a plain line under it for what to read', () => {
+    const d = read(text('## Week 2: Control flow', '- **Loops**: for and while', '- **Practice**: FizzBuzz and a number guessing game'))
+    expect(d.topics.map((t) => [t.name, t.kind, t.summary])).toEqual([['Loops', 'idea', 'for and while'], ['Practice', 'skill', 'FizzBuzz and a number guessing game']])
+    const noted = read(text('## Arabica versus Robusta', 'Read: how the two species differ', 'Which has more caffeine? = Robusta | Arabica | Liberica'))
+    expect(noted.topics.map((t) => [t.name, t.summary, t.cards.length])).toEqual([['Arabica versus Robusta', 'how the two species differ', 1]])
+  })
+
+  it('takes "Part 2: ..." and "Topic 3: ..." as it always did, and a line that only begins like one as a line', () => {
+    expect(names(read(text('Part 1: Soil', '- Clay', 'Part 2: Water', '- Rain')))).toEqual(['Clay', 'Rain'])
+    expect(read(text('Part 1: Soil', '- Clay', 'Part 2: Water', '- Rain')).topics.map((t) => t.group)).toEqual(['Part 1: Soil', 'Part 2: Water'])
+    expect(names(read(text('Topical creams', 'Partial fractions', 'Reading list')))).toEqual(['Topical creams', 'Partial fractions', 'Reading list'])
+    expect(names(read(text('Read: chapter 4', 'Loops', 'Lists')))).toEqual(['Read', 'Loops', 'Lists'])
   })
 })

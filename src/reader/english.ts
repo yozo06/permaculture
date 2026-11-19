@@ -67,6 +67,11 @@ export const ENGLISH: Words = frozen({
     more: ['more'],
     about: ['about'],
   },
+  outline: {
+    parts: ['part', 'section', 'module', 'unit', 'chapter'],
+    topics: ['topic', 'subtopic', 'lesson'],
+    notes: ['read', 'study', 'learn', 'practise', 'practice', 'do', 'watch', 'to read', 'to do', 'what to read', 'what to do'],
+  },
   counters: ['card', 'flashcard', 'question', 'item', 'no', 'no.'],
   columns: ['word', 'words', 'term', 'terms', 'front', 'question', 'q', 'phrase', 'expression', 'vocab', 'vocabulary', 'kanji', 'meaning', 'definition', 'back', 'answer', 'a', 'translation', 'english'],
   questions: ['q', 'question'],

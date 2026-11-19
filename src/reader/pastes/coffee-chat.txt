@@ -1,0 +1,75 @@
+Coffee as a commodity
+
+* Arabica versus Robusta: read how the two species differ in taste, cost, growing conditions and end use
+* Major producing countries: study output and harvest timing for Brazil, Vietnam, Colombia, Indonesia, Ethiopia and Honduras
+* Crop cycle and seasons: learn flowering, harvest and shipping months, plus Brazil’s on-year and off-year pattern
+* Processing methods: compare washed, natural and honey processing and how each affects quality and price
+* Grading and quality: read about screen size, defect counts, cupping scores and the main origin grades
+* Consumption and demand: study the biggest importing countries and trends in roast, soluble and specialty coffee
+
+Core vocabulary
+Green coffee = Unroasted beans
+Differential = Premium or discount to futures
+Basis = Cash price minus futures price
+Contango = Far months priced above near
+Backwardation = Near months priced above far
+FOB = Seller delivers on board at origin port
+PTBF = Differential agreed, futures price fixed later
+Certified stocks = Exchange-graded coffee in approved warehouses
+The physical trade
+
+* Supply chain players: map farmers, cooperatives, exporters, trade houses, importers and roasters and what each earns
+* Physical contract terms: read the standard ESCC and GCA contracts and what each clause covers
+* Incoterms and shipping: practise working out who pays freight, insurance and risk under FOB, CIF and FCA
+* Differentials by origin: track how premiums and discounts move for a few key origins and grades
+* Price-to-be-fixed contracts: work through examples of buyer’s call and seller’s call fixing
+* Warehousing and logistics: learn about containers, bag types, moisture risk and port delays
+* Trade finance basics: read about letters of credit, pre-export finance and counterparty risk
+
+Futures and options markets
+
+* How futures work: learn margining, daily settlement, expiry and delivery on a coffee contract
+* ICE Arabica and Robusta: read both contract rulebooks and compare what coffee is deliverable
+* Certified stocks and delivery: study grading, age penalties and how stock levels affect spreads
+* Calendar spreads and rolls: practise calculating spreads and rolling a position between months
+* Arabica-Robusta arbitrage: convert both to the same unit and track the price gap over time
+* Options on coffee futures: learn calls, puts, implied volatility and simple hedging structures
+* Market participants: read how commercials, funds and index traders differ in motive and behaviour
+
+Contract facts
+ICE Arabica futures ticker = KC
+Arabica contract size = 37,500 lb
+Arabica price quote = US cents per pound
+Arabica delivery months = Mar, May, Jul, Sep, Dec
+ICE Robusta futures ticker = RC
+Robusta contract size = 10 tonnes
+Robusta price quote = US dollars per tonne
+Standard coffee bag = 60 kg
+Hedging and pricing
+
+* Short and long hedges: work through how a producer and a roaster each lock in price
+* Basis risk: practise examples where futures and physical prices move by different amounts
+* Pricing a physical deal: build a price from futures, differential, freight, finance and margin
+* Currency exposure: study how the Brazilian real and other origin currencies drive selling
+* Position and book management: learn how a trader nets physical longs and shorts against futures
+* Hedge accounting and margin calls: read how cash flow strain can break a sound hedge
+
+Fundamental analysis
+
+* Supply and demand balance: build a simple world balance sheet from production, consumption and stocks
+* Key data reports: read USDA, ICO, Conab and Cecafe releases and note their schedules
+* Weather risk: study frost and drought in Brazil and how El Niño and La Niña affect origins
+* Commitments of Traders report: practise reading fund and commercial positioning each week
+* Stocks and export flows: track certified stocks and monthly origin export numbers
+* Policy and regulation: read about EU deforestation rules, tariffs and origin export policies
+* Costs of production: compare farm costs across origins to estimate price floors
+
+Trading practice and risk
+
+* Chart and price action: practise marking trends, support, resistance and volume on coffee charts
+* Position sizing: calculate contract value, tick value and risk per trade before entering
+* Leverage and margin: work out how far price can move before a margin call
+* Trade plan and journal: write entry, exit and stop rules, then log every trade and review
+* Paper trading: run simulated futures and spread trades for a few months before using money
+* Historic price shocks: study past frosts, droughts and squeezes and how the market reacted
+* Broker and market access: compare ways to trade coffee from your country, with costs and rules

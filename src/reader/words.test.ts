@@ -9,7 +9,7 @@ const names = (d: Draft): string[] => d.topics.map((t) => t.name)
 const NONE: Words = {
   labels: [], weekdays: [], reading: { verbs: [], refs: [] }, course: { labels: [], headings: [], afterColon: [], over: [], pages: [], totals: [], roughly: [] }, units: [],
   page: { see: [], refs: [] }, kinds: { doing: [], rule: [], ruleStarts: [], versus: [], whole: [], facts: [], drill: [] }, chatter: { starts: [], openers: [], whole: [], tails: [] },
-  asking: { leads: [], wants: [], verbs: [], whole: [], more: [], about: [] }, counters: [], columns: [], questions: [], answers: [], ands: [],
+  asking: { leads: [], wants: [], verbs: [], whole: [], more: [], about: [] }, outline: { parts: [], topics: [], notes: [] }, counters: [], columns: [], questions: [], answers: [], ands: [],
   writes: { page: '', partOf: '', card: '', cards: '', cardsName: '' },
 }
 
@@ -166,7 +166,7 @@ describe('the words it reads by', () => {
     const words = fc.record({
       labels: list, weekdays: list, reading: fc.record({ verbs: list, refs: list }), course: fc.record({ labels: list, headings: list, afterColon: list, over: list, pages: list, totals: list, roughly: list }), units: list,
       page: fc.record({ see: list, refs: list }), kinds: fc.record({ doing: list, rule: list, ruleStarts: list, versus: list, whole: list, facts: list, drill: list }), chatter: fc.record({ starts: list, openers: list, whole: list, tails: list }),
-      asking: fc.record({ leads: list, wants: list, verbs: list, whole: list, more: list, about: list }), counters: list, columns: list, questions: list, answers: list, ands: list,
+      asking: fc.record({ leads: list, wants: list, verbs: list, whole: list, more: list, about: list }), outline: fc.record({ parts: list, topics: list, notes: list }), counters: list, columns: list, questions: list, answers: list, ands: list,
       writes: fc.record({ page: fc.string({ maxLength: 12 }), partOf: fc.string({ maxLength: 12 }), card: fc.string({ maxLength: 12 }), cards: fc.string({ maxLength: 12 }), cardsName: fc.string({ maxLength: 12 }) }),
     })
     const piece = fc.constantFrom('#', '-', '1.', ' ', '\n', ' - ', ': ', ' = ', '|', 'Q:', 'A:', '?', ',', 'week 1', 'total', 'a', 'q', ' and ', ' p. 3', '(', '.', '*', '→')

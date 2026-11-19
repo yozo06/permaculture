@@ -172,5 +172,6 @@ Each of these is a paste that can honestly be read two ways. The draft shows the
 | `words.ts` | What lists a language has, and how a word in one is found. |
 | `english.ts` | The English lists, and the notes in English. |
 | `read.test.ts`, `words.test.ts`, `readme.test.ts` | A paste for every rule, and a check that this page is true. |
+| `pastes` | Whole pastes that real people made, as they made them. The tests read them. |
 
 To teach it a new kind of paste, put the paste in `read.test.ts` first, with what a person would expect of it. A rule may not guess, and whatever it leaves out it says in a note. A new word goes in `english.ts`, not in a rule.

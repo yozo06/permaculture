@@ -85,6 +85,16 @@ export interface Words {
     more: readonly string[]
     about: readonly string[]
   }
+  /**
+   * A list that says in words what marks would say: "Part: ..." for a "# heading", "Topic: ..." for the "## heading"
+   * of one topic, "Read: ..." for the line under it on what to read or do. A chat's page may take the marks out of
+   * what it shows, and the words come through.
+   */
+  outline: {
+    parts: readonly string[]
+    topics: readonly string[]
+    notes: readonly string[]
+  }
   /** "Card 3", "Question 4": a counter over a card, which names nothing. */
   counters: readonly string[]
   /** The first row of a table of cards, when it names the columns: "Word", "Meaning". */
@@ -133,6 +143,10 @@ export interface Patterns {
   chatter: RegExp
   /** Finds the asking at the start of a line, to be taken off it. */
   asking: RegExp
+  /** "Part: ...", "Topic: ..." and "Read: ...". Their first group is what follows. */
+  part: RegExp
+  topic: RegExp
+  noteLine: RegExp
   counter: RegExp
   column: RegExp
   /** Their first group is what was asked, and what was answered. */
@@ -185,10 +199,11 @@ export function compile(words: Words): Patterns {
   if (kept) return kept
   const all = words as unknown as Record<string, unknown>
   const reading = part(words, 'reading'), course = part(words, 'course'), page = part(words, 'page'), kinds = part(words, 'kinds')
-  const chatter = part(words, 'chatter'), asking = part(words, 'asking'), writes = part(words, 'writes')
+  const chatter = part(words, 'chatter'), asking = part(words, 'asking'), writes = part(words, 'writes'), outline = part(words, 'outline')
   const re = (source: string, flags = 'iu'): RegExp => new RegExp(source, flags)
   const whole = (list: unknown): RegExp => re('^' + any(list) + '$')
   const within = (list: unknown): string => EDGE + any(list) + BOUND
+  const labelled = (list: unknown): RegExp => re('^' + any(list) + '\\s*:\\s*(\\S.*)$')
   const written = (name: string): string => (typeof writes[name] === 'string' ? (writes[name] as string) : '')
   const totals = any(course.totals)
   const patterns: Patterns = {
@@ -214,6 +229,9 @@ export function compile(words: Words): Patterns {
     drill: re(within(kinds.drill) + '|\\b\\d+\\s*x\\s*\\d+'),
     chatter: re('^(?:' + any(chatter.starts) + BOUND + '|' + any(chatter.openers) + '[,!. ]|' + any(chatter.whole) + BOUND + '[\\s!.,:)]*(?:' + any(chatter.tails) + BOUND + '.*)?$)'),
     asking: re('^(?:' + any(asking.leads) + '\\s+)?(?:(?:' + any(asking.wants) + '\\s+' + any(asking.verbs) + '|' + any(asking.whole) + ')(?:\\s+' + any(asking.more) + ')?(?:\\s+' + any(asking.about) + ')?\\s+)?'),
+    part: labelled(outline.parts),
+    topic: labelled(outline.topics),
+    noteLine: labelled(outline.notes),
     counter: re('^' + any(all.counters) + '\\s*#?\\d+\\s*[:.)]?$'),
     column: whole(all.columns),
     question: re('^' + any(all.questions) + '\\s*\\d*\\s*[:.)]\\s*(.+)$'),

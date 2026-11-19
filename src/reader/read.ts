@@ -20,7 +20,12 @@ import { compile, fill, type Patterns, type Words } from './words.ts'
 export type Kind = 'facts' | 'skill' | 'idea' | 'rule' | 'whole'
 
 /** A question card: something to be asked, and what goes with it. */
-export interface Card { q: string; a: string }
+export interface Card {
+  q: string
+  a: string
+  /** Wrong answers that came with it, three at most. A card with none is given them from the other cards by whoever asks it. */
+  wrong?: string[]
+}
 
 export interface DraftTopic {
   name: string
@@ -148,6 +153,8 @@ interface Pair {
   named?: boolean
   /** Parted by a colon, the way a label is from what it labels ("Note: bring a calculator"). */
   colon?: boolean
+  /** Wrong answers that stood after the right one, between upright bars. */
+  wrong?: string[]
 }
 
 interface Tok {
@@ -286,9 +293,15 @@ const MARKS = [' = ', ' → ', ' -> ', ' => ', ' :: ', ' - ', ' – ', ' — ', 
 function splitPair(s: string, p: Patterns): Pair | null {
   // A side that is nothing but a picture or a sign ("dog - 🐶") is kept as it is; an address is not a side.
   const side = (raw: string): string => plain(raw) || (/https?:\/\//i.test(raw) ? '' : raw.trim())
-  const make = (left: string, right: string, more: Partial<Pair> = {}): Pair | null => {
-    const l = side(left), r = side(right)
-    return l && r && !p.label.test(l) ? { left: l, right: r, strong: false, ...more } : null
+  // After an equals sign or a question, "Robusta | Arabica | Liberica" is the answer and the wrong answers to show
+  // beside it. Only a card is written so, however few of them there are.
+  const make = (left: string, right: string, more: Partial<Pair> = {}, barred = false): Pair | null => {
+    const [first = '', ...others] = barred && right.includes('|') ? right.split('|') : [right]
+    const l = side(left), r = side(first)
+    if (!l || !r || p.label.test(l)) return null
+    const wrong: string[] = []
+    for (const w of others.map(side)) if (w && w.toLowerCase() !== r.toLowerCase() && !wrong.some((x) => x.toLowerCase() === w.toLowerCase())) wrong.push(w)
+    return { left: l, right: r, strong: false, ...more, ...(wrong.length ? { wrong, strong: true } : {}) }
   }
   // A bold start is the name, when a mark sets it apart from the rest. Without one the line simply goes on.
   const inside = /^(\*\*|__)(.+?):\1\s*(\S.*)$/.exec(s)
@@ -297,8 +310,10 @@ function splitPair(s: string, p: Patterns): Pair | null {
   if (bold) return make(bold[2] ?? '', bold[4] ?? '', { named: true, ...(bold[3] === ':' ? { colon: true } : {}) })
   if (/^(\*\*|__)/.test(s)) return null
   // A question, and its answer after it on the same line.
+  const marked = /^(.{3,}\?)\s*(?:=>|->|::|=|→)\s+(\S.*)$/.exec(s)
+  if (marked) return make(marked[1] ?? '', marked[2] ?? '', { strong: true }, true)
   const asked = /^(.{3,}?\?)\s+(\S.*)$/.exec(s)
-  if (asked && !/\?\s*$/.test(s)) return make(asked[1] ?? '', asked[2] ?? '', { strong: true })
+  if (asked && !/\?\s*$/.test(s)) return make(asked[1] ?? '', (asked[2] ?? '').replace(/^[-–—:]\s+/, ''), { strong: true }, true)
   // The first mark in the line is the one that parts it.
   let at = -1
   let mark = ''
@@ -310,7 +325,8 @@ function splitPair(s: string, p: Patterns): Pair | null {
   const left = s.slice(0, at)
   // A long run of words before the mark is a sentence with a colon in it, not a name.
   if (words(left) > 8) return null
-  return make(left, s.slice(at + mark.length), MARKS.indexOf(mark as (typeof MARKS)[number]) < 5 ? { eq: true } : mark === ': ' ? { colon: true } : {})
+  const eq = MARKS.indexOf(mark as (typeof MARKS)[number]) < 5
+  return make(left, s.slice(at + mark.length), eq ? { eq: true } : mark === ': ' ? { colon: true } : {}, eq)
 }
 
 /**
@@ -347,12 +363,13 @@ const headingText = (n: Node, p: Patterns): string => n.tok.text.replace(p.hours
 
 /* ---------- the kind of thing ---------- */
 
-function kindOf(name: string, p: Patterns): Kind {
+/** The kind of thing a name is. Where the name does not say, the line on what to read may: "practise ..." is something to do. */
+function kindOf(name: string, about: string, p: Patterns): Kind {
   if (p.doing.test(name)) return 'skill'
   if (p.rule.test(name) || p.versus.test(name)) return 'rule'
   if (p.whole.test(name)) return 'whole'
   if (p.facts.test(name)) return 'facts'
-  return p.drill.test(name) ? 'skill' : 'idea'
+  return p.drill.test(name) || p.doing.test(about) ? 'skill' : 'idea'
 }
 
 /* ---------- lines ---------- */
@@ -453,7 +470,17 @@ function tokens(input: string[], p: Patterns, note: (n: Note, key?: string) => v
   const out: Tok[] = []
   let blank = true
   let asked: Tok | null = null
-  const { code, blocks: codeBlocks } = fenced(lines)
+  let { code, blocks: codeBlocks } = fenced(lines)
+  // A list handed over in a block of code, as a chat does so that it copies cleanly, is the list and not code: when
+  // far more stands inside the blocks than outside them, only the rows of backticks are left out.
+  const beside = lines.filter((l, i) => !code.has(i) && l.trim() !== '').length
+  if (codeBlocks > 0 && code.size - 2 * codeBlocks > 3 * beside) {
+    code = new Set([...code].filter((i) => /^\s*```/.test(lines[i] ?? '')))
+    codeBlocks = 0
+  }
+  /** The heading last read, which a "Read: ..." line is about, and whether it was said in words ("Topic: ..."). */
+  let head: Tok | null = null
+  let headSaid = false
   /** Lines with no letter or number in them: rows of dots, arrows, a lone picture. */
   let wordless = 0
   /** Columns an Anki file says hold something other than the card, counted from 0. */
@@ -530,7 +557,28 @@ function tokens(input: string[], p: Patterns, note: (n: Note, key?: string) => v
       else if (lettered && !(asked && asked === prev) && (letterAt === 1 || (countLetter > 0 && letterAt === countLetter + 1))) { countLetter = letterAt; tok.bulleted = true; tok.marker = 'num'; rest = lettered[2] ?? '' }
       else if (romaned && (roman(romaned[1] ?? '') === 1 || roman(romaned[1] ?? '') === countRoman + 1)) { countRoman = roman(romaned[1] ?? ''); tok.bulleted = true; tok.marker = 'num'; rest = romaned[2] ?? '' }
     }
-    if (!tok.table && hash === null) {
+    // "Part: ...", "Topic: ..." and "Read: ..." say in words what "#", "##" and the line under a heading say in marks.
+    let headed = hash !== null
+    if (!tok.table && !tabbed && rest.includes(':')) {
+      const said = undress(rest)
+      const part = p.part.exec(said.text)
+      const named = part ?? p.topic.exec(said.text)
+      const about = named ? null : p.noteLine.exec(said.text)
+      if (named) {
+        tok.hash = part ? 1 : 2; tok.bulleted = false; tok.marker = ''; tok.num = 0
+        rest = named[1] ?? ''
+        headed = true
+        count = 0; countRoman = 0; countLetter = 0
+      } else if (about && head && (headSaid || !tok.bulleted)) {
+        // Among the bullets under a "## heading", "- Practice: FizzBuzz" is one more thing to learn.
+        // "Practise: ..." is something to do, and says so better with its first word left on.
+        const whole = said.text.replace(/\s*:\s*/, ' ')
+        head.body.push(p.doing.test(whole) ? whole : about[1] ?? '')
+        head.links.push(...said.links)
+        continue
+      }
+    }
+    if (!tok.table && !headed) {
       if (p.counter.test(plain(rest))) continue
       // An answer belongs to the question on the line before it.
       const answer = asked && asked === prev ? p.answer.exec(rest) : null
@@ -604,6 +652,7 @@ function tokens(input: string[], p: Patterns, note: (n: Note, key?: string) => v
     // Running text belongs to the heading or the line it stands under.
     if (free && prev && !tok.pair && !tok.colon && !tok.bold && !p.label.test(tok.text) && prose(tok.text)) { prev.body.push(tok.text); continue }
     out.push(tok)
+    if (tok.hash >= 0) { head = tok; headSaid = headed && hash === null }
   }
   if (codeBlocks > 0) note({ code: 'code-left-out', count: codeBlocks })
   if (wordless > 0) note({ code: 'wordless-left-out', count: wordless })
@@ -613,12 +662,14 @@ function tokens(input: string[], p: Patterns, note: (n: Note, key?: string) => v
 /** Which lines are headings though nothing marks them as one, and how deep every line sits. */
 function levels(toks: Tok[], p: Patterns): void {
   const capsShare = toks.filter((t) => isCaps(t.text)).length / Math.max(1, toks.length)
+  /** A plain line further down stands over bullets as the first line does: the first is one heading of several. */
+  const sections = toks.some((t, i) => i >= 2 && t.hash < 0 && !t.bulleted && !t.table && !t.pair && !t.asks && t.indent <= 1 && toks[i + 1]?.bulleted === true)
   toks.forEach((t, i) => {
     const next = toks[i + 1], after = toks[i + 2]
     if (t.hash >= 0 || t.bulleted || t.table || t.asks || t.pair?.strong || t.indent > 1) return
     // The first line, alone over a blank line, with a list under it: the title, even if it reads as two parts. But
     // only when it does not look like the lines under it: it is a few words long, or they are bulleted and it is not.
-    if (i === 0 && next?.blankBefore && toks.length >= 4 && (words(t.whole) >= 3 || toks.slice(1).some((x) => x.bulleted))) {
+    if (i === 0 && next?.blankBefore && toks.length >= 4 && (words(t.whole) >= 3 || toks.slice(1).some((x) => x.bulleted)) && !(next.bulleted && sections)) {
       // It stands over everything, the weeks and chapters under it included, as a "# Title" would.
       t.hash = 0; t.guessed = true; t.pair = null; t.admin = false; t.text = t.whole.replace(/\s*:$/, '')
       return
@@ -794,7 +845,9 @@ export function read(input: string, opts: ReadOptions = {}): Draft {
 
   let bodies = 0
   const within = (ns: Node[], parent: Node | null, group: string, middle: string[]): void => {
-    if (parent && parent.tok.body.length) bodies++
+    // What was written under a heading that holds cards is what to read for them. Under any other it is left out.
+    const about = parent ? parent.tok.body.join(' ') : ''
+    let told = false
     const here = cardsUnder(ns)
     // What can only be a card (a question and its answer, a table) is one, unless the reader was told otherwise.
     const isCard = (n: Node): boolean => n.tok.pair !== null && fitsCard(n.tok.pair, lim) && (here || (pairsAs === undefined && n.tok.pair.strong))
@@ -818,7 +871,8 @@ export function read(input: string, opts: ReadOptions = {}): Draft {
           if (!pair) continue
           if (seen.has(pair.left.toLowerCase())) { note({ code: 'twice-left-out', text: pair.left }, 'twice:' + pair.left.toLowerCase()); continue }
           seen.add(pair.left.toLowerCase())
-          all.push({ q: pair.left, a: pair.right })
+          const wrong = (pair.wrong ?? []).filter((w) => w.length <= lim.a).slice(0, 3)
+          all.push({ q: pair.left, a: pair.right, ...(wrong.length ? { wrong } : {}) })
         }
         const sets = shares(all, lim.cards)
         const under = parent ? headingText(parent, p) : ''
@@ -828,7 +882,9 @@ export function read(input: string, opts: ReadOptions = {}): Draft {
           const list = fill(set.length === 1 ? p.writes.card : p.writes.cards, { n: set.length, list: set.map((c) => c.q).join(', ') }) || set.map((c) => c.q).join(', ')
           // Sets under one heading are grouped by it; one set under a heading stands where the heading stood.
           const g = under && sets.length > 1 && !group ? fit(under, lim.group) : parent && group === fit(under, lim.group) && sets.length === 1 ? '' : group
-          add({ name, summary: fit(list, lim.summary), kind: 'facts', group: g, cards: set }, true)
+          // Cards with nothing said about them are facts to remember. With a line on what to read they are the questions of a topic.
+          add({ name, summary: fit(about || list, lim.summary), kind: about ? kindOf(under, about, p) : 'facts', group: g, cards: set }, true)
+          told = about !== ''
         })
         continue
       }
@@ -839,8 +895,9 @@ export function read(input: string, opts: ReadOptions = {}): Draft {
       const parts = [name !== whole ? whole : '', pair ? pair.right : '', n.tok.body.join(' '), n.tok.aside.join(' '), n.tok.links.join(' '), middle.length ? fill(p.writes.partOf, { path: middle.join(' › ') }) : ''].filter(Boolean)
       const summary = parts.join(name !== whole && pair ? ': ' : ' ')
       if (summary.length > lim.summary) note({ code: 'summary-cut', text: name }, 'cut:' + name)
-      add({ name, summary: fit(summary, lim.summary), kind: kindOf(whole, p), group, cards: [] }, false)
+      add({ name, summary: fit(summary, lim.summary), kind: kindOf(whole, [pair ? pair.right : '', n.tok.body.join(' ')].filter(Boolean).join(' '), p), group, cards: [] }, false)
     }
+    if (about && !told) bodies++
   }
   within(top, over, '', [])
   if (bodies > 0) note({ code: 'text-left-out', count: bodies })
