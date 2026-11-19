@@ -537,11 +537,17 @@ describe('what a second look found', () => {
     expect(names(d)).toEqual(['Chapter 1 Soil', 'Chapter 2 Water', 'Chapter 3 Light'])
   })
 
-  it('is no slower for pictures, dots or brackets that go nowhere', () => {
+  it('takes no more than twenty times as long over pictures, dots or brackets that go nowhere as over plain letters', () => {
+    // Against a plain line of the same length, not the clock: a slow machine slows both. Before these shapes were
+    // mended the first four took 30 to 110 times as long as the plain line; they take up to 10 now.
+    const took = (line: string): number => Math.min(...[0, 1, 2].map(() => {
+      const started = performance.now()
+      read(Array.from({ length: 1000 }, () => line).join('\n'))
+      return performance.now() - started
+    }))
+    const plain = took('x'.repeat(400))
     for (const line of ['a' + '☀'.repeat(398) + 'x', 'a ' + '🐶 '.repeat(130) + 'x', 'x' + '. '.repeat(199), '.'.repeat(400), '('.repeat(399) + 'x', '['.repeat(399) + 'x', '|'.repeat(400)]) {
-      const started = Date.now()
-      read(Array.from({ length: 2000 }, () => line).join('\n'))
-      expect(Date.now() - started, line.slice(0, 8)).toBeLessThan(400)
+      expect(took(line) / plain, line.slice(0, 8)).toBeLessThan(20)
     }
   })
 
