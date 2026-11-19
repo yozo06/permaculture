@@ -40,6 +40,8 @@ And the farm has art of its own (version 0.8.0): one sprite sheet, made for this
 
 And it grows anyone's subject (version 0.9.0). A new farmer is asked what they want to learn before they are shown the ready-made fields. They paste what they have, and a reader with no AI in it works out the topics, their groups and the question cards. The topics live in the farm's own log, so an exported farm carries them.
 
+And every topic of your own can be asked as multiple choice (version 0.10.0). The first tester to try a field of their own got forty topics with nothing to ask. Now the prompt the game hands out for an AI chat asks for questions under every topic, each with its wrong answers; the reader takes them in; a field that has topics without questions can get them; and the sheet says so before you add a topic that has none.
+
 Why this exists, what it promises and the whole plan are in [`ROADMAP.md`](ROADMAP.md).
 
 ## Repo
