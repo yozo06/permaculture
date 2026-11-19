@@ -370,6 +370,63 @@ describe('own-seeds-set', () => {
   })
 })
 
+describe('a card that came with its wrong answers', () => {
+  const asked = [
+    { q: 'Which species has more caffeine?', a: 'Robusta', wrong: ['Arabica', 'Liberica', 'Excelsa'] },
+    { q: 'Which species grows higher up?', a: 'Arabica', wrong: ['Robusta'] },
+    { q: 'What is unroasted coffee called?', a: 'Green coffee' },
+  ]
+  const waterOf = (cards: OwnSeed['cards']) => ownPack(field([seed('aaaaaa', { cards })])).seeds[0]?.questions?.water ?? []
+
+  it('is asked with them, and borrows only what it is short of', () => {
+    const water = waterOf(asked)
+    expect(water[0]).toMatchObject({ q: 'Which species has more caffeine?', answer: 'Robusta', distractors: ['Arabica', 'Liberica', 'Excelsa'] })
+    // Its own first, then the answers of the other cards. The wrong answers of another card are that card's alone.
+    expect(water[1]?.distractors).toEqual(['Robusta', 'Green coffee'])
+    expect(water[2]?.distractors.slice().sort()).toEqual(['Arabica', 'Robusta'])
+  })
+
+  it('can be asked alone, where a card with none of its own needs two others to borrow from', () => {
+    expect(waterOf([{ q: 'Capital of Peru?', a: 'Lima', wrong: ['Quito', 'Bogotá'] }])).toHaveLength(1)
+    expect(waterOf([{ q: 'Capital of Peru?', a: 'Lima', wrong: ['Quito'] }])).toHaveLength(0)
+    expect(waterOf([{ q: 'Capital of Peru?', a: 'Lima' }])).toHaveLength(0)
+    expect(ownPack(field([seed('aaaaaa', { cards: [{ q: 'Capital of Peru?', a: 'Lima', wrong: ['Quito', 'Bogotá'] }] })])).seeds[0]?.harvest).toBe('recall')
+  })
+
+  it('is never shown its right answer, or one wrong answer twice, among the wrong ones', () => {
+    const water = waterOf([{ q: 'Capital of Peru?', a: 'Lima', wrong: ['lima', 'Quito', ' quito ', 'Bogotá'] }])
+    expect(water[0]?.distractors).toEqual(['Quito', 'Bogotá'])
+  })
+
+  it('is kept by the farm with them, trimmed, and is the same farm when the log is read again', () => {
+    const cards = [{ q: 'Capital of Peru?', a: 'Lima', wrong: [' Quito ', 'Bogotá'] }, { q: 'Capital of Chile?', a: 'Santiago' }]
+    const s = farm([seed('aaaaaa', { cards })])
+    expect(s.own[F]?.seeds[0]?.cards).toEqual([{ q: 'Capital of Peru?', a: 'Lima', wrong: ['Quito', 'Bogotá'] }, { q: 'Capital of Chile?', a: 'Santiago' }])
+    const e = parseEvent(JSON.parse(JSON.stringify(setSeeds([seed('aaaaaa', { cards })]))))
+    expect(e).toEqual(setSeeds([seed('aaaaaa', { cards })]))
+    // A card with an empty list of them is a card with none.
+    expect(farm([seed('aaaaaa', { cards: [{ q: 'q', a: 'a', wrong: [] }] })]).own[F]?.seeds[0]?.cards).toEqual([{ q: 'q', a: 'a' }])
+  })
+
+  it('is refused with more of them than a card is asked with, with one too long, or with one that cannot be shown', () => {
+    const why = (wrong: unknown): string | null => whyOwnSeed(seed('aaaaaa', { cards: [{ q: 'q', a: 'a', wrong: wrong as string[] }] }))
+    expect(why(['b', 'c', 'd'])).toBeNull()
+    expect(why(['b', 'c', 'd', 'e'])).toMatch(/at most 3 wrong answers/)
+    expect(why(['x'.repeat(TEXT.a + 1)])).toMatch(/wrong answers/)
+    expect(why([''])).toMatch(/wrong answers/)
+    expect(why(['a​b'])).toMatch(/cannot show/)
+    expect(why(['a\nb'])).toMatch(/cannot show/)
+  })
+
+  it('is not read from a log that holds something else where they should be', () => {
+    const event = (wrong: unknown): unknown => ({ type: 'own-seeds-set', field: F, seeds: [{ ...seed('aaaaaa'), cards: [{ q: 'q', a: 'a', wrong }] }] })
+    expect(parseEvent(event(['b']))).not.toBeNull()
+    expect(parseEvent(event('b'))).toBeNull()
+    expect(parseEvent(event([1, 2]))).toBeNull()
+    expect(parseEvent(event({ 0: 'b' }))).toBeNull()
+  })
+})
+
 describe('what the farm asks of the reader', () => {
   it('asks for nothing wider than a farm may hold', () => {
     for (const key of ['title', 'name', 'summary', 'group', 'q', 'a', 'cards'] as const) expect(READING[key], key).toBeLessThanOrEqual(TEXT[key])
@@ -377,7 +434,7 @@ describe('what the farm asks of the reader', () => {
 
   it('asks for all the room a farm has, and for eight cards to a topic', () => {
     expect(READING).toEqual({ title: 60, name: 48, summary: 300, group: 60, q: 160, a: 120, cards: 8 })
-    expect({ ...READING, cards: TEXT.cards }).toEqual(TEXT)
+    expect({ ...READING, cards: TEXT.cards, wrong: TEXT.wrong }).toEqual(TEXT)
   })
 
   it('takes every topic the reader makes by the limits the farm hands it', () => {

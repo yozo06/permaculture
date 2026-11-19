@@ -35,8 +35,11 @@ export type Own = Readonly<Record<string, OwnField>>
 export const OWN = { fields: 20, seeds: 300 } as const
 /** What the game asks of something done today: fields on the farm (the game's and the farmer's), and topics in one field. */
 export const OWN_TODAY = { fields: 9, seeds: 150 } as const
-/** The most the text of a field and of a topic may hold on a farm, and the most cards in a topic. These never go down either. */
-export const TEXT = { title: 60, name: 48, summary: 300, group: 60, q: 160, a: 120, cards: 10 } as const
+/**
+ * The most the text of a field and of a topic may hold on a farm, the most cards in a topic, and the most wrong
+ * answers a card may bring with it. These never go down either.
+ */
+export const TEXT = { title: 60, name: 48, summary: 300, group: 60, q: 160, a: 120, cards: 10, wrong: 3 } as const
 /**
  * The limits the game hands the reader, so that whatever it makes of a paste fits a farm. The farm's limits are the
  * farm's own, and no reader's: a saved farm must fit whatever a reader comes to allow. A set of cards is made smaller
@@ -117,7 +120,10 @@ export function parseOwnSeed(raw: unknown): OwnSeed | null {
   const read: Card[] = []
   for (const c of cards) {
     if (!isRecord(c) || typeof c.q !== 'string' || typeof c.a !== 'string') return null
-    read.push({ q: c.q, a: c.a })
+    // A farm saved before cards could bring their wrong answers has none, and is read as it always was.
+    const wrong: unknown = c.wrong
+    if (wrong !== undefined && !(Array.isArray(wrong) && wrong.every((w) => typeof w === 'string'))) return null
+    read.push({ q: c.q, a: c.a, ...(wrong !== undefined && wrong.length > 0 ? { wrong: [...(wrong as string[])] } : {}) })
   }
   return { id, name, kind, summary, group, cards: read }
 }
@@ -135,17 +141,18 @@ export function whyTitle(title: string): string | null {
 
 /** Why this cannot be a topic, or null. */
 export function whyOwnSeed(s: OwnSeed): string | null {
-  if (UNSEEN.test(s.name + s.summary + s.group + s.cards.map((c) => c.q + c.a).join(''))) return CANNOT_SHOW
+  if (UNSEEN.test(s.name + s.summary + s.group + s.cards.map((c) => c.q + c.a + (c.wrong ?? []).join('')).join(''))) return CANNOT_SHOW
   if (!within(s.name, 1, TEXT.name)) return "A topic's name is 1 to " + TEXT.name + ' characters.'
   if (!within(s.summary, 0, TEXT.summary)) return 'The line on what to read is at most ' + TEXT.summary + ' characters.'
   if (!within(s.group, 0, TEXT.group)) return "A group's name is at most " + TEXT.group + ' characters.'
   if (s.cards.length > TEXT.cards) return 'A topic holds at most ' + TEXT.cards + ' cards.'
-  return s.cards.every((c) => within(c.q, 1, TEXT.q) && within(c.a, 1, TEXT.a)) ? null : 'A card has a question of 1 to ' + TEXT.q + ' characters and an answer of 1 to ' + TEXT.a + '.'
+  if (!s.cards.every((c) => within(c.q, 1, TEXT.q) && within(c.a, 1, TEXT.a))) return 'A card has a question of 1 to ' + TEXT.q + ' characters and an answer of 1 to ' + TEXT.a + '.'
+  return s.cards.every((c) => (c.wrong ?? []).length <= TEXT.wrong && (c.wrong ?? []).every((w) => within(w, 1, TEXT.a))) ? null : 'A card has at most ' + TEXT.wrong + ' wrong answers of 1 to ' + TEXT.a + ' characters.'
 }
 
 /** A topic as the farm keeps it: trimmed. */
 export const tidySeed = (s: OwnSeed): OwnSeed =>
-  ({ id: s.id, name: s.name.trim(), kind: s.kind, summary: s.summary.trim(), group: s.group.trim(), cards: s.cards.map((c) => ({ q: c.q.trim(), a: c.a.trim() })) })
+  ({ id: s.id, name: s.name.trim(), kind: s.kind, summary: s.summary.trim(), group: s.group.trim(), cards: s.cards.map((c) => ({ q: c.q.trim(), a: c.a.trim(), ...(c.wrong && c.wrong.length > 0 ? { wrong: c.wrong.map((w) => w.trim()) } : {}) })) })
 
 /* ---------- a field as a pack ---------- */
 
@@ -165,8 +172,9 @@ const asks = (q: string): string => (isQuestion(q) ? q : 'Which of these goes wi
 const turns = (c: Card): boolean => !isQuestion(c.q) && c.q.length <= 60
 
 /**
- * The questions a field's cards make: each card asked forwards to water, and backwards to harvest. The wrong answers
- * are borrowed: from the other cards of the topic first, then from the rest of the field. The field's answers are
+ * The questions a field's cards make: each card asked forwards to water, and backwards to harvest. A card is asked
+ * with the wrong answers it came with. What it is short of is borrowed: from the other cards of the topic first, then
+ * from the rest of the field. The field's answers are
  * listed once, each a single time, and a card takes the next few from where it stands in that list. So a list sorted
  * by its answers ("der" fifty times, then "die") still finds the others, and the work for one card does not grow
  * with the field.
@@ -189,8 +197,11 @@ function quiz(f: OwnField): Map<string, { water: Mcq[]; harvest: Mcq[] }> {
     const harvest: Mcq[] = []
     s.cards.forEach((c, i) => {
       const from = at++
-      /** Up to three wrong ones for `right`: the topic's own first, none that reads the same as it or as another. */
-      const wrong = (right: string, mine: (x: Card) => string | null, field: readonly string[]): string[] => {
+      /**
+       * Up to three wrong ones for `right`: the ones the card came with, then the topic's own, then the field's. None
+       * that reads the same as it or as another.
+       */
+      const wrong = (right: string, given: readonly string[], mine: (x: Card) => string | null, field: readonly string[]): string[] => {
         const found: string[] = []
         const taken = new Set([read(right)])
         const take = (w: string | null | undefined): void => {
@@ -198,17 +209,18 @@ function quiz(f: OwnField): Map<string, { water: Mcq[]; harvest: Mcq[] }> {
           taken.add(read(w))
           found.push(w)
         }
+        for (const w of given) if (found.length < 3) take(w.trim())
         for (let k = 1; k < s.cards.length && found.length < 3; k++) { const other = s.cards[(i + k) % s.cards.length]; take(other ? mine(other) : null) }
         for (let k = 0; k < field.length && found.length < 3; k++) take(field[(from + k) % field.length])
         return found
       }
       const why = c.q + (isQuestion(c.q) ? ' ' : ': ') + c.a
-      const answersFor = wrong(c.a, (x) => x.a, answers)
+      const answersFor = wrong(c.a, c.wrong ?? [], (x) => x.a, answers)
       if (answersFor.length < 2) return
       water.push({ q: asks(c.q), answer: c.a, distractors: answersFor, why })
       // Asked the other way round only when the question is a name, and the answer short enough to be a question.
       if (!turns(c) || c.a.length > 80) return
-      const fronts = wrong(c.q, (x) => (turns(x) ? x.q : null), names)
+      const fronts = wrong(c.q, [], (x) => (turns(x) ? x.q : null), names)
       if (fronts.length >= 2) harvest.push({ q: asks(c.a), answer: c.q, distractors: fronts, why })
     })
     out.set(s.id, { water, harvest })
