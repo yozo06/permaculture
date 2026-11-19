@@ -1,6 +1,6 @@
 import fc from 'fast-check'
 import { describe, expect, it } from 'vitest'
-import { TEXT, read, type Draft, type DraftTopic } from './index.ts'
+import { LIMITS, read, type Draft, type DraftTopic, type Limits } from './index.ts'
 
 const names = (d: Draft): string[] => d.topics.map((t) => t.name)
 const topic = (d: Draft, name: string): DraftTopic => {
@@ -125,7 +125,7 @@ describe('a line in two parts', () => {
   it('puts no more than eight cards in a topic, in even shares', () => {
     const d = read(Array.from({ length: 20 }, (_, i) => 'wort' + i + ' = word' + i).join('\n'))
     expect(d.topics.map((t) => t.cards.length)).toEqual([7, 7, 6])
-    expect(d.topics.every((t) => t.cards.length <= TEXT.bundle)).toBe(true)
+    expect(d.topics.every((t) => t.cards.length <= LIMITS.cards)).toBe(true)
     expect(new Set(names(d)).size).toBe(3)
   })
 
@@ -244,7 +244,7 @@ describe('cards from a table or a file of cards', () => {
   })
 
   it('makes a topic, not a card, of a pair too long for a card', () => {
-    const long = 'x'.repeat(TEXT.a + 1)
+    const long = 'x'.repeat(LIMITS.a + 1)
     const d = read(text('Hund = dog', 'Katze = cat', 'Maus = mouse', 'Essay = ' + long))
     expect(names(d)).toContain('Essay')
     expect(topic(d, 'Essay').cards).toEqual([])
@@ -498,7 +498,7 @@ describe('what a second look found', () => {
   it('keeps the name of the hundredth set of cards under one heading within what a name may hold', () => {
     const d = read(text('# ' + 'Z'.repeat(50), ...Array.from({ length: 900 }, (_, i) => 'w' + i + ' = z' + i)))
     expect(d.topics.length).toBeGreaterThan(100)
-    expect(Math.max(...d.topics.map((t) => t.name.length))).toBeLessThanOrEqual(TEXT.name)
+    expect(Math.max(...d.topics.map((t) => t.name.length))).toBeLessThanOrEqual(LIMITS.name)
     expect(new Set(names(d)).size).toBe(d.topics.length)
   })
 
@@ -564,9 +564,9 @@ describe('what a second look found', () => {
   })
 
   it('reads only so far along a line, and says so, so that no line can hold the page up', () => {
-    const long = 'x'.repeat(TEXT.line + 50)
+    const long = 'x'.repeat(LIMITS.line + 50)
     const d = read(text('Short', long))
-    expect(d.notes).toContain('Read only the first ' + TEXT.line + ' characters of 1 very long line.')
+    expect(d.notes).toContain('Read only the first ' + LIMITS.line + ' characters of 1 very long line.')
     for (const hostile of ['[a](b'.repeat(4000), '['.repeat(40000), '('.repeat(40000), '<a'.repeat(20000), '*_'.repeat(20000), 'a ? '.repeat(10000), '. '.repeat(20000) + '1', 'a' + ' '.repeat(40000) + '1', '"a",'.repeat(10000), '**a** '.repeat(8000)]) {
       const started = Date.now()
       read(hostile)
@@ -605,7 +605,7 @@ describe('what it tells the reader', () => {
     const line = 'The causes and the long consequences of the French Revolution for the rest of Europe'
     const d = read(line)
     const t = d.topics[0] as DraftTopic
-    expect(t.name.length).toBeLessThanOrEqual(TEXT.name)
+    expect(t.name.length).toBeLessThanOrEqual(LIMITS.name)
     expect(t.name.endsWith('…')).toBe(true)
     expect(t.name.startsWith('The causes and the long consequences')).toBe(true)
     expect(t.summary).toBe(line)
@@ -632,21 +632,21 @@ describe('what it tells the reader', () => {
 })
 
 describe('whatever it is given', () => {
-  const sane = (d: Draft): void => {
+  const sane = (d: Draft, lim: Limits = LIMITS): void => {
     const seen = new Set<string>()
     for (const t of d.topics) {
       expect(t.name.length).toBeGreaterThanOrEqual(1)
-      expect(t.name.length).toBeLessThanOrEqual(TEXT.name)
+      expect(t.name.length).toBeLessThanOrEqual(lim.name)
       expect(t.name).toBe(t.name.trim())
       expect(/[\p{L}\p{N}]/u.test(t.name) || /^https?:/.test(t.name)).toBe(true)
-      expect(t.summary.length).toBeLessThanOrEqual(TEXT.summary)
-      expect(t.group.length).toBeLessThanOrEqual(TEXT.group)
-      expect(t.cards.length).toBeLessThanOrEqual(TEXT.cards)
+      expect(t.summary.length).toBeLessThanOrEqual(lim.summary)
+      expect(t.group.length).toBeLessThanOrEqual(lim.group)
+      expect(t.cards.length).toBeLessThanOrEqual(lim.cards)
       for (const c of t.cards) {
         expect(c.q.length).toBeGreaterThanOrEqual(1)
-        expect(c.q.length).toBeLessThanOrEqual(TEXT.q)
+        expect(c.q.length).toBeLessThanOrEqual(lim.q)
         expect(c.a.length).toBeGreaterThanOrEqual(1)
-        expect(c.a.length).toBeLessThanOrEqual(TEXT.a)
+        expect(c.a.length).toBeLessThanOrEqual(lim.a)
       }
       expect(['facts', 'skill', 'idea', 'rule', 'whole']).toContain(t.kind)
       // eslint-disable-next-line no-control-regex
@@ -655,7 +655,7 @@ describe('whatever it is given', () => {
       expect(seen.has(key)).toBe(false)
       seen.add(key)
     }
-    expect(d.title.length).toBeLessThanOrEqual(TEXT.title)
+    expect(d.title.length).toBeLessThanOrEqual(lim.title)
     expect(d.pairs).toBeGreaterThanOrEqual(0)
   }
   const piece = fc.constantFrom('#', '##', '-', '*', '1.', '1.1', ' ', '  ', '\t', '\n', '\n\n', ' - ', ': ', ' = ', '|', '**', 'Q:', 'A:', '?', ',', '"', 'Week 1', '===', '---', '[x]', '(', ')', '\u202E', '\u0000', 'ಊಟ', 'long '.repeat(30))
@@ -667,13 +667,88 @@ describe('whatever it is given', () => {
     }), { numRuns: 400 })
   })
 
+  it('keeps to whatever limits it is given, whatever it is given to read', () => {
+    const limits = fc.record({ title: fc.integer({ min: 12, max: 80 }), name: fc.integer({ min: 12, max: 80 }), summary: fc.integer({ min: 12, max: 400 }), group: fc.integer({ min: 12, max: 80 }), q: fc.integer({ min: 1, max: 200 }), a: fc.integer({ min: 1, max: 200 }), cards: fc.integer({ min: 1, max: 12 }), lines: fc.integer({ min: 1, max: 60 }), line: fc.integer({ min: 20, max: 500 }), notes: fc.integer({ min: 0, max: 14 }) })
+    fc.assert(fc.property(junk, limits, fc.constantFrom(undefined, 'cards' as const, 'topics' as const), (s, lim, pairs) => {
+      const d = read(s, { limits: lim, ...(pairs ? { pairs } : {}) })
+      sane(d, lim)
+      expect(d.topics.length).toBeLessThanOrEqual(lim.lines * 40)
+      expect(d.notes.length).toBeLessThanOrEqual(lim.notes + 1)
+    }), { numRuns: 400 })
+  })
+
   it('reads the same text the same way twice', () => {
     fc.assert(fc.property(junk, (s) => { expect(read(s)).toEqual(read(s)) }), { numRuns: 100 })
   })
 
   it('reads a very long text without reading for ever', () => {
     const d = read(Array.from({ length: 30000 }, (_, i) => 'topic ' + i).join('\n'))
-    expect(d.topics.length).toBeLessThanOrEqual(TEXT.lines)
+    expect(d.topics.length).toBeLessThanOrEqual(LIMITS.lines)
     expect(d.notes.some((n) => n.includes('lines'))).toBe(true)
+  })
+})
+
+describe('the limits it is given', () => {
+  const words = text('## Animals', ...Array.from({ length: 12 }, (_, i) => 'Tier' + i + ' = animal' + i))
+
+  it('cuts a name, a group, a title and a line on what to read to them', () => {
+    const paste = text('# A course with a long name that goes on', '## The first part, which has a long name too', '- A topic with a rather long name of its own: and a long line about what there is to read in it')
+    const d = read(paste, { limits: { title: 16, group: 14, name: 20, summary: 30 } })
+    expect(d.title).toBe('A course with…')
+    expect(d.topics.map((t) => [t.group, t.name])).toEqual([['The first…', 'A topic with a…']])
+    expect(d.topics[0]?.summary.length).toBeLessThanOrEqual(30)
+    expect(read(paste).title).toBe('A course with a long name that goes on')
+  })
+
+  it('puts as many cards in a topic as it is told to', () => {
+    expect(read(words).topics.map((t) => t.cards.length)).toEqual([6, 6])
+    expect(read(words, { limits: { cards: 3 } }).topics.map((t) => t.cards.length)).toEqual([3, 3, 3, 3])
+    expect(read(words, { limits: { cards: 12 } }).topics.map((t) => t.cards.length)).toEqual([12])
+  })
+
+  it('makes a card only of what fits one', () => {
+    const d = read(text('Hund = dog', 'Katze = cat', 'Maus = mouse', 'Vogel = bird', 'Reh = deer'), { limits: { q: 4 } })
+    expect(d.topics.map((t) => [t.name, t.cards.map((c) => c.q)])).toEqual([['Hund, Maus, Reh', ['Hund', 'Maus', 'Reh']], ['Katze', []], ['Vogel', []]])
+  })
+
+  it('reads as many lines, and as far along each, as it is told to', () => {
+    const d = read(text('One', 'Two', 'Three', 'Four'), { limits: { lines: 2 } })
+    expect(names(d)).toEqual(['One', 'Two'])
+    const far = read('abcdefghij '.repeat(10), { limits: { line: 22, name: 40 } })
+    expect(names(far)).toEqual(['abcdefghij abcdefghij'])
+  })
+
+  it('hands back as many notes as it is told to, and counts the rest', () => {
+    const twice = text(...['a', 'b', 'c', 'd', 'e'].flatMap((x) => ['Topic ' + x, 'topic ' + x]))
+    expect(read(twice).notes).toHaveLength(5)
+    const d = read(twice, { limits: { notes: 2 } })
+    expect(d.notes).toHaveLength(3)
+    expect(d.notes[2]).toBe('And 3 more like these.')
+  })
+
+  it('keeps its own where it is given none, or something that is not a number', () => {
+    const odd = { name: Number.NaN, cards: 'three', lines: null, line: undefined, title: Number.POSITIVE_INFINITY } as unknown as Partial<Limits>
+    expect(read(words, { limits: odd })).toEqual(read(words))
+    expect(read(words, { limits: {} })).toEqual(read(words))
+    expect(read(words, { limits: null as unknown as Partial<Limits> })).toEqual(read(words))
+  })
+
+  it('brings a limit that is too small or too large to the nearest it can work with', () => {
+    const long = 'A topic whose name is certainly longer than twelve characters'
+    expect(read(long, { limits: { name: 0 } }).topics[0]?.name).toBe(read(long, { limits: { name: 12 } }).topics[0]?.name)
+    expect(read(long, { limits: { name: -5 } }).topics[0]?.name.length).toBeLessThanOrEqual(12)
+    expect(read(words, { limits: { cards: 0 } }).topics.map((t) => t.cards.length)).toEqual(Array.from({ length: 12 }, () => 1))
+    expect(read(words, { limits: { cards: 2.9 } }).topics.map((t) => t.cards.length)).toEqual([2, 2, 2, 2, 2, 2])
+    expect(read(text('One', 'Two'), { limits: { lines: 0 } }).topics).toHaveLength(1)
+    expect(read('x'.repeat(5000), { limits: { line: 1e9, name: 1e9 } }).topics[0]?.name).toBe('x'.repeat(400))
+  })
+
+  it('does not change the limits it was handed, nor its own', () => {
+    const mine = { name: 5, cards: 2.5 }
+    const before = { ...LIMITS }
+    read(words, { limits: mine })
+    expect(mine).toEqual({ name: 5, cards: 2.5 })
+    expect(LIMITS).toEqual(before)
+    expect(Object.isFrozen(LIMITS)).toBe(true)
   })
 })

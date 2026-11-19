@@ -6,11 +6,11 @@ import { allowed, apply, check, fold, initialState, parseEvent, refusedCount } f
 import { EXPLANATION, NOTES, earningCatalog, run, smallCatalog as cat, smallFarm, started } from './fixtures'
 import { explainChecklist, harvestWork, waterWork } from './ladder'
 import { fieldOrigin, fieldOf } from './land'
-import { KINDS, KIND_ORDER, OWN, OWN_TODAY, catalogFor, isOwnId, ownPack, whyOwnSeed, whyTitle, type OwnField, type OwnSeed } from './own'
+import { KINDS, KIND_ORDER, OWN, OWN_TODAY, READING, TEXT, catalogFor, isOwnId, ownPack, whyOwnSeed, whyTitle, type OwnField, type OwnSeed } from './own'
 import { makePicture } from './picture'
 import { earnedProgress, readiness } from './readiness'
 import { RULES, cropOf } from './rules'
-import { HIDDEN, TEXT, read } from '../reader'
+import { HIDDEN, read } from '../reader'
 import type { FarmEvent, FarmState } from './types'
 
 const F = 'my_abcd1234'
@@ -367,6 +367,29 @@ describe('own-seeds-set', () => {
     expect(check(full, setSeeds([seed('aaaaaa', { name: 'Renamed' })]), cat)).toBeNull()
     const most = run(cat, [setSeeds(many(OWN.seeds - OWN_TODAY.seeds, 1000))], full)
     expect(allowed(most, setSeeds([seed('cccccc')]), cat)).toMatch(/holds/)
+  })
+})
+
+describe('what the farm asks of the reader', () => {
+  it('asks for nothing wider than a farm may hold', () => {
+    for (const key of ['title', 'name', 'summary', 'group', 'q', 'a', 'cards'] as const) expect(READING[key], key).toBeLessThanOrEqual(TEXT[key])
+  })
+
+  it('takes every topic the reader makes by the limits the farm hands it', () => {
+    const piece = fc.constantFrom('#', '##', '-', '1.', ' ', '\t', '\n', '\n\n', ' - ', ': ', ' = ', '|', '**', 'Q:', 'A:', '?', ',', 'Week 1', 'long '.repeat(30), 'x'.repeat(70), 'alpha', 'beta', 'gamma')
+    const junk = fc.array(fc.oneof(piece, fc.string({ maxLength: 12 })), { maxLength: 60 }).map((a) => a.join(''))
+    fc.assert(fc.property(junk, fc.constantFrom(undefined, 'cards' as const, 'topics' as const), (s, pairs) => {
+      const d = read(s, { limits: READING, ...(pairs ? { pairs } : {}) })
+      expect(whyTitle(d.title || 'x')).toBeNull()
+      for (const t of d.topics) expect(whyOwnSeed({ id: F + '_aaaaaa', ...t }), JSON.stringify(t)).toBeNull()
+    }), { numRuns: 300 })
+  })
+
+  it('would refuse what the reader makes by wider limits, which is why it hands over its own', () => {
+    const long = 'A topic with a name far longer than the forty-eight characters a farm has room for'
+    const made = (limits: { name: number }): OwnSeed => ({ id: F + '_aaaaaa', name: '', kind: 'idea', summary: '', group: '', cards: [], ...read(long, { limits }).topics[0] })
+    expect(whyOwnSeed(made({ name: 200 }))).toMatch(/1 to 48/)
+    expect(whyOwnSeed(made(READING))).toBeNull()
   })
 })
 

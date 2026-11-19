@@ -5,7 +5,7 @@
 // a kind becomes a layer, a rubric and a harvest; a group becomes a branch; cards become questions, with the wrong
 // answers borrowed from the other cards of the field. So a saved farm cannot carry a rule of its own making.
 import { buildCatalog, type Catalog } from './catalog'
-import { HIDDEN, TEXT, type Card, type Kind } from '../reader'
+import { HIDDEN, type Card, type Kind, type Limits } from '../reader'
 import type { BranchDef, Layer, Mcq, PackDef, SeedDef } from './types'
 import { isRecord } from './util'
 
@@ -35,6 +35,14 @@ export type Own = Readonly<Record<string, OwnField>>
 export const OWN = { fields: 20, seeds: 300 } as const
 /** What the game asks of something done today: fields on the farm (the game's and the farmer's), and topics in one field. */
 export const OWN_TODAY = { fields: 9, seeds: 150 } as const
+/** The most the text of a field and of a topic may hold on a farm, and the most cards in a topic. These never go down either. */
+export const TEXT = { title: 60, name: 48, summary: 300, group: 60, q: 160, a: 120, cards: 10 } as const
+/**
+ * The limits the game hands the reader, so that whatever it makes of a paste fits a farm. The farm's limits are the
+ * farm's own, and no reader's: a saved farm must fit whatever a reader comes to allow. A set of cards is made smaller
+ * than a topic can hold.
+ */
+export const READING = { title: TEXT.title, name: TEXT.name, summary: TEXT.summary, group: TEXT.group, q: TEXT.q, a: TEXT.a, cards: 8 } as const satisfies Partial<Limits>
 
 // The game's own ids are made of letters, digits and hyphens, so nothing of the game's can ever look like one of these.
 const FIELD_ID = /^my_[0-9a-z]{8}$/

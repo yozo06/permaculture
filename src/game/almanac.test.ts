@@ -1,8 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { collectPacks } from '../../scripts/packs-lib.mjs'
 import { buildCatalog, LAYER_NAMES } from '../engine/catalog'
-import { OWN_TODAY } from '../engine/own'
-import { TEXT } from '../reader'
+import { OWN_TODAY, READING } from '../engine/own'
 import { GROUND_UP } from '../engine/readiness'
 import { RULES } from '../engine/rules'
 import { almanacHtml } from './almanac'
@@ -22,7 +21,7 @@ describe('almanacHtml', () => {
     expect(section).toContain('+ Your own')
     expect(section).toContain('costs ' + RULES.fence.own + ' coins a tile')
     expect(section).toContain('It holds ' + OWN_TODAY.seeds + ' topics')
-    expect(section).toContain('up to ' + TEXT.bundle + ' to a topic')
+    expect(section).toContain('up to ' + READING.cards + ' to a topic')
     expect(section).toContain('a skill to practise')
   })
 

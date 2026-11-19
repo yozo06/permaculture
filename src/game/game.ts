@@ -8,8 +8,8 @@ import {
 } from '../engine/land'
 import { farmFileName, farmFileText, parseFarmFile } from '../engine/log'
 import { buyersFor, standing } from '../engine/market'
-import { catalogFor, fieldOfSeed, isOwnId, kindLabel, whyTitle } from '../engine/own'
-import { TEXT, read as readText } from '../reader'
+import { READING, TEXT, catalogFor, fieldOfSeed, isOwnId, kindLabel, whyTitle } from '../engine/own'
+import { read as readText } from '../reader'
 import { farmAtEndOf } from '../engine/past'
 import { WALK_QUESTIONS, isWalkDay, walkedToday } from '../engine/walk'
 import { farmCode, layOut, momentOf, readPicture, type Picture } from '../engine/picture'
@@ -1507,7 +1507,7 @@ function reread(): void {
   const field = a && Object.hasOwn(S.own, a.field) ? S.own[a.field] : undefined
   const box = document.getElementById('ownText'), out = document.getElementById('ownReading'), go = document.getElementById('ownAdd')
   if (!a || !field || !(box instanceof HTMLTextAreaElement) || !out || !(go instanceof HTMLButtonElement)) return
-  const draft = readText(box.value, a.pairs ? { pairs: a.pairs } : {})
+  const draft = readText(box.value, { limits: READING, ...(a.pairs ? { pairs: a.pairs } : {}) })
   a.adding = toAdd(draft, field)
   out.innerHTML = readingHtml(draft, a.adding, a.pairs)
   const n = a.adding.seeds.length

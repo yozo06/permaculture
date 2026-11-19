@@ -41,13 +41,55 @@ export interface Draft {
   pairsAs: 'cards' | 'topics'
 }
 
+/** The most each piece of a draft may hold, and how much of a text is read. */
+export interface Limits {
+  title: number
+  name: number
+  /** The line on what to read. */
+  summary: number
+  group: number
+  /** A card's question, and its answer. A pair with a longer side is not made into a card. */
+  q: number
+  a: number
+  /** Cards put in one topic. */
+  cards: number
+  /** Lines read, and characters read of each. */
+  lines: number
+  line: number
+  /** Notes handed back. The rest are counted in one more. */
+  notes: number
+}
+
 export interface ReadOptions {
   /** Read lines in two parts this way, whatever they look like. */
   pairs?: 'cards' | 'topics'
+  /** Limits to keep to in place of the reader's own. One left out, or not a number, is the reader's own. */
+  limits?: Partial<Limits>
 }
 
-/** The most each piece of text may hold, the most cards in a topic, and the most lines read. */
-export const TEXT = { title: 60, name: 48, summary: 300, group: 60, q: 160, a: 120, cards: 10, bundle: 8, lines: 2000, line: 400, notes: 12 } as const
+/** The limits kept to when none are given. */
+export const LIMITS: Readonly<Limits> = Object.freeze({ title: 60, name: 48, summary: 300, group: 60, q: 160, a: 120, cards: 8, lines: 2000, line: 400, notes: 12 })
+
+/**
+ * The least and the most each limit can be set to. A name needs room for an ellipsis and a number after it. No more
+ * of a line is read than the reader's own limit: its rules were timed on lines up to that length, and a few of them
+ * slow down on longer ones. The time a text takes grows in step with `lines`.
+ */
+const BOUNDS: Readonly<Record<keyof Limits, readonly [number, number]>> = {
+  title: [12, 400], name: [12, 400], summary: [12, 10000], group: [12, 400], q: [1, 400], a: [1, 400], cards: [1, 1000], lines: [1, 20000], line: [20, 400], notes: [0, 1000],
+}
+
+/** The limits to read by: each one given, as a whole number within its bounds, and the reader's own for the rest. */
+function limitsOf(given: unknown): Limits {
+  const out: Limits = { ...LIMITS }
+  if (typeof given !== 'object' || given === null) return out
+  for (const key of Object.keys(BOUNDS) as (keyof Limits)[]) {
+    const v: unknown = (given as Record<string, unknown>)[key]
+    const [least, most] = BOUNDS[key]
+    if (typeof v === 'number' && Number.isFinite(v)) out[key] = Math.min(most, Math.max(least, Math.floor(v)))
+  }
+  return out
+}
 
 interface Pair {
   left: string
@@ -236,7 +278,7 @@ function unpaged(s: string): string {
 }
 
 /** Short enough to be asked as a card. */
-const fitsCard = (p: Pair): boolean => p.left.length <= TEXT.q && p.right.length <= TEXT.a
+const fitsCard = (p: Pair, lim: Limits): boolean => p.left.length <= lim.q && p.right.length <= lim.a
 /** Looks like something to be asked, and not like a topic with a sentence about it. */
 const cardLike = (p: Pair): boolean =>
   p.strong || (!p.named && p.left.length <= 60 && !NOTE.test(p.right) && (p.eq ? p.right.length <= 80 : p.right.length <= 40 && words(p.right) <= 6))
@@ -620,11 +662,11 @@ function shares<T>(items: T[], size: number): T[][] {
 }
 
 /** A name for a set of cards that stands under no heading: its first few questions. */
-function fronts(cards: Card[]): string {
+function fronts(cards: Card[], lim: Limits): string {
   let s = ''
   for (const c of cards) {
     const next = s ? s + ', ' + c.q : c.q
-    if (next.length > TEXT.name - 1) return s ? s + '…' : fit(c.q, TEXT.name)
+    if (next.length > lim.name - 1) return s ? s + '…' : fit(c.q, lim.name)
     s = next
   }
   return s
@@ -632,20 +674,21 @@ function fronts(cards: Card[]): string {
 
 /** Read a learner's own text into topics. Never throws. */
 export function read(input: string, opts: ReadOptions = {}): Draft {
+  const lim = limitsOf(opts.limits)
   const notes: string[] = []
   const said = new Set<string>()
   const note = (n: string, key = n): void => { if (!said.has(key)) { said.add(key); notes.push(n) } }
 
   let lines = String(input).normalize('NFC').replace(LINE_END, '\n').replace(SPACES, ' ').replace(WIDE_COLON, ': ').replace(WIDE_EQUALS, ' = ').replace(UNSEEN, '').split('\n')
-  if (lines.length > TEXT.lines) {
-    note('Read the first ' + TEXT.lines + ' lines only; the text has ' + lines.length + '.')
-    lines = lines.slice(0, TEXT.lines)
+  if (lines.length > lim.lines) {
+    note('Read the first ' + lim.lines + ' lines only; the text has ' + lines.length + '.')
+    lines = lines.slice(0, lim.lines)
   }
   // No name or note is as long as this, and a line read only so far cannot keep a pattern busy for long.
-  const long = lines.filter((l) => l.length > TEXT.line).length
+  const long = lines.filter((l) => l.length > lim.line).length
   if (long > 0) {
-    note('Read only the first ' + TEXT.line + ' characters of ' + long + (long === 1 ? ' very long line.' : ' very long lines.'))
-    lines = lines.map((l) => (l.length > TEXT.line ? l.slice(0, TEXT.line) : l))
+    note('Read only the first ' + lim.line + ' characters of ' + long + (long === 1 ? ' very long line.' : ' very long lines.'))
+    lines = lines.map((l) => (l.length > lim.line ? l.slice(0, lim.line) : l))
   }
   const toks = tokens(lines, note)
   levels(toks)
@@ -667,7 +710,7 @@ export function read(input: string, opts: ReadOptions = {}): Draft {
   let over: Node | null = null
   const only = top[0]
   if (top.length === 1 && only && only.children.length > 0) {
-    title = fit(headingText(only), TEXT.title)
+    title = fit(headingText(only), lim.title)
     // A plain line taken for the title is not a topic any more, and a person should know that it was.
     if (only.tok.guessed) note('Read as the title of the whole list, not as a topic: ' + title)
     over = only
@@ -688,7 +731,7 @@ export function read(input: string, opts: ReadOptions = {}): Draft {
     if (opts.pairs) return opts.pairs === 'cards'
     const mine = ns.filter((n) => n.children.length === 0)
     const paired = mine.filter((n) => n.tok.pair)
-    const fitting = paired.filter((n) => n.tok.pair && fitsCard(n.tok.pair))
+    const fitting = paired.filter((n) => n.tok.pair && fitsCard(n.tok.pair, lim))
     const like = fitting.filter((n) => n.tok.pair && cardLike(n.tok.pair)).length
     return fitting.length >= 3 && like >= 0.8 * fitting.length && paired.length >= 0.6 * mine.length
   }
@@ -707,7 +750,7 @@ export function read(input: string, opts: ReadOptions = {}): Draft {
       // A set of cards is kept under a name of its own; a topic that is there twice is left out.
       if (!spare) return note('Left out, because it is there twice: ' + name, 'twice:' + name.toLowerCase())
       const base = name
-      for (let i = 2; taken.has(name.toLowerCase()); i++) name = fit(base, TEXT.name - (' (' + i + ')').length) + ' (' + i + ')'
+      for (let i = 2; taken.has(name.toLowerCase()); i++) name = fit(base, lim.name - (' (' + i + ')').length) + ' (' + i + ')'
     }
     taken.add(name.toLowerCase())
     topics.push({ ...t, name })
@@ -718,7 +761,7 @@ export function read(input: string, opts: ReadOptions = {}): Draft {
     if (parent && parent.tok.body.length) bodies++
     const here = cardsUnder(ns)
     // What can only be a card (a question and its answer, a table) is one, unless the reader was told otherwise.
-    const isCard = (n: Node): boolean => n.tok.pair !== null && fitsCard(n.tok.pair) && (here || (opts.pairs === undefined && n.tok.pair.strong))
+    const isCard = (n: Node): boolean => n.tok.pair !== null && fitsCard(n.tok.pair, lim) && (here || (opts.pairs === undefined && n.tok.pair.strong))
     const cards = ns.filter((n) => n.children.length === 0 && isCard(n))
     asCards += cards.length
     let cardsDone = false
@@ -726,7 +769,7 @@ export function read(input: string, opts: ReadOptions = {}): Draft {
       if (n.children.length > 0) {
         const mine = headingText(n)
         // The first heading down is the group; the ones under it are said in the line on what to read.
-        within(n.children, n, group || fit(mine, TEXT.group), group ? [...middle, mine] : middle)
+        within(n.children, n, group || fit(mine, lim.group), group ? [...middle, mine] : middle)
         continue
       }
       if (isCard(n)) {
@@ -741,31 +784,31 @@ export function read(input: string, opts: ReadOptions = {}): Draft {
           seen.add(p.left.toLowerCase())
           all.push({ q: p.left, a: p.right })
         }
-        const sets = shares(all, TEXT.bundle)
+        const sets = shares(all, lim.cards)
         const under = parent ? headingText(parent) : ''
         sets.forEach((set, i) => {
           const tag = ' (' + (i + 1) + ')'
-          const name = under ? (sets.length > 1 ? fit(under, TEXT.name - tag.length) + tag : fit(under, TEXT.name)) : fronts(set)
+          const name = under ? (sets.length > 1 ? fit(under, lim.name - tag.length) + tag : fit(under, lim.name)) : fronts(set, lim)
           const list = set.length + (set.length === 1 ? ' card: ' : ' cards: ') + set.map((c) => c.q).join(', ')
           // Sets under one heading are grouped by it; one set under a heading stands where the heading stood.
-          const g = under && sets.length > 1 && !group ? fit(under, TEXT.group) : parent && group === fit(under, TEXT.group) && sets.length === 1 ? '' : group
-          add({ name, summary: fit(list, TEXT.summary), kind: 'facts', group: g, cards: set }, true)
+          const g = under && sets.length > 1 && !group ? fit(under, lim.group) : parent && group === fit(under, lim.group) && sets.length === 1 ? '' : group
+          add({ name, summary: fit(list, lim.summary), kind: 'facts', group: g, cards: set }, true)
         })
         continue
       }
       const p = n.tok.pair
       const whole = p ? p.left : n.tok.text
-      const name = fit(whole, TEXT.name)
+      const name = fit(whole, lim.name)
       if (name !== whole) note('Shortened, with the whole line kept as what to read: ' + name, 'short:' + name)
       const parts = [name !== whole ? whole : '', p ? p.right : '', n.tok.body.join(' '), n.tok.aside.join(' '), n.tok.links.join(' '), middle.length ? 'Part of ' + middle.join(' › ') + '.' : ''].filter(Boolean)
       const summary = parts.join(name !== whole && p ? ': ' : ' ')
-      if (summary.length > TEXT.summary) note('Cut short, the line on what to read for: ' + name, 'cut:' + name)
-      add({ name, summary: fit(summary, TEXT.summary), kind: kindOf(whole), group, cards: [] }, false)
+      if (summary.length > lim.summary) note('Cut short, the line on what to read for: ' + name, 'cut:' + name)
+      add({ name, summary: fit(summary, lim.summary), kind: kindOf(whole), group, cards: [] }, false)
     }
   }
   within(top, over, '', [])
   if (bodies > 0) note('Left out the text under ' + bodies + (bodies === 1 ? ' heading.' : ' headings.'))
 
-  const shown = notes.length > TEXT.notes + 1 ? [...notes.slice(0, TEXT.notes), 'And ' + (notes.length - TEXT.notes) + ' more like these.'] : notes
+  const shown = notes.length > lim.notes + 1 ? [...notes.slice(0, lim.notes), 'And ' + (notes.length - lim.notes) + ' more like these.'] : notes
   return { title, topics, notes: shown, pairs, pairsAs: opts.pairs ?? (pairs > 0 && 2 * asCards >= pairs ? 'cards' : 'topics') }
 }
