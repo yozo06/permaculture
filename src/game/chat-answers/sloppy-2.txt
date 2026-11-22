@@ -1,0 +1,55 @@
+Sure! Here is your study list for GCSE Physics:
+
+Part 1: Forces and Motion
+
+Topic 1.1: Speed and velocity
+Read - the chapter on scalars and vectors in your revision guide
+Q: What is the difference between speed and velocity?
+A: Velocity has a direction and speed does not
+Wrong: Speed is measured in newtons, Velocity is always smaller than speed, Speed has a direction and velocity does not
+Q: Which equation gives the average speed of an object?
+A: Distance divided by time
+Wrong: Time divided by distance, Mass times acceleration, Force divided by area
+Q: What is the SI unit of velocity?
+A: Metres per second
+Wrong: Metres per second squared, Newtons, Joules per second
+
+Topic 1.2: Newton's laws
+Read - the three laws of motion and the worked examples on resultant force
+Q: What does Newton's first law say about an object with no resultant force?
+A: It stays at rest or keeps moving at a constant velocity
+Wrong: It always slows down, It speeds up steadily, It moves in a circle
+Q: Which equation links force, mass and acceleration?
+A: F = ma
+Wrong: F = mv, F = m/a, F = a/m
+Q: What is the SI unit of force?
+A: Newton
+Wrong: Joule, Watt, Pascal
+
+Part 2: Energy
+
+Topic 2.1: Kinetic and potential energy
+Read - the formulae for kinetic and gravitational potential energy
+Q: Which equation gives kinetic energy?
+A: Half times mass times speed squared
+Wrong: Mass times gravity times height, Force times distance, Mass times speed
+Q: What does gravitational potential energy depend on?
+A: Mass, height and gravitational field strength
+Wrong: Mass and speed only, Height and time only, Speed and gravitational field strength
+Q: What energy store increases when you lift a book onto a shelf?
+A: Gravitational potential
+Wrong: Kinetic, Thermal, Elastic potential
+
+Topic 2.2: Conservation of energy
+Read - the idea that energy is transferred but never created or destroyed
+Q: What does the law of conservation of energy say?
+A: Energy cannot be created or destroyed, only transferred
+Wrong: Energy is used up when it is transferred, Energy is created in a battery, Energy always ends up as sound
+Q: Where does most wasted energy usually end up?
+A: As thermal energy in the surroundings
+Wrong: As chemical energy, As gravitational energy, As nuclear energy
+Q: How do you calculate efficiency?
+A: Useful output energy divided by total input energy
+Wrong: Total input energy divided by useful output energy, Useful output power times time, Total input energy minus useful output energy
+
+I hope this helps with your revision! Let me know if you want more questions on any topic.

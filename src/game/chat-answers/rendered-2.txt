@@ -1,0 +1,68 @@
+Part 1: Cell biology
+
+1. Topic: Cell structure
+	Read: Label animal, plant and bacterial cells and match each part to its job.
+	Which organelle releases energy in a cell? = mitochondrion | ribosome | nucleus | vacuole
+	Which part controls what enters and leaves the cell? = cell membrane | cell wall | cytoplasm | nucleus
+	Which structure makes plant cells rigid? = cellulose cell wall | cell membrane | chloroplast | cytoplasm
+	Where does protein synthesis happen? = ribosomes | mitochondria | lysosomes | the nucleus
+
+2. Topic: Cell division
+	Read: Follow the stages of mitosis and explain why cells divide.
+	How many daughter cells does mitosis produce? = two | four | one | eight
+	Are daughter cells from mitosis identical to the parent? = Yes, they are identical clones | No, each one is different | Only half are identical | Only in plants
+	What is a stem cell? = An unspecialised cell that can differentiate | A cell that has stopped dividing | A cell with two nuclei | A cell found only in plants
+	In which phase is DNA copied? = interphase | prophase | anaphase | telophase
+
+3. Topic: Transport in cells
+	Read: Compare diffusion, osmosis and active transport with examples.
+	What is diffusion? = Net movement from high to low concentration | Movement against a concentration gradient | Movement of cells toward a stimulus | Movement of water by pumping
+	Which process needs energy to move substances? = active transport | diffusion | osmosis | passive transport
+	What is osmosis? = Water moving across a partially permeable membrane | Solutes moving across a membrane using energy | Gas exchange in the lungs | Water leaving through the cell wall
+	What happens to a plant cell in pure water? = It swells and becomes turgid | It shrinks and becomes flaccid | It bursts open at once | It stays exactly the same
+
+Part 2: Organisation
+
+1. Topic: Digestive system
+	Read: Trace food through the gut and name the enzyme made at each stage.
+	Which enzyme breaks down starch? = amylase | protease | lipase | lactase
+	Where is bile made? = liver | gall bladder | pancreas | stomach
+	What does lipase break fats into? = fatty acids and glycerol | amino acids | simple sugars | starch
+	Why does the stomach contain hydrochloric acid? = To give protease its optimum pH | To digest fats | To store bile | To absorb water
+
+2. Topic: Heart and blood vessels
+	Read: Draw the double circulation and label the chambers and valves.
+	Which chamber pumps blood to the body? = left ventricle | right ventricle | left atrium | right atrium
+	Which vessel carries blood away from the heart? = artery | vein | capillary | venule
+	What do valves in the heart do? = Prevent backflow of blood | Pump blood faster | Filter the blood | Store oxygen
+	Which blood component carries oxygen? = red blood cells | white blood cells | platelets | plasma
+
+3. Topic: Plant tissues
+	Read: Sketch a leaf cross-section and a stem and name each tissue.
+	Which tissue carries water up a plant? = xylem | phloem | epidermis | mesophyll
+	What does phloem transport? = dissolved sugars | water only | minerals only | carbon dioxide
+	Which cells control the size of stomata? = guard cells | palisade cells | root hair cells | xylem vessels
+	Where does most photosynthesis occur in a leaf? = palisade mesophyll | spongy mesophyll | upper epidermis | the xylem
+
+Part 3: Infection and response
+
+1. Topic: Pathogens and disease
+	Read: List the four types of pathogen with one disease for each.
+	Which type of pathogen causes malaria? = protist | virus | bacterium | fungus
+	How are viruses different from bacteria? = They reproduce only inside host cells | They are much larger than bacteria | They have a nucleus and cytoplasm | They can be killed by antibiotics
+	Which disease is caused by a bacterium? = salmonella food poisoning | measles | HIV | athlete's foot
+	How is cholera spread? = contaminated water | droplets in the air | sexual contact | mosquito bites
+
+2. Topic: Vaccination
+	Read: Explain how a vaccine trains the immune system and why it protects others.
+	What does a vaccine contain? = Dead or weakened pathogens | Antibiotics | Live white blood cells | Antibodies from another person
+	What is herd immunity? = Most people being immune protects the rest | A vaccine that works on all pathogens | Antibodies passed from mother to baby | Animals gaining immunity from farm diseases
+	Why do memory cells matter? = They respond faster to reinfection | They kill all bacteria directly | They make antibiotics | They carry oxygen
+	Why can't antibiotics treat viral infections? = Viruses reproduce inside our cells | Viruses are too large | Viruses have no DNA | Antibiotics only work on fungi
+
+3. Topic: Antibiotics and drugs
+	Read: Read how drugs are discovered and tested before they reach patients.
+	What is antibiotic resistance? = Bacteria evolving to survive antibiotics | Patients becoming allergic to antibiotics | Viruses attacking antibiotics | Antibiotics losing their colour
+	Which drug comes from the mould Penicillium? = penicillin | aspirin | digitalis | morphine
+	Which plant gives the heart drug digitalis? = foxglove | willow | poppy | cinchona
+	Who first takes a new drug in clinical trials? = healthy volunteers | children | the elderly only | laboratory mice

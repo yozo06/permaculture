@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs'
+import { readFileSync, readdirSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { buildCatalog } from '../engine/catalog'
 import { smallCatalog as cat, smallFarm, run } from '../engine/fixtures'
@@ -519,5 +519,41 @@ describe('the box of a topic\'s cards, with wrong answers', () => {
     const had = [{ q: 'Capital of Peru?', a: 'Lima', wrong: ['Quito', 'Bogotá'] }]
     expect(cardsFromText('Capital of Peru? = Lima', had).cards).toEqual([{ q: 'Capital of Peru?', a: 'Lima' }])
     expect(cardsFromText('Capital of Peru? = Lima | Cusco', had).cards).toEqual([{ q: 'Capital of Peru?', a: 'Lima', wrong: ['Cusco'] }])
+  })
+})
+
+describe('an answer in one code block', () => {
+  // The coffee paste is the one a real chat wrote; the twenty beside it were written by agents playing chats of
+  // different care, to the request of version 0.10.0.
+  const dir = 'src/game/chat-answers/'
+  const answers: [string, string][] = [
+    ['coffee', readFileSync('src/reader/pastes/coffee-chat.txt', 'utf8')],
+    ...readdirSync(dir).filter((f) => f.endsWith('.txt')).sort().map((f): [string, string] => [f, readFileSync(dir + f, 'utf8')]),
+  ]
+  const READING = { title: 60, name: 48, summary: 300, group: 60, q: 160, a: 120, cards: 8 }
+  const seen = (text: string) => {
+    const d = read(text, { limits: READING })
+    return { title: d.title, topics: d.topics.map((t) => [t.group, t.name, t.kind, t.cards.length]) }
+  }
+
+  it('reads the same inside a fence as bare, with or without a language after the fence', () => {
+    for (const [name, text] of answers) {
+      const bare = seen(text)
+      expect(seen('```\n' + text.trim() + '\n```'), name).toEqual(bare)
+      expect(seen('```text\n' + text.trim() + '\n```'), name).toEqual(bare)
+    }
+  })
+
+  it('reads the same when the whole page was selected, with the chat\'s words and the code block\'s label around it', () => {
+    for (const [name, text] of answers) {
+      const page = ['Here is your study list.', '', 'text', 'Copy code', text.trim(), '', 'Let me know if you would like more questions on any topic.'].join('\n')
+      expect(seen(page), name).toEqual(seen(text))
+    }
+  })
+
+  it('keeps a short list in a fence when the chat talks around it', () => {
+    const short = (answers.find(([n]) => n === 'tidy-1.txt')?.[1] ?? '').split('\n').slice(0, 30).join('\n')
+    const around = ['Sure! Here is a short study list for you to paste into your game.', 'I kept it small, as you asked.', 'Each topic has a few questions.', '', '```', short, '```', '', 'Good luck with your learning!', 'If you want, I can add more topics later.', 'Just ask.'].join('\n')
+    expect(seen(around)).toEqual(seen(short))
   })
 })

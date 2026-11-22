@@ -508,9 +508,17 @@ function tokens(input: string[], p: Patterns, note: (n: Note, key?: string) => v
   // A list handed over in a block of code, as a chat does so that it copies cleanly, is the list and not code: when
   // far more stands inside the blocks than outside them, and what stands inside is such a list, only the rows of
   // backticks are left out.
+  // A list may also come in a block marked as plain text, or not marked at all, when hardly any line in it is code.
   const beside = lines.filter((l, i) => !code.has(i) && l.trim() !== '').length
   const listInCode = lines.some((l, i) => code.has(i) && (quizLine(l) || (labelish(l) && p.topic.test(bare(l)))))
-  if (codeBlocks > 0 && listInCode && code.size - 2 * codeBlocks > 3 * beside) {
+  const marks = lines.filter((l, i) => code.has(i) && /^\s*```/.test(l)).map((l) => l.replace(/^\s*`+/, '').trim())
+  const inside = lines.filter((l, i) => code.has(i) && !/^\s*```/.test(l) && l.trim() !== '')
+  const codey = (l: string): boolean => /[;{}]\s*$|=>|[\w.]\(.*\)\s*$|^\s*(?:def|function|import|from|const|let|var|class|return|public|private|#include)\b/.test(l)
+  const plainInCode = marks.every((m) => m === '' || p.plainCode.test(m)) && inside.filter(codey).length * 4 < inside.length
+  /** When the list came in blocks, a whole sentence outside them is the chat talking: "I kept it short, as you asked." */
+  const talk = new Set<number>()
+  if (codeBlocks > 0 && (listInCode || plainInCode) && code.size - 2 * codeBlocks > 3 * beside) {
+    lines.forEach((l, i) => { if (!code.has(i) && /\p{L}.*[.!?:]\s*$/u.test(l) && !quizLine(l)) talk.add(i) })
     code = new Set([...code].filter((i) => /^\s*```/.test(lines[i] ?? '')))
     codeBlocks = 0
   }
@@ -549,9 +557,16 @@ function tokens(input: string[], p: Patterns, note: (n: Note, key?: string) => v
   const skip = new Set<number>()
   let firstRow = true
   let count = 0, countRoman = 0, countLetter = 0
+  // Selecting a chat's whole page copies a code block's button and, on the line before it, the block's language.
+  const dress = new Set<number>()
+  lines.forEach((l, i) => {
+    if (!p.codeButton.test(l.trim())) return
+    dress.add(i)
+    if (/^\s*\S{1,20}\s*$/.test(lines[i - 1] ?? '')) dress.add(i - 1)
+  })
   for (const [at, line] of lines.entries()) {
     // A block of code is not notes.
-    if (code.has(at)) continue
+    if (code.has(at) || dress.has(at) || talk.has(at)) continue
     const lead = /^[ \t]*/.exec(line)?.[0] ?? ''
     const indent = [...lead].reduce((n, ch) => n + (ch === '\t' ? 4 : 1), 0)
     let rest = line.slice(lead.length).trimEnd()

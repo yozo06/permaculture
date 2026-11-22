@@ -1,0 +1,117 @@
+Part: Cloud Concepts
+Topic: What is cloud computing
+Read: Write a one-page explanation of the cloud for a friend who has never used it, then compare it to your own words afterwards.
+Which best describes the cloud? = On-demand IT resources over the internet with pay-as-you-go pricing | Servers you buy and keep in your own office | A fixed monthly contract for a set amount of hardware | A single data centre run by one company
+What is a main benefit of cloud over on-premises: no up-front hardware purchase? = Trading capital expense for variable expense | Having to forecast capacity years ahead | Owning the physical servers | Lower flexibility
+Which of these is a cloud deployment model? = All of the above | Public cloud | Private cloud | Hybrid cloud
+What does elasticity mean in the cloud? = Resources scale up and down with demand | Resources are fixed in size | Resources are free | Resources are always on one server
+
+Topic: The six advantages of cloud
+Read: Learn the six advantages by heart from the AWS whitepaper and invent one real example for each.
+Which advantage lets you stop guessing capacity? = Stop guessing capacity | Increase speed and agility | Go global in minutes | Stop spending money running data centres
+What does going global in minutes mean? = Deploying in many regions quickly | Using a single region | Buying hardware worldwide | Hiring staff overseas
+How does cloud benefit from economies of scale? = Lower pay-as-you-go prices | Higher fixed prices | Slower deployments | Fewer services
+Which of these is one of the six advantages? = Trade fixed expense for variable expense | Buy more servers than you need | Lock in a three-year price | Manage your own data centre
+
+Topic: Cloud service models
+Read: Sort ten products you use every day into IaaS, PaaS and SaaS and justify each choice.
+Which model gives you virtual servers you manage yourself? = IaaS | PaaS | SaaS | FaaS
+Which model hides the operating system and runtime from you? = PaaS | IaaS | On-premises | Colocation
+Gmail is an example of which model? = SaaS | IaaS | PaaS | Hybrid
+Which model gives you the most control over the underlying infrastructure? = IaaS | SaaS | PaaS | Serverless
+
+Topic: The Well-Architected Framework
+Read: Pick a small app you know and score it against each pillar in a simple table.
+How many pillars does the AWS Well-Architected Framework have? = Six | Three | Five | Ten
+Which pillar covers running workloads and learning from failures? = Operational excellence | Reliability | Security | Cost optimization
+Which pillar is about recovering from failures and meeting demand? = Reliability | Performance efficiency | Sustainability | Security
+Which pillar was added most recently? = Sustainability | Security | Reliability | Cost optimization
+
+Part: Core Services
+Topic: Compute (EC2 & Lambda)
+Read: Do two things - launch a free-tier EC2 instance, then write and trigger a tiny Lambda function and compare what you had to manage.
+What is Amazon EC2? = Resizable virtual servers in the cloud | A managed database | An object storage service | A content delivery network
+What is a key feature of AWS Lambda? = You run code without managing servers | You manage the operating system | You pay for idle time | You must choose an instance type
+Which EC2 purchasing option offers up to 90% off but can be interrupted? = Spot Instances | On-Demand | Reserved Instances | Dedicated Hosts
+Which service automatically adds or removes EC2 instances? = Auto Scaling | CloudFront | Route 53 | Elastic Beanstalk
+What is the maximum run time of one Lambda invocation? = 15 minutes | 5 minutes | 1 hour | 24 hours
+
+Topic: Storage with S3 and EBS
+Read: Create an S3 bucket, upload a file, switch storage classes and attach an EBS volume to an instance.
+What kind of storage is Amazon S3? = Object storage | Block storage | File storage | Tape storage
+How many nines of durability does S3 Standard offer? = 11 | 3 | 5 | 9
+Which service provides block storage for EC2? = EBS | S3 | Glacier | EFS
+Which S3 storage class is best for rarely accessed archive data at the lowest cost? = S3 Glacier Deep Archive | S3 Standard | S3 Intelligent-Tiering | S3 One Zone-IA
+What is the largest size of a single S3 object? = 5 TB | 5 GB | 5 MB | 50 TB
+
+Topic: Databases
+Read: Compare a relational table of orders with a DynamoDB table holding the same data, and write down where each is stronger.
+Which AWS service is a managed relational database? = Amazon RDS | DynamoDB | Redshift | ElastiCache
+Which service is a serverless NoSQL key-value database? = DynamoDB | RDS | Aurora | Redshift
+Which service is a data warehouse for analytics? = Amazon Redshift | Amazon RDS | DynamoDB | Amazon Neptune
+Which service adds an in-memory cache in front of a database? = ElastiCache | S3 | CloudFront | Route 53
+
+Topic: Networking and content delivery
+Read: Draw a VPC with a public and a private subnet and trace how a request from the internet reaches a server.
+What is a VPC? = A logically isolated virtual network in AWS | A virtual private computer | A physical data centre | A type of load balancer
+Which service is a global content delivery network? = CloudFront | Route 53 | Direct Connect | VPC
+Which service provides DNS? = Route 53 | CloudFront | Elastic Load Balancing | Direct Connect
+What does an internet gateway do? = Lets resources in a VPC reach the internet | Encrypts all traffic | Stores logs | Connects two VPCs
+
+Part: Security and Compliance
+Topic: The shared responsibility model
+Read: Make two lists, one for what AWS secures and one for what you secure, and check them against the official diagram.
+Who is responsible for the physical security of data centres? = AWS | The customer | Both equally | A third party
+Who is responsible for patching a guest operating system on EC2? = The customer | AWS | Both equally | The hardware vendor
+Who is responsible for encrypting your own data in S3? = The customer | AWS | A third-party auditor | No one
+What does security of the cloud mean? = AWS protects the infrastructure that runs its services | The customer secures their data | The customer secures their passwords | The customer manages the hardware
+
+Topic: Identity and access management
+Read: Create an IAM user with a custom policy that gives read-only access to one S3 bucket and test it.
+What does IAM stand for? = Identity and Access Management | Internet and Application Management | Instance and Access Monitoring | Identity and Account Manager
+Which is a best practice for the root user? = Enable MFA and avoid everyday use | Share it with the team | Create access keys for daily use | Use it for all tasks
+What is an IAM role used for? = Granting temporary permissions to a service or user | Storing passwords | Encrypting disks | Monitoring costs
+What principle says to give only the permissions needed? = Least privilege | Defence in depth | Shared responsibility | Separation of duties
+
+Topic: Monitoring and auditing
+Read: Turn on CloudTrail and CloudWatch for a test account and find the log line for something you just did.
+Which service records API calls made in your account? = CloudTrail | CloudWatch | Config | Trusted Advisor
+Which service collects metrics and alarms? = CloudWatch | CloudTrail | IAM | Inspector
+Which service tracks changes to resource configurations? = AWS Config | CloudWatch | CloudTrail | GuardDuty
+Which service uses machine learning to detect threats? = GuardDuty | Config | Trusted Advisor | Artifact
+
+Topic: Compliance and protection
+Read: Skim the compliance programs page and note which ones apply to the industry you work in.
+Where do you download AWS compliance reports? = AWS Artifact | AWS Config | CloudTrail | Trusted Advisor
+Which service protects web apps against common attacks such as SQL injection? = AWS WAF | AWS Shield | AWS KMS | Amazon Inspector
+Which service helps protect against DDoS attacks? = AWS Shield | AWS WAF | AWS KMS | AWS Config
+Which service manages encryption keys? = AWS KMS | AWS Shield | AWS Artifact | AWS WAF
+
+Part: Billing and Support
+Topic: Pricing models
+Read: Compare three options: On-Demand, Reserved and Spot. Price the same small workload three ways in the AWS Pricing Calculator and compare the totals.
+Which pricing model charges per second or hour with no commitment? = On-Demand | Reserved | Savings Plans | Dedicated
+For what term can you commit to a Reserved Instance to save up to 72% - at most 1 year or 3? = One or three years | One month | Six months | Ten years
+Which tool estimates the monthly cost of a planned architecture? = AWS Pricing Calculator | Cost Explorer | Budgets | Trusted Advisor
+Is data transfer into AWS from the internet usually charged? = No | Yes | Only in Europe | Only above 1,000 GB
+
+Topic: Cost management tools
+Read: Set a monthly budget with an email alert in a test account and watch how the forecast changes.
+Which service lets you set a spending limit and get alerts? = AWS Budgets | Cost Explorer | Pricing Calculator | Trusted Advisor
+Which tool lets you view and forecast past spending? = Cost Explorer | Budgets | Artifact | Config
+What do cost allocation tags help with? = Tracking costs by team or project | Encrypting resources | Speeding up queries | Creating backups
+What does consolidated billing in AWS Organizations give you? = One bill and combined volume discounts | A separate bill per account | Free support | Unlimited accounts
+
+Topic: Support plans
+Read: Put the support plans in a table by price, response time and access to a technical account manager.
+Which support plan is free? = Basic | Developer | Business | Enterprise
+Which plan first includes 24/7 phone support for production issues? = Business | Developer | Basic | None of them
+Which plan includes a Technical Account Manager? = Enterprise | Business | Developer | Basic
+What does Trusted Advisor do? = Gives recommendations on cost, security and performance | Stores backups | Provisions servers | Writes code
+
+Topic: Global infrastructure
+Read: Open the Regions map, choose three Regions for a made-up app and say why you picked each.
+What is an AWS Region? = A geographic area with multiple Availability Zones | A single data centre | A content delivery location | A type of VPC
+What is an Availability Zone? = One or more discrete data centres in a Region | A whole country | A global network | A type of subnet
+How many Availability Zones does a Region have at minimum? = 3 | 1 | 2 | 6
+What is an edge location used for? = Caching content close to users | Running databases | Storing billing data | Managing keys

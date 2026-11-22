@@ -72,6 +72,13 @@ export interface Words {
     /** What may follow one of those: "Thanks for reading". */
     tails: readonly string[]
   }
+  /** What a chat's page shows on a block of code, which comes along when the whole page is selected and copied. */
+  code: {
+    /** The block's button, on a line of its own: "Copy code". The one word on the line before it names the block's language. */
+    buttons: readonly string[]
+    /** What a block that holds plain text is marked as, after its three backticks: "text". */
+    plain: readonly string[]
+  }
   /** "ok so i want to learn about ...": the asking, which is not part of what is asked for. */
   asking: {
     /** "ok so", "also". */
@@ -143,6 +150,9 @@ export interface Patterns {
   facts: RegExp
   drill: RegExp
   chatter: RegExp
+  /** A line that is a code block's button, and a mark that says a block holds plain text. */
+  codeButton: RegExp
+  plainCode: RegExp
   /** Finds the asking at the start of a line, to be taken off it. */
   asking: RegExp
   /** "Part: ...", "Topic: ..." and "Read: ...". Their first group is a number after the word, if there is one, and their second what follows. */
@@ -225,6 +235,7 @@ export function compile(words: Words): Patterns {
   const all = words as unknown as Record<string, unknown>
   const reading = part(words, 'reading'), course = part(words, 'course'), page = part(words, 'page'), kinds = part(words, 'kinds')
   const chatter = part(words, 'chatter'), asking = part(words, 'asking'), writes = part(words, 'writes'), outline = part(words, 'outline')
+  const code = part(words, 'code')
   const re = (source: string, flags = 'iu'): RegExp => new RegExp(source, flags)
   const whole = (list: unknown): RegExp => re('^' + any(list) + '$')
   const within = (list: unknown): string => EDGE + any(list) + BOUND
@@ -254,6 +265,8 @@ export function compile(words: Words): Patterns {
     // "3 x 10": so many of so many is a drill in any language.
     drill: re(within(kinds.drill) + '|\\b\\d+\\s*x\\s*\\d+'),
     chatter: re('^(?:' + any(chatter.starts) + BOUND + '|' + any(chatter.openers) + '[,!. ]|' + any(chatter.whole) + BOUND + '[\\s!.,:)]*(?:' + any(chatter.tails) + BOUND + '.*)?$)'),
+    codeButton: re('^' + any(code.buttons) + '[!.]?$'),
+    plainCode: whole(code.plain),
     asking: re('^(?:' + any(asking.leads) + '\\s+)?(?:(?:' + any(asking.wants) + '\\s+' + any(asking.verbs) + '|' + any(asking.whole) + ')(?:\\s+' + any(asking.more) + ')?(?:\\s+' + any(asking.about) + ')?\\s+)?'),
     part: labelled(outline.parts),
     topic: labelled(outline.topics),

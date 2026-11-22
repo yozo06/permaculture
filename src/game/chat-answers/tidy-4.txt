@@ -1,0 +1,115 @@
+Part: The Rules of the Game
+Topic: The board and the pieces
+Read: Set up a board from memory five times and check that each queen starts on her own colour.
+How many squares are on a chessboard? = 64 | 32 | 81 | 100
+On which colour square does the white queen start? = White | Black | It depends on the player | Either colour
+How many pawns does each player start with? = 8 | 6 | 10 | 16
+Which piece stands next to the king at the start of the game? = The queen | The bishop | The rook | The knight
+
+Topic: How each piece moves
+Read: Place one piece alone on an empty board and count the squares it can reach, for each piece in turn.
+Which piece moves in an L-shape? = The knight | The bishop | The rook | The pawn
+Which piece can jump over other pieces? = The knight | The bishop | The queen | The rook
+How many squares can a king move at a time? = One | Two | As many as it likes | Three
+How does a bishop move? = Diagonally any number of squares | One square in any direction | Straight along files and ranks | In an L-shape
+
+Topic: Special moves
+Read: Play out castling, en passant and promotion on a board until you can do each without hesitation.
+What must be true before castling - that the king and rook have not moved? = Neither has moved before | Only the king has not moved | Only the rook has not moved | Either may have moved once
+When can a pawn capture en passant? = Right after an enemy pawn moves two squares past it | Any time it stands beside an enemy pawn | Only on its first move | Only when the king is in check
+A pawn reaching the far rank can become which piece? = Queen, rook, bishop or knight | Only a queen | Only a piece already captured | Only a knight or bishop
+Which of these is a rule of castling? = All of the above | The king can't be in check | The king can't pass through an attacked square | The squares between must be empty
+
+Topic: Check, checkmate and draws
+Read: Study ten positions and decide for each whether it is check, checkmate, stalemate or a draw.
+What is stalemate? = The player to move has no legal move and is not in check | The king is attacked and cannot escape | Both players agree a draw | The same position occurs three times
+What are the three ways to answer a check? = Move the king, block, or capture the attacker | Move any piece, resign, or offer a draw | Castle, promote, or capture | Block, resign, or pass
+After how many moves without a capture or pawn move can a player claim a draw? = 50 | 20 | 30 | 100
+Can a king ever capture the piece that gives check? = Yes, if the piece is not protected | No, never | Only with a pawn's help | Only in the endgame
+
+Part: Opening Principles
+Topic: Controlling the centre
+Read: Play ten games where you move a centre pawn first and note how much room your pieces have.
+Which four squares make up the centre of the board? = d4, d5, e4, e5 | c3, c6, f3, f6 | a1, a8, h1, h8 | b2, b7, g2, g7
+Why are centre pawns valuable? = They give pieces room to move | They can never be captured | They are worth three points | They protect the king
+After 1.e4 e5 2.Nf3, which reply by Black defends the pawn? = 2...Nc6 | 2...Qh4 | 2...a6 | 2...h5
+Which opening move is often called the king's pawn opening? = 1.e4 | 1.d4 | 1.c4 | 1.Nf3
+
+Topic: Developing your pieces
+Read: Replay your last three games and mark every move where a piece stayed at home too long.
+In the opening, which pieces should you usually develop first? = Knights and bishops | The queen and rooks | The king | All the pawns
+What does it mean to develop a piece? = Move it from its starting square to a useful one | Trade it for a pawn | Protect it with a pawn | Move it to the edge
+Why avoid moving the same piece twice in the opening? = You lose time while the opponent develops | It is against the rules | It loses material | It exposes the king
+Why bring out knights before bishops, as the old saying goes? = Their best squares are easier to decide | Bishops cannot move early | Knights are worth more | Knights protect the king
+
+Topic: King safety
+Read: Castle in every practice game by move ten and see how often the opponent's attack then fails.
+Why do players castle early? = To tuck the king away and connect the rooks | To attack the opponent's king | To win a pawn | To trade the queens
+Which castling is called short castling? = Kingside | Queenside | Both sides | Neither side
+Which of these weakens the king's safety? = Moving the pawns in front of it | Castling | Developing the knights | Controlling the centre
+Where does the king usually end up after kingside castling? = g1 for White | c1 for White | e2 for White | h1 for White
+
+Topic: Opening traps — Scholar's Mate and more
+Read: Learn the Scholar's Mate and then practise defending it as Black.
+What is Scholar's Mate? = A four-move checkmate on f7 or f2 | A trap that wins the queen | A draw by repetition | A way to castle early
+Which square does the Scholar's Mate target? = f7 | e8 | a7 | h7
+How can Black stop the Scholar's Mate? = Defend f7 and attack the queen with a knight | Resign | Move the king early | Push the a-pawn
+Why shouldn't you bring the queen out too early? = She can be chased and you lose tempo | She is worth only three points | The rules forbid it | The queen can't capture
+
+Part: Tactics
+Topic: Forks and pins
+Read: Solve twenty fork and pin puzzles and say aloud which piece is attacked twice.
+What is a fork? = One piece attacking two pieces at once | Two pieces attacking one square | A pawn move | A trade of queens
+Which piece is famous for forking the king and queen? = The knight | The bishop | The rook | The king
+What is a pin? = A piece can't move without exposing a more valuable piece | A piece is captured for free | A king is trapped | Two pawns are blocked
+What is the difference between an absolute pin and a relative pin? = In an absolute pin the piece behind is the king | In a relative pin the piece behind is the king | An absolute pin is always a bishop | There is no difference
+
+Topic: Skewers and discovered attacks
+Read: Set up each pattern on a board and find the one move that creates it.
+What is a skewer? = A valuable piece is attacked and must move, exposing the one behind | A pawn is attacked twice | A piece is trapped at the edge | A king is stalemated
+What is a discovered attack? = Moving one piece reveals an attack from another | Capturing with a pawn | Castling with check | A queen sacrifice
+Which piece can give a discovered check? = Any piece moving away from the line | Only the queen | Only a knight | Only a pawn
+Which pieces can create a skewer? = Bishops, rooks and queens | Knights and pawns | Pawns and kings | Only the queen
+
+Topic: Sacrifices and combinations
+Read: Work through five famous games and note at which move each sacrifice began.
+When is a sacrifice worth it? = When it leads to mate or wins more material back | Whenever you are behind | When your opponent is rated lower | Only in the endgame
+How many points is a queen usually worth? = 9 | 5 | 3 | 12
+What is a combination? = A forcing series of moves that wins something | A pair of connected pawns | A slow plan in the middle game | A way of castling
+Which of these counts as a forcing move? = Check | A quiet pawn move | Waiting move | Developing a bishop
+
+Topic: Checkmate patterns
+Read: Learn the back-rank mate, smothered mate and the two-rook ladder by setting them up from scratch.
+What is a back-rank mate? = A rook or queen checks the king trapped by its own pawns | A king moves to the edge | A knight mates on the first move | A bishop and pawn mate
+Which piece delivers a smothered mate? = The knight | The bishop | The pawn | The rook
+How can you avoid a back-rank mate? = Make a luft by moving a pawn in front of the king | Castle queenside | Trade all the rooks | Move the queen back
+What is the least that can force mate against a lone king, besides your own king? = A queen or a rook | A single knight | A single bishop | A single pawn
+
+Part: Endgames
+Topic: King and pawn endings
+Read: Play out the basic king and pawn endings against a friend or an engine from each side.
+What is the opposition? = Kings face each other with one square between | Two kings side by side | A king facing a rook | Two pawns blocked
+What is the rule of the square? = Whether a king can catch a passed pawn | How to castle in the endgame | How a bishop is traded | How to count material
+What is a passed pawn? = A pawn with no enemy pawn blocking or guarding its path | A pawn that has captured | A pawn on the seventh rank | A pawn next to a rook
+Why is it often good to bring the king to the centre in the endgame? = It becomes a strong active piece | It can be checkmated there | It cannot be attacked | It protects the pawns on the edge
+
+Topic: Rook endings
+Read: Set up Lucena and Philidor positions and practise each until you can do them in under a minute.
+What is the Lucena position used for? = Winning with a rook and pawn | Drawing with a rook and pawn | Getting a stalemate | Trading rooks
+What is the Philidor position used for? = Drawing a rook and pawn ending | Winning with an extra pawn | Forcing stalemate | Promoting a pawn
+What does a rook on the seventh rank often do? = Attacks pawns and cuts off the king | Protects the king | Blocks a passed pawn | Wins a tempo for the opponent
+Which rule says "a rook belongs behind a passed pawn"? = Tarrasch's rule | Lucena's rule | The rule of the square | The fifty-move rule
+
+Topic: Basic checkmates
+Read: Checkmate the lone king with queen, with two rooks and with a rook, each ten times.
+Can a lone king be checkmated by a king and a knight? = No | Yes | Only in a corner | Only with a pawn
+Which pieces together can force checkmate against a lone king? = King and rook | King and knight | King and bishop alone | King alone
+How many moves does king and rook need at most to force mate? = About 16 | About 3 | About 50 | About 100
+What is the ladder mate? = Two rooks mate in turn along the ranks | Two bishops mate on the diagonal | A queen mates in the corner | A pawn mates from behind
+
+Topic: Material and technique
+Read: Count the material in ten positions and say who is better and why.
+How many points is a rook usually worth? = 5 | 3 | 9 | 1
+How many points is a bishop usually worth? = 3 | 5 | 2 | 4
+Which is generally better in an open position? = Bishops | Knights | Pawns | Kings
+What does converting an advantage mean? = Turning a better position into a win | Giving up the advantage | Trading pawns for pieces | Offering a draw

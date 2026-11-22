@@ -1,0 +1,116 @@
+Part: Atoms and the Periodic Table
+Topic: Atomic structure
+Read: Draw the nucleus and electron shells for the first twenty elements and label each particle.
+What is the relative charge of a neutron? = 0 | +1 | -1 | +2
+Which particles are found in the nucleus of an atom? = Protons and neutrons | Protons and electrons | Neutrons and electrons | Electrons only
+The mass number of an atom is the total number of what? = Protons and neutrons | Protons only | Neutrons only | Electrons and neutrons
+How many electrons can the first shell hold? = 2 | 4 | 8 | 18
+
+Topic: Isotopes and relative atomic mass
+Read: Work through five examples of calculating relative atomic mass from isotope abundances.
+What do isotopes of one element have in common? = The same number of protons | The same number of neutrons | The same mass number | The same relative mass
+Chlorine is 75% chlorine-35 and 25% chlorine-37 (by abundance). What is its relative atomic mass to 1 decimal place? = 35.5 | 36.0 | 35.0 | 36.5
+Carbon-12 and carbon-14 differ in which way? = Number of neutrons | Number of protons | Number of electrons | Charge of the nucleus
+Why is the relative atomic mass of an element often not a whole number? = It is a weighted average of its isotopes | It includes the mass of electrons | It counts only the heaviest isotope | It changes with temperature
+
+Topic: Groups and periods
+Read: Colour in a blank periodic table by group and write one property beside each coloured block.
+Which group of the periodic table contains the alkali metals? = Group 1 | Group 2 | Group 7 | Group 0
+What do elements in the same group have in common? = The same number of outer electrons | The same number of shells | The same number of protons | The same mass number
+Which of these is a halogen? = Chlorine | Neon | Sodium | Argon
+Why are the noble gases (Group 0) so unreactive — unlike the alkali metals? = They have full outer shells | They have one outer electron | They have no electrons | They are all very heavy
+
+Topic: Reactivity trends
+Read: Watch videos of lithium, sodium and potassium in water and write down what changes down the group.
+How does reactivity change going down Group 1? = It increases | It decreases | It stays the same | It rises then falls
+What is produced when sodium reacts with water? = Sodium hydroxide and hydrogen | Sodium oxide and oxygen | Sodium chloride and hydrogen | Sodium carbonate and water
+How does the reactivity of the halogens change going down Group 7? = It decreases | It increases | It stays the same | It rises then falls
+Which statement about alkali metals is true: they are stored under oil to stop them reacting with air? = True | False | True only for lithium | True only for caesium
+
+Part: Bonding and Structure
+Topic: Ionic bonding
+Read: Draw dot-and-cross diagrams for sodium chloride, magnesium oxide and calcium chloride.
+What happens to electrons in ionic bonding? = They are transferred from one atom to another | They are shared between two atoms | They are lost to the air | They are shared by all the atoms
+What is the formula of magnesium chloride? = MgCl2 | MgCl | Mg2Cl | Mg2Cl2
+Why do ionic compounds have high melting points? = Strong forces between oppositely charged ions | Weak forces between molecules | Free electrons in the structure | Large molecules that are hard to move
+When can an ionic compound conduct electricity? = When molten or dissolved in water | When solid | When cold | Never
+What is the charge on an ion of a Group 2 metal? = 2+ | 1+ | 2- | 3+
+
+Topic: Covalent bonding
+Read: Build models of water, methane, ammonia and carbon dioxide and count the shared pairs.
+What is a covalent bond? = A shared pair of electrons | A transfer of electrons | An attraction between metal ions | A force between molecules
+How many covalent bonds does a carbon atom usually form? = 4 | 2 | 3 | 1
+Which of these has a double bond? = Carbon dioxide | Methane | Water | Hydrogen chloride
+Why do simple molecular substances have low boiling points? = Weak intermolecular forces | Strong covalent bonds | Strong ionic bonds | Large numbers of free electrons
+
+Topic: Giant structures - allotropes of carbon
+Read: Compare diamond, graphite and graphene in a table of structure, bonding and properties.
+Why is diamond very hard? = Each carbon atom forms four strong covalent bonds | Its layers slide over each other | It has delocalised electrons | It is made of small molecules
+Why does graphite conduct electricity? = It has delocalised electrons between layers | It contains ions | It has free protons | Its atoms bond to four others
+Which is a single layer of graphite? = Graphene | Diamond | Fullerene | Silica
+What is the shape of a buckminsterfullerene molecule (C60)? = A hollow sphere | A flat sheet | A tetrahedron | A long tube
+
+Topic: Metallic bonding
+Read: Sketch a metal lattice and mark the positive ions and the sea of delocalised electrons.
+What is metallic bonding? = Attraction between positive ions and delocalised electrons | Sharing of electron pairs between atoms | Transfer of electrons between atoms | Attraction between small molecules
+Why can metals be bent and shaped? = Layers of atoms can slide over each other | The bonds break easily | They contain molecules | They are brittle
+Why do metals conduct electricity? = Delocalised electrons can move | Ions can move through the solid | Protons can flow | Molecules carry the charge
+Why is an alloy harder than a pure metal? = Different sized atoms stop the layers sliding | The atoms are all the same size | It has more free electrons | It has covalent bonds
+
+Part: Quantitative Chemistry
+Topic: Relative formula mass
+Read: Practise adding up relative atomic masses from the periodic table for ten different compounds.
+What is the relative formula mass of water (H2O)? = 18 | 16 | 17 | 20
+What is the relative formula mass of CO2? = 44 | 28 | 32 | 56
+Which values do you add to find a relative formula mass? = The relative atomic masses of all the atoms | Only the atomic numbers | Only the mass of the heaviest atom | The masses of the electrons
+What is the relative formula mass of calcium carbonate (CaCO3)? = 100 | 84 | 68 | 116
+
+Topic: The mole
+Read: Convert grams to moles and back again for ten different substances using the formula triangle.
+How many particles are in one mole of a substance? = 6.02 x 10^23 | 6.02 x 10^12 | 3.01 x 10^23 | 1.00 x 10^23
+How many moles are in 36 g of water (Mr 18)? = 2 | 1 | 18 | 0.5
+What is the formula for the number of moles? = Mass divided by relative formula mass | Mass multiplied by relative formula mass | Relative formula mass divided by mass | Volume divided by mass
+What is the mass of 0.5 moles of sodium chloride (Mr 58.5)? = 29.25 g | 58.5 g | 117 g | 14.6 g
+
+Topic: Balancing equations
+Read: Balance a worked set of twelve equations, checking each atom on both sides.
+Why must a chemical equation be balanced? = Atoms are not created or destroyed | Reactants must have equal mass | Products are always heavier | Electrons are lost in reactions
+What is the balanced equation for hydrogen and oxygen making water? = 2H2 + O2 gives 2H2O | H2 + O2 gives H2O | H2 + O2 gives 2H2O | 2H2 + 2O2 gives 2H2O
+What number goes in front of HCl: Mg + _HCl gives MgCl2 + H2? = 2 | 1 | 3 | 4
+What does the state symbol (aq) mean? = Dissolved in water | A solid | A gas | A liquid
+
+Topic: Percentage yield and atom economy
+Read: Calculate the percentage yield from a reaction where you weigh the product yourself.
+What is the formula for percentage yield? = Actual yield divided by theoretical yield, times 100 | Theoretical yield divided by actual yield, times 100 | Actual yield minus theoretical yield | Mass of reactants divided by mass of products
+A reaction should make 20 g but makes 15 g. What is the percentage yield? = 75% | 25% | 133% | 5%
+Why is a high atom economy better for industry? = Less waste is made | The reaction is faster | The product is cheaper to separate | The yield is always 100%
+Which of these can make the actual yield lower than the theoretical yield? = All of the above | Reversible reactions | Losing product when transferring it | Impure reactants
+
+Part: Chemical Reactions and Energy
+Topic: Acids and alkalis
+Read: Test six household liquids with universal indicator and place them on the pH scale.
+What is the pH of pure water at 25 °C - a neutral solution? = 7 | 0 | 14 | 1
+Which ion do all acids produce in water? = H+ | OH- | Cl- | Na+
+What does a pH of 12 tell you about a solution? = It is a fairly strong alkali | It is a weak acid | It is neutral | It is a strong acid
+What is made when an acid reacts with a metal carbonate? = A salt, water and carbon dioxide | A salt and hydrogen | A salt and water only | A metal and oxygen
+
+Topic: Electrolysis
+Read: Set up a simple electrolysis of copper sulfate solution and record what forms at each electrode.
+Which electrode is the cathode? = The negative electrode | The positive electrode | The one made of carbon | The one that loses mass
+What forms at the cathode when molten lead bromide is electrolysed? = Lead | Bromine | Hydrogen | Oxygen
+Why must an ionic compound be molten or dissolved to be electrolysed? = The ions must be free to move | The electrons must be locked in place | The atoms must be neutral | It must first become a molecule
+What is made at the anode when sodium chloride solution is electrolysed? = Chlorine | Hydrogen | Sodium | Oxygen
+
+Topic: Exothermic and endothermic reactions
+Read: Measure the temperature change when you mix different solutions and sort the reactions into two groups.
+What happens to the temperature of the surroundings in an exothermic reaction? = It rises | It falls | It stays the same | It rises then falls
+Which of these is an endothermic process? = Thermal decomposition | Combustion | Neutralisation | Respiration
+What does a negative energy change (delta H) show? = The reaction is exothermic | The reaction is endothermic | The reaction is very slow | The reaction needs a catalyst
+Breaking bonds does what to energy? = It takes in energy | It releases energy | It makes no difference | It creates energy
+
+Topic: Rates of reaction
+Read: Time how long it takes marble chips to react with acid at different concentrations.
+Which of these increases the rate of reaction? = All of the above | Raising the temperature | Increasing the concentration | Using a powder instead of lumps
+What does a catalyst do? = Speeds up a reaction without being used up | Slows a reaction down | Is used up in the reaction | Increases the yield
+What happens to the number of collisions as concentration increases? = More collisions per second | Fewer collisions per second | The same number of collisions | Only collisions with the catalyst increase
+On a graph of product against time, what does a steeper line mean? = A faster rate | A slower rate | A higher yield | A lower yield

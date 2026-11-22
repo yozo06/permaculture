@@ -63,6 +63,10 @@ export const ENGLISH: Words = frozen({
     whole: ['thanks', 'thank you', 'thx', 'ty', 'cheers', 'ok', 'okay', 'hi', 'hello', 'hey', 'enjoy'],
     tails: ['for reading'],
   },
+  code: {
+    buttons: ['copy code', 'copy', 'copied', 'code snippet'],
+    plain: ['text', 'plaintext', 'plain text', 'txt', 'markdown', 'md'],
+  },
   asking: {
     leads: ['ok so', 'okay so', 'also', 'and also'],
     wants: ['i want to', 'i wanna', 'i wanna to', 'i would like to', 'i need to', "i'd like to"],

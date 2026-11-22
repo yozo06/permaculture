@@ -1121,6 +1121,35 @@ describe('a list with its parts, topics and questions said in words', () => {
     expect(read(text('## ConfigMaps', '```yaml', 'kind: ConfigMap', '```', '## Secrets')).notes).toEqual([{ code: 'code-left-out', count: 1 }])
   })
 
+  it('reads a block marked as text, or not marked, as the list when hardly a line in it is code', () => {
+    const bullets = text('## Coffee as a commodity', '* Arabica versus Robusta: the two species', '* Major producing countries: who grows what', '## The physical trade', '* Contracts: FOB and CIF', '* Grading: defects and screen size')
+    for (const mark of ['', 'text', 'markdown']) {
+      const d = read('```' + mark + '\n' + bullets + '\n```')
+      expect(d.topics, mark).toEqual(read(bullets).topics)
+      expect(d.notes, mark).toEqual(read(bullets).notes)
+    }
+    // A block marked as a language, or one full of code, is still code.
+    const loops = (mark: string) => read(text('## Loops', '```' + mark, ...Array.from({ length: 12 }, (_, i) => 'print(' + i + ')'), '```', '## Lists'))
+    expect(names(loops(''))).toEqual(['Loops', 'Lists'])
+    expect(names(loops('js'))).toEqual(['Loops', 'Lists'])
+    expect(names(read(text('Notes', '```', 'const a = 1;', 'function f() {', '  return a;', '}', 'let b = 2;', '```')))).toEqual(['Notes'])
+  })
+
+  it('leaves out the whole sentences a chat writes around the block it put its list in', () => {
+    const d = read(text('Sure! Here is a short list for you.', 'I kept it small, as you asked.', '', '```', list, '```', '', 'Just ask if you want more.', 'Enjoy!'))
+    expect([d.title, ...names(d)]).toEqual(['', ...names(read(list))])
+    expect(d.notes).toEqual([])
+  })
+
+  it('leaves out the language and the button of a block of code, copied with the rest of a chat\'s page', () => {
+    for (const label of [['text', 'Copy code'], ['plaintext', 'Copy'], ['Code snippet']]) {
+      const d = read(text('Here is your study list.', '', ...label, list, '', 'Good luck!'))
+      expect([d.title, ...names(d)], label.join(' ')).toEqual(['', ...names(read(list))])
+    }
+    // A topic named like a language stays, where no button follows it.
+    expect(names(read(text('Markdown', 'Plain text', 'Spreadsheets')))).toEqual(['Markdown', 'Plain text', 'Spreadsheets'])
+  })
+
   it('puts the text under a heading that holds cards into the line on what to read, and says nothing of leaving it out', () => {
     const d = read(text('## Verbs', 'The strong verbs change their vowel in the past tense, and are best learnt by heart.', 'gehen = to go', 'kommen = to come', 'sehen = to see'))
     expect(d.topics.map((t) => [t.name, t.summary, t.kind])).toEqual([['Verbs', 'The strong verbs change their vowel in the past tense, and are best learnt by heart.', 'facts']])
