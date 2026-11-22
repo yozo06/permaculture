@@ -244,10 +244,11 @@ export function aiPrompt(subject: string, wants = '', have: readonly Pick<OwnSee
   const bare = have.filter((s) => s.cards.length === 0).slice(0, FILL_AT_ONCE)
   // What is too long to go whole is cut at the end of a line.
   const all = [wants.trim(), about.lean?.trim() ?? ''].filter(Boolean).join('\n')
-  const cut = all.length > WANTS ? all.slice(0, WANTS) : all
+  // Never through the two halves of one letter (an emoji, say), which no link could carry.
+  const cut = all.length > WANTS ? all.slice(0, /[\uD800-\uDBFF]/.test(all[WANTS - 1] ?? '') ? WANTS - 1 : WANTS) : all
   const said = (all.length > WANTS && cut.includes('\n') ? cut.slice(0, cut.lastIndexOf('\n')) : cut).trim()
   // In a code block the chat's own Copy button takes the whole list in one tap, and its page leaves it as written.
-  const plainly = 'Put the whole list in one code block marked "text", and nothing outside it: no introduction, no closing remarks, no table, no bold, no numbering. The list ends on the last question line.'
+  const plainly = 'Put the whole list in one code block marked "text", and nothing outside it: no introduction, no closing remarks, no table, no bold, no numbering, no bullets or dashes in front of lines. The list ends on the last question line.'
   const question = 'A question about that topic? = the right answer | a wrong answer | another wrong answer | a third wrong answer'
   const rules = [
     '- A question and all its answers are one line: the question, " = ", the right answer, then three wrong answers with " | " between them. No "A) B) C)" lines, no "Answer:" line, no "Q:".',
