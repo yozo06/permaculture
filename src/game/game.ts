@@ -1155,7 +1155,7 @@ function openWelcome(ticked: readonly string[] = []): void {
   open('<h2>Welcome to Permaculture</h2><p>A farm where the crops are the things you are learning. Plant a seed with notes in your own words, water it by answering and explaining, and it grows. Leave a crop two days past thirsty and it wilts, unless the rain barrel has a day to spend.</p>' +
     '<label for="ownName" class="lead">What do you want to learn?</label>' +
     '<input type="text" id="ownName" class="write" data-quiet data-keep maxlength="' + TEXT.title + '" placeholder="German, Organic chemistry, Guitar…" autocomplete="off">' +
-    '<p class="sub">Anything at all. It becomes a field of your own, and next you fill it with your topics: paste a syllabus, a word list or your notes, and the game works out the rest.</p>' +
+    '<p class="sub">Anything at all. It becomes a field of your own. Next, five quick questions, and an AI chat of your choice writes your topics and their questions. Or paste a syllabus, a word list or your notes, and the game works out the rest.</p>' +
     pickerHtml(picker, 'Or start with a ready-made field') +
     '<p class="sub">Each one becomes a field on your farm, and you can open more later from the learning tree. You can plant ' + RULES.newSeedsPerDay + ' new seeds a day, and everything is saved in this browser.</p>' +
     '<div class="foot"><button type="button" data-act="newFarm" data-arg="sample">Try the sample farm</button><button type="button" class="pri" id="fieldsGo" data-act="openFields"' + (picker.some((p) => p.ticked) ? '' : ' disabled') + '>Start my farm</button></div>')

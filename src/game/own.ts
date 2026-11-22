@@ -177,7 +177,7 @@ export function addSheetHtml(field: Pick<OwnField, 'id' | 'title' | 'color'>, fi
   return (
     chipHtml(field.title, field.color) + '<h2>What is in ' + esc(field.title) + '?</h2>' +
     '<p>Paste whatever you have: a syllabus, a contents page, your notes, a word list, flashcards, or what an AI chat wrote for you. Or just type, one topic to a line. The game works out the rest.</p>' +
-    '<label for="ownText" class="sub">Your topics</label>' +
+    '<label for="ownText" class="sub">Your topics, or the chat’s answer</label>' +
     '<textarea id="ownText" class="write" rows="7" data-min="1" data-gate="ownAdd" data-quiet autocomplete="off" spellcheck="false" placeholder="Photosynthesis&#10;Cell division - read chapter 4&#10;Hund = dog"></textarea>' +
     '<div class="branches"><label class="filebtn">Choose a file<input type="file" id="ownFile" accept=".txt,.md,.csv,.tsv,text/*"></label>' +
     '<button type="button" data-act="ownPrompt" data-arg="' + esc(field.id) + '">Ask an AI chat for a list</button></div>' +
@@ -187,7 +187,7 @@ export function addSheetHtml(field: Pick<OwnField, 'id' | 'title' | 'color'>, fi
       : '') +
     '<div id="ownChats"></div>' +
     '<div id="ownReading" aria-live="polite"><p class="sub">Nothing to add yet. One topic to a line is enough.</p></div>' +
-    '<p class="sub">A topic takes about ten days to grow from seed to tree, and you can plant ' + RULES.newSeedsPerDay + ' new ones a day. A topic with question cards is watered by multiple choice; one without is watered by explaining it in writing. Lines like “Hund = dog” become cards, and the prompt for an AI chat asks it for questions under every topic. If you write in the box what you want to learn first, the prompt takes that along.</p>' +
+    '<p class="sub">A topic takes about ten days to grow from seed to tree, and you can plant ' + RULES.newSeedsPerDay + ' new ones a day. A topic with question cards is watered by multiple choice; one without is watered by explaining it in writing. Lines like “Hund = dog” become cards, and an AI chat asked for a list writes questions under every topic. If the chat stopped part way, ask it to go on and paste the rest too: only the new topics are added.</p>' +
     '<div class="foot"><button type="button" data-act="' + (first ? 'close' : 'ownBack') + '" data-arg="' + esc(field.id) + '">' + (first ? 'Skip for now' : 'Back') + '</button>' +
     '<button type="button" class="pri" id="ownAdd" data-act="ownAdd" data-arg="' + esc(field.id) + '" disabled>Add topics</button></div>'
   )

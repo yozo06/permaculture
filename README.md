@@ -42,6 +42,8 @@ And it grows anyone's subject (version 0.9.0). A new farmer is asked what they w
 
 And every topic of your own can be asked as multiple choice (version 0.10.0). The first tester to try a field of their own got forty topics with nothing to ask. Now the prompt the game hands out for an AI chat asks for questions under every topic, each with its wrong answers; the reader takes them in; a field that has topics without questions can get them; and the sheet says so before you add a topic that has none.
 
+And loading what you want to learn takes five taps (version 0.11.0). A learner who knows only the subject's name answers five quick questions: what it is for, where they are now, how much, knowing or doing, and anything to lean on or leave out. The game makes that into a request and opens ChatGPT with it already sent, or copies it for any other chat. The chat writes the topics and their questions in one block; one tap copies it, and pasting it back makes the field. The game itself still never talks to an AI.
+
 Why this exists, what it promises and the whole plan are in [`ROADMAP.md`](ROADMAP.md).
 
 ## Repo
