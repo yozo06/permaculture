@@ -592,6 +592,9 @@ describe('five questions before a chat is asked for a list', () => {
     expect(html).toContain('data-act="ownOwn"')
     expect(html).toContain('Skip for now')
     expect(aboutSheetHtml(g, false)).toContain('>Back<')
+    // Opened from the paste box, it goes back there, even while the farm is being set up.
+    expect(aboutSheetHtml(g, true, true)).toContain('>Back<')
+    expect(aboutSheetHtml(g, true, true)).not.toContain('Skip for now')
   })
 
   it('takes back only the answers the sheet offers, the first of each', () => {

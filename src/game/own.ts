@@ -216,9 +216,10 @@ const ASKED: Record<Question, string> = { purpose: 'What is it for?', level: 'Wh
 /**
  * The five questions asked before a chat is asked for a list: four rows of taps and a box. Every answer may be left
  * out. ChatGPT, which takes the request from its link, is a link of its own; for any other chat the request is
- * copied first. `first` is true while a farm is being set up.
+ * copied first. `first` is true while a farm is being set up, and `fromAdd` when the sheet was opened from the paste
+ * box, to which its Back button returns.
  */
-export function aboutSheetHtml(field: Pick<OwnField, 'id' | 'title' | 'color'>, first: boolean): string {
+export function aboutSheetHtml(field: Pick<OwnField, 'id' | 'title' | 'color'>, first: boolean, fromAdd = false): string {
   const id = esc(field.id)
   const rows = (Object.keys(ABOUT) as Question[]).map((q) =>
     '<p class="ask">' + ASKED[q] + '</p><div class="tabs pick" role="group" aria-label="' + ASKED[q] + '">' +
@@ -234,7 +235,7 @@ export function aboutSheetHtml(field: Pick<OwnField, 'id' | 'title' | 'color'>, 
     '<button type="button" data-act="ownCopy" data-arg="' + id + '">Copy for another chat</button></div>' +
     '<div id="ownChats"></div>' +
     '<p class="sub">The chat opens in a new tab. When it has written your list, copy it with the Copy button on the list, come back here, and paste it into the box.</p>' +
-    '<div class="foot"><button type="button" data-act="' + (first ? 'close' : 'ownBack') + '" data-arg="' + id + '">' + (first ? 'Skip for now' : 'Back') + '</button>' +
+    '<div class="foot"><button type="button" data-act="' + (first && !fromAdd ? 'close' : 'ownBack') + '" data-arg="' + id + '">' + (first && !fromAdd ? 'Skip for now' : 'Back') + '</button>' +
     '<button type="button" data-act="ownOwn" data-arg="' + id + '">I have my own list</button></div>'
   )
 }

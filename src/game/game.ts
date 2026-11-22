@@ -506,10 +506,18 @@ function open(html: string): void {
   takes.focus({ preventScroll: true })
   sheet.scrollTop = 0
 }
+/** The field whose answer from a chat was awaited, forgotten. */
+function forgetWaiting(): void {
+  if (store.ui.waiting === null) return
+  store.ui.waiting = null
+  store.saveUi()
+}
 /** A farm with no fields has not been set up: its farmer has yet to say what they want to grow. */
 const needsSetup = (): boolean => Object.keys(S.fields).length === 0
 function close(): void {
   veil.hidden = true
+  // A sheet closed without adding: the learner is not waiting for a chat's answer any more.
+  forgetWaiting()
   // A farm link that arrived while the player was writing has waited for them to finish.
   const waiting = PENDING.shift()
   if (waiting !== undefined) {
@@ -1520,6 +1528,7 @@ sheet.addEventListener('input', (e) => {
   if (!(e.target instanceof HTMLElement)) return
   if (e.target.id === 'ownText') reread()
   else if (e.target.id === 'ownName') welcomeGate()
+  else if (e.target.id === 'ownLean') copiedNoLonger()
 })
 function addTopics(): void {
   const a = ADD
@@ -1534,22 +1543,32 @@ function addTopics(): void {
   close()
   hint('Open the <b>Seed bag</b>, pick a topic, then tap soil in the <b>' + esc(packTitle(a.field)) + '</b> field to plant it with notes in your own words.')
 }
-/** The five questions asked of a learner before an AI chat is asked for their list. `lean` is what they had written already. */
-let ASK: { field: string; first: boolean } | null = null
-function openAbout(fieldId: string, first = false, lean = ''): void {
+/**
+ * The five questions asked of a learner before an AI chat is asked for their list. `lean` is what they had written
+ * already; `back` is what was in the paste box when they came from it, to put back if they return.
+ */
+let ASK: { field: string; first: boolean; back: string | null } | null = null
+function openAbout(fieldId: string, first = false, lean = '', back: string | null = null): void {
   const field = Object.hasOwn(S.own, fieldId) ? S.own[fieldId] : undefined
   if (!field) return
-  ASK = { field: fieldId, first }
-  open(aboutSheetHtml(field, first))
+  ASK = { field: fieldId, first, back }
+  open(aboutSheetHtml(field, first, back !== null))
   // The sheet holds the focus itself: on its first answer, the focus ring would look like an answer already given.
   sheet.focus({ preventScroll: true })
   if (lean.trim()) byIdAs('ownLean', HTMLTextAreaElement).value = lean
 }
 /** An answer tapped: it is marked in its row, in place, so the sheet does not jump. Tapped again, it is taken back. */
 function pickAbout(b: HTMLButtonElement): void {
+  copiedNoLonger()
   const was = b.classList.contains('on')
   for (const x of b.parentElement?.querySelectorAll('button') ?? []) { x.classList.remove('on'); x.setAttribute('aria-pressed', 'false') }
   if (!was) { b.classList.add('on'); b.setAttribute('aria-pressed', 'true') }
+}
+/** An answer changed after the request was copied: what was copied, and the links that carry it, are out of date. */
+function copiedNoLonger(): void {
+  const at = document.getElementById('ownChats')
+  if (at) at.innerHTML = ''
+  document.getElementById('ownPromptText')?.remove()
 }
 /** The request the answers on the sheet make, read only when it is wanted. */
 function askedRequest(fieldId: string): string {
@@ -1822,10 +1841,19 @@ sheet.addEventListener('click', (e) => {
   else if (what === 'ownRename') { if (Object.hasOwn(S.own, arg)) open(nameFieldSheetHtml({ id: arg, title: S.own[arg]?.title ?? '' })) }
   else if (what === 'ownCreate') nameField(arg)
   else if (what === 'ownAddOpen') openAdd(arg)
-  else if (what === 'ownBack') openTree(arg)
+  else if (what === 'ownBack') {
+    forgetWaiting()
+    // From the five questions opened on the paste box, Back is the paste box, with what was in it.
+    const ask = ASK
+    if (ask && ask.field === arg && ask.back !== null && document.getElementById('ownLean')) {
+      openAdd(arg, ask.first)
+      const box = document.getElementById('ownText')
+      if (ask.back.trim() && box instanceof HTMLTextAreaElement) { box.value = ask.back; reread() }
+    } else openTree(arg)
+  }
   else if (what === 'ownPairs') { if (ADD) { ADD.pairs = arg === 'cards' || arg === 'topics' ? arg : null; reread() } }
   else if (what === 'ownAdd') addTopics()
-  else if (what === 'ownPrompt') { const box = document.getElementById('ownText'); openAbout(arg, ADD?.first ?? false, box instanceof HTMLTextAreaElement ? box.value : '') }
+  else if (what === 'ownPrompt') { const box = document.getElementById('ownText'); const had = box instanceof HTMLTextAreaElement ? box.value : ''; openAbout(arg, ADD?.first ?? false, had, had) }
   else if (what === 'ownPromptFill') copyRequest(fillRequest(arg), arg, ADD?.first ?? false)
   else if (what === 'ownAbout') pickAbout(b)
   else if (what === 'ownCopy') copyRequest(askedRequest(arg), arg, ASK?.first ?? false)
