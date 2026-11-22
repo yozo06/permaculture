@@ -557,9 +557,11 @@ function tokens(input: string[], p: Patterns, note: (n: Note, key?: string) => v
   const skip = new Set<number>()
   let firstRow = true
   let count = 0, countRoman = 0, countLetter = 0
-  // Selecting a chat's whole page copies a code block's button and, on the line before it, the block's language.
+  // Selecting a chat's whole page copies a code block's button and, on the line before it, the block's language. Where
+  // the button is a picture, the language stands alone; in a list said in words ("Topic: ...") no topic is that bare.
   const dress = new Set<number>()
   lines.forEach((l, i) => {
+    if (outlined && p.plainCode.test(l.trim())) dress.add(i)
     if (!p.codeButton.test(l.trim())) return
     dress.add(i)
     if (/^\s*\S{1,20}\s*$/.test(lines[i - 1] ?? '')) dress.add(i - 1)

@@ -914,6 +914,29 @@ describe('what a look at the reader as its own part found', () => {
   })
 })
 
+describe('what ChatGPT wrote to the request of version 0.11.0', () => {
+  // A real answer (2026-11-22, signed out): coffee trading, for work, the basics known, a taste, mostly knowing, "I buy
+  // green coffee for a roaster; skip the history". It came in one code block, as asked, with nothing outside it.
+  const answer = readFileSync('src/reader/pastes/chatgpt-coffee-trading.txt', 'utf8')
+  const seen = (d: ReturnType<typeof read>) => ({ title: d.title, notes: d.notes, topics: d.topics.map((t) => [t.group, t.name, t.kind, t.cards.length]) })
+
+  it('reads every topic with its questions, each with three wrong answers', () => {
+    const d = read(answer)
+    expect(d.title).toBe('')
+    expect(d.notes).toEqual([])
+    expect(d.topics).toHaveLength(11)
+    expect(new Set(d.topics.map((t) => t.group)).size).toBe(3)
+    expect(d.topics.every((t) => t.cards.length === 5 && t.cards.every((c) => c.wrong?.length === 3))).toBe(true)
+  })
+
+  it('reads it the same from the Copy button, from the message copied whole, and from the page selected by hand', () => {
+    const bare = seen(read(answer))
+    expect(seen(read('```text\n' + answer.trim() + '\n```'))).toEqual(bare)
+    // The page shows the block's language above it, and its button as a picture, which copies as nothing.
+    expect(seen(read('text\n' + answer.trim() + '\n\nChatGPT is AI and can make mistakes.'))).toEqual(bare)
+  })
+})
+
 describe('a list an AI chat wrote, as it comes out of the chat', () => {
   // The first real paste: what a chat answered to the game's own prompt of version 0.9.0, copied from the chat's page.
   // The page had turned "## heading" into a plain line and "- " into "* ".
@@ -1142,7 +1165,8 @@ describe('a list with its parts, topics and questions said in words', () => {
   })
 
   it('leaves out the language and the button of a block of code, copied with the rest of a chat\'s page', () => {
-    for (const label of [['text', 'Copy code'], ['plaintext', 'Copy'], ['Code snippet']]) {
+    // ChatGPT's button is a picture, so its page gives the language alone, on the line above the list.
+    for (const label of [['text', 'Copy code'], ['plaintext', 'Copy'], ['Code snippet'], ['text'], ['Markdown']]) {
       const d = read(text('Here is your study list.', '', ...label, list, '', 'Good luck!'))
       expect([d.title, ...names(d)], label.join(' ')).toEqual(['', ...names(read(list))])
     }
