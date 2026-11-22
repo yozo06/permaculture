@@ -347,6 +347,8 @@ describe('the prompt for an AI chat', () => {
     for (const p of [aiPrompt('German A1'), aiPrompt('German A1', '', [seed('aaaaaa')])]) {
       expect(p).toMatch(/whole list in one code block marked "text"/)
       expect(p).toMatch(/nothing outside it/)
+      // A chat that put bullets before its topics lost every part in a review, so the request says not to.
+      expect(p).toMatch(/no bullets or dashes/)
       expect(p).not.toContain('`')
     }
   })
@@ -385,6 +387,11 @@ describe('the prompt for an AI chat', () => {
     expect(aiPrompt('Coffee', '', [], { amount: 'thorough' })).toMatch(new RegExp('about ' + AMOUNT.thorough + ' topics'))
     expect(plain).toMatch(/3 to 6 parts/)
     expect(p).not.toMatch(/3 to 6 parts/)
+  })
+
+  it('never cuts what the learner wrote through the middle of a letter, which a link could not carry', () => {
+    const p = aiPrompt('Coffee', 'a'.repeat(5999) + '😀 and more words after')
+    expect(() => encodeURIComponent(p)).not.toThrow()
   })
 
   it('stays short enough to go inside a link with every answer given', () => {
@@ -545,11 +552,12 @@ describe('an answer in one code block', () => {
     return { title: d.title, topics: d.topics.map((t) => [t.group, t.name, t.kind, t.cards.length]) }
   }
 
-  it('reads the same inside a fence as bare, with or without a language after the fence', () => {
+  it('reads the same inside a fence marked as text as bare, and inside an unmarked one when it is in the shape asked for', () => {
     for (const [name, text] of answers) {
       const bare = seen(text)
-      expect(seen('```\n' + text.trim() + '\n```'), name).toEqual(bare)
       expect(seen('```text\n' + text.trim() + '\n```'), name).toEqual(bare)
+      // The coffee paste was written to the request of 0.9.0, before "Topic:" lines; unmarked, it could be any program.
+      if (name !== 'coffee') expect(seen('```\n' + text.trim() + '\n```'), name).toEqual(bare)
     }
   })
 
