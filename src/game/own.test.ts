@@ -339,7 +339,15 @@ describe('the prompt for an AI chat', () => {
     // And it tells the chat off the shapes that weaker ones fall back on.
     expect(p).toMatch(/no number after/)
     expect(p).toMatch(/one line/)
-    expect(p).toMatch(/End on the last question line/)
+    expect(p).toMatch(/ends on the last question line/)
+  })
+
+  it('asks for the whole list in one code block, so that the chat\'s Copy button takes all of it, and in the request for questions too', () => {
+    for (const p of [aiPrompt('German A1'), aiPrompt('German A1', '', [seed('aaaaaa')])]) {
+      expect(p).toMatch(/whole list in one code block marked "text"/)
+      expect(p).toMatch(/nothing outside it/)
+      expect(p).not.toContain('`')
+    }
   })
 
   it('hands the chat what the learner wrote in the box, cut to what a chat will read', () => {
