@@ -8,6 +8,7 @@ import { RULES, cropOf } from '../engine/rules'
 import type { FarmState } from '../engine/types'
 import { cropSprite, iconHtml } from './art/sprites'
 import { chipHtml } from './sheets'
+import { CHATS, chatLink } from './chats'
 import { esc } from './util'
 import { OWN_HARVEST } from './views'
 
@@ -179,10 +180,12 @@ export function addSheetHtml(field: Pick<OwnField, 'id' | 'title' | 'color'>, fi
     '<label for="ownText" class="sub">Your topics</label>' +
     '<textarea id="ownText" class="write" rows="7" data-min="1" data-gate="ownAdd" data-quiet autocomplete="off" spellcheck="false" placeholder="Photosynthesis&#10;Cell division - read chapter 4&#10;Hund = dog"></textarea>' +
     '<div class="branches"><label class="filebtn">Choose a file<input type="file" id="ownFile" accept=".txt,.md,.csv,.tsv,text/*"></label>' +
-    '<button type="button" data-act="ownPrompt" data-arg="' + esc(field.id) + '">Copy a prompt for an AI chat</button>' +
+    '<button type="button" data-act="ownPrompt" data-arg="' + esc(field.id) + '">Ask an AI chat for a list</button></div>' +
     (bare > 0 && !first
-      ? '<button type="button" data-act="ownPromptFill" data-arg="' + esc(field.id) + '">Copy a prompt for questions on ' + (bare > FILL_AT_ONCE ? FILL_AT_ONCE + ' of your ' : 'your ') + plural(bare, 'topic') + ' without any</button>'
-      : '') + '</div>' +
+      ? '<div class="branches"><a class="btn" data-act="ownAskFill" data-arg="' + esc(field.id) + '" href="' + esc(CHATS[0].open) + '" target="_blank" rel="noopener noreferrer">Ask ChatGPT for questions on ' + (bare > FILL_AT_ONCE ? FILL_AT_ONCE + ' of your ' : 'your ') + plural(bare, 'topic') + ' without any</a>' +
+        '<button type="button" data-act="ownPromptFill" data-arg="' + esc(field.id) + '">Copy that for another chat</button></div>'
+      : '') +
+    '<div id="ownChats"></div>' +
     '<div id="ownReading" aria-live="polite"><p class="sub">Nothing to add yet. One topic to a line is enough.</p></div>' +
     '<p class="sub">A topic takes about ten days to grow from seed to tree, and you can plant ' + RULES.newSeedsPerDay + ' new ones a day. A topic with question cards is watered by multiple choice; one without is watered by explaining it in writing. Lines like “Hund = dog” become cards, and the prompt for an AI chat asks it for questions under every topic. If you write in the box what you want to learn first, the prompt takes that along.</p>' +
     '<div class="foot"><button type="button" data-act="' + (first ? 'close' : 'ownBack') + '" data-arg="' + esc(field.id) + '">' + (first ? 'Skip for now' : 'Back') + '</button>' +
@@ -206,6 +209,56 @@ export type About = { [Q in Question]?: (typeof ABOUT)[Q][number][0] } & { lean?
 /** About how many topics each answer to "How much?" asks for. */
 export const AMOUNT = { taste: 10, working: 25, thorough: 40 } as const
 const PARTS = { taste: '2 or 3 parts', working: '4 or 5 parts', thorough: '5 to 8 parts' } as const
+
+/** Each question as the sheet asks it. */
+const ASKED: Record<Question, string> = { purpose: 'What is it for?', level: 'Where are you now?', amount: 'How much?', mode: 'Knowing or doing?' }
+
+/**
+ * The five questions asked before a chat is asked for a list: four rows of taps and a box. Every answer may be left
+ * out. ChatGPT, which takes the request from its link, is a link of its own; for any other chat the request is
+ * copied first. `first` is true while a farm is being set up.
+ */
+export function aboutSheetHtml(field: Pick<OwnField, 'id' | 'title' | 'color'>, first: boolean): string {
+  const id = esc(field.id)
+  const rows = (Object.keys(ABOUT) as Question[]).map((q) =>
+    '<p class="ask">' + ASKED[q] + '</p><div class="tabs pick" role="group" aria-label="' + ASKED[q] + '">' +
+    ABOUT[q].map(([choice, label]) => '<button type="button" data-act="ownAbout" data-arg="' + q + '|' + choice + '" aria-pressed="false">' + label + (q === 'amount' ? ' (about ' + AMOUNT[choice as keyof typeof AMOUNT] + ' topics)' : '') + '</button>').join('') +
+    '</div>').join('')
+  return (
+    chipHtml(field.title, field.color) + '<h2>What do you want from ' + esc(field.title) + '?</h2>' +
+    '<p>Five quick answers, each one optional. The game makes them into a request for an AI chat, which writes your topics and their questions.</p>' +
+    rows +
+    '<label for="ownLean" class="ask">Anything to lean on or leave out?</label>' +
+    '<textarea id="ownLean" class="write short" rows="2" maxlength="' + WANTS + '" data-quiet data-keep autocomplete="off" placeholder="A book, a syllabus, “skip the history”…"></textarea>' +
+    '<div class="branches"><a class="btn pri" data-act="ownAsk" data-arg="' + id + '" href="' + esc(CHATS[0].open) + '" target="_blank" rel="noopener noreferrer">Ask ChatGPT for my list</a>' +
+    '<button type="button" data-act="ownCopy" data-arg="' + id + '">Copy for another chat</button></div>' +
+    '<div id="ownChats"></div>' +
+    '<p class="sub">The chat opens in a new tab. When it has written your list, copy it with the Copy button on the list, come back here, and paste it into the box.</p>' +
+    '<div class="foot"><button type="button" data-act="' + (first ? 'close' : 'ownBack') + '" data-arg="' + id + '">' + (first ? 'Skip for now' : 'Back') + '</button>' +
+    '<button type="button" data-act="ownOwn" data-arg="' + id + '">I have my own list</button></div>'
+  )
+}
+
+/** The answers picked on the sheet, as "question|choice", and what was written in its box. Anything else is left out. */
+export function aboutFrom(picked: readonly string[], lean: string): About {
+  const about: Record<string, string> = {}
+  for (const p of picked) {
+    const [q, choice] = p.split('|')
+    if (!q || !Object.hasOwn(ABOUT, q) || Object.hasOwn(about, q)) continue
+    if (ABOUT[q as Question].some(([c]) => c === choice) && choice) about[q] = choice
+  }
+  const said = lean.trim()
+  return { ...(about as About), ...(said ? { lean: said } : {}) }
+}
+
+/**
+ * A link to each chat, to paste the request into, once it is `copied` (or shown to be copied by hand). A chat that
+ * takes the request from its link has it there too.
+ */
+export function chatLinksHtml(request: string, copied: boolean): string {
+  return '<p class="sub">' + (copied ? 'Copied. Open your chat, paste the request in and send it.' : 'Copy the request above, then open your chat, paste it in and send it.') + ' Any other chat works too.</p><div class="branches chats">' +
+    CHATS.map((c) => '<a class="btn" data-act="ownChat" href="' + esc(chatLink(c.id, request).href) + '" target="_blank" rel="noopener noreferrer">' + esc(c.name) + '</a>').join('') + '</div>'
+}
 
 /** What the answers to "What is it for?", "Where are you now?" and "Knowing or doing?" tell the chat, a line each. */
 export function aboutLines(about: About): string[] {

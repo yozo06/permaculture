@@ -23,7 +23,8 @@ import { MOMENT_MS, momentDots, type DotTone, type MomentKind } from './moments'
 import { BOOK_KEY, ageText, bookText, readBook, receive, remove, tooOld, type Arrival, type Book } from './neighbours'
 import { NEUTRAL_COLOR, cropHeight, cropSprite, holds, markRise, paintKeys, sprite as spriteAt } from './art/sprites'
 import { drop, frontmost, idle, lift, move, press, rehold, wheelStep, type Hand, type Point, type Said, type Target, type Wheel } from './hand'
-import { addSheetHtml, aiPrompt, cardsFromText, explainAsk, fieldSheetHtml, harvestTag, layerText, nameFieldSheetHtml, newFieldId, newSeedId, pickColor, readingHtml, toAdd, topicSheetHtml, type Adding } from './own'
+import { chatLink } from './chats'
+import { aboutFrom, aboutSheetHtml, addSheetHtml, aiPrompt, cardsFromText, chatLinksHtml, explainAsk, fieldSheetHtml, harvestTag, layerText, nameFieldSheetHtml, newFieldId, newSeedId, pickColor, readingHtml, toAdd, topicSheetHtml, type Adding } from './own'
 import { createStore, defaultFarmer, defaultId, LOG_KEY, type StorageLike } from './store'
 import { esc, shuffle } from './util'
 import { REF, cameraAfter, defaultZoom, fitView, pinchZoom, shift, zoomRange, type View } from './view'
@@ -1139,7 +1140,7 @@ function openTickedFields(): void {
   // The world may have grown with the fields; centre on it, and save that, or a reload shows the farm off-centre.
   store.ui.cam = camHome()
   store.saveUi()
-  if (mine) return openAdd(mine, true)
+  if (mine) return openAbout(mine, true)
   close()
   if (first) hint('Open the <b>Seed bag</b>, pick a seed, then tap soil in its field to plant it with notes in your own words.')
   toast(first ? 'Your farm is ready. Day ' + S.day + '.' : 'Field opened.')
@@ -1527,40 +1528,90 @@ function addTopics(): void {
   // A topic that is there takes its questions and keeps its place; the new ones follow.
   if (!act({ type: 'own-seeds-set', field: a.field, seeds: [...filled, ...seeds] })) return
   ADD = null
+  if (store.ui.waiting === a.field) { store.ui.waiting = null; store.saveUi() }
   toast(seeds.length > 0 ? 'Added ' + seeds.length + (seeds.length === 1 ? ' topic.' : ' topics.') : 'Added questions to ' + filled.length + (filled.length === 1 ? ' topic.' : ' topics.'))
   if (!a.first) return openTree(a.field)
   close()
   hint('Open the <b>Seed bag</b>, pick a topic, then tap soil in the <b>' + esc(packTitle(a.field)) + '</b> field to plant it with notes in your own words.')
 }
-/** Copy what to ask an AI chat for. Where the browser will not copy, the words are put on the sheet to be copied by hand. */
-function copyPrompt(fieldId: string, fill = false): void {
-  // What is written in the box goes along: what the learner is after, or the list they have so far.
-  const box = document.getElementById('ownText')
+/** The five questions asked of a learner before an AI chat is asked for their list. `lean` is what they had written already. */
+let ASK: { field: string; first: boolean } | null = null
+function openAbout(fieldId: string, first = false, lean = ''): void {
   const field = Object.hasOwn(S.own, fieldId) ? S.own[fieldId] : undefined
-  const prompt = aiPrompt(packTitle(fieldId), !fill && box instanceof HTMLTextAreaElement ? box.value : '', fill ? field?.seeds ?? [] : [])
-  const took = !fill && box instanceof HTMLTextAreaElement && box.value.trim() !== ''
-  const done = (): void => {
-    toast(took ? 'Copied, with what you wrote. Paste it into any AI chat, then paste its answer here.' : 'Copied. Paste it into any AI chat, then paste its answer here.')
-    // What was written has gone with the prompt. It is left selected, so that pasting the chat's answer takes its place.
-    if (took && box instanceof HTMLTextAreaElement) { box.focus(); box.select() }
-  }
+  if (!field) return
+  ASK = { field: fieldId, first }
+  open(aboutSheetHtml(field, first))
+  // The sheet holds the focus itself: on its first answer, the focus ring would look like an answer already given.
+  sheet.focus({ preventScroll: true })
+  if (lean.trim()) byIdAs('ownLean', HTMLTextAreaElement).value = lean
+}
+/** An answer tapped: it is marked in its row, in place, so the sheet does not jump. Tapped again, it is taken back. */
+function pickAbout(b: HTMLButtonElement): void {
+  const was = b.classList.contains('on')
+  for (const x of b.parentElement?.querySelectorAll('button') ?? []) { x.classList.remove('on'); x.setAttribute('aria-pressed', 'false') }
+  if (!was) { b.classList.add('on'); b.setAttribute('aria-pressed', 'true') }
+}
+/** The request the answers on the sheet make, read only when it is wanted. */
+function askedRequest(fieldId: string): string {
+  const picked = [...sheet.querySelectorAll<HTMLElement>('button.on[data-act="ownAbout"]')].map((b) => b.dataset.arg ?? '')
+  const lean = document.getElementById('ownLean')
+  return aiPrompt(packTitle(fieldId), '', [], aboutFrom(picked, lean instanceof HTMLTextAreaElement ? lean.value : ''))
+}
+/** The request for questions on the topics of the field that have none. */
+const fillRequest = (fieldId: string): string => aiPrompt(packTitle(fieldId), '', (Object.hasOwn(S.own, fieldId) ? S.own[fieldId]?.seeds : undefined) ?? [])
+/** The field whose request was copied last, for the chat links shown after it. */
+let COPIED: { field: string; first: boolean } | null = null
+/**
+ * Copy a request, then show a link to each chat to paste it into. Where the browser will not copy, the request is put
+ * on the sheet to be copied by hand, with the links under it.
+ */
+function copyRequest(request: string, fieldId: string, first: boolean): void {
+  COPIED = { field: fieldId, first }
+  const links = (copied: boolean): void => { const at = document.getElementById('ownChats'); if (at) at.innerHTML = chatLinksHtml(request, copied) }
+  const done = (): void => { links(true); toast('Copied. Open your chat and paste it in.') }
   const byHand = (): void => {
-    if (!document.getElementById('ownPromptText')) sheet.querySelector('#ownReading')?.insertAdjacentHTML('beforebegin', '<textarea id="ownPromptText" class="write short" rows="4" readonly></textarea>')
+    if (!document.getElementById('ownPromptText')) sheet.querySelector('#ownChats')?.insertAdjacentHTML('beforebegin', '<textarea id="ownPromptText" class="write short" rows="4" readonly></textarea>')
     const t = byIdAs('ownPromptText', HTMLTextAreaElement)
-    t.value = prompt
+    t.value = request
+    links(false)
     t.focus()
     t.select()
-    toast('Select all and copy. Paste it into any AI chat.')
+    toast('Select all and copy, then open your chat and paste it in.')
   }
-  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(prompt).then(done, byHand)
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(request).then(done, byHand)
   else byHand()
+}
+/**
+ * The learner is off to a chat for the list of the field `fieldId`. The add sheet waits behind for the answer, and if
+ * the browser drops the game meanwhile, it opens once more on the next load. It opens after the tap is done, so the
+ * link is followed as it was.
+ */
+function awaitAnswer(fieldId: string, first: boolean): void {
+  store.ui.waiting = fieldId
+  store.saveUi()
+  if (ADD?.field !== fieldId || !sheet.querySelector('#ownText')) setTimeout(() => openAdd(fieldId, first), 0)
+}
+/** A tap on one of the links to a chat. ChatGPT takes the request in its link; one too long for it is copied instead. */
+function followChat(e: MouseEvent, a: HTMLAnchorElement): void {
+  const what = a.dataset.act
+  const arg = a.dataset.arg ?? ''
+  if (what === 'ownChat') { if (COPIED) awaitAnswer(COPIED.field, COPIED.first); return }
+  if (what !== 'ownAsk' && what !== 'ownAskFill') return
+  const first = what === 'ownAsk' ? ASK?.first ?? false : ADD?.first ?? false
+  const request = what === 'ownAsk' ? askedRequest(arg) : fillRequest(arg)
+  const link = chatLink('chatgpt', request)
+  if (!link.carried) { e.preventDefault(); copyRequest(request, arg, first); return }
+  a.href = link.href
+  // Copied as well, where the browser allows it, for a phone whose ChatGPT app opens without the request.
+  navigator.clipboard?.writeText(request).catch(() => {})
+  awaitAnswer(arg, first)
 }
 /** A new field from the sheet that asks its name, or a new name for the field `fieldId`. */
 function nameField(fieldId: string): void {
   const name = byIdAs('ownName', HTMLInputElement).value
   if (!fieldId) {
     const id = makeField(name)
-    if (id) openAdd(id)
+    if (id) openAbout(id)
     return
   }
   const field = Object.hasOwn(S.own, fieldId) ? S.own[fieldId] : undefined
@@ -1701,6 +1752,8 @@ function sleep(): void {
 
 /* ---------- one delegated handler for every sheet ---------- */
 sheet.addEventListener('click', (e) => {
+  const link = e.target instanceof Element ? e.target.closest('a[data-act]') : null
+  if (link instanceof HTMLAnchorElement) return followChat(e, link)
   const b = e.target instanceof Element ? e.target.closest('button') : null
   if (!b || b.disabled) return
   const what = b.dataset.act
@@ -1772,8 +1825,18 @@ sheet.addEventListener('click', (e) => {
   else if (what === 'ownBack') openTree(arg)
   else if (what === 'ownPairs') { if (ADD) { ADD.pairs = arg === 'cards' || arg === 'topics' ? arg : null; reread() } }
   else if (what === 'ownAdd') addTopics()
-  else if (what === 'ownPrompt') copyPrompt(arg)
-  else if (what === 'ownPromptFill') copyPrompt(arg, true)
+  else if (what === 'ownPrompt') { const box = document.getElementById('ownText'); openAbout(arg, ADD?.first ?? false, box instanceof HTMLTextAreaElement ? box.value : '') }
+  else if (what === 'ownPromptFill') copyRequest(fillRequest(arg), arg, ADD?.first ?? false)
+  else if (what === 'ownAbout') pickAbout(b)
+  else if (what === 'ownCopy') copyRequest(askedRequest(arg), arg, ASK?.first ?? false)
+  else if (what === 'ownOwn') {
+    // What was written in the box of the five questions comes along: it may be the list itself.
+    const lean = document.getElementById('ownLean')
+    const had = lean instanceof HTMLTextAreaElement ? lean.value.trim() : ''
+    openAdd(arg, ASK?.first ?? false)
+    const box = document.getElementById('ownText')
+    if (had && box instanceof HTMLTextAreaElement) { box.value = had; reread() }
+  }
   else if (what === 'ownEdit') openTopic(arg)
   else if (what === 'ownSave') saveTopic(arg)
   else if (what === 'ownRemove') removeTopic(arg)
@@ -1828,4 +1891,11 @@ else if (store.refused > store.ui.driftSeen) {
   open('<h2>Your farm has changed</h2><p>' + esc(driftText(store.refused)) + '</p><p class="sub">This should never happen. Export your farm from the seed bag and report it, with the version at the bottom of the Almanac (' + esc(__APP_VERSION__) + ').</p>' + foot('Carry on'))
   store.ui.driftSeen = store.refused
   store.saveUi()
+} else if (store.ui.waiting) {
+  // The learner went to a chat for a list, and the browser dropped the game meanwhile: its sheet opens once more.
+  const waiting = store.ui.waiting
+  store.ui.waiting = null
+  store.saveUi()
+  const field = Object.hasOwn(S.own, waiting) ? S.own[waiting] : undefined
+  if (field) { openAdd(waiting, field.seeds.length === 0); toast('Paste the chat\'s answer into the box.') }
 }

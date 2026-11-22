@@ -205,6 +205,21 @@ describe('new farms and imports', () => {
     expect(store.ui.cam).toBeNull()
   })
 
+  it('remembers across a reload the field whose answer from a chat is awaited, and forgets it with the farm', () => {
+    const disk = memory()
+    const store = make(disk)
+    expect(store.ui.waiting).toBeNull()
+    store.ui.waiting = 'my_abcd1234'
+    store.saveUi()
+    expect(make(disk).ui.waiting).toBe('my_abcd1234')
+    disk.data[UI_KEY] = '{"waiting":5}'
+    expect(make(disk).ui.waiting).toBeNull()
+    const again = make(disk)
+    again.ui.waiting = 'my_abcd1234'
+    again.newFarm('fresh')
+    expect(again.ui.waiting).toBeNull()
+  })
+
   it('imports a v3 log, and refuses one that does not start a farm', () => {
     const a = make(memory())
     a.dispatch({ type: 'slept' })
