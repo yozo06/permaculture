@@ -76,9 +76,12 @@ describe("the game's code", () => {
     }
   })
 
-  it('names one other site, the village green, which is a link the player taps', () => {
-    const named = code.flatMap(({ text }) => [...text.matchAll(/(?:https?|wss?|ftp):\/\/[^\s"'`<>)]+|["'`]\/\/[^\s"'`<>)]+/g)].map((m) => m[0]))
-    expect(named).toEqual(['https://github.com/yozo06/permaculture/discussions'])
+  it('names other sites only as links the player taps: the village green, and the AI chats in a file of their own', () => {
+    const named = code.flatMap(({ file, text }) => [...text.matchAll(/(?:https?|wss?|ftp):\/\/[^\s"'`<>)]+|["'`]\/\/[^\s"'`<>)]+/g)].map((m) => ({ file, at: m[0] })))
+    expect(named.filter((n) => n.file !== 'src/game/chats.ts').map((n) => n.at)).toEqual(['https://github.com/yozo06/permaculture/discussions'])
+    expect(named.filter((n) => n.file === 'src/game/chats.ts').map((n) => n.at)).toEqual([
+      'https://chatgpt.com/', 'https://chatgpt.com/?q=', 'https://grok.com/', 'https://grok.com/?q=', 'https://claude.ai/new', 'https://gemini.google.com/app', 'https://copilot.microsoft.com/',
+    ])
   })
 
   it('builds nothing that would fetch by itself: no picture, frame, script or stylesheet made in code', () => {
