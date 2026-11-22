@@ -191,7 +191,41 @@ export function addSheetHtml(field: Pick<OwnField, 'id' | 'title' | 'color'>, fi
 }
 
 /** How much of what a learner wrote goes into the prompt. */
-const WANTS = 6000
+export const WANTS = 6000
+
+/** The five questions asked before a chat is asked for a list, each answer with the words it is shown in. */
+export const ABOUT = {
+  purpose: [['work', 'Work'], ['exam', 'An exam or course'], ['hobby', 'A hobby'], ['talk', 'Talking with people'], ['curious', 'Just curious']],
+  level: [['new', 'Starting from nothing'], ['basics', 'I know the basics'], ['using', 'I use it already']],
+  amount: [['taste', 'A taste'], ['working', 'Working knowledge'], ['thorough', 'Thorough']],
+  mode: [['know', 'Mostly knowing'], ['do', 'Mostly doing'], ['both', 'Both']],
+} as const
+export type Question = keyof typeof ABOUT
+/** What a learner answered. A question left unanswered is left out; `lean` is what to lean on or leave out. */
+export type About = { [Q in Question]?: (typeof ABOUT)[Q][number][0] } & { lean?: string }
+/** About how many topics each answer to "How much?" asks for. */
+export const AMOUNT = { taste: 10, working: 25, thorough: 40 } as const
+const PARTS = { taste: '2 or 3 parts', working: '4 or 5 parts', thorough: '5 to 8 parts' } as const
+
+/** What the answers to "What is it for?", "Where are you now?" and "Knowing or doing?" tell the chat, a line each. */
+export function aboutLines(about: About): string[] {
+  const purpose = { work: 'my work', exam: 'an exam or a course', hobby: 'a hobby', talk: 'talking with people', curious: 'my own curiosity' } as const
+  const level = {
+    new: 'I am starting from nothing: begin with the very basics.',
+    basics: 'I know the basics already: skip them and start one step beyond.',
+    using: 'I use it already: leave out what anyone who uses it knows, and cover what experienced people still get wrong.',
+  } as const
+  const mode = {
+    know: 'Most of my topics should be things to understand and remember.',
+    do: 'Most of my topics should be things to do, each with a "Practise:" line.',
+    both: 'I want a mix of things to understand and things to do.',
+  } as const
+  return [
+    ...(about.purpose ? ['I want it for ' + purpose[about.purpose] + ': choose the topics and questions that matter for that.'] : []),
+    ...(about.level ? [level[about.level]] : []),
+    ...(about.mode ? [mode[about.mode]] : []),
+  ]
+}
 /** How many topics one prompt asks for questions on. A chat writes only so much in one answer. */
 export const FILL_AT_ONCE = 20
 
@@ -199,16 +233,17 @@ export const FILL_AT_ONCE = 20
  * What to ask an AI chat for, so that its answer pastes straight in: a list of topics, each with a line on what to
  * read and questions with their wrong answers. The game itself never talks to one. `wants` is what the learner wrote
  * about what they are after, or have so far. Given a field's topics, it asks instead for questions on the first of
- * them that have none.
+ * them that have none. `about` holds the learner's answers to the five questions; asking about a field's own topics
+ * does without them.
  *
  * The shape is said in words ("Part:", "Topic:", "Read:") and not in marks: a chat's page turns "## heading" into a
  * plain line before it is copied, and the words come through. The rules name the shapes weaker chats fall back on,
  * and one finished topic is shown, because an example is what they copy best.
  */
-export function aiPrompt(subject: string, wants = '', have: readonly Pick<OwnSeed, 'name' | 'summary' | 'cards'>[] = []): string {
+export function aiPrompt(subject: string, wants = '', have: readonly Pick<OwnSeed, 'name' | 'summary' | 'cards'>[] = [], about: About = {}): string {
   const bare = have.filter((s) => s.cards.length === 0).slice(0, FILL_AT_ONCE)
   // What is too long to go whole is cut at the end of a line.
-  const all = wants.trim()
+  const all = [wants.trim(), about.lean?.trim() ?? ''].filter(Boolean).join('\n')
   const cut = all.length > WANTS ? all.slice(0, WANTS) : all
   const said = (all.length > WANTS && cut.includes('\n') ? cut.slice(0, cut.lastIndexOf('\n')) : cut).trim()
   const plainly = 'Give only the list, as plain text: no introduction, no closing remarks, no table, no bold, no numbering. End on the last question line.'
@@ -248,8 +283,13 @@ export function aiPrompt(subject: string, wants = '', have: readonly Pick<OwnSee
       ...bare.flatMap((s) => ['Topic: ' + s.name, ...(s.summary ? ['Read: ' + s.summary] : [])]),
     ].join('\n')
   }
+  const me = aboutLines(about)
+  const size = about.amount
+    ? 'Otherwise make ' + PARTS[about.amount] + ', in the order I should learn them, with about ' + AMOUNT[about.amount] + ' topics in all.'
+    : 'Otherwise make 3 to 6 parts, in the order I should learn them, with 3 to 6 topics in each.'
   return [
     'I am learning: ' + subject.trim(),
+    ...(me.length ? ['', ...me] : []),
     ...(said ? ['', 'What I want from it, or what I have so far:', said] : []),
     '',
     'Write me a study list with quiz questions, to paste into a learning game. ' + plainly,
@@ -262,7 +302,7 @@ export function aiPrompt(subject: string, wants = '', have: readonly Pick<OwnSee
     question,
     '',
     'Rules:',
-    '- If what I wrote above is already a list of topics, keep its parts and topics as they are. Otherwise make 3 to 6 parts, in the order I should learn them, with 3 to 6 topics in each.',
+    '- If what I wrote above is already a list of topics, keep its parts and topics as they are. ' + size,
     '- Write "Part:" and "Topic:" exactly so, with no number after them. A topic name is short: 6 words at most.',
     '- Under every topic, one "Read:" line and then 4 to 6 question lines. Where a topic is something to do and not something to understand, write "Practise:" in place of "Read:".',
     ...rules,

@@ -7,8 +7,8 @@ import { OWN_TODAY, catalogFor, isOwnFieldId, isOwnSeedId, type OwnField, type O
 import { read } from '../reader'
 import type { FarmEvent, FarmState } from '../engine/types'
 import {
-  FILL_AT_ONCE, OWN_COLORS, addSheetHtml, aiPrompt, cardsFromText, cardsText, explainAsk, fieldSheetHtml, harvestTag, layerText, nameFieldSheetHtml, newFieldId, newSeedId, pickColor, readingHtml,
-  toAdd, topicSheetHtml,
+  AMOUNT, FILL_AT_ONCE, OWN_COLORS, aboutLines, addSheetHtml, aiPrompt, cardsFromText, cardsText, explainAsk, fieldSheetHtml, harvestTag, layerText, nameFieldSheetHtml, newFieldId, newSeedId, pickColor, readingHtml,
+  toAdd, topicSheetHtml, type About,
 } from './own'
 
 const F = 'my_abcd1234'
@@ -355,6 +355,45 @@ describe('the prompt for an AI chat', () => {
     expect(lines).toContain(last)
     // A list of forty topics with a line each fits whole.
     expect(aiPrompt('Coffee', readFileSync('src/reader/pastes/coffee-chat.txt', 'utf8'))).toContain('Broker and market access')
+  })
+
+  it('tells the chat what each of the five answers said, and nothing of a question left unanswered', () => {
+    const plain = aiPrompt('Coffee')
+    const all: About = { purpose: 'work', level: 'basics', amount: 'working', mode: 'do', lean: 'Skip the history.' }
+    const p = aiPrompt('Coffee', '', [], all)
+    for (const q of ['purpose', 'level', 'mode'] as const) {
+      const said = aiPrompt('Coffee', '', [], { [q]: all[q] })
+      expect(said).not.toBe(plain)
+      expect(aboutLines({ [q]: all[q] }).every((l) => p.includes(l))).toBe(true)
+    }
+    expect(aboutLines({})).toEqual([])
+    expect(aiPrompt('Coffee', '', [], {})).toBe(plain)
+    // What is to lean on or leave out goes with what was written in the box.
+    expect(p).toContain('Skip the history.')
+    expect(aiPrompt('Coffee', 'I trade', [], { lean: 'Skip the history.' })).toMatch(/I trade\nSkip the history\./)
+    // How much decides the size of the list.
+    expect(aiPrompt('Coffee', '', [], { amount: 'taste' })).toMatch(new RegExp('about ' + AMOUNT.taste + ' topics'))
+    expect(aiPrompt('Coffee', '', [], { amount: 'thorough' })).toMatch(new RegExp('about ' + AMOUNT.thorough + ' topics'))
+    expect(plain).toMatch(/3 to 6 parts/)
+    expect(p).not.toMatch(/3 to 6 parts/)
+  })
+
+  it('stays short enough to go inside a link with every answer given', () => {
+    const p = aiPrompt('Organic chemistry for my second year', '', [], { purpose: 'exam', level: 'using', amount: 'thorough', mode: 'both', lean: 'Lean on Clayden, chapters 1 to 12.' })
+    expect(encodeURIComponent(p).length).toBeLessThanOrEqual(4000)
+  })
+
+  it('reads an answer written to a request with the five answers in it, as it reads one without', () => {
+    const p = aiPrompt('German A1', '', [], { purpose: 'talk', level: 'new', amount: 'taste', mode: 'know' })
+    const d = read(shapes(p))
+    expect(d.notes).toEqual([])
+    expect(d.topics).toHaveLength(1)
+    expect(d.topics[0]?.cards[0]?.wrong).toHaveLength(3)
+  })
+
+  it('asks for questions on the topics a field has the same way whatever the five answers were', () => {
+    const have = [seed('aaaaaa', { name: 'Basis risk' })]
+    expect(aiPrompt('Coffee', '', have, { level: 'new', amount: 'taste' })).toBe(aiPrompt('Coffee', '', have))
   })
 
   it('asks for questions on the topics a field has that have none, by their own names', () => {
