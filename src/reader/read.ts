@@ -329,7 +329,8 @@ function splitPair(s: string, p: Patterns): Pair | null {
   if (bold) return make(bold[2] ?? '', bold[4] ?? '', { named: true, ...(bold[3] === ':' ? { colon: true } : {}) })
   if (/^(\*\*|__)/.test(s)) return null
   // A question, and its answer after it on the same line.
-  const marked = /^(.{3,}\?)\s*(?:=>|->|::|=|→|:)\s+(\S.*)$/.exec(s)
+  // A question may end in a quotation of one: 'How do you ask "Where is it?" = ...'.
+  const marked = /^(.{3,}\?["'”’»)\]]?)\s*(?:=>|->|::|=|→|:)\s+(\S.*)$/.exec(s)
   if (marked) return make(marked[1] ?? '', marked[2] ?? '', { strong: true }, true)
   const asked = /^(.{3,}?\?)\s+(\S.*)$/.exec(s)
   if (asked && !/\?\s*$/.test(s)) return make(asked[1] ?? '', (asked[2] ?? '').replace(/^[-–—:]\s+/, ''), { strong: true }, true)
@@ -508,13 +509,14 @@ function tokens(input: string[], p: Patterns, note: (n: Note, key?: string) => v
   // A list handed over in a block of code, as a chat does so that it copies cleanly, is the list and not code: when
   // far more stands inside the blocks than outside them, and what stands inside is such a list, only the rows of
   // backticks are left out.
-  // A list may also come in a block marked as plain text, or not marked at all, when hardly any line in it is code.
+  // A list may also come in a block marked as plain text, when hardly any line in it is code. A block not marked at all
+  // may be any program, so it is a list only when its lines say so.
   const beside = lines.filter((l, i) => !code.has(i) && l.trim() !== '').length
   const listInCode = lines.some((l, i) => code.has(i) && (quizLine(l) || (labelish(l) && p.topic.test(bare(l)))))
   const marks = lines.filter((l, i) => code.has(i) && /^\s*```/.test(l)).map((l) => l.replace(/^\s*`+/, '').trim())
   const inside = lines.filter((l, i) => code.has(i) && !/^\s*```/.test(l) && l.trim() !== '')
   const codey = (l: string): boolean => /[;{}]\s*$|=>|[\w.]\(.*\)\s*$|^\s*(?:def|function|import|from|const|let|var|class|return|public|private|#include)\b/.test(l)
-  const plainInCode = marks.every((m) => m === '' || p.plainCode.test(m)) && inside.filter(codey).length * 4 < inside.length
+  const plainInCode = marks.some((m) => m !== '') && marks.every((m) => m === '' || p.plainCode.test(m)) && inside.filter(codey).length * 4 < inside.length
   /** When the list came in blocks, a whole sentence outside them is the chat talking: "I kept it short, as you asked." */
   const talk = new Set<number>()
   if (codeBlocks > 0 && (listInCode || plainInCode) && code.size - 2 * codeBlocks > 3 * beside) {
@@ -560,11 +562,13 @@ function tokens(input: string[], p: Patterns, note: (n: Note, key?: string) => v
   // Selecting a chat's whole page copies a code block's button and, on the line before it, the block's language. Where
   // the button is a picture, the language stands alone; in a list said in words ("Topic: ...") no topic is that bare.
   const dress = new Set<number>()
+  // A one-word button ("Copy") goes only after such a language: "Cut, Copy, Paste" is a list of topics.
   lines.forEach((l, i) => {
     if (outlined && p.plainCode.test(l.trim())) dress.add(i)
     if (!p.codeButton.test(l.trim())) return
-    dress.add(i)
-    if (/^\s*\S{1,20}\s*$/.test(lines[i - 1] ?? '')) dress.add(i - 1)
+    const named = p.plainCode.test((lines[i - 1] ?? '').trim())
+    if (named) dress.add(i - 1)
+    if (named || /\s/.test(l.trim())) dress.add(i)
   })
   for (const [at, line] of lines.entries()) {
     // A block of code is not notes.

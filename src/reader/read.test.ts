@@ -1144,12 +1144,24 @@ describe('a list with its parts, topics and questions said in words', () => {
     expect(read(text('## ConfigMaps', '```yaml', 'kind: ConfigMap', '```', '## Secrets')).notes).toEqual([{ code: 'code-left-out', count: 1 }])
   })
 
-  it('reads a block marked as text, or not marked, as the list when hardly a line in it is code', () => {
+  it('reads a block marked as plain text as the list when hardly a line in it is code', () => {
     const bullets = text('## Coffee as a commodity', '* Arabica versus Robusta: the two species', '* Major producing countries: who grows what', '## The physical trade', '* Contracts: FOB and CIF', '* Grading: defects and screen size')
-    for (const mark of ['', 'text', 'markdown']) {
+    for (const mark of ['text', 'markdown']) {
       const d = read('```' + mark + '\n' + bullets + '\n```')
       expect(d.topics, mark).toEqual(read(bullets).topics)
       expect(d.notes, mark).toEqual(read(bullets).notes)
+    }
+    // Not marked, a block is the list only when it says so in its lines ("Topic:", questions); otherwise it may be any program.
+    expect(read('```\n' + bullets + '\n```').notes).toEqual([{ code: 'code-left-out', count: 1 }])
+    const programs = [
+      text('Setting up Node', '```', 'cd project', 'npm install', 'npm run dev', 'git status', '```'),
+      text('Python loops', '```', 'x = 5', 'for i in range(x):', '    total += i', 'else:', '    done = True', '```'),
+      text('Config', '```', 'services:', '  web:', '    image: nginx', '    ports:', '      - 80:80', '```'),
+    ]
+    for (const program of programs) {
+      const d = read(program)
+      expect(d.topics.length, program).toBe(1)
+      expect(d.notes, program).toEqual([{ code: 'code-left-out', count: 1 }])
     }
     // A block marked as a language, or one full of code, is still code.
     const loops = (mark: string) => read(text('## Loops', '```' + mark, ...Array.from({ length: 12 }, (_, i) => 'print(' + i + ')'), '```', '## Lists'))
@@ -1172,6 +1184,9 @@ describe('a list with its parts, topics and questions said in words', () => {
     }
     // A topic named like a language stays, where no button follows it.
     expect(names(read(text('Markdown', 'Plain text', 'Spreadsheets')))).toEqual(['Markdown', 'Plain text', 'Spreadsheets'])
+    // And a topic that is the word on a button stays, with the one above it, where no language names a block.
+    expect(names(read(text('Cut', 'Copy', 'Paste', 'Undo', 'Redo')))).toEqual(['Cut', 'Copy', 'Paste', 'Undo', 'Redo'])
+    expect(names(read(text('Formulas', 'Copy', 'Pivot tables', 'Charts')))).toEqual(['Formulas', 'Copy', 'Pivot tables', 'Charts'])
   })
 
   it('puts the text under a heading that holds cards into the line on what to read, and says nothing of leaving it out', () => {
@@ -1202,6 +1217,15 @@ describe('a list with its parts, topics and questions said in words', () => {
     expect(d.notes).toEqual([])
     // A name in quotation marks is the name without them.
     expect(names(read(text('Topic: "Emulsions: mayo vs. hollandaise"', 'What holds an emulsion? = An emulsifier | Salt | Heat | Sugar', 'Topic: ‘Stocks’', 'What is a stock made from? = Bones | Flour | Cream | Sugar')))).toEqual(['Emulsions: mayo vs. hollandaise', 'Stocks'])
+  })
+
+  it('reads a question that quotes another, with the quotation mark after its question mark', () => {
+    const d = read(text('Topic: Asking the way', 'Read: the questions a traveller asks',
+      'How do you ask "Where is the station?" = ¿Dónde está la estación? | ¿Qué hora es? | ¿Cómo estás? | ¿Cuánto cuesta?',
+      'What does “¿Está lejos?” mean? = Is it far? | Is it near? | Is it open? | Is it late?',
+      'Topic: Understanding replies', 'What does "todo recto" mean? = Straight ahead | Turn left | Go back | Stop here'))
+    expect(d.topics.map((t) => [t.name, t.cards.length])).toEqual([['Asking the way', 2], ['Understanding replies', 1]])
+    expect(d.topics[0]?.cards[0]).toEqual({ q: 'How do you ask "Where is the station?"', a: '¿Dónde está la estación?', wrong: ['¿Qué hora es?', '¿Cómo estás?', '¿Cuánto cuesta?'] })
   })
 
   it('leaves a list of words alone whose words happen to be "part", "topic" or "read"', () => {
