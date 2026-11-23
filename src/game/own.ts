@@ -207,21 +207,30 @@ export type About = { [Q in Question]?: (typeof ABOUT)[Q][number][0] } & { lean?
 export const AMOUNT = { taste: 10, working: 25, thorough: 40 } as const
 const PARTS = { taste: '2 or 3 parts', working: '4 or 5 parts', thorough: '5 to 8 parts' } as const
 
-/** What the answers to "What is it for?", "Where are you now?" and "Knowing or doing?" tell the chat, a line each. */
+/**
+ * What the answers to "What is it for?", "Where are you now?" and "Knowing or doing?" tell the chat, a line each. Each
+ * line says what to favour in the topics and how to ask the questions, because those are what the answers change.
+ */
 export function aboutLines(about: About): string[] {
-  const purpose = { work: 'my work', exam: 'an exam or a course', hobby: 'a hobby', talk: 'talking with people', curious: 'my own curiosity' } as const
+  const purpose = {
+    work: 'I need it for my work: favour what is used in practice, with the real terms, figures and cases, and ask questions about situations I will meet.',
+    exam: 'I am studying it for an exam or a course: follow the order it is usually taught, cover what exams ask, and ask questions the way an exam would, with its exact terms.',
+    hobby: 'It is a hobby: favour what lets me enjoy it and get going soon, leave out theory I will not use, and keep the questions practical.',
+    talk: 'I want to talk with people about it, or in it: favour everyday words, phrases and situations over theory, and ask questions about what to say and what things mean.',
+    curious: 'I am learning it out of curiosity: favour the big ideas, how they connect and what is surprising, and ask questions that check I understood why.',
+  } as const
   const level = {
-    new: 'I am starting from nothing: begin with the very basics.',
-    basics: 'I know the basics already: skip them and start one step beyond.',
-    using: 'I use it already: leave out what anyone who uses it knows, and cover what experienced people still get wrong.',
+    new: 'I am starting from nothing: begin with the very first basics, in plain words, and keep the first questions easy.',
+    basics: 'I know the basics already: leave them out, start one step beyond, and make the questions about as hard as a good test.',
+    using: 'I use it already: leave out what anyone who uses it knows, cover the finer points and the common mistakes, and make the questions hard enough to catch an experienced person.',
   } as const
   const mode = {
-    know: 'Most of my topics should be things to understand and remember.',
-    do: 'Most of my topics should be things to do, each with a "Practise:" line.',
-    both: 'I want a mix of things to understand and things to do.',
+    know: 'Most of my topics should be things to understand and remember, each with a "Read:" line, and the questions should test facts, meanings and reasons.',
+    do: 'Most of my topics should be things to do, each with a "Practise:" line that says what to practise, and the questions should be about how to do them well.',
+    both: 'I want a mix: things to understand, with a "Read:" line, and things to do, with a "Practise:" line, and questions that fit each.',
   } as const
   return [
-    ...(about.purpose ? ['I want it for ' + purpose[about.purpose] + ': choose the topics and questions that matter for that.'] : []),
+    ...(about.purpose ? [purpose[about.purpose]] : []),
     ...(about.level ? [level[about.level]] : []),
     ...(about.mode ? [mode[about.mode]] : []),
   ]

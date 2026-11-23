@@ -7,7 +7,7 @@ import { OWN_TODAY, catalogFor, isOwnFieldId, isOwnSeedId, type OwnField, type O
 import { read } from '../reader'
 import type { FarmEvent, FarmState } from '../engine/types'
 import {
-  AMOUNT, FILL_AT_ONCE, OWN_COLORS, aboutLines, addSheetHtml, aiPrompt, cardsFromText, cardsText, explainAsk, fieldSheetHtml, harvestTag, layerText, nameFieldSheetHtml, newFieldId, newSeedId, pickColor, readingHtml,
+  ABOUT, AMOUNT, FILL_AT_ONCE, OWN_COLORS, aboutLines, addSheetHtml, aiPrompt, cardsFromText, cardsText, explainAsk, fieldSheetHtml, harvestTag, layerText, nameFieldSheetHtml, newFieldId, newSeedId, pickColor, readingHtml,
   toAdd, topicSheetHtml, type About,
 } from './own'
 
@@ -391,6 +391,17 @@ describe('the prompt for an AI chat', () => {
   it('never cuts what the learner wrote through the middle of a letter, which a link could not carry', () => {
     const p = aiPrompt('Coffee', 'a'.repeat(5999) + '😀 and more words after')
     expect(() => encodeURIComponent(p)).not.toThrow()
+  })
+
+  it('says something of its own for every answer, about the topics and about the questions, in words the reader cannot mistake', () => {
+    for (const q of ['purpose', 'level', 'mode'] as const) {
+      const said = ABOUT[q].map(([choice]) => aboutLines({ [q]: choice }).join(' '))
+      expect(new Set(said).size, q).toBe(said.length)
+      for (const line of said) {
+        expect(line, q).toMatch(/question/i)
+        expect(line, q).not.toMatch(/[=|]/)
+      }
+    }
   })
 
   it('stays short enough to go inside a link with every answer given', () => {
