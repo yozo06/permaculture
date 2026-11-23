@@ -5,9 +5,10 @@ import { smallCatalog as cat, smallFarm, run } from '../engine/fixtures'
 import { check } from '../engine/fold'
 import { OWN_TODAY, catalogFor, isOwnFieldId, isOwnSeedId, type OwnField, type OwnSeed } from '../engine/own'
 import { read } from '../reader'
+import { CHATS } from './chats'
 import type { FarmEvent, FarmState } from '../engine/types'
 import {
-  ABOUT, AMOUNT, FILL_AT_ONCE, OWN_COLORS, aboutLines, addSheetHtml, aiPrompt, cardsFromText, cardsText, explainAsk, fieldSheetHtml, harvestTag, layerText, nameFieldSheetHtml, newFieldId, newSeedId, pickColor, readingHtml,
+  ABOUT, AMOUNT, FILL_AT_ONCE, OWN_COLORS, aboutFrom, aboutLines, aboutSheetHtml, chatLinksHtml, addSheetHtml, aiPrompt, cardsFromText, cardsText, explainAsk, fieldSheetHtml, harvestTag, layerText, nameFieldSheetHtml, newFieldId, newSeedId, pickColor, readingHtml,
   toAdd, topicSheetHtml, type About,
 } from './own'
 
@@ -240,7 +241,7 @@ describe('the sheets', () => {
     const sheets = [
       fieldSheetHtml(bad, state, catalogFor(cat, { [F]: bad })), topicSheetHtml(bad, bad.seeds[0] as OwnSeed, false), addSheetHtml(bad, true), addSheetHtml(bad, false),
       nameFieldSheetHtml({ id: F, title: evil }), readingHtml(read(evil + '\n## ' + evil + '\n- ' + evil + ' = ' + evil), toAdd(read(evil + '\n- a = ' + evil + '\n- b = c\n- d = e'), bad, counting())),
-      explainAsk({ pack: F, layer: 'herb', name: evil }),
+      explainAsk({ pack: F, layer: 'herb', name: evil }), aboutSheetHtml(bad, true), chatLinksHtml(evil, true),
     ]
     for (const html of sheets) {
       expect(html).not.toMatch(/<img|<script|onerror=alert\(1\)>/)
@@ -500,6 +501,23 @@ describe('questions for topics that are there already', () => {
   })
 })
 
+describe('the choice of how to read lines in two parts', () => {
+  it('is not offered for a list whose every question came with its wrong answers, as a chat was asked to write it', () => {
+    const answer = readFileSync('src/reader/pastes/chatgpt-guitar.txt', 'utf8')
+    const d = read(answer)
+    const html = readingHtml(d, toAdd(d, field(), counting()))
+    expect(html).not.toContain('Hund')
+    expect(html).not.toContain('data-act="ownPairs"')
+  })
+
+  it('is offered where the lines could be read either way, and stays once a way was picked', () => {
+    const words = read('Hund - dog\nKatze - cat\nBrot - bread\nWasser - water')
+    expect(readingHtml(words, toAdd(words, field(), counting()))).toContain('data-act="ownPairs"')
+    const answer = read(readFileSync('src/reader/pastes/chatgpt-guitar.txt', 'utf8'), { pairs: 'topics' })
+    expect(readingHtml(answer, toAdd(answer, field(), counting()), 'topics')).toContain('data-act="ownPairs"')
+  })
+})
+
 describe('topics with nothing to ask', () => {
   it('says how many there are, and what that means, before they are added', () => {
     const d = read('Part: A\nTopic: One\nWhat? = a | b | c\nTopic: Two\nTopic: Three')
@@ -582,5 +600,52 @@ describe('an answer in one code block', () => {
     const short = (answers.find(([n]) => n === 'tidy-1.txt')?.[1] ?? '').split('\n').slice(0, 30).join('\n')
     const around = ['Sure! Here is a short study list for you to paste into your game.', 'I kept it small, as you asked.', 'Each topic has a few questions.', '', '```', short, '```', '', 'Good luck with your learning!', 'If you want, I can add more topics later.', 'Just ask.'].join('\n')
     expect(seen(around)).toEqual(seen(short))
+  })
+})
+
+describe('five questions before a chat is asked for a list', () => {
+  const g = { id: F, title: 'German', color: '#4DB6A4' }
+
+  it('asks the five questions by taps, has a box for the fifth, and offers the ways on', () => {
+    const html = aboutSheetHtml(g, true)
+    for (const q of Object.keys(ABOUT)) expect(html).toContain('data-arg="' + q + '|')
+    expect((html.match(/data-act="ownAbout"/g) ?? []).length).toBe(Object.values(ABOUT).flat().length)
+    expect(html).toContain('A taste (about ' + AMOUNT.taste + ' topics)')
+    // Every button is only a button: none sends a form.
+    expect(html).not.toMatch(/<button(?![^>]*type="button")/)
+    expect(html).toMatch(/<textarea id="ownLean"[^>]*maxlength="6000"/)
+    // Asking ChatGPT is a link the learner taps, opened in a new tab, and the other ways are buttons.
+    expect(html).toMatch(/<a [^>]*data-act="ownAsk"[^>]*target="_blank" rel="noopener noreferrer"[^>]*>Ask ChatGPT/)
+    expect(html).toContain('data-act="ownCopy"')
+    expect(html).toContain('data-act="ownOwn"')
+    expect(html).toContain('Skip for now')
+    expect(aboutSheetHtml(g, false)).toContain('>Back<')
+    // Opened from the paste box, it goes back there, even while the farm is being set up.
+    expect(aboutSheetHtml(g, true, true)).toContain('>Back<')
+    expect(aboutSheetHtml(g, true, true)).not.toContain('Skip for now')
+  })
+
+  it('takes back only the answers the sheet offers, the first of each', () => {
+    expect(aboutFrom(['purpose|work', 'level|basics', 'amount|thorough', 'mode|do', 'purpose|exam', 'purpose|hack', 'size|big', 'level'], '  Skip the history  '))
+      .toEqual({ purpose: 'work', level: 'basics', amount: 'thorough', mode: 'do', lean: 'Skip the history' })
+    expect(aboutFrom([], '   ')).toEqual({})
+  })
+
+  it('shows a link to each chat once the request is copied, each to open in a new tab', () => {
+    const html = chatLinksHtml('I am learning: German', true)
+    for (const c of CHATS) expect(html).toContain('>' + c.name + '<')
+    expect(html).toContain('Copied.')
+    // Where the browser would not copy, it does not say it did.
+    expect(chatLinksHtml('I am learning: German', false)).not.toContain('Copied')
+    expect((html.match(/target="_blank" rel="noopener noreferrer"/g) ?? []).length).toBe(CHATS.length)
+    expect((html.match(/data-act="ownChat"/g) ?? []).length).toBe(CHATS.length)
+  })
+
+  it('offers ChatGPT and the copy for questions on a field\'s topics without any', () => {
+    const html = addSheetHtml(g, false, 3)
+    expect(html).toMatch(/<a [^>]*data-act="ownAskFill"[^>]*target="_blank"/)
+    expect(html).toContain('data-act="ownPromptFill"')
+    // The request for a new list goes by the five questions.
+    expect(html).toContain('data-act="ownPrompt"')
   })
 })

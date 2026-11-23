@@ -1,8 +1,8 @@
 # A field of your own
 
-The seven ready-made fields are one person's subjects. A field of your own is for yours: type what you want to learn, paste whatever you already have, and the game turns it into topics you can plant.
+The seven ready-made fields are one person's subjects. A field of your own is for yours: type what you want to learn, answer five quick questions, and let an AI chat of your choice write the topics and their questions. Or paste whatever you already have, and the game turns it into topics you can plant.
 
-Nothing here uses AI, an account or a server. The reading is done by rules, in your browser, and your topics are kept in your farm's own log.
+The game itself uses no AI, no account and no server. It only opens your chat for you; the reading is done by rules, in your browser, and your topics are kept in your farm's own log.
 
 ## What you can paste
 
@@ -24,17 +24,19 @@ Anything with one topic to a line works. The reader also understands the shapes 
 | A heading with running text under it (a full sentence or more, or a line that begins "Read:") and then cards | One topic, with that text as what to read and the cards as its questions. |
 | What an AI chat wrote for you | The same as any of the above. The usual opening and closing lines ("Here is...", "Let me know...") are dropped, and a list handed over in a block of code is read as the list. The game itself never talks to one. |
 
-### Questions from an AI chat
+### A list from an AI chat, in five taps
 
-A topic with question cards is watered by multiple choice. A topic with none is watered by explaining it in writing, which is slower and asks more of you. If you would rather be asked, let an AI chat write the questions:
+A topic with question cards is watered by multiple choice. A topic with none is watered by explaining it in writing, which is slower and asks more of you. If you would rather be asked, let an AI chat write the list and its questions:
 
-1. On the add sheet, write in the box what you want to learn, in your own words. This is optional.
-2. Press **Copy a prompt for an AI chat** and paste the prompt into any chat. It asks for a list of parts and topics, and under every topic a line on what to read and four to six questions, each with its right answer and three wrong ones.
-3. Paste the chat's answer into the box. The sheet shows what the game made of it, and says so if any topic came without questions.
+1. Name your field. The game asks five questions, all optional, by taps: what it is for, where you are now, how much (about 10, 25 or 40 topics), knowing or doing, and a box for anything to lean on or leave out (a book, a syllabus, "skip the history").
+2. Press **Ask ChatGPT for my list**. ChatGPT opens in a new tab with the request in it, already sent. For another chat press **Copy for another chat**, then the chat's name (Grok, Claude, Gemini, Copilot, or any other), and paste the request in. It asks for parts and topics, and under every topic a line on what to read and four to six questions, each with its right answer and three wrong ones, all in one code block.
+3. Copy the chat's list with the Copy button on its block, come back, and paste it into the box. The sheet shows what the game made of it, and says so if any topic came without questions. If the chat stopped part way, ask it to go on and paste the rest too: only the new topics are added.
 
-A field that already has topics with nothing to ask can get them questions the same way: the add sheet then has a second button, **Copy a prompt for questions on your topics without any**. Paste the chat's answer, and each of those topics takes its questions and keeps everything else, whether it is planted or not. One prompt asks about twenty topics, because a chat writes only so much in one answer; a field with more is done in rounds. A chat seldom writes a name back exactly, so a topic is known by its name whatever the capitals, quotation marks or numbering.
+If the game is closed or reloaded while you are in the chat, the paste box opens again, once, the next time you open the game. A request too long for ChatGPT's link (a long syllabus in the fifth box, say) is copied instead, and the links to every chat are shown, ChatGPT among them. **I have my own list** skips the chat and goes straight to the box. None of these chats documents the links the game uses for it; the game was tried with each on 2026-11-22, and ChatGPT is the one that takes the request from the link. If one stops, the copy still works.
 
-The prompt asks for the list in words ("Part:", "Topic:", "Read:") and not in Markdown marks, because a chat's page turns "## heading" into a plain line before you copy it.
+A field that already has topics with nothing to ask can get them questions the same way: the add sheet then has **Ask ChatGPT for questions on your topics without any**, and **Copy that for another chat**. Paste the chat's answer, and each of those topics takes its questions and keeps everything else, whether it is planted or not. One request asks about twenty topics, because a chat writes only so much in one answer; a field with more is done in rounds. A chat seldom writes a name back exactly, so a topic is known by its name whatever the capitals, quotation marks or numbering.
+
+The request asks for the list in words ("Part:", "Topic:", "Read:") and not in Markdown marks, because a chat's page turns "## heading" into a plain line before you copy it. A list copied by selecting the page, with the block's label "text" above it, reads the same as one copied with the button.
 
 ### Lines in two parts
 

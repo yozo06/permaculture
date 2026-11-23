@@ -31,10 +31,12 @@ export interface UiState {
   driftSeen: number
   /** Screen pixels to one pixel of art, as the farmer left it. Null means the zoom their screen starts at. */
   zoom: number | null
+  /** The field of the farmer's own whose list was asked of an AI chat, for the sheet to take it to open on the next load. */
+  waiting: string | null
 }
 
 export const defaultFarmer = (): UiState['farmer'] => ({ x: 9, y: 8, tx: 9, ty: 8 })
-const freshUi = (): UiState => ({ cam: null, farmer: defaultFarmer(), seedSel: null, treeTab: null, driftSeen: 0, zoom: null })
+const freshUi = (): UiState => ({ cam: null, farmer: defaultFarmer(), seedSel: null, treeTab: null, driftSeen: 0, zoom: null, waiting: null })
 
 export type NewFarm = 'fresh' | 'sample'
 
@@ -93,6 +95,7 @@ function readUi(raw: string | null): UiState {
     }
     if (typeof v.seedSel === 'string') ui.seedSel = v.seedSel
     if (typeof v.treeTab === 'string') ui.treeTab = v.treeTab
+    if (typeof v.waiting === 'string') ui.waiting = v.waiting
     ui.driftSeen = Math.max(0, Math.round(num(v.driftSeen, 0)))
     // Only a sane whole number is kept; the view fits it to the screen it finds itself on.
     if (typeof v.zoom === 'number' && Number.isFinite(v.zoom)) ui.zoom = Math.min(32, Math.max(1, Math.round(v.zoom)))
