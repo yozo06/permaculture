@@ -552,7 +552,9 @@ describe('what a second look found', () => {
     for (const line of ['a' + '☀'.repeat(398) + 'x', 'a ' + '🐶 '.repeat(130) + 'x', 'x' + '. '.repeat(199), '.'.repeat(400), '('.repeat(399) + 'x', '['.repeat(399) + 'x', '|'.repeat(400)]) {
       expect(took(line) / plain, line.slice(0, 8)).toBeLessThan(20)
     }
-  })
+    // Some 24 readings of a thousand long lines: 1.5 s on a laptop, over 5 s on the build machines. The ratio is the
+    // test; the time it takes is not.
+  }, 30000)
 
   it('never puts a heading under a line that is not one', () => {
     const d = read(text('| 2 + 2 = ? | 4 |', '| 3 + 3 = ? | 6 |', '| 5 + 5 = ? | 10 |', '## Algebra', '- Linear equations', '- Quadratics'))
