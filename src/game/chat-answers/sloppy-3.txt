@@ -1,0 +1,85 @@
+Here's a study list for SQL for a data analyst job:
+
+Part: Querying data
+
+Topic: SELECT and WHERE
+(Read: the SELECT and WHERE pages of the SQL tutorial and write five queries)
+1. What does SELECT * FROM users WHERE age = 30 return?
+A) All users aged 30
+B) Only the first user
+C) All users except those aged 30
+D) The number of users
+Answer: A
+
+2. Which clause filters rows before they are grouped?
+A) HAVING
+B) WHERE
+C) ORDER BY
+D) LIMIT
+Answer: B
+
+3. Which operator tests for a missing value?
+A) = NULL
+B) IS NULL
+C) == NULL
+Answer: B
+
+Topic: Sorting and limiting
+(Read: ORDER BY, LIMIT and OFFSET with two examples)
+1. Which keyword sorts the result from highest to lowest?
+A) DESC
+B) ASC
+C) TOP
+D) MAX
+Answer: A
+
+2. What does LIMIT 10 do?
+A) Returns at most ten rows
+B) Deletes ten rows
+C) Returns the tenth column
+D) Sorts by ten columns
+Answer: A
+
+Part: Combining data
+
+Topic: Joins
+(Read: INNER JOIN and LEFT JOIN, with a diagram for each)
+1. Which join returns only rows that match in both tables?
+A) LEFT JOIN
+B) FULL JOIN
+C) INNER JOIN
+D) CROSS JOIN
+Answer: C
+
+2. What does a LEFT JOIN keep?
+A) All rows from the left table
+B) Only unmatched rows
+C) All rows from the right table
+Answer: A
+
+3. In SELECT a.id FROM a JOIN b ON a.id = b.a_id, what does the ON clause do?
+A) It says how the rows of the two tables match
+B) It sorts the result
+C) It limits the result to one row
+D) It names the new table
+Answer: A
+
+Topic: Aggregation and GROUP BY
+(Read: COUNT, SUM, AVG and GROUP BY, then HAVING)
+1. Which function counts the rows in a group?
+A) COUNT
+B) SUM
+C) TOTAL
+D) ROWS
+Answer: A
+
+2. Which clause filters groups after aggregation?
+A) WHERE
+B) HAVING
+C) FILTER
+D) ON
+Answer: B
+
+Topic: Subqueries and CTEs
+
+Let me know if you would like more topics added!

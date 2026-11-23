@@ -552,7 +552,9 @@ describe('what a second look found', () => {
     for (const line of ['a' + '☀'.repeat(398) + 'x', 'a ' + '🐶 '.repeat(130) + 'x', 'x' + '. '.repeat(199), '.'.repeat(400), '('.repeat(399) + 'x', '['.repeat(399) + 'x', '|'.repeat(400)]) {
       expect(took(line) / plain, line.slice(0, 8)).toBeLessThan(20)
     }
-  })
+    // Some 24 readings of a thousand long lines: 1.5 s on a laptop, over 5 s on the build machines. The ratio is the
+    // test; the time it takes is not.
+  }, 30000)
 
   it('never puts a heading under a line that is not one', () => {
     const d = read(text('| 2 + 2 = ? | 4 |', '| 3 + 3 = ? | 6 |', '| 5 + 5 = ? | 10 |', '## Algebra', '- Linear equations', '- Quadratics'))
@@ -914,6 +916,42 @@ describe('what a look at the reader as its own part found', () => {
   })
 })
 
+describe('what ChatGPT wrote to the request of version 0.11.0', () => {
+  // A real answer (2026-11-22, signed out): coffee trading, for work, the basics known, a taste, mostly knowing, "I buy
+  // green coffee for a roaster; skip the history". It came in one code block, as asked, with nothing outside it.
+  const answer = readFileSync('src/reader/pastes/chatgpt-coffee-trading.txt', 'utf8')
+  const seen = (d: ReturnType<typeof read>) => ({ title: d.title, notes: d.notes, topics: d.topics.map((t) => [t.group, t.name, t.kind, t.cards.length]) })
+
+  it('reads every topic with its questions, each with three wrong answers', () => {
+    const d = read(answer)
+    expect(d.title).toBe('')
+    expect(d.notes).toEqual([])
+    expect(d.topics).toHaveLength(11)
+    expect(new Set(d.topics.map((t) => t.group)).size).toBe(3)
+    expect(d.topics.every((t) => t.cards.length === 5 && t.cards.every((c) => c.wrong?.length === 3))).toBe(true)
+  })
+
+  it('reads it the same from the Copy button, from the message copied whole, and from the page selected by hand', () => {
+    const bare = seen(read(answer))
+    expect(seen(read('```text\n' + answer.trim() + '\n```'))).toEqual(bare)
+    // The page shows the block's language above it, and its button as a picture, which copies as nothing.
+    expect(seen(read('text\n' + answer.trim() + '\n\nChatGPT is AI and can make mistakes.'))).toEqual(bare)
+  })
+})
+
+describe('what ChatGPT wrote when asked for things to do', () => {
+  // A real answer (2026-11-23, signed out): guitar, a hobby, starting from nothing, a taste, mostly doing.
+  const d = read(readFileSync('src/reader/pastes/chatgpt-guitar.txt', 'utf8'))
+
+  it('marks as skills the topics it gave a "Practise:" line, and keeps every question', () => {
+    expect(d.notes).toEqual([])
+    expect(d.topics).toHaveLength(11)
+    expect(d.topics.filter((t) => t.kind === 'skill')).toHaveLength(9)
+    expect(d.topics.every((t) => t.cards.length === 5 && t.cards.every((c) => c.wrong?.length === 3))).toBe(true)
+    expect(topic(d, 'Your first chords').summary).toBe('Practise changing between Em, Am and C slowly')
+  })
+})
+
 describe('a list an AI chat wrote, as it comes out of the chat', () => {
   // The first real paste: what a chat answered to the game's own prompt of version 0.9.0, copied from the chat's page.
   // The page had turned "## heading" into a plain line and "- " into "* ".
@@ -1121,6 +1159,51 @@ describe('a list with its parts, topics and questions said in words', () => {
     expect(read(text('## ConfigMaps', '```yaml', 'kind: ConfigMap', '```', '## Secrets')).notes).toEqual([{ code: 'code-left-out', count: 1 }])
   })
 
+  it('reads a block marked as plain text as the list when hardly a line in it is code', () => {
+    const bullets = text('## Coffee as a commodity', '* Arabica versus Robusta: the two species', '* Major producing countries: who grows what', '## The physical trade', '* Contracts: FOB and CIF', '* Grading: defects and screen size')
+    for (const mark of ['text', 'markdown']) {
+      const d = read('```' + mark + '\n' + bullets + '\n```')
+      expect(d.topics, mark).toEqual(read(bullets).topics)
+      expect(d.notes, mark).toEqual(read(bullets).notes)
+    }
+    // Not marked, a block is the list only when it says so in its lines ("Topic:", questions); otherwise it may be any program.
+    expect(read('```\n' + bullets + '\n```').notes).toEqual([{ code: 'code-left-out', count: 1 }])
+    const programs = [
+      text('Setting up Node', '```', 'cd project', 'npm install', 'npm run dev', 'git status', '```'),
+      text('Python loops', '```', 'x = 5', 'for i in range(x):', '    total += i', 'else:', '    done = True', '```'),
+      text('Config', '```', 'services:', '  web:', '    image: nginx', '    ports:', '      - 80:80', '```'),
+    ]
+    for (const program of programs) {
+      const d = read(program)
+      expect(d.topics.length, program).toBe(1)
+      expect(d.notes, program).toEqual([{ code: 'code-left-out', count: 1 }])
+    }
+    // A block marked as a language, or one full of code, is still code.
+    const loops = (mark: string) => read(text('## Loops', '```' + mark, ...Array.from({ length: 12 }, (_, i) => 'print(' + i + ')'), '```', '## Lists'))
+    expect(names(loops(''))).toEqual(['Loops', 'Lists'])
+    expect(names(loops('js'))).toEqual(['Loops', 'Lists'])
+    expect(names(read(text('Notes', '```', 'const a = 1;', 'function f() {', '  return a;', '}', 'let b = 2;', '```')))).toEqual(['Notes'])
+  })
+
+  it('leaves out the whole sentences a chat writes around the block it put its list in', () => {
+    const d = read(text('Sure! Here is a short list for you.', 'I kept it small, as you asked.', '', '```', list, '```', '', 'Just ask if you want more.', 'Enjoy!'))
+    expect([d.title, ...names(d)]).toEqual(['', ...names(read(list))])
+    expect(d.notes).toEqual([])
+  })
+
+  it('leaves out the language and the button of a block of code, copied with the rest of a chat\'s page', () => {
+    // ChatGPT's button is a picture, so its page gives the language alone, on the line above the list.
+    for (const label of [['text', 'Copy code'], ['plaintext', 'Copy'], ['Code snippet'], ['text'], ['Markdown']]) {
+      const d = read(text('Here is your study list.', '', ...label, list, '', 'Good luck!'))
+      expect([d.title, ...names(d)], label.join(' ')).toEqual(['', ...names(read(list))])
+    }
+    // A topic named like a language stays, where no button follows it.
+    expect(names(read(text('Markdown', 'Plain text', 'Spreadsheets')))).toEqual(['Markdown', 'Plain text', 'Spreadsheets'])
+    // And a topic that is the word on a button stays, with the one above it, where no language names a block.
+    expect(names(read(text('Cut', 'Copy', 'Paste', 'Undo', 'Redo')))).toEqual(['Cut', 'Copy', 'Paste', 'Undo', 'Redo'])
+    expect(names(read(text('Formulas', 'Copy', 'Pivot tables', 'Charts')))).toEqual(['Formulas', 'Copy', 'Pivot tables', 'Charts'])
+  })
+
   it('puts the text under a heading that holds cards into the line on what to read, and says nothing of leaving it out', () => {
     const d = read(text('## Verbs', 'The strong verbs change their vowel in the past tense, and are best learnt by heart.', 'gehen = to go', 'kommen = to come', 'sehen = to see'))
     expect(d.topics.map((t) => [t.name, t.summary, t.kind])).toEqual([['Verbs', 'The strong verbs change their vowel in the past tense, and are best learnt by heart.', 'facts']])
@@ -1149,6 +1232,15 @@ describe('a list with its parts, topics and questions said in words', () => {
     expect(d.notes).toEqual([])
     // A name in quotation marks is the name without them.
     expect(names(read(text('Topic: "Emulsions: mayo vs. hollandaise"', 'What holds an emulsion? = An emulsifier | Salt | Heat | Sugar', 'Topic: ‘Stocks’', 'What is a stock made from? = Bones | Flour | Cream | Sugar')))).toEqual(['Emulsions: mayo vs. hollandaise', 'Stocks'])
+  })
+
+  it('reads a question that quotes another, with the quotation mark after its question mark', () => {
+    const d = read(text('Topic: Asking the way', 'Read: the questions a traveller asks',
+      'How do you ask "Where is the station?" = ¿Dónde está la estación? | ¿Qué hora es? | ¿Cómo estás? | ¿Cuánto cuesta?',
+      'What does “¿Está lejos?” mean? = Is it far? | Is it near? | Is it open? | Is it late?',
+      'Topic: Understanding replies', 'What does "todo recto" mean? = Straight ahead | Turn left | Go back | Stop here'))
+    expect(d.topics.map((t) => [t.name, t.cards.length])).toEqual([['Asking the way', 2], ['Understanding replies', 1]])
+    expect(d.topics[0]?.cards[0]).toEqual({ q: 'How do you ask "Where is the station?"', a: '¿Dónde está la estación?', wrong: ['¿Qué hora es?', '¿Cómo estás?', '¿Cuánto cuesta?'] })
   })
 
   it('leaves a list of words alone whose words happen to be "part", "topic" or "read"', () => {

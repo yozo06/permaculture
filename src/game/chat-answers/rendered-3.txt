@@ -1,0 +1,98 @@
+Here's a study list for learning SQL for data analysis:
+
+---
+
+# **Part:** Querying basics
+
+## **Topic:** SELECT and filtering
+
+**Read:** Write ten queries that filter a customers table in different ways.
+
+1. Which clause filters rows before grouping? = `WHERE` | `HAVING` | `ORDER BY` | `LIMIT`
+2. How do you select every column from `orders`? = `SELECT * FROM orders` | `SELECT ALL orders` | `GET * FROM orders` | `SELECT COLUMNS FROM orders`
+3. Which operator tests for a missing value? = `IS NULL` | `IS NOT NULL` | `EQUALS NULL` | `IS EMPTY`
+4. What does `SELECT DISTINCT country` return? = Each country once | Only the first country | Countries sorted A to Z | The count of countries
+
+## **Topic:** Sorting and limiting
+
+**Read:** Practise ranking rows and paging through long results.
+
+1. Which keyword sorts largest first? = `ORDER BY ... DESC` | `ORDER BY ... ASC` | `SORT BY ... DESC` | `GROUP BY ... DESC`
+2. How do you return the first 10 rows in PostgreSQL? = `LIMIT 10` | `TOP 10 ROWS` | `FIRST 10` | `ROWNUM <= 10`
+3. What does `OFFSET 20` do? = Skips the first 20 rows | Returns the last 20 rows | Adds 20 to each value | Limits output to 20 rows
+4. What order does `ORDER BY` use by default? = ascending | descending | random | insertion order
+
+## **Topic:** Aggregation with GROUP BY
+
+**Read:** Summarise sales by month and by region.
+
+1. Which clause filters groups after aggregation? = `HAVING` | `WHERE` | `ON` | `USING`
+2. What does `COUNT(*)` count? = All rows, including NULLs | Only non-NULL values | Distinct values only | Columns in the table
+3. What does `COUNT(email)` skip? = Rows where email is NULL | Duplicate emails | Rows ordered last | Rows with short emails
+4. Why does `SELECT name, SUM(total)` fail without `GROUP BY name`? = `name` is neither grouped nor aggregated | `SUM` needs two arguments | `name` must be numeric | `total` is a reserved word
+
+---
+
+# **Part:** Combining tables
+
+## **Topic:** Inner joins
+
+**Read:** Join orders to customers and check the row counts.
+
+1. What does an `INNER JOIN` return? = Rows with matches in both tables | All rows from the left table | All rows from both tables | Every possible pairing of rows
+2. What does `ON` define in a join? = The matching condition | The sort order | The output columns | The row limit
+3. What happens if you forget the join condition? = A cross join of every pairing | Rows are sorted randomly | The query returns no rows | The join becomes a left join
+4. Why alias tables as `o` and `c`? = Shorter, clearer column references | Faster query execution | Required by the standard | To create indexes
+
+## **Topic:** Left joins and NULLs
+
+**Read:** Find customers with no orders and fill gaps with defaults.
+
+1. What does `LEFT JOIN` keep? = All rows from the left table | Only matching rows | All rows from the right table | Only unmatched rows
+2. How do you find customers with no orders? = `LEFT JOIN`, then `WHERE o.id IS NULL` | `INNER JOIN`, then `WHERE o.id IS NULL` | `RIGHT JOIN`, then `WHERE c.id IS NULL` | `CROSS JOIN`, then `HAVING COUNT(*) > 5`
+3. What does `COALESCE(x, 0)` return? = x, or 0 when x is NULL | Always 0 | The first row of x | NULL when x is 0
+4. What does comparing `NULL` with `NULL` using equals return? = NULL | true | false | 0
+
+## **Topic:** Subqueries and CTEs
+
+**Read:** Rewrite a nested query as a chain of named steps.
+
+1. What does a `WITH` clause define? = A named temporary result set | A permanent table | An index | A user permission
+2. When is a CTE useful? = Breaking a complex query into steps | Making a table permanent | Skipping a join | Locking rows
+3. What does `EXISTS` test? = Whether a subquery returns any rows | Whether a column holds NULLs | Whether a table has an index | Whether a user has access
+4. What does a correlated subquery do? = Refers to columns of the outer query | Runs once before the outer query | Cannot use `WHERE` | Returns only one column
+
+---
+
+# **Part:** Reliable data work
+
+## **Topic:** Indexes
+
+**Read:** Compare a slow query before and after adding an index.
+
+1. What is the main purpose of an index? = Faster lookups on a column | Smaller table storage | Stricter data types | Automatic backups
+2. What is the cost of many indexes? = Slower writes and more storage | Slower reads | Lost rows | Locked schemas
+3. Which filter can use a plain index on `email`? = An exact match on the full email | A pattern starting with a wildcard | A function applied to the column | A length check on the column
+4. What does `EXPLAIN` show? = The query's execution plan | The table's columns | The server's users | The last error
+
+## **Topic:** Normalisation
+
+**Read:** Split a messy spreadsheet-style table into clean related tables.
+
+1. What does first normal form require? = Atomic values in each column | No foreign keys | One table per database | Every column indexed
+2. Why store a customer address once? = To avoid update anomalies | To speed every query up | To save a join | To allow NULLs
+3. What is a foreign key? = A column referencing another table's key | A column that must be unique | An encrypted column | A column of all NULLs
+4. When might you denormalise? = To speed up read-heavy reports | To save disk space | To enforce uniqueness | To avoid indexes
+
+## **Topic:** Transactions
+
+**Read:** Run a transfer between two accounts and force it to roll back.
+
+1. What does `COMMIT` do? = Makes the transaction's changes permanent | Undoes the changes | Starts a transaction | Locks the whole database
+2. What does the A in ACID stand for? = Atomicity | Availability | Accuracy | Aggregation
+3. What does `ROLLBACK` do? = Cancels uncommitted changes | Saves changes | Deletes the table | Copies the table
+4. What is a dirty read? = Reading another transaction's uncommitted data | Reading a deleted table | Reading a corrupted disk | Reading NULL values
+
+---
+
+Want me to add a part on window functions?

@@ -1,0 +1,115 @@
+Part: Querying Single Tables
+Topic: SELECT and FROM
+Read: Pick any table you work with and list its columns, then write queries that return only the ones you need.
+Which clause says which table the rows come from? = FROM | SELECT | WHERE | GROUP BY
+What does SELECT * return? = Every column of the table | Only the first column | Only the primary key | A count of the rows
+Why is it better to name columns than to use SELECT * in a report? = The output stays stable if the table changes | It always runs faster than any other query | It removes duplicate rows | It sorts the rows for you
+Which keyword removes duplicate rows, e.g. repeated customer names, from the result? = DISTINCT | UNIQUE | ONLY | SINGLE
+
+Topic: Filtering with WHERE
+Read: Write ten filters on an orders table using dates, ranges, lists and missing values.
+Which operator tests whether a value is in a list? = IN | HAS | WITHIN | ANY
+How do you find rows where a column has no value? = IS NULL | EQUALS NULL | NOT EXISTS | IS EMPTY
+Which condition matches names that start with the letter A? = LIKE 'A%' | LIKE '%A' | LIKE 'A_' | LIKE '%A%'
+Which condition keeps rows with a price from 10 to 20 inclusive? = BETWEEN 10 AND 20 | BETWEEN 11 AND 19 | IN (10, 20) | OVER 10 AND UNDER 20
+
+Topic: Sorting and limiting
+Read: Rank the ten best-selling products with ORDER BY and LIMIT, then reverse the order.
+Which clause sorts the result? = ORDER BY | SORT BY | GROUP BY | ARRANGE BY
+What is the default sort direction in ORDER BY? = Ascending | Descending | Random | Alphabetical only
+What does LIMIT 5 do? = Returns at most five rows | Returns exactly five columns | Skips the first five rows | Stops the query after five seconds
+Why should you pair LIMIT with ORDER BY? = Without it the rows returned are not guaranteed to be the same | LIMIT does not work without it | It makes the query use an index | It stops duplicate rows
+
+Topic: NULL values
+Read: Find the NULLs in one real column and decide in each case if they mean zero, unknown or not applicable.
+What does NULL + 5 return? = NULL | 5 | 0 | An error
+Which function returns the first non-NULL value in its list? = COALESCE | NULLIF | IFNULL | FIRST
+Does COUNT(column) count rows where the column is NULL? = No | Yes | Only for text columns | Only if the column is indexed
+What does a comparison like price greater than NULL give? = Unknown, so the row is filtered out | True | False | An error
+
+Part: Summarising Data
+Topic: Aggregate functions
+Read: Compute the count, sum, average, minimum and maximum of the same column and compare the answers.
+Which function adds up the values in a column? = SUM | TOTAL | ADD | COUNT
+What does COUNT(*) count? = All rows in the group | Only rows with no NULLs | Only distinct values | Only numeric columns
+Which function would give the earliest order date? = MIN | FIRST | LOW | MAX
+If a column holds 2, 4 and NULL, what does AVG return? = 3 | 2 | 6 | NULL
+
+Topic: GROUP BY
+Read: Count orders per customer and per month, then check that the groups add back up to the total.
+What does GROUP BY do? = Collapses rows with the same values into one row each | Sorts the rows alphabetically | Removes rows with NULLs | Joins two tables together
+Which columns may appear in SELECT with a GROUP BY? = Grouped columns and aggregates | Any column of the table | Only aggregates | Only the primary key
+You group orders by country and there are 12 countries. How many rows come back? = 12 | 1 | 24 | One per order
+Can you group by more than one column? = Yes, and each combination becomes a group | No, only one | Only if they are numbers | Only in a subquery
+
+Topic: HAVING versus WHERE
+Read: Find customers with more than three orders and see why WHERE cannot do it.
+Which clause filters groups after aggregation? = HAVING | WHERE | FILTER | LIMIT
+Which clause filters rows before they are grouped? = WHERE | HAVING | ORDER BY | SELECT
+Which query finds customers with more than 3 orders? = GROUP BY customer_id HAVING COUNT(*) greater than 3 | WHERE COUNT(*) greater than 3 | ORDER BY COUNT(*) greater than 3 | GROUP BY COUNT(*) greater than 3
+Can HAVING be used without GROUP BY? = Yes, the whole table is treated as one group | No, it always causes an error | Only with ORDER BY | Only on text columns
+
+Topic: Dates and times
+Read: Pull the weekly and monthly totals of a sales table and check the first and last day of each period.
+Which function cuts a timestamp down to the start of a month? = DATE_TRUNC | DATE_ADD | DATE_PART | DATE_DIFF
+How would you group sales by month? = Truncate the date to the month and group by it | Group by the day only | Order by the year | Sum the dates
+Why can grouping by a raw timestamp give too many groups? = Almost every timestamp is unique | Timestamps cannot be grouped | Timestamps are stored as text | Groups are limited to 100 rows
+What does an interval of 7 days added to a date give? = The same weekday a week later | The previous month | The first day of the year | The same day next year
+
+Part: Combining Tables: Joins and Set Operations
+Topic: Inner joins
+Read: Join orders to customers on the customer id and check the row count against the orders table.
+What does an INNER JOIN return? = Only rows that match in both tables | All rows from the left table | All rows from both tables | Only rows with no match
+Which clause says how two tables are matched in a join? = ON | WHERE | USING ALL | GROUP BY
+Orders has 1,000 rows and every order has exactly one customer. How many rows does an inner join to customers return? = 1,000 | 100 | 2,000 | 0
+What usually links an orders table to a customers table? = A foreign key | A primary key on orders | A view | An index
+
+Topic: Outer joins
+Read: Find customers who never ordered by using a LEFT JOIN and filtering on the missing side.
+What does a LEFT JOIN keep? = All rows from the left table | All rows from the right table | Only matching rows | Only unmatched rows
+Which filter finds customers with no orders after a LEFT JOIN from customers? = WHERE orders.id IS NULL | WHERE orders.id IS NOT NULL | HAVING orders.id IS NULL | WHERE customers.id IS NULL
+What does a FULL OUTER JOIN return? = Rows from both tables, matched where possible | Only matched rows | Only the left rows | A row for every pair of rows
+What fills the columns of unmatched rows in a LEFT JOIN? = NULL | Zero | An empty string | The previous row's value
+
+Topic: Join traps and fan-out
+Read: Join a table with several matches per row and compare the sum before and after the join.
+What is a fan-out in a join? = One row matching many rows and inflating totals | A join that returns no rows | A join on the wrong data type | A join that runs in parallel
+Why might a SUM be too high after a join? = Rows were duplicated by the join | The join removed NULLs | The join sorted the rows | The join used an index
+How many rows does a CROSS JOIN of a 3-row and a 4-row table return? = 12 | 7 | 3 | 4
+How can you check a join did not duplicate rows? = Compare the row count with the starting table | Add DISTINCT to the end | Use SELECT * | Count the columns
+
+Topic: UNION and set operations
+Read: Stack this year's and last year's order tables and compare UNION with UNION ALL.
+What is the difference between UNION and UNION ALL? = UNION removes duplicate rows | UNION ALL removes duplicate rows | UNION needs a join | UNION ALL sorts the result
+What must be true of the queries combined with UNION? = Same number of columns with compatible types | Same table name | Same column names | Same WHERE clause
+Which operator returns rows found in both queries? = INTERSECT | UNION | EXCEPT | JOIN
+Which operator returns rows in the first query but not the second? = EXCEPT | INTERSECT | UNION | MERGE
+
+Part: Intermediate Techniques
+Topic: Subqueries and CTEs
+Read: Rewrite one nested subquery as a WITH clause and compare which one is easier to read.
+What does a CTE start with? = WITH | CTE | USING | DEFINE
+What is a CTE useful for? = Naming a step so a query reads top to bottom | Storing data permanently | Speeding up every query by 50% | Replacing indexes
+Where can a subquery appear? = In FROM, WHERE or SELECT | Only in WHERE | Only in FROM | Only in SELECT
+What does a correlated subquery do? = Refers to a column of the outer query | Runs once for the whole table | Cannot return a value | Always returns one row
+
+Topic: CASE expressions
+Read: Bucket customers into tiers by total spend and count the people in each tier.
+What does CASE do in SQL? = Chooses a value by conditions | Changes the letter case of text | Creates a new table | Sorts the rows
+Which keyword ends a CASE expression? = END | STOP | CLOSE | DONE
+What does a CASE return if no condition matches and there is no ELSE? = NULL | 0 | An error | An empty string
+How would you count only the paid orders in one query? = SUM of a CASE that gives 1 for paid orders | COUNT(DISTINCT paid) | COUNT(*) with HAVING | GROUP BY unpaid
+
+Topic: Window functions - OVER and PARTITION BY
+Read: Rank customers by spend within each country and compute a running total of daily sales.
+What does OVER (PARTITION BY country) do? = Applies the calculation within each country | Splits the table into two tables | Sorts the rows by country | Removes rows from other countries
+Which function numbers rows 1, 2, 3 within a window? = ROW_NUMBER | COUNT | RANK_ALL | NTILE_ONE
+Two rows tie for first place. What does RANK give the next row? = 3 | 2 | 1 | 4
+How does a window function differ from GROUP BY? = It keeps every row in the output | It removes rows | It cannot use aggregates | It only works on dates
+
+Topic: Performance & Indexes
+Read: Run EXPLAIN on a slow query and write down which step reads the most rows.
+What does an index mainly speed up? = Finding rows by the indexed columns | Writing new rows | Deleting tables | Sorting text in the app
+What does EXPLAIN show? = How the database plans to run the query | The data in the tables | The cost in dollars | The users on the system
+Why can a function on an indexed column slow a filter? = The index can't be used on the transformed value | The function locks the table | Functions are always slow | The index is deleted
+Which of these usually makes a query cheaper? = Filtering early and selecting only needed columns | Selecting every column | Joining every table | Sorting the whole table

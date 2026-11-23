@@ -1,0 +1,90 @@
+Part: Green coffee sourcing and contracts
+Topic: Coffee quality specifications
+Read: commercial grade, screen size, moisture, defects, density, cup profile and physical specifications
+What information belongs in a green coffee specification? = Origin, process, grade, moisture, screen | Roast level, packaging, retail price, label | Farm history, harvest festival, shipping brand | Brewing method, grind size, extraction time
+How is screen size measured in green coffee? = Sieve aperture in sixty-fourths of an inch | Bean weight in grams | Bean length in millimetres | Number of defects per sample
+What does moisture content indicate? = Water present in the green beans | Oil content in roasted beans | Caffeine concentration in brewed coffee | Percentage of broken beans
+Why does bean density matter commercially? = It influences roasting behaviour and consistency | It determines the coffee's country of origin | It measures caffeine concentration | It determines the final selling price
+What does a defect count help establish? = Physical quality and grading | Cup acidity and sweetness | Shipping distance and duration | Roaster production capacity
+
+Topic: Coffee contracts and terms
+Read: contract specifications, quantity tolerances, shipment periods, pricing basis, Incoterms and contractual obligations
+What does a contract quantity tolerance allow? = Agreed variation in delivered quantity | Unlimited changes to coffee origin | Automatic changes to payment currency | Unrestricted changes to quality
+What does a shipment period define? = Agreed timeframe for dispatch | Date of final roasting | Date of retail delivery | Duration of warehouse storage
+What does FOB mean in coffee trading? = Seller delivers goods aboard nominated vessel | Buyer collects coffee at the farm | Seller pays all destination duties | Buyer pays only after roasting
+What does CIF include in the price? = Cost, insurance and freight | Coffee, inspection and financing | Customs, import and forwarding | Certification, insurance and financing
+Why specify crop year in a contract? = To identify the coffee harvest period | To guarantee a fixed exchange rate | To establish the roasting date | To determine warehouse insurance
+
+Topic: Coffee pricing and differentials
+Read: commodity benchmarks, origin differentials, quality premiums, futures references, currency exposure and price components
+What is a coffee differential? = Premium or discount against benchmark price | Difference between green and roasted weight | Gap between farm and port distances | Variation between screen sizes
+What is the C market benchmark? = Arabica coffee futures benchmark | Robusta physical auction benchmark | Global coffee retail price index | International freight price index
+What can cause an origin differential to increase? = Stronger demand for that origin | Lower global shipping insurance | Higher warehouse handling efficiency | Reduced currency volatility
+What does a fixed differential contract mean? = Premium stays agreed against reference | Futures price stays permanently unchanged | Exchange rate cannot fluctuate | Shipment quantity becomes fixed
+What is basis risk in coffee purchasing? = Benchmark exposure differs from physical price | Coffee loses weight during storage | Contract quantity differs from packaging | Currency conversion uses two banks
+
+Part: Quality assessment and risk management
+Topic: Sensory evaluation and defects
+Read: cupping protocols, sensory attributes, taints, defects, calibration and quality consistency
+What does a coffee's cup profile describe? = Its sensory characteristics | Its physical shipping dimensions | Its customs classification | Its farmgate price
+What does a clean cup indicate? = Absence of distracting off-flavours | High caffeine concentration | Maximum bean density | Uniform screen size
+What is a phenolic defect associated with? = Medicinal or chemical-like flavours | Excessive sweetness and body | Bright citrus acidity | Strong chocolate fragrance
+Why is sample roasting standardised? = To compare coffees under consistent conditions | To increase the sample's commercial value | To reduce green bean moisture | To establish the final retail price
+What is the purpose of blind cupping? = Reduce bias during sensory evaluation | Identify the exporter without documentation | Measure coffee moisture accurately | Determine shipping insurance costs
+
+Topic: Sampling and pre-shipment approval
+Read: representative sampling, offer samples, pre-shipment samples, arrival samples and contractual quality disputes
+Why must a green coffee sample be representative? = It should reflect the entire lot | It should contain only premium beans | It should match the smallest bag | It should contain only visually perfect beans
+What is a pre-shipment sample used for? = Checking quality before dispatch | Confirming quality after roasting | Measuring destination warehouse capacity | Testing retail packaging durability
+What is an arrival sample used to assess? = Coffee condition upon receipt | Farm production before harvest | Exporter's financial position | Roaster's finished product packaging
+What can cause a sample-to-shipment discrepancy? = Non-representative sampling or lot variation | Incorrect retail labelling only | Excessive brewing temperature | Different roasting equipment
+Why retain sealed reference samples? = Supporting later quality dispute resolution | Increasing coffee shelf life | Improving green bean density | Reducing freight charges
+
+Topic: Green coffee storage and logistics
+Read: warehouse conditions, moisture migration, container loading, bag integrity, traceability and transport risks
+Why is stable warehouse humidity important? = It limits moisture-related quality changes | It increases bean caffeine content | It improves screen size uniformity | It prevents currency fluctuations
+What is moisture migration in stored coffee? = Water movement between beans and surroundings | Movement of coffee bags between ports | Transfer of oils during roasting | Movement of defects between grades
+Why use container liners for green coffee? = Reduce exposure to moisture and condensation | Increase container loading capacity automatically | Improve coffee cup sweetness | Prevent futures price volatility
+What is container sweat? = Condensation forming inside a container | Coffee oil leaking from roasted beans | Water added during washing | Moisture released during cupping
+What should be checked when receiving coffee? = Seal, bags, condition and documentation | Roast colour, crema and extraction | Retail labels and brewing instructions | Grinder settings and water temperature
+
+Part: Commercial strategy and procurement decisions
+Topic: Origin and producer relationships
+Read: origin characteristics, harvest calendars, producer structures, traceability, sustainability and supply reliability
+Why does harvest timing matter when sourcing? = It affects availability and freshness | It fixes the futures market price | It determines shipping insurance automatically | It guarantees a specific cup score
+What does traceability establish? = Coffee's documented supply chain origin | Coffee's exact future market price | Coffee's final roasting temperature | Coffee's guaranteed retail demand
+What is lot separation important for? = Maintaining identity and quality consistency | Increasing customs duties | Reducing screen size | Changing the harvest year
+What is a producer cooperative? = Organisation of member coffee producers | Government coffee futures exchange | International shipping insurance company | Private roasting equipment manufacturer
+Why develop long-term producer relationships? = Improve sourcing continuity and quality collaboration | Eliminate all market price fluctuations | Guarantee unlimited harvest volumes | Remove the need for contracts
+
+Topic: Procurement risk management
+Read: supply risks, counterparty exposure, crop uncertainty, quality claims, currency risk and contingency planning
+What is counterparty risk in coffee trading? = Risk that the other party defaults | Risk of beans roasting unevenly | Risk of incorrect brewing temperature | Risk of retail packaging damage
+What is crop risk? = Uncertainty in harvest volume or quality | Uncertainty in warehouse rental prices | Uncertainty in roasting machine output | Uncertainty in retail label design
+How can currency risk affect purchasing? = Exchange movements change landed cost | Bean density changes during transit | Moisture levels change futures contracts | Screen size changes import duties
+What is a quality claim? = Formal complaint about contractual quality | Request for a lower futures margin | Application for warehouse insurance | Request for additional packaging
+Why maintain alternative suppliers? = Reduce dependence on one supply source | Guarantee identical cup profiles everywhere | Eliminate all shipping costs | Avoid documenting coffee purchases
+
+Topic: Landed cost calculations
+Read: FOB price, freight, insurance, duties, port charges, inland transport, financing and cost per kilogram
+What is landed cost? = Total cost to bring coffee to destination | Original farmgate price only | Futures benchmark without differential | Retail price before roasting
+Which costs belong in landed cost? = Coffee, freight, insurance and import charges | Roasting labour and café rent only | Retail advertising and customer discounts | Brewing equipment and packaging design
+Why calculate landed cost per kilogram? = Compare true purchasing costs across offers | Calculate final roasted coffee colour | Determine the coffee's sensory score | Establish producer cooperative membership
+What happens when freight costs increase? = Landed cost generally increases | Green coffee density increases | Contract quantity automatically decreases | Cup acidity automatically increases
+Why include financing costs in procurement? = Capital remains tied up during the supply cycle | Financing determines bean screen size | Interest rates change coffee defects | Financing guarantees better cup quality
+
+Topic: Procurement and supplier negotiation
+Read: offer comparison, negotiation levers, quality premiums, payment terms, supplier performance and buying decisions
+What is a negotiation lever in coffee purchasing? = A term that can be adjusted | A physical coffee grading tool | A futures exchange trading screen | A warehouse temperature sensor
+Which term can reduce cash-flow pressure? = Longer agreed payment terms | Higher moisture specifications | Shorter shipment windows | More restrictive quality tolerances
+Why compare offers on equal specifications? = Ensure commercial comparisons are meaningful | Make every origin taste identical | Guarantee identical harvest volumes | Remove all currency exposure
+What is supplier performance evaluation? = Reviewing delivery, quality and reliability | Measuring coffee caffeine concentration | Calculating daily roasting output | Comparing retail advertising campaigns
+Why document negotiated contract changes? = Maintain clear agreed obligations | Increase coffee acidity | Improve physical bean density | Reduce the benchmark futures price
+
+Topic: Market monitoring and buying strategy
+Read: futures market movements, crop reports, weather exposure, supply-demand balances, position management and purchasing timing
+What does a coffee futures market hedge? = Exposure to benchmark price movements | Physical coffee quality defects | Container condensation risk | Warehouse theft risk
+What is a forward purchase? = Agreeing a future delivery purchase | Buying coffee only after roasting | Selling coffee without a contract | Purchasing coffee at a retail café
+Why monitor exchange rates alongside coffee prices? = Both influence the effective purchase cost | Both determine cup cleanliness | Both control bean screen size | Both establish harvest maturity
+What is a procurement coverage ratio? = Share of future demand already purchased | Percentage of defective beans received | Share of coffee roasted each day | Percentage of freight charges insured
+Why avoid purchasing all requirements at once? = Reduce timing and price concentration risk | Guarantee lower prices every time | Eliminate supplier quality differences | Prevent all shipping delays

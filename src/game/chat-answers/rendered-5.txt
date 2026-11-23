@@ -1,0 +1,59 @@
+Part: Cloud concepts
+Topic: Benefits of the AWS Cloud
+Read: Read the six advantages of cloud computing and give an example of each.
+What does elasticity mean? = Resources scale up and down with demand | Resources never change size | Data is copied to every Region | Hardware is owned by the customer
+Which benefit swaps upfront cost for variable cost? = Pay-as-you-go pricing | Reserved hardware | Colocation hosting | Capital budgeting
+What is an AWS Region? = A geographic area containing Availability Zones | A single data centre building | A network edge cache | A private link to AWS
+Why use multiple Availability Zones? = To survive a single data centre failure | To lower storage costs | To get a free tier | To encrypt all data
+Topic: Shared responsibility model
+Read: Draw a line between what AWS secures and what you secure.
+Who secures the physical data centres? = AWS | The customer | The auditor | The internet provider
+Which is a customer responsibility? = Configuring security groups | Replacing failed disks | Securing hypervisors | Guarding data centre doors
+AWS is responsible for the security of what? = The cloud itself | Customer applications | Customer passwords | Customer data
+Who patches the guest operating system on EC2? = The customer | AWS | The Region | The hypervisor vendor
+Topic: Cloud economics and pricing
+Read: Compare On-Demand, Reserved and Spot pricing for one workload.
+What is a Reserved Instance? = A discount for a one or three year commitment | A free trial instance | An instance owned by AWS staff | A dedicated physical building
+What are Spot Instances? = Spare capacity at a steep discount | Instances with a fixed price forever | Instances reserved for banks | Instances that never stop
+Which tool estimates the cost of a planned architecture? = AWS Pricing Calculator | AWS Cost Explorer | AWS Trusted Advisor | AWS Config
+Which tool shows past spending? = AWS Cost Explorer | AWS Pricing Calculator | AWS Artifact | AWS Config
+
+Part: Security and compliance
+Topic: Identity and Access Management
+Read: Create a user, a group and a role and attach a policy to each.
+What is an IAM role? = An identity with temporary credentials | A permanent user password | A billing group | A network rule
+What is the principle of least privilege? = Grant only the permissions needed | Grant admin to everyone | Share the root credentials | Rotate keys yearly
+How should the root user be protected? = MFA and no daily use | A long username | A shared password | An access key in code
+What does an IAM policy do? = Defines allowed and denied actions | Stores data | Routes traffic | Encrypts disks
+Topic: Network security services
+Read: Read how security groups, Shield and WAF each protect a workload.
+What does a security group act as? = A virtual firewall for instances | A DNS service | A load balancer | A backup tool
+Are security groups stateful? = Yes, return traffic is allowed automatically | No, return traffic needs its own rule | Only for outbound traffic | Only in the default VPC
+Which service protects against DDoS attacks? = AWS Shield | AWS KMS | Amazon Macie | AWS Artifact
+What does AWS WAF filter? = Web requests by rules | Disk blocks | Billing events | DNS zones
+Topic: Compliance and auditing
+Read: Find the compliance reports and audit logs for a sample account.
+Where can you download AWS compliance reports? = AWS Artifact | AWS Config | Amazon CloudWatch | AWS Organizations
+Which service records API calls? = AWS CloudTrail | Amazon CloudWatch | AWS Config | AWS Trusted Advisor
+What does AWS Config track? = Resource configuration changes | CPU use | Billing totals | Network latency
+Which service checks for gaps like open ports? = AWS Trusted Advisor | AWS Artifact | Amazon SES | AWS Snowball
+
+Part: Core services
+Topic: Compute options
+Read: Launch an EC2 instance, a Lambda function and a container.
+Which service runs code without servers to manage? = AWS Lambda | Amazon EC2 | AWS Outposts | Amazon EBS
+What does Auto Scaling do? = Adjusts instance count to demand | Encrypts instances | Backs up volumes | Routes DNS
+Which service runs Docker containers? = Amazon ECS | Amazon S3 | Amazon RDS | Amazon SQS
+What does Elastic Load Balancing do? = Spreads traffic across targets | Stores snapshots | Rotates keys | Hosts websites
+Topic: Storage services
+Read: Match each kind of data to object, block or file storage.
+Which service stores objects like images? = Amazon S3 | Amazon EBS | Amazon EFS | AWS Glue
+What is Amazon EBS? = Block storage for EC2 instances | An object archive | A relational database | A content delivery network
+Which S3 class suits long-term archives? = S3 Glacier Deep Archive | S3 Standard | S3 One Zone-IA | S3 Intelligent-Tiering
+What is Amazon EFS? = A shared file system | A block disk for one instance | A data warehouse | A message queue
+Topic: Database services
+Read: Pick a database for a shop, a leaderboard and a report.
+Which service is a managed relational database? = Amazon RDS | Amazon DynamoDB | Amazon ElastiCache | Amazon Neptune
+What is DynamoDB? = A managed NoSQL key-value database | A data warehouse | A graph database | A caching layer
+Which service is a data warehouse? = Amazon Redshift | Amazon RDS | Amazon Aurora | Amazon DynamoDB
+What does ElastiCache do? = In-memory caching | Long-term archives | Virus scanning | Email delivery

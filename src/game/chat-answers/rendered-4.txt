@@ -1,0 +1,75 @@
+Here is your study list, ready to paste:
+
+```text
+Part: Openings
+
+Topic: Opening principles
+Read: Play five games focusing only on centre, development and castling.
+Which squares should you fight for early? = The central squares | The corner squares | The edge squares | The back rank
+Why develop knights before bishops? = Their best squares are clearer | They move faster | They are worth more | They cannot be captured early
+When should you castle? = Early, to protect your king | Only in the endgame | After trading queens | Never before move twenty
+Why avoid moving the same piece twice early? = You lose time in development | It breaks castling rights | The rules forbid it | It loses material at once
+
+Topic: The Italian Game
+Read: Learn the first six moves and the plans for both sides.
+Which moves start the Italian Game? = 1.e4 e5 2.Nf3 Nc6 3.Bc4 | 1.d4 d5 2.c4 e6 3.Nc3 | 1.e4 c5 2.Nf3 d6 3.d4 | 1.e4 e6 2.d4 d5 3.Nc3
+Which weak square does the Italian bishop target? = f7 | b7 | g7 | e8
+What is the Giuoco Piano? = The quiet line with 3...Bc5 | The line with 3...Nf6 | The line with 3...d6 | The gambit with 4.b4
+What is the idea of the Evans Gambit? = Sacrifice the b-pawn to gain tempo | Trade queens immediately | Fianchetto the king's bishop | Castle queenside early
+
+Topic: Sicilian Defence basics
+Read: Study the main Sicilian lines and the pawn structures they give.
+Which move defines the Sicilian Defence? = 1.e4 c5 | 1.e4 e5 | 1.e4 e6 | 1.d4 c5
+What imbalance does the Sicilian create? = Black trades a c-pawn for White's d-pawn | Both sides trade queens | White loses castling rights | Black gains an extra pawn
+Which Sicilian has Black pawns on d6 and a6? = Najdorf | Dragon | Taimanov | Sveshnikov
+Which Sicilian features ...g6 and a bishop on g7? = Dragon | Najdorf | Taimanov | Kan
+
+Part: Middlegame tactics
+
+Topic: Forks and pins
+Read: Solve twenty puzzles that win material with a fork or a pin.
+What is a fork? = One piece attacking two targets | A piece pinned to its king | Two pawns side by side | A trapped bishop
+Which piece forks most often? = knight | bishop | rook | king
+What makes a pin absolute? = The pinned piece shields the king | The pinned piece is a pawn | The pinning piece is a queen | The pin is on the back rank
+Which pieces can create a pin? = bishop, rook and queen | knight, bishop and pawn | only the queen | only bishops
+
+Topic: Skewers and discovered attacks
+Read: Set up each pattern on a board and find it in model games.
+How does a skewer differ from a pin? = The more valuable piece is in front | The cheaper piece is in front | It attacks only pawns | It needs a knight
+What is a discovered attack? = Moving one piece unmasks another's attack | Capturing en passant | Giving check with a pawn | Promoting a pawn with check
+What is a discovered check? = The moved piece uncovers check from another | A check no one notices | A check delivered by a pawn | A check from two queens
+Why is a double check so powerful? = Only a king move can answer it | It wins the queen | It forces stalemate | It ends the game
+
+Topic: Checkmating patterns
+Read: Memorise the back-rank, smothered and Arabian mates.
+What is a back-rank mate? = Rook mates a king trapped behind pawns | Two bishops mate in the open | A knight mates in the corner | Queen mates beside the king
+Which piece delivers a smothered mate? = knight | bishop | rook | pawn
+In Scholar's Mate, which pawn does the queen capture? = f7 | e7 | g7 | h7
+Which two pieces mate in the Arabian mate? = rook and knight | queen and bishop | two rooks | two knights
+
+Part: Endgames
+
+Topic: King and pawn endings
+Read: Play out king and pawn versus king from every starting square.
+What is the opposition? = Kings face each other, one square between | Kings on adjacent squares | Kings in opposite corners | Kings two files apart
+What does the rule of the square tell you? = Whether a king can catch a passed pawn | How many moves a rook needs | Which square a pawn promotes on | When to offer a draw
+Why is a king in front of its pawn good? = It controls the promotion squares | It cannot be checked | It frees the pawn to capture | It forces stalemate
+Which pawn is the hardest to win with? = a rook pawn | a knight pawn | a centre pawn | a bishop pawn
+
+Topic: Rook endgames
+Read: Learn the Lucena and Philidor positions and drill them.
+What is the Lucena position? = A known winning rook and pawn position | A known drawing fortress | A stalemate trick with rooks | A queen versus rook draw
+What is the Philidor position? = A drawing defence with the rook on the sixth | A winning attack with the rook behind | A fortress with two rooks | A trap with a bishop
+Where should rooks usually be placed? = Behind passed pawns | In front of passed pawns | On the seventh rank | Beside the king
+What does "cut off the king" mean? = Block the enemy king along a file | Capture the king's pawns | Trade rooks | Check from behind
+
+Topic: Basic checkmates
+Read: Deliver king and queen, king and rook mate against a bare king.
+Which material cannot force checkmate? = king and knight versus king | king and rook versus king | king and queen versus king | king and two bishops versus king
+What must you avoid when mating with king and queen? = Stalemate | Check | Castling | Promotion
+In king and rook mate, what does the rook do? = Cuts off the king along a rank | Pins the king | Guards the pawns | Gives perpetual check
+Why must the stronger king approach the enemy king? = To help deliver the final mate | To block its own pieces | To avoid stalemate | To protect the rook from nothing
+
+```
+
+Paste it into the box and press read.

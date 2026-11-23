@@ -1,0 +1,40 @@
+Part: Logic and comparison
+Topic: Logical operators
+Read: Practise evaluating expressions with &&, || and !
+What does `a || b` return when a is truthy? = a, without checking b | b, after checking both | Always true | Always false
+What is the value of `true && false`? = false | true | undefined | null
+What does `!!x` convert x to? = A boolean | A number | A string | An array
+Which operator means "or" in JavaScript? = `||` | `&&` | `!` | `??`
+Topic: Equality
+Read: Know the difference between == and ===
+What does `0 == "0"` evaluate to? = true | false | undefined | NaN
+Which operator compares both value and type? = `===` | `==` | `=` | `!=`
+Which operator assigns a value to a variable? = `=` | `==` | `===` | `=>`
+Is `x == y` true when x is 1 and y is "1"? = Yes, after type coercion | No, the types differ | Only in strict mode | It throws an error
+Topic: Absolute value and inequalities
+Read: Solve simple inequalities that use |x|
+What is the value of |-7|? = 7 | -7 | 0 | 1/7
+How is |x| defined when x is negative? = -x | x | 0 | x^2
+Which values satisfy |x| < 3? = -3 < x < 3 | x > 3 | x < -3 | x = 3
+How else can you write the absolute value of x? = |x| | [x] | (x) | {x}
+What does |a - b| measure on a number line? = The distance between a and b | The sum of a and b | The product of a and b | The midpoint of a and b
+Part: Functions and text
+Topic: Function notation
+Read: Evaluate functions written as f(x) = ...
+If f(x) = x^2, what is f(3)? = 9 | 6 | 5 | 8
+What is the domain of f(x) = 1/x? = All reals except 0 | All real numbers | Only positive numbers | x > 0
+What does g(x) = 2x + 1 return at x = 4? = 9 | 8 | 10 | 5
+What does f(x) = x^2 give for f(-3)? = 9 | -9 | 6 | -6
+Topic: Template strings
+Read: Build strings with backticks and ${...}
+How do you insert a variable called name into a template literal? = Use ${name} inside backticks | Use {name} inside quotes | Use $(name) inside backticks | Use %name inside quotes
+What does `2 ^ 3` give in JavaScript? = 1 | 8 | 6 | 9
+Which operator raises a number to a power? = `**` | `^` | `^^` | `pow`
+What does `2 ** 3` give in JavaScript? = 8 | 6 | 9 | 5
+What does `5 * "2"` give in JavaScript? = 10 | "52" | NaN | "10"
+Topic: Regex and markup
+Read: Read patterns such as a* and Markdown such as _word_
+What does the regex `a*` match? = Zero or more a characters | One or more a characters | Exactly one a | The text a*
+What does _word_ render as in Markdown? = Italic text | Bold text | Strikethrough | A link
+What does **word** render as in Markdown? = Bold text | Italic text | Code | A heading
+In a regex, what does `^` at the start of a pattern mean? = Match at the start of the text | Match any character | Match a literal caret | Negate the whole pattern

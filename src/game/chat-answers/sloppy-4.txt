@@ -1,0 +1,39 @@
+Part: Openings
+Topic: Opening principles
+Read: control the centre, develop your pieces and castle early
+- What is the main aim of the first few moves? -> **Develop pieces and control the centre** | Win a pawn at once | Attack the queen | Move the same piece repeatedly
+- Which squares are the central squares? -> d4, e4, d5 and e5 | a1, a8, h1 and h8 | b2, g2, b7 and g7 | c3, f3, c6 and f6
+- Why should you castle early? -> **It protects the king and connects the rooks** | It wins a pawn | It attacks the queen | It stops the opponent castling
+Topic: Common first moves
+Read: look at 1.e4 and 1.d4 and the usual replies
+- Which opening starts with 1.e4 e5 2.Nf3 Nc6 3.Bb5 -> **Ruy Lopez** | Italian Game | Sicilian Defence | French Defence
+- What is 1.d4 d5 2.c4 called -> **The Queen's Gambit** | The King's Gambit | The Scotch Game | The Caro-Kann
+
+Part: Middlegame
+Topic: Tactics
+Read: practise forks, pins and skewers every day
+- Name the tactic where one piece attacks two pieces at once -> **A fork** | A pin | A skewer | A discovered check
+- Name the tactic where a piece cannot move without exposing a more valuable piece -> **A pin** | A fork | A skewer | A promotion
+- Name the tactic where a valuable piece must move and exposes a piece behind it -> **A skewer** | A pin | A fork | A zwischenzug
+Topic: Pawn structure
+Read: doubled, isolated and passed pawns
+- What is an isolated pawn? -> **A pawn with no friendly pawns on adjacent files** ; A pawn that has reached the last rank ; Two pawns on the same file ; A pawn protected by a bishop
+- What is a passed pawn? -> **A pawn with no enemy pawns in front of it or beside its path** ; A pawn on the seventh rank ; A pawn that has captured en passant ; A pawn defended by a rook
+- What is a doubled pawn? -> **Two pawns of one colour on the same file** ; Two pawns side by side ; A pawn on the fourth rank ; A pawn that cannot move
+Topic: Planning
+
+Part: Endgames
+Topic: King and pawn endings
+Read: the opposition and the square of the pawn
+- What is the opposition?: **Kings face each other with one square between them, and the side not to move gains** | Both kings in the corner | A king next to a rook | A king attacking a pawn
+- When is the king usually strongest?: **When it is active and near the centre** | When it is hidden on the back rank | When it stays on its starting square | When it is next to the queen
+Topic: Basic checkmates
+Read: king and queen versus king, then king and rook versus king
+- Which piece gives mate most easily with the king's help? -> **The queen** | A lone bishop | A lone knight | A lone pawn
+- Can a king and a lone knight force checkmate? -> **No, it is a draw** | Yes, in ten moves | Yes, in fifty moves | Only on a corner square
+- What is stalemate? -> **The player to move has no legal move and is not in check** | The king is in check with no escape | Both players agree to stop | A player runs out of time
+Topic: Rook endings
+Read: the Lucena and Philidor positions
+**What is the Lucena position?** = A winning rook ending where the pawn is on the seventh rank | A drawn rook ending | A king and pawn ending | A queen versus rook ending
+**What is the Philidor position?** = A drawing method for the defender in a rook ending | A winning method for the attacker | An opening trap | A checkmate pattern
+**Which side usually has the advantage if a rook is behind the passed pawn?** = The side with the passed pawn | The side with the king far away | Neither side | The side with fewer pawns

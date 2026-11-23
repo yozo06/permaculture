@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs'
+import { readFileSync, readdirSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { buildCatalog } from '../engine/catalog'
 import { smallCatalog as cat, smallFarm, run } from '../engine/fixtures'
@@ -7,8 +7,8 @@ import { OWN_TODAY, catalogFor, isOwnFieldId, isOwnSeedId, type OwnField, type O
 import { read } from '../reader'
 import type { FarmEvent, FarmState } from '../engine/types'
 import {
-  FILL_AT_ONCE, OWN_COLORS, addSheetHtml, aiPrompt, cardsFromText, cardsText, explainAsk, fieldSheetHtml, harvestTag, layerText, nameFieldSheetHtml, newFieldId, newSeedId, pickColor, readingHtml,
-  toAdd, topicSheetHtml,
+  ABOUT, AMOUNT, FILL_AT_ONCE, OWN_COLORS, aboutLines, addSheetHtml, aiPrompt, cardsFromText, cardsText, explainAsk, fieldSheetHtml, harvestTag, layerText, nameFieldSheetHtml, newFieldId, newSeedId, pickColor, readingHtml,
+  toAdd, topicSheetHtml, type About,
 } from './own'
 
 const F = 'my_abcd1234'
@@ -339,7 +339,17 @@ describe('the prompt for an AI chat', () => {
     // And it tells the chat off the shapes that weaker ones fall back on.
     expect(p).toMatch(/no number after/)
     expect(p).toMatch(/one line/)
-    expect(p).toMatch(/End on the last question line/)
+    expect(p).toMatch(/ends on the last question line/)
+  })
+
+  it('asks for the whole list in one code block, so that the chat\'s Copy button takes all of it, and in the request for questions too', () => {
+    for (const p of [aiPrompt('German A1'), aiPrompt('German A1', '', [seed('aaaaaa')])]) {
+      expect(p).toMatch(/whole list in one code block marked "text"/)
+      expect(p).toMatch(/nothing outside it/)
+      // A chat that put bullets before its topics lost every part in a review, so the request says not to.
+      expect(p).toMatch(/no bullets or dashes/)
+      expect(p).not.toContain('`')
+    }
   })
 
   it('hands the chat what the learner wrote in the box, cut to what a chat will read', () => {
@@ -355,6 +365,61 @@ describe('the prompt for an AI chat', () => {
     expect(lines).toContain(last)
     // A list of forty topics with a line each fits whole.
     expect(aiPrompt('Coffee', readFileSync('src/reader/pastes/coffee-chat.txt', 'utf8'))).toContain('Broker and market access')
+  })
+
+  it('tells the chat what each of the five answers said, and nothing of a question left unanswered', () => {
+    const plain = aiPrompt('Coffee')
+    const all: About = { purpose: 'work', level: 'basics', amount: 'working', mode: 'do', lean: 'Skip the history.' }
+    const p = aiPrompt('Coffee', '', [], all)
+    for (const q of ['purpose', 'level', 'mode'] as const) {
+      const said = aiPrompt('Coffee', '', [], { [q]: all[q] })
+      expect(said).not.toBe(plain)
+      expect(aboutLines({ [q]: all[q] }).every((l) => p.includes(l))).toBe(true)
+    }
+    expect(aboutLines({})).toEqual([])
+    expect(aiPrompt('Coffee', '', [], {})).toBe(plain)
+    // What is to lean on or leave out goes with what was written in the box.
+    expect(p).toContain('Skip the history.')
+    expect(aiPrompt('Coffee', 'I trade', [], { lean: 'Skip the history.' })).toMatch(/I trade\nSkip the history\./)
+    // How much decides the size of the list.
+    expect(aiPrompt('Coffee', '', [], { amount: 'taste' })).toMatch(new RegExp('about ' + AMOUNT.taste + ' topics'))
+    expect(aiPrompt('Coffee', '', [], { amount: 'thorough' })).toMatch(new RegExp('about ' + AMOUNT.thorough + ' topics'))
+    expect(plain).toMatch(/3 to 6 parts/)
+    expect(p).not.toMatch(/3 to 6 parts/)
+  })
+
+  it('never cuts what the learner wrote through the middle of a letter, which a link could not carry', () => {
+    const p = aiPrompt('Coffee', 'a'.repeat(5999) + '😀 and more words after')
+    expect(() => encodeURIComponent(p)).not.toThrow()
+  })
+
+  it('says something of its own for every answer, about the topics and about the questions, in words the reader cannot mistake', () => {
+    for (const q of ['purpose', 'level', 'mode'] as const) {
+      const said = ABOUT[q].map(([choice]) => aboutLines({ [q]: choice }).join(' '))
+      expect(new Set(said).size, q).toBe(said.length)
+      for (const line of said) {
+        expect(line, q).toMatch(/question/i)
+        expect(line, q).not.toMatch(/[=|]/)
+      }
+    }
+  })
+
+  it('stays short enough to go inside a link with every answer given', () => {
+    const p = aiPrompt('Organic chemistry for my second year', '', [], { purpose: 'exam', level: 'using', amount: 'thorough', mode: 'both', lean: 'Lean on Clayden, chapters 1 to 12.' })
+    expect(encodeURIComponent(p).length).toBeLessThanOrEqual(4000)
+  })
+
+  it('reads an answer written to a request with the five answers in it, as it reads one without', () => {
+    const p = aiPrompt('German A1', '', [], { purpose: 'talk', level: 'new', amount: 'taste', mode: 'know' })
+    const d = read(shapes(p))
+    expect(d.notes).toEqual([])
+    expect(d.topics).toHaveLength(1)
+    expect(d.topics[0]?.cards[0]?.wrong).toHaveLength(3)
+  })
+
+  it('asks for questions on the topics a field has the same way whatever the five answers were', () => {
+    const have = [seed('aaaaaa', { name: 'Basis risk' })]
+    expect(aiPrompt('Coffee', '', have, { level: 'new', amount: 'taste' })).toBe(aiPrompt('Coffee', '', have))
   })
 
   it('asks for questions on the topics a field has that have none, by their own names', () => {
@@ -480,5 +545,42 @@ describe('the box of a topic\'s cards, with wrong answers', () => {
     const had = [{ q: 'Capital of Peru?', a: 'Lima', wrong: ['Quito', 'Bogotá'] }]
     expect(cardsFromText('Capital of Peru? = Lima', had).cards).toEqual([{ q: 'Capital of Peru?', a: 'Lima' }])
     expect(cardsFromText('Capital of Peru? = Lima | Cusco', had).cards).toEqual([{ q: 'Capital of Peru?', a: 'Lima', wrong: ['Cusco'] }])
+  })
+})
+
+describe('an answer in one code block', () => {
+  // The coffee paste is the one a real chat wrote; the twenty beside it were written by agents playing chats of
+  // different care, to the request of version 0.10.0.
+  const dir = 'src/game/chat-answers/'
+  const answers: [string, string][] = [
+    ['coffee', readFileSync('src/reader/pastes/coffee-chat.txt', 'utf8')],
+    ...readdirSync(dir).filter((f) => f.endsWith('.txt')).sort().map((f): [string, string] => [f, readFileSync(dir + f, 'utf8')]),
+  ]
+  const READING = { title: 60, name: 48, summary: 300, group: 60, q: 160, a: 120, cards: 8 }
+  const seen = (text: string) => {
+    const d = read(text, { limits: READING })
+    return { title: d.title, topics: d.topics.map((t) => [t.group, t.name, t.kind, t.cards.length]) }
+  }
+
+  it('reads the same inside a fence marked as text as bare, and inside an unmarked one when it is in the shape asked for', () => {
+    for (const [name, text] of answers) {
+      const bare = seen(text)
+      expect(seen('```text\n' + text.trim() + '\n```'), name).toEqual(bare)
+      // The coffee paste was written to the request of 0.9.0, before "Topic:" lines; unmarked, it could be any program.
+      if (name !== 'coffee') expect(seen('```\n' + text.trim() + '\n```'), name).toEqual(bare)
+    }
+  })
+
+  it('reads the same when the whole page was selected, with the chat\'s words and the code block\'s label around it', () => {
+    for (const [name, text] of answers) {
+      const page = ['Here is your study list.', '', 'text', 'Copy code', text.trim(), '', 'Let me know if you would like more questions on any topic.'].join('\n')
+      expect(seen(page), name).toEqual(seen(text))
+    }
+  })
+
+  it('keeps a short list in a fence when the chat talks around it', () => {
+    const short = (answers.find(([n]) => n === 'tidy-1.txt')?.[1] ?? '').split('\n').slice(0, 30).join('\n')
+    const around = ['Sure! Here is a short study list for you to paste into your game.', 'I kept it small, as you asked.', 'Each topic has a few questions.', '', '```', short, '```', '', 'Good luck with your learning!', 'If you want, I can add more topics later.', 'Just ask.'].join('\n')
+    expect(seen(around)).toEqual(seen(short))
   })
 })
