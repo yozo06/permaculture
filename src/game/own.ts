@@ -158,7 +158,11 @@ export function readingHtml(draft: Draft, adding: Adding, told: 'cards' | 'topic
     ? '<p class="sub"><b>' + bare + ' of them ' + (bare === 1 ? 'has' : 'have') + ' no questions</b>, so ' + (bare === 1 ? 'it is' : 'they are') + ' watered by explaining ' + (bare === 1 ? 'it' : 'them') +
       ' in writing, not by multiple choice. The prompt for an AI chat asks for questions under every topic.</p>'
     : ''
-  const pairs = draft.pairs > 0
+  // A list whose every question brought its own wrong answers is in the shape a chat is asked for: there is nothing to
+  // decide, unless the learner already chose another way and may want to go back.
+  const asked = draft.topics.flatMap((t) => t.cards)
+  const settled = told === null && draft.pairsAs === 'cards' && asked.length > 0 && asked.every((c) => (c.wrong?.length ?? 0) >= 2)
+  const pairs = draft.pairs > 0 && !settled
     ? '<p class="sub">' + plural(draft.pairs, 'line') + ' came in two parts, like “Hund - dog”. A short pair makes a question card; a name and a sentence make a topic with a note.</p><div class="tabs">' +
       WAYS.map(([way, label]) => '<button type="button" data-act="ownPairs" data-arg="' + way + '"' + ((told ?? '') === way ? ' class="on"' : '') + '>' + label + '</button>').join('') + '</div>'
     : ''

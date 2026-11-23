@@ -501,6 +501,23 @@ describe('questions for topics that are there already', () => {
   })
 })
 
+describe('the choice of how to read lines in two parts', () => {
+  it('is not offered for a list whose every question came with its wrong answers, as a chat was asked to write it', () => {
+    const answer = readFileSync('src/reader/pastes/chatgpt-guitar.txt', 'utf8')
+    const d = read(answer)
+    const html = readingHtml(d, toAdd(d, field(), counting()))
+    expect(html).not.toContain('Hund')
+    expect(html).not.toContain('data-act="ownPairs"')
+  })
+
+  it('is offered where the lines could be read either way, and stays once a way was picked', () => {
+    const words = read('Hund - dog\nKatze - cat\nBrot - bread\nWasser - water')
+    expect(readingHtml(words, toAdd(words, field(), counting()))).toContain('data-act="ownPairs"')
+    const answer = read(readFileSync('src/reader/pastes/chatgpt-guitar.txt', 'utf8'), { pairs: 'topics' })
+    expect(readingHtml(answer, toAdd(answer, field(), counting()), 'topics')).toContain('data-act="ownPairs"')
+  })
+})
+
 describe('topics with nothing to ask', () => {
   it('says how many there are, and what that means, before they are added', () => {
     const d = read('Part: A\nTopic: One\nWhat? = a | b | c\nTopic: Two\nTopic: Three')
