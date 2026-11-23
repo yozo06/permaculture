@@ -937,6 +937,19 @@ describe('what ChatGPT wrote to the request of version 0.11.0', () => {
   })
 })
 
+describe('what ChatGPT wrote when asked for things to do', () => {
+  // A real answer (2026-11-23, signed out): guitar, a hobby, starting from nothing, a taste, mostly doing.
+  const d = read(readFileSync('src/reader/pastes/chatgpt-guitar.txt', 'utf8'))
+
+  it('marks as skills the topics it gave a "Practise:" line, and keeps every question', () => {
+    expect(d.notes).toEqual([])
+    expect(d.topics).toHaveLength(11)
+    expect(d.topics.filter((t) => t.kind === 'skill')).toHaveLength(9)
+    expect(d.topics.every((t) => t.cards.length === 5 && t.cards.every((c) => c.wrong?.length === 3))).toBe(true)
+    expect(topic(d, 'Your first chords').summary).toBe('Practise changing between Em, Am and C slowly')
+  })
+})
+
 describe('a list an AI chat wrote, as it comes out of the chat', () => {
   // The first real paste: what a chat answered to the game's own prompt of version 0.9.0, copied from the chat's page.
   // The page had turned "## heading" into a plain line and "- " into "* ".

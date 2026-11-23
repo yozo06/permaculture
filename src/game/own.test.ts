@@ -394,6 +394,17 @@ describe('the prompt for an AI chat', () => {
     expect(() => encodeURIComponent(p)).not.toThrow()
   })
 
+  it('says something of its own for every answer, about the topics and about the questions, in words the reader cannot mistake', () => {
+    for (const q of ['purpose', 'level', 'mode'] as const) {
+      const said = ABOUT[q].map(([choice]) => aboutLines({ [q]: choice }).join(' '))
+      expect(new Set(said).size, q).toBe(said.length)
+      for (const line of said) {
+        expect(line, q).toMatch(/question/i)
+        expect(line, q).not.toMatch(/[=|]/)
+      }
+    }
+  })
+
   it('stays short enough to go inside a link with every answer given', () => {
     const p = aiPrompt('Organic chemistry for my second year', '', [], { purpose: 'exam', level: 'using', amount: 'thorough', mode: 'both', lean: 'Lean on Clayden, chapters 1 to 12.' })
     expect(encodeURIComponent(p).length).toBeLessThanOrEqual(4000)
